@@ -1,0 +1,6 @@
+@ToanTuDuy_HostAddress = http://localhost:5114
+
+GET {{ToanTuDuy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
