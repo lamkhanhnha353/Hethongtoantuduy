@@ -13,7 +13,7 @@ namespace ToanTuDuy.Models
         public string Role { get; set; }
 
         [Column("refresh_token")]
-        public string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         // Navigation Properties
         public ParentProfile ParentProfile { get; set; }
@@ -35,10 +35,10 @@ namespace ToanTuDuy.Models
         public string FullName { get; set; }
 
         [Column("pin")]
-        public string Pin { get; set; }
+        public string? Pin { get; set; }
 
         [Column("avatar")]
-        public string Avatar { get; set; }
+        public string? Avatar { get; set; }
 
         // Navigation Properties
         [ForeignKey(nameof(AccountId))]
@@ -61,7 +61,7 @@ namespace ToanTuDuy.Models
         public string FullName { get; set; }
 
         [Column("avatar")]
-        public string Avatar { get; set; }
+        public string? Avatar { get; set; }
 
         [Column("total_points")]
         public int TotalPoints { get; set; }
@@ -98,7 +98,7 @@ namespace ToanTuDuy.Models
         public string FullName { get; set; }
 
         [Column("email")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         // Navigation Properties
         [ForeignKey(nameof(AccountId))]

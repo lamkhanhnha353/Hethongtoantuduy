@@ -36,6 +36,14 @@ namespace ToanTuDuy.Data
             // Bắt buộc gọi base method của IdentityDbContext
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Course>()
+                .Property(c => c.Fee)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.Amount)
+                .HasColumnType("decimal(18,2)");
+
             // 1. Ánh xạ cấu trúc Identity User về bảng ACCOUNT như yêu cầu
             modelBuilder.Entity<ApplicationUser>(entity =>
             {

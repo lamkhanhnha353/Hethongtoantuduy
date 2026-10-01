@@ -135,10 +135,10 @@ namespace ToanTuDuy.Models
         public string Status { get; set; }
 
         [Column("payment_method")]
-        public string PaymentMethod { get; set; }
+        public string? PaymentMethod { get; set; }
 
         [Column("transaction_id")]
-        public string TransactionId { get; set; }
+        public string? TransactionId { get; set; }
 
         // Navigation Properties
         [ForeignKey(nameof(ParentId))]
@@ -236,7 +236,7 @@ namespace ToanTuDuy.Models
         public string Status { get; set; }
 
         [Column("teacher_feedback")]
-        public string TeacherFeedback { get; set; }
+        public string? TeacherFeedback { get; set; }
 
         // Navigation Properties
         [ForeignKey(nameof(AssignmentId))]
@@ -308,7 +308,7 @@ namespace ToanTuDuy.Models
         public int StudentId { get; set; }
 
         [Column("reason")]
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
 
         [Column("status")]
         public string Status { get; set; }
