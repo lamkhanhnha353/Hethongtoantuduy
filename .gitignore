@@ -4,7 +4,7 @@
 # Chặn thư mục chứa file biên dịch và thư viện tạm
 **/bin/
 **/obj/
-
+agents.md
 # Chặn file cấu hình chứa thông tin nhạy cảm của môi trường dev
 **/appsettings.Development.json
 **/appsettings.*.json
