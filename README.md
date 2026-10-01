@@ -14,40 +14,96 @@ Dự án gồm ba phần độc lập:
 
 ## Công nghệ sử dụng
 
-| Lớp / Phạm vi | Công nghệ | Phiên bản | Vai trò trong dự án |
-| --- | --- | --- | --- |
-| **Backend** | .NET | 10.0 (net10.0) | Runtime và framework |
-| Backend | ASP.NET Core Web API | 10.0.12 | HTTP API, middleware, DI, routing |
-| Backend | Entity Framework Core | 10.0.12 | ORM, ánh xạ model, migration |
-| Backend | EF Core SqlServer Provider | 10.0.12 | Kết nối SQL Server |
-| Backend | ASP.NET Core Identity | 10.0.12 | Xác thực, hash mật khẩu, quản lý role |
-| Backend | Json Web Token | System.IdentityModel | Sinh access token và refresh token |
-| Backend | JWT Bearer Authentication | 10.0.12 | Gói tham chiếu cho xác thực bearer |
-| Backend | Microsoft.AspNetCore.OpenApi | 10.0.12 | Tài liệu OpenAPI ở môi trường Development |
-| Backend | SQL Server | 2022 (16.0) | Cơ sở dữ liệu, xác thực Windows |
-| **Mobile** | Expo SDK | ~57.0.25 | Nền tảng và bộ công cụ build |
-| Mobile | React Native | 0.86.3 | Framework giao diện native |
-| Mobile | React | 19.2.3 | Thư viện UI |
-| Mobile | Expo Router | ~57.0.23 | Định tuyến theo cấu trúc thư mục |
-| Mobile | TypeScript | ~6.0.3 | Ngôn ngữ, bật `strict` |
-| Mobile | NativeWind | 4.2.7 | Tailwind CSS cho React Native |
-| Mobile | Tailwind CSS | ^3.4.17 | Hệ thiết kế utility-first |
-| Mobile | React Native Reanimated | 4.5.1 | Animation (đã cài, chưa dùng) |
-| Mobile | React Native Gesture Handler | ~2.32.0 | Xử lý cử chỉ (đã cài, chưa dùng) |
-| Mobile | React Native Safe Area Context | ~5.7.0 | Vùng an toàn (đã cài, chưa dùng) |
-| Mobile | React Native Web | ~0.21.0 | Xuất bản web từ cùng mã nguồn |
-| Mobile | EAS Build / Submit | CLI >= 24.8.0 | Build và phát hành trên cloud |
-| Mobile | Babel + Metro | theo Expo SDK | Bundler và biến đổi JSX |
-| **Web** | Vue | ^3.5.42 | Framework giao diện, Composition API |
-| Web | Vue Router | ^5.3.1 | Định tuyến phía client, chế độ HTML5 |
-| Web | Vite | ^8.2.2 | Dev server và bundler |
-| Web | @vitejs/plugin-vue | ^6.0.8 | Biên dịch SFC `.vue` |
-| Web | vite-plugin-vue-devtools | ^8.2.1 | Công cụ gỡ lỗi |
-| Web | JavaScript (ESM) | — | Ngôn ngữ, dùng `jsconfig.json` |
-| Web | Node.js | ^22.18.0 hoặc >=24.12.0 | Môi trường chạy |
-| **Công cụ** | Git | — | Quản lý phiên bản, nhánh theo module |
-| Công cụ | SQL Server Management Studio / sqlcmd | — | Quản trị database |
-| Công cụ | dotnet-ef | 10.0.12 | Tạo và áp dụng migration |
+### Backend
+
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-10.0.12-5B2C8D?style=flat-square&logo=dotnet&logoColor=white)
+![Entity Framework Core](https://img.shields.io/badge/Entity%20Framework%20Core-10.0.12-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white)
+![ASP.NET Core Identity](https://img.shields.io/badge/Identity-10.0.12-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-JSON%20Web%20Token-000000?style=flat-square&logo=jsonwebtoken&logoColor=white)
+![Swagger](https://img.shields.io/badge/OpenAPI-10.0.12-85EA2D?style=flat-square&logo=swagger&logoColor=black)
+
+| Công nghệ | Phiên bản | Vai trò trong dự án |
+| --- | --- | --- |
+| .NET | 10.0 (net10.0) | Runtime và framework |
+| ASP.NET Core Web API | 10.0.12 | HTTP API, middleware, DI, routing |
+| Entity Framework Core | 10.0.12 | ORM, ánh xạ model, migration |
+| EF Core SqlServer Provider | 10.0.12 | Kết nối SQL Server |
+| ASP.NET Core Identity | 10.0.12 | Xác thực, hash mật khẩu, quản lý role |
+| Json Web Token | System.IdentityModel | Sinh access token và refresh token |
+| JWT Bearer Authentication | 10.0.12 | Gói tham chiếu cho xác thực bearer |
+| Microsoft.AspNetCore.OpenApi | 10.0.12 | Tài liệu OpenAPI ở môi trường Development |
+| SQL Server | 2022 (16.0) | Cơ sở dữ liệu, xác thực Windows |
+
+### Mobile
+
+![Expo](https://img.shields.io/badge/Expo-57.0-000000?style=flat-square&logo=expo&logoColor=white)
+![React Native](https://img.shields.io/badge/React%20Native-0.86.3-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![React](https://img.shields.io/badge/React-19.2.3-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Expo Router](https://img.shields.io/badge/Expo%20Router-57.0-23-000000?style=flat-square&logo=expo&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![NativeWind](https://img.shields.io/badge/NativeWind-4.2.7-06B6D4?style=flat-square&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.17-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Reanimated](https://img.shields.io/badge/Reanimated-4.5.1-001A72?style=flat-square&logo=reanimated&logoColor=white)
+![Gesture Handler](https://img.shields.io/badge/Gesture%20Handler-2.32.0-4956E8?style=flat-square&logoColor=white)
+![Safe Area Context](https://img.shields.io/badge/Safe%20Area-5.7.0-3B82F6?style=flat-square&logoColor=white)
+![React Native Web](https://img.shields.io/badge/React%20Native%20Web-0.21.0-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![EAS Build](https://img.shields.io/badge/EAS%20Build-24.8.0-000000?style=flat-square&logo=expo&logoColor=white)
+![Babel](https://img.shields.io/badge/Babel-8E44AD?style=flat-square&logo=babel&logoColor=white)
+![Metro](https://img.shields.io/badge/Metro-9DBCD6?style=flat-square&logoColor=black)
+
+| Công nghệ | Phiên bản | Vai trò trong dự án |
+| --- | --- | --- |
+| Expo SDK | ~57.0.25 | Nền tảng và bộ công cụ build |
+| React Native | 0.86.3 | Framework giao diện native |
+| React | 19.2.3 | Thư viện UI |
+| Expo Router | ~57.0.23 | Định tuyến theo cấu trúc thư mục |
+| TypeScript | ~6.0.3 | Ngôn ngữ, bật `strict` |
+| NativeWind | 4.2.7 | Tailwind CSS cho React Native |
+| Tailwind CSS | ^3.4.17 | Hệ thiết kế utility-first |
+| React Native Reanimated | 4.5.1 | Animation (đã cài, chưa dùng) |
+| React Native Gesture Handler | ~2.32.0 | Xử lý cử chỉ (đã cài, chưa dùng) |
+| React Native Safe Area Context | ~5.7.0 | Vùng an toàn (đã cài, chưa dùng) |
+| React Native Web | ~0.21.0 | Xuất bản web từ cùng mã nguồn |
+| EAS Build / Submit | CLI >= 24.8.0 | Build và phát hành trên cloud |
+| Babel + Metro | theo Expo SDK | Bundler và biến đổi JSX |
+
+### Web
+
+![Vue.js](https://img.shields.io/badge/Vue-3.5.42-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
+![Vue Router](https://img.shields.io/badge/Vue%20Router-5.3.1-35495E?style=flat-square&logo=vuedotjs&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8.2.2-646CFF?style=flat-square&logo=vitedotjs&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ESM-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-22.18.0-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
+![Vite Plugin Vue](https://img.shields.io/badge/%40vitejs%2Fplugin--vue-6.0.8-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Vue DevTools](https://img.shields.io/badge/vue--devtools-8.2.1-646CFF?style=flat-square&logo=vite&logoColor=white)
+
+| Công nghệ | Phiên bản | Vai trò trong dự án |
+| --- | --- | --- |
+| Vue | ^3.5.42 | Framework giao diện, Composition API |
+| Vue Router | ^5.3.1 | Định tuyến phía client, chế độ HTML5 |
+| Vite | ^8.2.2 | Dev server và bundler |
+| @vitejs/plugin-vue | ^6.0.8 | Biên dịch SFC `.vue` |
+| vite-plugin-vue-devtools | ^8.2.1 | Công cụ gỡ lỗi |
+| JavaScript (ESM) | — | Ngôn ngữ, dùng `jsconfig.json` |
+| Node.js | ^22.18.0 hoặc >=24.12.0 | Môi trường chạy |
+
+### Công cụ
+
+![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)
+![dotnet-ef](https://img.shields.io/badge/dotnet--ef-10.0.12-512BD4?style=flat-square&logo=dotnet&logoColor=white)
+![SQL Server Management Studio](https://img.shields.io/badge/SSMS-SQL%20Server-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white)
+![npm](https://img.shields.io/badge/npm-10.9.3-CB3837?style=flat-square&logo=npm&logoColor=white)
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?style=flat-square&logo=powershell&logoColor=white)
+
+| Công nghệ | Phiên bản | Vai trò trong dự án |
+| --- | --- | --- |
+| Git | — | Quản lý phiên bản, nhánh theo module |
+| dotnet-ef | 10.0.12 | Tạo và áp dụng migration |
+| SSMS / sqlcmd | — | Quản trị database |
+| npm | 10.9.3 | Cài dependency cho Mobile và Web |
+| PowerShell | 5.1 | Môi trường dòng lệnh trên Windows |
 
 ---
 
