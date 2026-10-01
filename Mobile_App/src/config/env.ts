@@ -8,8 +8,6 @@ function normalize(url: string) {
 
 export const API_URL = normalize(process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL);
 
-export const USE_MOCK_API = process.env.EXPO_PUBLIC_USE_MOCK_API !== 'false';
-
 export const API_TIMEOUT_MS = 15000;
 
 /**

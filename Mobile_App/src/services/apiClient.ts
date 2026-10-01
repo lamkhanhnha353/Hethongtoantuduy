@@ -6,12 +6,6 @@ import { ApiError, type ApiErrorPayload } from '@/services/apiError';
 const NETWORK_ERROR_STATUS = 0;
 const INVALID_JSON_STATUS = 502;
 
-/**
- * Backend trả về hai dạng lỗi khác nhau:
- * - Lỗi validation: ValidationProblemDetails với `errors` là object, mỗi field là mảng thông báo.
- * - Lỗi nghiệp vụ: `{ code, message }` hoặc `{ code, message, details }`.
- * Hàm này gộp cả hai về một ApiError để tầng trên chỉ cần xử lý một kiểu lỗi.
- */
 function toApiError(status: number, payload: ApiErrorPayload): ApiError {
   const fieldErrors = payload.errors ?? {};
   const firstFieldMessage = Object.values(fieldErrors)[0]?.[0];
@@ -38,6 +32,7 @@ export const apiClient: AxiosInstance = create({
  * Chuyển mọi lỗi axios về ApiError để tầng UI chỉ cần bắt một kiểu lỗi duy nhất,
  * không cần phân biệt lỗi mạng / timeout / HTTP.
  */
+// setup interceptor để chuyển mọi lỗi axios về ApiError    
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorPayload>) => {
@@ -66,11 +61,6 @@ apiClient.interceptors.response.use(
   },
 );
 
-/**
- * Header xác thực cho các endpoint cần access token.
- * Truyền vào `headers` tại nơi gọi để không phải đọc token trong interceptor,
- * tránh phụ thuộc thứ tự khởi tạo module.
- */
 export function authHeaders(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
 }

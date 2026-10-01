@@ -1,6 +1,5 @@
 import { apiClient } from '@/services/apiClient';
-import { ApiError, mockLogin, mockRegister } from '@/services/apiError';
-import { USE_MOCK_API } from '@/config/env';
+import { ApiError } from '@/services/apiError';
 import type { AuthResult, LoginPayload, RegisterPayload } from '@/types/auth';
 
 function toAuthResult(payload: Record<string, unknown>): AuthResult {
@@ -12,25 +11,11 @@ function toAuthResult(payload: Record<string, unknown>): AuthResult {
   };
 }
 
-async function loginToApi(payload: LoginPayload) {
-  const { data } = await apiClient.post<Record<string, unknown>>('/api/auth/login', payload);
-
-  return toAuthResult(data);
-}
-
-async function registerToApi(payload: RegisterPayload) {
-  const { data } = await apiClient.post<Record<string, unknown>>('/api/auth/register', payload);
-
-  return toAuthResult(data);
-}
-
 export async function login(payload: LoginPayload): Promise<AuthResult> {
-  if (USE_MOCK_API) {
-    return mockLogin(payload);
-  }
-
   try {
-    return await loginToApi(payload);
+    const { data } = await apiClient.post<Record<string, unknown>>('/api/auth/login', payload);
+
+    return toAuthResult(data);
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -41,12 +26,10 @@ export async function login(payload: LoginPayload): Promise<AuthResult> {
 }
 
 export async function register(payload: RegisterPayload): Promise<AuthResult> {
-  if (USE_MOCK_API) {
-    return mockRegister(payload);
-  }
-
   try {
-    return await registerToApi(payload);
+    const { data } = await apiClient.post<Record<string, unknown>>('/api/auth/register', payload);
+
+    return toAuthResult(data);
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
