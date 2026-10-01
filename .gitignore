@@ -1,0 +1,41 @@
+# ==========================================
+# 1. THƯ VIỆN & FILE CHẠY CỦA BACKEND (.NET)
+# ==========================================
+# Chặn thư mục chứa file biên dịch và thư viện tạm
+**/bin/
+**/obj/
+
+# Chặn file cấu hình chứa thông tin nhạy cảm của môi trường dev
+**/appsettings.Development.json
+**/appsettings.*.json
+*.user
+
+# ==========================================
+# 2. THƯ VIỆN & FILE CHẠY CỦA FRONTEND
+# ==========================================
+# Chặn toàn bộ thư viện npm/yarn tải về
+**/node_modules/
+
+# Chặn thư mục chứa code đã build (React/Vue/Angular)
+**/dist/
+**/build/
+**/.next/
+
+# Chặn các file biến môi trường (Tuyệt đối không đưa lên Git)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# ==========================================
+# 3. CÔNG CỤ LẬP TRÌNH & HỆ ĐIỀU HÀNH
+# ==========================================
+# Visual Studio & VS Code
+.vscode/
+.idea/
+*.suo
+*.sln.docstates
+
+# Hệ điều hành & Log
+.DS_Store
+Thumbs.db
+*.log
