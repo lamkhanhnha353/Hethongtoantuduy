@@ -1,14 +1,12 @@
+import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { loadSession, clearSession } from '@/services/tokenStorage';
+import { loadSession } from '@/services/tokenStorage';
+import { useAuthStore } from '@/store/authStore';
 import type { StoredSession } from '@/types/auth';
 
 export const sessionQueryKey = ['session'] as const;
 
-/**
- * Đọc phiên đăng nhập từ SecureStore. Đây là dữ liệu cục bộ nên
- * `staleTime: Infinity` + `gcTime: Infinity` để không refetch không cần thiết.
- */
 export function useSessionQuery() {
   return useQuery<StoredSession | null>({
     queryKey: sessionQueryKey,
@@ -18,15 +16,24 @@ export function useSessionQuery() {
   });
 }
 
-/**
- * Xóa session cả trong storage lẫn cache của TanStack Query
- * để các màn hình khác tự động phản ánh trạng thái đã đăng xuất.
- */
 export function useClearSessionMutation() {
   const queryClient = useQueryClient();
+  const logout = useAuthStore((state) => state.logout);
 
   return async function clear() {
-    await clearSession();
+    await logout();
     queryClient.setQueryData(sessionQueryKey, null);
   };
+}
+export function useAuthHydration() {
+  const hydrate = useAuthStore((state) => state.hydrate);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
+
+  useEffect(() => {
+    if (isHydrated) {
+      return;
+    }
+
+    void hydrate();
+  }, [hydrate, isHydrated]);
 }

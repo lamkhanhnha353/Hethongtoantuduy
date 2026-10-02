@@ -1,21 +1,11 @@
 import { apiClient } from '@/services/apiClient';
 import { ApiError } from '@/services/apiError';
-import type { AuthResult, LoginPayload, RegisterPayload } from '@/types/auth';
+import type { AuthResponseDto, LoginRequestDto, RegisterRequestDto } from '@/types/auth';
 
-function toAuthResult(payload: Record<string, unknown>): AuthResult {
-  return {
-    accessToken: String(payload.accessToken ?? payload.AccessToken ?? ''),
-    refreshToken: String(payload.refreshToken ?? payload.RefreshToken ?? ''),
-    role: (payload.role ?? payload.Role) as AuthResult['role'],
-    profileId: Number(payload.profileId ?? payload.ProfileId ?? 0),
-  };
-}
-
-export async function login(payload: LoginPayload): Promise<AuthResult> {
+export async function login(payload: LoginRequestDto): Promise<AuthResponseDto> {
   try {
-    const { data } = await apiClient.post<Record<string, unknown>>('/api/auth/login', payload);
-
-    return toAuthResult(data);
+    const { data } = await apiClient.post<AuthResponseDto>('/api/auth/login', payload);
+    return data;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -24,17 +14,14 @@ export async function login(payload: LoginPayload): Promise<AuthResult> {
     throw new ApiError(0, 'Đăng nhập thất bại, vui lòng thử lại.');
   }
 }
-
-export async function register(payload: RegisterPayload): Promise<AuthResult> {
+export async function register(payload: RegisterRequestDto): Promise<AuthResponseDto> {
   try {
-    const { data } = await apiClient.post<Record<string, unknown>>('/api/auth/register', payload);
-
-    return toAuthResult(data);
+    const { data } = await apiClient.post<AuthResponseDto>('/api/auth/register', payload);
+    return data;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
-
     throw new ApiError(0, 'Đăng ký thất bại, vui lòng thử lại.');
   }
 }

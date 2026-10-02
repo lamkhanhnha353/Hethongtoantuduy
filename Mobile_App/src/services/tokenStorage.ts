@@ -5,11 +5,6 @@ import type { StoredSession } from '@/types/auth';
 
 const SESSION_KEY = 'toanTuDuy.session';
 
-/**
- * Web không có SecureStore native nên fallback sang `localStorage`.
- * `localStorage` có thể bị chặn (private mode, SSR) nên mọi lỗi đều bị nuốt
- * để app không crash khi chỉ đọc phiên.
- */
 const localStorageAdapter = {
   async getItem(key: string): Promise<string | null> {
     try {
@@ -48,8 +43,7 @@ const secureStoreAdapter = {
   },
 };
 
-const adapter =
-  SESSION_STORAGE_MODE === 'local' ? localStorageAdapter : secureStoreAdapter;
+const adapter = SESSION_STORAGE_MODE === 'local' ? localStorageAdapter : secureStoreAdapter;
 
 export async function saveSession(session: StoredSession) {
   await adapter.setItem(SESSION_KEY, JSON.stringify(session));

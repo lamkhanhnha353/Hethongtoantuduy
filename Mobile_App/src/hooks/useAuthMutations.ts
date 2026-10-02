@@ -2,21 +2,22 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from '@/services/apiError';
 import { login, register } from '@/services/authService';
-import { saveSession } from '@/services/tokenStorage';
 import { sessionQueryKey } from '@/hooks/useSession';
-import type { LoginPayload, RegisterPayload, StoredSession } from '@/types/auth';
+import { useAuthStore } from '@/store/authStore';
+import type { LoginRequestDto, RegisterRequestDto, StoredSession } from '@/types/auth';
 
-type LoginInput = LoginPayload & { fullName?: string };
-type RegisterInput = RegisterPayload;
+type LoginInput = LoginRequestDto & { fullName?: string };
+type RegisterInput = RegisterRequestDto;
 
 /**
- * Mutation đăng nhập: nhận payload, gọi service, rồi lưu session xuống SecureStore.
- * Việc lưu session nằm trong `mutationFn` để UI chỉ cần theo dõi trạng thái
- * `isPending` / `isError` / `isSuccess` mà không cần quản lý `loading` thủ công.
- * Đồng thời ghi session vào cache để màn hình `/` hiển thị đúng ngay sau khi chuyển hướng.
+ * Mutation đăng nhập: nhận payload, gọi service, rồi lưu session vào store
+ * (đồng thời persist xuống SecureStore) để interceptor tự gắn token cho các
+ * request sau. Ghi thêm vào cache của TanStack Query để màn hình `/` hiển thị
+ * đúng ngay sau khi chuyển hướng.
  */
 export function useLoginMutation() {
   const queryClient = useQueryClient();
+  const setSession = useAuthStore((state) => state.setSession);
 
   return useMutation<StoredSession, unknown, LoginInput>({
     mutationFn: async ({ fullName, ...payload }) => {
@@ -26,7 +27,7 @@ export function useLoginMutation() {
         phone: payload.phone,
         fullName: fullName ?? '',
       };
-      await saveSession(session);
+      await setSession(session);
       return session;
     },
     onSuccess: (session) => {
@@ -40,6 +41,7 @@ export function useLoginMutation() {
  */
 export function useRegisterMutation() {
   const queryClient = useQueryClient();
+  const setSession = useAuthStore((state) => state.setSession);
 
   return useMutation<StoredSession, unknown, RegisterInput>({
     mutationFn: async (payload) => {
@@ -49,7 +51,7 @@ export function useRegisterMutation() {
         phone: payload.phone,
         fullName: payload.fullName,
       };
-      await saveSession(session);
+      await setSession(session);
       return session;
     },
     onSuccess: (session) => {
