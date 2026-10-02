@@ -39,3 +39,18 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Backend API Contracts
+
+- Before creating or changing a service type, inspect the matching backend controller and DTO under `Backend/ToanTuDuy`. Do not infer response fields from usage alone.
+- Types that mirror backend DTOs must use the `Dto` suffix so they are distinct from client-only/domain types:
+  - `LoginRequestDto` mirrors `LoginRequest`.
+  - `RegisterRequestDto` mirrors `RegisterRequest`.
+  - `AuthResponseDto` mirrors `AuthResponse`.
+- Keep client-only types separate from DTO types. For example, `StoredSession` contains app-local persisted data and must not be named as a backend DTO.
+- Do not use `Record<string, unknown>` for known backend request or response bodies. Use an explicit interface/type matching the backend DTO properties and C# types.
+- Keep the wire property names produced by ASP.NET Core's default web JSON settings: C# PascalCase properties are serialized as camelCase (`accessToken`, `refreshToken`, `profileId`, `fullName`).
+- Verify backend JSON naming and enum configuration before adding a type. Do not add PascalCase fallback fields unless the backend actually emits them.
+- Model every distinct backend error envelope that the service can receive. Auth currently returns `ValidationProblemDetails` for validation errors and `{ code, message, details? }` for controller errors.
+- ASP.NET Core validation error keys may be C# PascalCase (`Phone`, `FullName`) or JSON paths (`$.phone`). Normalize them to the mobile form's camelCase keys before exposing them as `fieldErrors`.
+- After changing API types or services, run both `npx tsc --noEmit` and `npx expo lint` before declaring the task complete.

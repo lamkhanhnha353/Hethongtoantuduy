@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const DEFAULT_API_URL = 'http://localhost:5114';
+const DEFAULT_API_URL = 'http://192.168.1.120:5114';
 
 function normalize(url: string) {
   return url.replace(/\/+$/, '');
@@ -29,7 +29,8 @@ export const REQUEST_HEADERS = {
  * Android emulator không hiểu được `localhost` của máy host nên cần dùng IP của host.
  * Các nền tảng khác đều dùng được `localhost` trỏ về chính máy đang chạy app.
  */
+const LAN_IP = 'http://10.0.2.2:5114';
 export const PLATFORM_NOTE = Platform.select({
-  android: 'Trên Android emulator hãy đặt EXPO_PUBLIC_API_URL=http://10.0.2.2:5114',
+  android: LAN_IP,
   default: null,
 });
