@@ -38,7 +38,7 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
               >
                 {role.label}
               </Text>
-              <Text className="mt-0.5 text-xs text-slate-500">{role.hint}</Text>
+              {/* <Text className="mt-0.5 text-xs text-slate-500">{role.hint}</Text> */}
             </TouchableOpacity>
           );
         })}
