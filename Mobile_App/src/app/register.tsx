@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, router } from 'expo-router';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/AlertBanner';
@@ -29,11 +30,11 @@ export default function ScreenRegister() {
 
   const fieldErrors: FieldErrors = apiError
     ? {
-        phone: apiError.fieldErrors.Phone?.[0],
-        password: apiError.fieldErrors.Password?.[0],
-        fullName: apiError.fieldErrors.FullName?.[0],
-        email: apiError.fieldErrors.Email?.[0],
-        role: apiError.fieldErrors.Role?.[0],
+        phone: apiError.fieldErrors.phone?.[0],
+        password: apiError.fieldErrors.password?.[0],
+        fullName: apiError.fieldErrors.fullName?.[0],
+        email: apiError.fieldErrors.email?.[0],
+        role: apiError.fieldErrors.role?.[0],
       }
     : {};
 
@@ -52,86 +53,83 @@ export default function ScreenRegister() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      <KeyboardAwareScrollView
         className="flex-1"
+        contentContainerClassName="flex-grow justify-center px-6 py-10"
+        enableOnAndroid
+        extraScrollHeight={24}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="flex-grow justify-center px-6 py-10"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View className="mb-8">
-            <Text className="text-3xl font-bold text-slate-900">Đăng ký</Text>
-            <Text className="mt-2 text-sm text-slate-600">
-              Tạo tài khoản để bắt đầu sử dụng hệ thống.
-            </Text>
-          </View>
-
-          {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
-
-          <RoleSelector error={fieldErrors.role} onChange={setRole} value={role} />
-
-          <FormField
-            autoComplete="name"
-            error={fieldErrors.fullName}
-            label="Họ và tên"
-            onChangeText={setFullName}
-            placeholder="Nguyễn Văn A"
-            value={fullName}
-          />
-
-          <FormField
-            autoComplete="tel"
-            error={fieldErrors.phone}
-            keyboardType="phone-pad"
-            label="Số điện thoại"
-            onChangeText={setPhone}
-            placeholder="0987654321"
-            value={phone}
-          />
-
-          <FormField
-            autoComplete="password"
-            error={fieldErrors.password}
-            label="Mật khẩu"
-            onChangeText={setPassword}
-            placeholder="Tối thiểu 6 ký tự"
-            secureTextEntry
-            value={password}
-          />
-
-          {needsEmail ? (
-            <FormField
-              autoCapitalize="none"
-              autoComplete="email"
-              error={fieldErrors.email}
-              keyboardType="email-address"
-              label="Email"
-              onChangeText={setEmail}
-              placeholder="giangvien@example.com"
-              value={email}
-            />
-          ) : null}
-
-          <PrimaryButton
-            label="Tạo tài khoản"
-            loading={registerMutation.isPending}
-            onPress={handleSubmit}
-          />
-
-          <Text className="mt-6 text-center text-sm text-slate-600">
-            Đã có tài khoản?{' '}
-            <Link className="font-semibold text-sky-700" href="/login">
-              Đăng nhập
-            </Link>
+        <View className="mb-8">
+          <Text className="text-3xl font-bold text-slate-900">Đăng ký</Text>
+          <Text className="mt-2 text-sm text-slate-600">
+            Tạo tài khoản để bắt đầu sử dụng hệ thống.
           </Text>
+        </View>
 
-          <View className="mt-8">
-            <DebugNotice />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
+
+        <RoleSelector error={fieldErrors.role} onChange={setRole} value={role} />
+
+        <FormField
+          autoComplete="name"
+          error={fieldErrors.fullName}
+          label="Họ và tên"
+          onChangeText={setFullName}
+          placeholder="Nguyễn Văn A"
+          value={fullName}
+        />
+
+        <FormField
+          autoComplete="tel"
+          error={fieldErrors.phone}
+          keyboardType="phone-pad"
+          label="Số điện thoại"
+          onChangeText={setPhone}
+          placeholder="0987654321"
+          value={phone}
+        />
+
+        <FormField
+          autoComplete="password"
+          error={fieldErrors.password}
+          label="Mật khẩu"
+          onChangeText={setPassword}
+          placeholder="Tối thiểu 6 ký tự"
+          secureTextEntry
+          value={password}
+        />
+
+        {needsEmail ? (
+          <FormField
+            autoCapitalize="none"
+            autoComplete="email"
+            error={fieldErrors.email}
+            keyboardType="email-address"
+            label="Email"
+            onChangeText={setEmail}
+            placeholder="giangvien@example.com"
+            value={email}
+          />
+        ) : null}
+
+        <PrimaryButton
+          label="Tạo tài khoản"
+          loading={registerMutation.isPending}
+          onPress={handleSubmit}
+        />
+
+        <Text className="mt-6 text-center text-sm text-slate-600">
+          Đã có tài khoản?{' '}
+          <Link className="font-semibold text-sky-700" href="/login">
+            Đăng nhập
+          </Link>
+        </Text>
+
+        <View className="mt-8">
+          <DebugNotice />
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

@@ -1,26 +1,23 @@
 export type UserRole = 'Parent' | 'Teacher';
 
-export type LoginPayload = {
+export type LoginRequestDto = {
   phone: string;
   password: string;
 };
-
-export type RegisterPayload = {
+export type RegisterRequestDto = {
   phone: string;
   password: string;
   role: UserRole;
   fullName: string;
   email?: string;
 };
-
-export type AuthResult = {
+export type AuthResponseDto = {
   accessToken: string;
   refreshToken: string;
   role: UserRole;
   profileId: number;
 };
-
-export type StoredSession = AuthResult & {
+export type StoredSession = AuthResponseDto & {
   phone: string;
   fullName: string;
 };
