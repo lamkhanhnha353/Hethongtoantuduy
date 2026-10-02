@@ -1,19 +1,19 @@
-import { Text, TouchableOpacity, View } from 'react-native';
-import { router } from 'expo-router';
+import { Redirect } from 'expo-router';
+import { ActivityIndicator, Text, View } from 'react-native';
 
-export default function ScreenHome() {
-  return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text className="mb-5 text-2xl font-bold text-[#333333]">
-        Hello world
-      </Text>
+import { useSessionQuery } from '@/hooks/useSession';
 
-      <TouchableOpacity
-        className="rounded-lg bg-[#ff0000] px-5 py-3"
-        onPress={() => router.push('/login')}
-      >
-        <Text className="text-base font-bold text-white">Bấm vào đây hãy</Text>
-      </TouchableOpacity>
-    </View>
-  );
+export default function ScreenIndex() {
+  const { data: session, isPending } = useSessionQuery();
+
+  if (isPending) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-50">
+        <ActivityIndicator size="large" color="#0284c7" />
+        <Text className="mt-3 text-sm text-slate-500">Đang kiểm tra phiên đăng nhập...</Text>
+      </View>
+    );
+  }
+
+  return <Redirect href={session ? '/home' : '/login'} />;
 }
