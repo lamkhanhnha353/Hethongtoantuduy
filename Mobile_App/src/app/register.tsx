@@ -68,7 +68,7 @@ export default function ScreenRegister() {
         fullName: fullName.trim(),
         email: needsEmail ? email.trim() : undefined,
       },
-      { onSuccess: () => router.replace('/home') },
+      { onSuccess: () => router.replace('/select-profile') },
     );
   }
 

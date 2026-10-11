@@ -22,6 +22,19 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
 // Register Custom Services (Dependency Injection)
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -29,6 +42,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
