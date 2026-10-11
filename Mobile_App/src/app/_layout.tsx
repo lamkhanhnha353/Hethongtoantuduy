@@ -16,7 +16,10 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="register" />
           <Stack.Screen name="forgot-password" />
-          <Stack.Screen name="home" />
+         
+          <Stack.Screen name="select-profile" />
+          <Stack.Screen name="parent" />
+          <Stack.Screen name="student" />
         </Stack>
       </AppQueryClientProvider>
     </SafeAreaProvider>
