@@ -34,7 +34,9 @@ namespace ToanTuDuy.Models
         [Column("full_name")]
         public string FullName { get; set; }
 
+        // Lưu hash của PIN (không bao giờ lưu plaintext).
         [Column("pin")]
+        [MaxLength(255)]
         public string? Pin { get; set; }
 
         [Column("avatar")]
