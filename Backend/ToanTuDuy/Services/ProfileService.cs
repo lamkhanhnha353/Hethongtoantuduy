@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
@@ -13,14 +12,10 @@ namespace ToanTuDuy.Services
         private const string TeacherRole = "Teacher";
 
         private readonly ApplicationDbContext _context;
-        private readonly IPasswordHasher<Models.ParentProfile> _pinHasher;
 
-        public ProfileService(
-            ApplicationDbContext context,
-            IPasswordHasher<Models.ParentProfile> pinHasher)
+        public ProfileService(ApplicationDbContext context)
         {
             _context = context;
-            _pinHasher = pinHasher;
         }
 
         public async Task<ProfileResponse> GetAsync(int accountId)
@@ -82,53 +77,6 @@ namespace ToanTuDuy.Services
 
             var phone = await GetPhoneAsync(accountId);
             return MapParent(phone, profile);
-        }
-
-        public async Task SetPinAsync(int accountId, SetPinRequest request)
-        {
-            var parent = await _context.ParentProfiles
-                .FirstOrDefaultAsync(p => p.AccountId == accountId)
-                ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
-
-            var hasExistingPin = !string.IsNullOrEmpty(parent.Pin);
-
-            // Đã có PIN thì bắt buộc xác thực PIN hiện tại trước khi đổi.
-            if (hasExistingPin)
-            {
-                if (string.IsNullOrEmpty(request.CurrentPin))
-                {
-                    throw ApiException.BadRequest("Vui lòng nhập PIN hiện tại để đổi PIN.");
-                }
-
-                var check = _pinHasher.VerifyHashedPassword(parent, parent.Pin!, request.CurrentPin);
-                if (check == PasswordVerificationResult.Failed)
-                {
-                    throw ApiException.BadRequest("PIN hiện tại không đúng.");
-                }
-            }
-
-            parent.Pin = _pinHasher.HashPassword(parent, request.NewPin);
-            await _context.SaveChangesAsync();
-        }
-// ham danh cho pin cua parrent
-        public async Task<PinVerificationResponse> VerifyPinAsync(int accountId, VerifyPinRequest request)
-        {
-            var parent = await _context.ParentProfiles
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.AccountId == accountId)
-                ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
-
-            if (string.IsNullOrEmpty(parent.Pin))
-            {
-                throw ApiException.BadRequest("Chưa thiết lập PIN.");
-            }
-
-            var check = _pinHasher.VerifyHashedPassword(parent, parent.Pin, request.Pin);
-
-            return new PinVerificationResponse
-            {
-                Valid = check != PasswordVerificationResult.Failed,
-            };
         }
 
         private async Task<ProfileResponse> BuildTeacherResponseAsync(int accountId)
