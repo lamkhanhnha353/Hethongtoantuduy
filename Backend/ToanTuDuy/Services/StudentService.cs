@@ -1,21 +1,35 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs.Student;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Storage;
 
 namespace ToanTuDuy.Services
 {
     public class StudentService : IStudentService
     {
-        private readonly ApplicationDbContext _context;
+        private const string AvatarFolder = "avatars/students";
 
-        public StudentService(ApplicationDbContext context)
+        private readonly ApplicationDbContext _context;
+        private readonly IImageStorage _imageStorage;
+        private readonly ILogger<StudentService> _logger;
+
+        public StudentService(
+            ApplicationDbContext context,
+            IImageStorage imageStorage,
+            ILogger<StudentService> logger)
         {
             _context = context;
+            _imageStorage = imageStorage;
+            _logger = logger;
         }
 
         public async Task<IReadOnlyList<StudentResponse>> GetByParentAsync(int accountId) =>
@@ -38,7 +52,6 @@ namespace ToanTuDuy.Services
             {
                 ParentAccountId = accountId,
                 FullName = request.FullName,
-                Avatar = request.Avatar,
             };
 
             _context.StudentProfiles.Add(student);
@@ -52,8 +65,38 @@ namespace ToanTuDuy.Services
             var student = await FindAsync(accountId, studentId);
 
             student.FullName = request.FullName;
-            student.Avatar = request.Avatar;
             await _context.SaveChangesAsync();
+
+            return Map(student);
+        }
+
+        public async Task<StudentResponse> UpdateAvatarAsync(int accountId, int studentId, IFormFile? file, CancellationToken cancellationToken = default)
+        {
+            ImageUploadRules.EnsureValid(file);
+
+            var student = await FindAsync(accountId, studentId);
+
+            await using var stream = file!.OpenReadStream();
+            var url = await _imageStorage.UploadAsync(stream, file.FileName, file.ContentType, AvatarFolder, cancellationToken);
+
+            await SafeDeleteAsync(student.Avatar, cancellationToken);
+
+            student.Avatar = url;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Map(student);
+        }
+
+        public async Task<StudentResponse> RemoveAvatarAsync(int accountId, int studentId, CancellationToken cancellationToken = default)
+        {
+            var student = await FindAsync(accountId, studentId);
+
+            if (!string.IsNullOrWhiteSpace(student.Avatar))
+            {
+                await SafeDeleteAsync(student.Avatar, cancellationToken);
+                student.Avatar = null;
+                await _context.SaveChangesAsync(cancellationToken);
+            }
 
             return Map(student);
         }
@@ -68,8 +111,27 @@ namespace ToanTuDuy.Services
                     "Không thể xóa học sinh đang có dữ liệu liên quan (lớp, bài tập, điểm danh, hóa đơn...).");
             }
 
+            await SafeDeleteAsync(student.Avatar, CancellationToken.None);
+
             _context.StudentProfiles.Remove(student);
             await _context.SaveChangesAsync();
+        }
+
+        private async Task SafeDeleteAsync(string? url, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return;
+            }
+
+            try
+            {
+                await _imageStorage.DeleteAsync(url, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Xóa avatar học sinh thất bại: {Url}", url);
+            }
         }
 
         private async Task<StudentProfile> FindAsync(int accountId, int studentId) =>

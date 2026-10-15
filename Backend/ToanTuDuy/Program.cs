@@ -7,7 +7,9 @@ using System.Text;
 using ToanTuDuy.Data;
 using ToanTuDuy.Middleware;
 using ToanTuDuy.Models;
+using ToanTuDuy.Options;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +75,10 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 
 // Hasher riêng cho PIN của phụ huynh (không lưu plaintext)
 builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<ParentProfile>>();
+
+// Lưu ảnh trên Cloudinary (DB chỉ giữ URL trả về)
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
+builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 
 var app = builder.Build();
 
