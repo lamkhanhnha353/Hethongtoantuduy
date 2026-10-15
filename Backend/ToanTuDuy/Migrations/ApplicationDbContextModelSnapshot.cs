@@ -609,7 +609,8 @@ namespace ToanTuDuy.Migrations
                         .HasColumnName("full_name");
 
                     b.Property<string>("Pin")
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("pin");
 
                     b.HasKey("Id");
