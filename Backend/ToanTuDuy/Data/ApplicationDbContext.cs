@@ -18,6 +18,7 @@ namespace ToanTuDuy.Data
         public DbSet<StudentProfile> StudentProfiles { get; set; }
         public DbSet<TeacherProfile> TeacherProfiles { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<CourseLevel> CourseLevels { get; set; }
         public DbSet<Classes> Classes { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<ClassStudent> ClassStudents { get; set; }
@@ -36,7 +37,7 @@ namespace ToanTuDuy.Data
             // Bắt buộc gọi base method của IdentityDbContext
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Course>()
+            modelBuilder.Entity<CourseLevel>()
                 .Property(c => c.Fee)
                 .HasColumnType("decimal(18,2)");
 

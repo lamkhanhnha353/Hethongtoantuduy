@@ -21,7 +21,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
 
 // Register Custom Services (Dependency Injection)
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ICourseLevelService, CourseLevelService>();
+builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 
 builder.Services.AddCors(options =>
 {
