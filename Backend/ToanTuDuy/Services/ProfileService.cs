@@ -1,8 +1,12 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs.Profile;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Services.Storage;
 
 namespace ToanTuDuy.Services
 {
@@ -10,12 +14,20 @@ namespace ToanTuDuy.Services
     {
         private const string ParentRole = "Parent";
         private const string TeacherRole = "Teacher";
+        private const string AvatarFolder = "avatars/parents";
 
         private readonly ApplicationDbContext _context;
+        private readonly IImageStorage _imageStorage;
+        private readonly ILogger<ProfileService> _logger;
 
-        public ProfileService(ApplicationDbContext context)
+        public ProfileService(
+            ApplicationDbContext context,
+            IImageStorage imageStorage,
+            ILogger<ProfileService> logger)
         {
             _context = context;
+            _imageStorage = imageStorage;
+            _logger = logger;
         }
 
         public async Task<ProfileResponse> GetAsync(int accountId)
@@ -48,7 +60,6 @@ namespace ToanTuDuy.Services
                         ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
 
                     parent.FullName = request.FullName;
-                    parent.Avatar = request.Avatar;
                     await _context.SaveChangesAsync();
 
                     return MapParent(user.PhoneNumber ?? string.Empty, parent);
@@ -65,6 +76,62 @@ namespace ToanTuDuy.Services
 
                 default:
                     throw ApiException.BadRequest("Role không hợp lệ.");
+            }
+        }
+
+        public async Task<ProfileResponse> UpdateAvatarAsync(int accountId, IFormFile? file, CancellationToken cancellationToken = default)
+        {
+            ImageUploadRules.EnsureValid(file);
+
+            var parent = await _context.ParentProfiles
+                .FirstOrDefaultAsync(p => p.AccountId == accountId, cancellationToken)
+                ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
+
+            await using var stream = file!.OpenReadStream();
+            var url = await _imageStorage.UploadAsync(stream, file.FileName, file.ContentType, AvatarFolder, cancellationToken);
+
+            // Xóa ảnh cũ (nếu có) sau khi upload ảnh mới thành công.
+            await SafeDeleteAsync(parent.Avatar, cancellationToken);
+
+            parent.Avatar = url;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var phone = await GetPhoneAsync(accountId);
+            return MapParent(phone, parent);
+        }
+
+        public async Task<ProfileResponse> RemoveAvatarAsync(int accountId, CancellationToken cancellationToken = default)
+        {
+            var parent = await _context.ParentProfiles
+                .FirstOrDefaultAsync(p => p.AccountId == accountId, cancellationToken)
+                ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
+
+            if (!string.IsNullOrWhiteSpace(parent.Avatar))
+            {
+                await SafeDeleteAsync(parent.Avatar, cancellationToken);
+                parent.Avatar = null;
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            var phone = await GetPhoneAsync(accountId);
+            return MapParent(phone, parent);
+        }
+
+        private async Task SafeDeleteAsync(string? url, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return;
+            }
+
+            try
+            {
+                await _imageStorage.DeleteAsync(url, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Không chặn thao tác chính nếu xóa ảnh cũ trên cloud thất bại.
+                _logger.LogWarning(ex, "Xóa avatar cũ thất bại: {Url}", url);
             }
         }
 

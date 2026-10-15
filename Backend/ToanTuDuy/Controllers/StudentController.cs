@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs.Student;
 using ToanTuDuy.Extensions;
@@ -35,6 +37,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        [RequirePin]
         public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
         {
             var student = await _studentService.CreateAsync(User.GetAccountId(), request);
@@ -45,6 +48,21 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentRequest request)
         {
             var student = await _studentService.UpdateAsync(User.GetAccountId(), id, request);
+            return Ok(student);
+        }
+
+        [HttpPost("{id:int}/avatar")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> UploadAvatar(int id, IFormFile? file, CancellationToken cancellationToken)
+        {
+            var student = await _studentService.UpdateAvatarAsync(User.GetAccountId(), id, file, cancellationToken);
+            return Ok(student);
+        }
+
+        [HttpDelete("{id:int}/avatar")]
+        public async Task<IActionResult> DeleteAvatar(int id, CancellationToken cancellationToken)
+        {
+            var student = await _studentService.RemoveAvatarAsync(User.GetAccountId(), id, cancellationToken);
             return Ok(student);
         }
 
