@@ -19,6 +19,7 @@ namespace ToanTuDuy.Exceptions
 
         public static ApiException BadRequest(string message) => new(400, message);
         public static ApiException Unauthorized(string message) => new(401, message);
+        public static ApiException Forbidden(string message) => new(403, message);
         public static ApiException NotFound(string message) => new(404, message);
         public static ApiException Conflict(string message) => new(409, message);
     }

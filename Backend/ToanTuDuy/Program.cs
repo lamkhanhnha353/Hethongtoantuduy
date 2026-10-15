@@ -68,6 +68,7 @@ builder.Services.AddCors(options =>
 // Register Custom Services (Dependency Injection)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IPinService, PinService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 
 // Hasher riêng cho PIN của phụ huynh (không lưu plaintext)

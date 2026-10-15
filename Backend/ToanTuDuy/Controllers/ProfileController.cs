@@ -13,10 +13,12 @@ namespace ToanTuDuy.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;
+        private readonly IPinService _pinService;
 
-        public ProfileController(IProfileService profileService)
+        public ProfileController(IProfileService profileService, IPinService pinService)
         {
             _profileService = profileService;
+            _pinService = pinService;
         }
 
         [HttpGet]
@@ -37,7 +39,7 @@ namespace ToanTuDuy.Controllers
         [Authorize(Roles = "Parent")]
         public async Task<IActionResult> SetPin([FromBody] SetPinRequest request)
         {
-            await _profileService.SetPinAsync(User.GetAccountId(), request);
+            await _pinService.SetAsync(User.GetAccountId(), request);
             return NoContent();
         }
 
@@ -45,7 +47,7 @@ namespace ToanTuDuy.Controllers
         [Authorize(Roles = "Parent")]
         public async Task<IActionResult> VerifyPin([FromBody] VerifyPinRequest request)
         {
-            var result = await _profileService.VerifyPinAsync(User.GetAccountId(), request);
+            var result = await _pinService.VerifyAsync(User.GetAccountId(), request.Pin);
             return Ok(result);
         }
     }

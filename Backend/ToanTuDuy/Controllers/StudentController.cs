@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs.Student;
 using ToanTuDuy.Extensions;
+using ToanTuDuy.Filters;
 using ToanTuDuy.Services;
 
 namespace ToanTuDuy.Controllers
@@ -48,6 +49,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [RequirePin]
         public async Task<IActionResult> Delete(int id)
         {
             await _studentService.DeleteAsync(User.GetAccountId(), id);
