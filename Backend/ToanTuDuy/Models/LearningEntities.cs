@@ -18,22 +18,36 @@ namespace ToanTuDuy.Models
         [Column("name")]
         public string Name { get; set; }
 
-        [Column("fee")]
-        public decimal Fee { get; set; }
+        [Column("description")]
+        public string? Description { get; set; }
 
-        [Column("total_sessions")]
-        public int TotalSessions { get; set; }
+        [Column("min_age")]
+        public int MinAge { get; set; }
+
+        [Column("max_age")]
+        public int MaxAge { get; set; }
+
+        [Column("image_url")]
+        public string? ImageUrl { get; set; }
 
         [Column("status")]
         public string Status { get; set; }
 
-        // Navigation Properties
-        public ICollection<Classes> Classes { get; set; } = new List<Classes>();
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
+        public ICollection<CourseLevel> CourseLevels { get; set; } = new List<CourseLevel>();
+
+     
         public ICollection<Question> Questions { get; set; } = new List<Question>();
     }
 
-    [Table("CLASSES")]
-    public class Classes
+  
+    [Table("COURSE_LEVEL")]
+    public class CourseLevel
     {
         [Key]
         [Column("id")]
@@ -42,8 +56,53 @@ namespace ToanTuDuy.Models
         [Column("course_id")]
         public int CourseId { get; set; }
 
+        [Column("code")]
+        public string Code { get; set; }
+
+        [Column("name")]
+        public string Name { get; set; }
+
+        [Column("order_index")]
+        public int OrderIndex { get; set; }
+
+        [Column("status")]
+        public string Status { get; set; }
+
+        [Column("fee")]
+        public decimal Fee { get; set; }
+
+        [Column("total_sessions")]
+        public int TotalSessions { get; set; }
+
+       
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
+        // Navigation Properties
+        [ForeignKey(nameof(CourseId))]
+        public Course Course { get; set; }
+
+        // Lớp học giờ sẽ thuộc về một Cấp độ cụ thể
+        public ICollection<Classes> Classes { get; set; } = new List<Classes>();
+    }
+
+
+    [Table("CLASSES")]
+    public class Classes
+    {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
+        [Column("course_level_id")]
+        public int CourseLevelId { get; set; }
+
+        // 1. Thêm dấu ? để cho phép Null
         [Column("teacher_id")]
-        public int TeacherId { get; set; }
+        public int? TeacherId { get; set; }
 
         [Column("name")]
         public string Name { get; set; }
@@ -51,15 +110,30 @@ namespace ToanTuDuy.Models
         [Column("max_capacity")]
         public int MaxCapacity { get; set; }
 
+        // 2. Thêm trường Ngày khai giảng
+        [Column("start_date")]
+        public DateTime StartDate { get; set; }
+
+        // 3. Thêm trường Ngày kết thúc (Cho phép null)
+        [Column("end_date")]
+        public DateTime? EndDate { get; set; }
+
         [Column("status")]
         public string Status { get; set; }
 
+        // 4. Thêm CreatedAt và UpdatedAt cho đồng bộ
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
         // Navigation Properties
-        [ForeignKey(nameof(CourseId))]
-        public Course Course { get; set; }
+        [ForeignKey(nameof(CourseLevelId))]
+        public CourseLevel CourseLevel { get; set; }
 
         [ForeignKey(nameof(TeacherId))]
-        public TeacherProfile Teacher { get; set; }
+        public TeacherProfile? Teacher { get; set; } // Thêm dấu ?
 
         public ICollection<ClassSchedule> ClassSchedules { get; set; } = new List<ClassSchedule>();
         public ICollection<ClassStudent> ClassStudents { get; set; } = new List<ClassStudent>();
@@ -79,7 +153,7 @@ namespace ToanTuDuy.Models
         public int ClassId { get; set; }
 
         [Column("day_of_week")]
-        public string DayOfWeek { get; set; }
+        public int DayOfWeek { get; set; }
 
         [Column("start_time")]
         public TimeSpan StartTime { get; set; }
@@ -87,10 +161,20 @@ namespace ToanTuDuy.Models
         [Column("end_time")]
         public TimeSpan EndTime { get; set; }
 
-        // Navigation Properties
+        [Column("room")]
+        [StringLength(100)]
+        public string? Room { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
         [ForeignKey(nameof(ClassId))]
         public Classes Class { get; set; }
     }
+    
 
     [Table("CLASS_STUDENT")]
     public class ClassStudent

@@ -355,18 +355,30 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("class_id");
 
-                    b.Property<string>("DayOfWeek")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int")
                         .HasColumnName("day_of_week");
 
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time")
                         .HasColumnName("end_time");
 
+                    b.Property<string>("Room")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("room");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time")
                         .HasColumnName("start_time");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id");
 
@@ -405,9 +417,17 @@ namespace ToanTuDuy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CourseId")
+                    b.Property<int>("CourseLevelId")
                         .HasColumnType("int")
-                        .HasColumnName("course_id");
+                        .HasColumnName("course_level_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("end_date");
 
                     b.Property<int>("MaxCapacity")
                         .HasColumnType("int")
@@ -418,18 +438,26 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("start_date");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
-                    b.Property<int>("TeacherId")
+                    b.Property<int?>("TeacherId")
                         .HasColumnType("int")
                         .HasColumnName("teacher_id");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("CourseId");
+                    b.HasIndex("CourseLevelId");
 
                     b.HasIndex("TeacherId");
 
@@ -450,9 +478,25 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("code");
 
-                    b.Property<decimal>("Fee")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("fee");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("image_url");
+
+                    b.Property<int>("MaxAge")
+                        .HasColumnType("int")
+                        .HasColumnName("max_age");
+
+                    b.Property<int>("MinAge")
+                        .HasColumnType("int")
+                        .HasColumnName("min_age");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -464,13 +508,68 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
-                    b.Property<int>("TotalSessions")
-                        .HasColumnType("int")
-                        .HasColumnName("total_sessions");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id");
 
                     b.ToTable("COURSE");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.CourseLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("code");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("Fee")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("fee");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int")
+                        .HasColumnName("order_index");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("TotalSessions")
+                        .HasColumnType("int")
+                        .HasColumnName("total_sessions");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("COURSE_LEVEL");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Invoice", b =>
@@ -912,21 +1011,30 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.Classes", b =>
                 {
-                    b.HasOne("ToanTuDuy.Models.Course", "Course")
+                    b.HasOne("ToanTuDuy.Models.CourseLevel", "CourseLevel")
                         .WithMany("Classes")
-                        .HasForeignKey("CourseId")
+                        .HasForeignKey("CourseLevelId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
                         .WithMany("Classes")
-                        .HasForeignKey("TeacherId")
+                        .HasForeignKey("TeacherId");
+
+                    b.Navigation("CourseLevel");
+
+                    b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.CourseLevel", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.Course", "Course")
+                        .WithMany("CourseLevels")
+                        .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Course");
-
-                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Invoice", b =>
@@ -1104,9 +1212,14 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.Course", b =>
                 {
-                    b.Navigation("Classes");
+                    b.Navigation("CourseLevels");
 
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.CourseLevel", b =>
+                {
+                    b.Navigation("Classes");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Lesson", b =>
