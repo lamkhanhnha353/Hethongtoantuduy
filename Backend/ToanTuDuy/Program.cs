@@ -19,6 +19,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// Setup CORS for browser clients (Expo web, web frontend)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 // Register Custom Services (Dependency Injection)
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -46,6 +55,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
+app.UseCors("DevCors");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
