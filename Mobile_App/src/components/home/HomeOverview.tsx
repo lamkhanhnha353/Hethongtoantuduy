@@ -1,6 +1,6 @@
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
-import { ROLE_FEATURES, ROLE_LABELS, ROLE_SUMMARY } from '@/content/homeContent';
+import { ROLE_FEATURES, ROLE_LABELS, ROLE_SUMMARY, type HomeFeature } from '@/content/homeContent';
 import type { StoredSession } from '@/types/auth';
 
 type HomeOverviewProps = {
@@ -44,25 +44,29 @@ function Row({ label, value }: RowProps) {
 
 type FeatureGridProps = {
   role: StoredSession['role'];
+  onSelect: (feature: HomeFeature) => void;
 };
 
-export function FeatureGrid({ role }: FeatureGridProps) {
+export function FeatureGrid({ role, onSelect }: FeatureGridProps) {
   return (
     <View className="mt-6">
-      <Text className="text-base font-semibold text-slate-900">Chức năng sắp có</Text>
+      <Text className="text-base font-semibold text-slate-900">Chức năng</Text>
       <Text className="mt-1 text-sm text-slate-500">
-        Các mục dưới đây sẽ được bổ sung ở các bước phát triển tiếp theo.
+        Chọn một mục để bắt đầu sử dụng.
       </Text>
 
       <View className="mt-3 flex-row flex-wrap gap-3">
         {ROLE_FEATURES[role].map((feature) => (
-          <View
+          <TouchableOpacity
             key={feature.id}
+            accessibilityRole="button"
+            activeOpacity={0.85}
             className="min-w-[45%] flex-1 rounded-xl border border-slate-200 bg-white p-4"
+            onPress={() => onSelect(feature)}
           >
             <Text className="text-sm font-semibold text-slate-900">{feature.title}</Text>
             <Text className="mt-1 text-xs leading-4 text-slate-500">{feature.description}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </View>

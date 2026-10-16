@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { ApiError } from '@/services/apiError';
 import { login, register } from '@/services/authService';
 import { sessionQueryKey } from '@/hooks/useSession';
 import { useAuthStore } from '@/store/authStore';
@@ -58,15 +57,4 @@ export function useRegisterMutation() {
       queryClient.setQueryData(sessionQueryKey, session);
     },
   });
-}
-
-/**
- * Chuẩn hóa lỗi từ `mutation.error` về ApiError để tầng UI hiển thị thống nhất,
- * kể cả khi lỗi không phải ApiError (lỗi mạng, lỗi lạ).
- */
-export function toApiError(error: unknown): ApiError {
-  if (error instanceof ApiError) {
-    return error;
-  }
-  return new ApiError(0, 'Đã xảy ra lỗi, vui lòng thử lại.');
 }
