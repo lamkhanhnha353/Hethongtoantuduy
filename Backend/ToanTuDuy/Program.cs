@@ -23,7 +23,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// 4. Setup Authentication với JWT Bearer
+// Setup Authentication với JWT Bearer
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["Key"] ?? "Chuoi_Bi_Mat_Dai_Va_Phuc_Tap_Nhat_Co_The_123!@#";
 
@@ -51,6 +51,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+
 // Setup CORS
 builder.Services.AddCors(options =>
 {
@@ -61,8 +62,6 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
-
-
 
 var app = builder.Build();
 
