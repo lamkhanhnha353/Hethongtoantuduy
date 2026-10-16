@@ -8,7 +8,7 @@ import { FeatureGrid, HomeOverview } from '@/components/home/HomeOverview';
 import { WelcomeHeader } from '@/components/home/WelcomeHeader';
 import type { HomeFeature } from '@/content/homeContent';
 import { useProfileQuery } from '@/hooks/useProfile';
-import { useSessionQuery } from '@/hooks/useSession';
+import { useSession } from '@/hooks/useSession';
 
 const PARENT_FEATURE_ROUTES: Record<string, '/students'> = {
   students: '/students',
@@ -16,11 +16,11 @@ const PARENT_FEATURE_ROUTES: Record<string, '/students'> = {
 
 export default function ScreenHome() {
   const router = useRouter();
-  const { data: session, isPending: isSessionPending } = useSessionQuery();
+  const { session, isHydrated } = useSession();
   const { data: profile } = useProfileQuery();
   const [notice, setNotice] = useState<string | null>(null);
 
-  if (isSessionPending) {
+  if (!isHydrated) {
     return (
       <SafeAreaView
         className="flex-1 items-center justify-center bg-slate-50"

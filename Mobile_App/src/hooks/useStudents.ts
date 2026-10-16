@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { PickedImage } from '@/lib/imageUpload';
 import { studentQueryKey, studentsQueryKey } from '@/lib/queryKeys';
 import {
   createStudent,
@@ -9,7 +10,6 @@ import {
   getStudents,
   updateStudent,
   uploadStudentAvatar,
-  type PickedImage,
 } from '@/services/studentService';
 import type {
   CreateStudentRequestDto,

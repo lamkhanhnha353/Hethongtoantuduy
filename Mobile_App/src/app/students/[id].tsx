@@ -11,8 +11,8 @@ import { FormField } from '@/components/FormField';
 import { PinModal } from '@/components/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { prepareAvatarUpload } from '@/lib/imageUpload';
 import { toApiError } from '@/services/apiError';
-import { prepareAvatarUpload } from '@/services/studentService';
 import {
   useDeleteStudentAvatarMutation,
   useDeleteStudentMutation,

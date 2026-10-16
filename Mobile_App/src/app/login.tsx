@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, router } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { FormField } from '@/components/FormField';
 import { PasswordField } from '@/components/PasswordField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Divider, SocialAuthButtons } from '@/components/SocialAuthButtons';
+import { SESSION_EXPIRED_MESSAGE } from '@/lib/sessionExpiry';
 import { toApiError } from '@/services/apiError';
 import { useLoginMutation } from '@/hooks/useAuthMutations';
 type FieldErrors = Partial<Record<'phone' | 'password', string>>;
@@ -17,6 +18,7 @@ const SOCIAL_NOT_READY_MESSAGE =
   'Đăng nhập bằng Google hoặc Facebook đang được phát triển. Bạn vui lòng dùng số điện thoại.';
 
 export default function ScreenLogin() {
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export default function ScreenLogin() {
   const loginMutation = useLoginMutation();
 
   const apiError = loginMutation.isError ? toApiError(loginMutation.error) : null;
+  const isSessionExpired = reason === 'expired';
 
   const fieldErrors: FieldErrors = apiError
     ? {
@@ -57,6 +60,7 @@ export default function ScreenLogin() {
           </Text>
         </View>
 
+        {isSessionExpired ? <AlertBanner tone="error" message={SESSION_EXPIRED_MESSAGE} /> : null}
         {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
         {notice ? <AlertBanner tone="info" message={notice} /> : null}
 

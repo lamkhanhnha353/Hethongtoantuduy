@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
-import { useSessionQuery } from '@/hooks/useSession';
+import { useSession } from '@/hooks/useSession';
 
 export default function TabsLayout() {
-  const { data: session } = useSessionQuery();
+  const { session } = useSession();
   const isParent = session?.role === 'Parent';
 
   return (
