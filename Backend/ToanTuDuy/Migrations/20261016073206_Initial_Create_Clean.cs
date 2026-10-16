@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ToanTuDuy.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDb : Migration
+    public partial class Initial_Create_Clean : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,9 @@ namespace ToanTuDuy.Migrations
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    refresh_token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    refresh_token = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    is_active = table.Column<bool>(type: "bit", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -61,6 +63,8 @@ namespace ToanTuDuy.Migrations
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    icon_url = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     condition_type = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     condition_value = table.Column<int>(type: "int", nullable: false)
                 },
@@ -77,9 +81,13 @@ namespace ToanTuDuy.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     code = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    fee = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    total_sessions = table.Column<int>(type: "int", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    min_age = table.Column<int>(type: "int", nullable: false),
+                    max_age = table.Column<int>(type: "int", nullable: false),
+                    image_url = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -155,8 +163,10 @@ namespace ToanTuDuy.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     account_id = table.Column<int>(type: "int", nullable: false),
                     full_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    pin = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    avatar = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    pin_hash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    avatar = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -170,30 +180,6 @@ namespace ToanTuDuy.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "STUDENT_PROFILE",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    parent_account_id = table.Column<int>(type: "int", nullable: false),
-                    full_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    avatar = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    total_points = table.Column<int>(type: "int", nullable: false),
-                    stars = table.Column<int>(type: "int", nullable: false),
-                    streak_days = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_STUDENT_PROFILE", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_STUDENT_PROFILE_ACCOUNT_parent_account_id",
-                        column: x => x.parent_account_id,
-                        principalTable: "ACCOUNT",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TEACHER_PROFILE",
                 columns: table => new
                 {
@@ -201,7 +187,9 @@ namespace ToanTuDuy.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     account_id = table.Column<int>(type: "int", nullable: false),
                     full_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    email = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    specialize = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    created_at = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -260,22 +248,26 @@ namespace ToanTuDuy.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "QUESTION",
+                name: "COURSE_LEVEL",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     course_id = table.Column<int>(type: "int", nullable: false),
-                    type = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    difficulty = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    answer = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    order_index = table.Column<int>(type: "int", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    fee = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    total_sessions = table.Column<int>(type: "int", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_QUESTION", x => x.id);
+                    table.PrimaryKey("PK_COURSE_LEVEL", x => x.id);
                     table.ForeignKey(
-                        name: "FK_QUESTION_COURSE_course_id",
+                        name: "FK_COURSE_LEVEL_COURSE_course_id",
                         column: x => x.course_id,
                         principalTable: "COURSE",
                         principalColumn: "id",
@@ -283,26 +275,95 @@ namespace ToanTuDuy.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "STUDENT_BADGE",
+                name: "QUESTION_BANK",
                 columns: table => new
                 {
-                    student_id = table.Column<int>(type: "int", nullable: false),
-                    badge_id = table.Column<int>(type: "int", nullable: false),
-                    earned_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    course_id = table.Column<int>(type: "int", nullable: false),
+                    name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_STUDENT_BADGE", x => new { x.student_id, x.badge_id });
+                    table.PrimaryKey("PK_QUESTION_BANK", x => x.id);
                     table.ForeignKey(
-                        name: "FK_STUDENT_BADGE_BADGE_badge_id",
-                        column: x => x.badge_id,
-                        principalTable: "BADGE",
+                        name: "FK_QUESTION_BANK_COURSE_course_id",
+                        column: x => x.course_id,
+                        principalTable: "COURSE",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NOTIFICATION",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    parent_id = table.Column<int>(type: "int", nullable: false),
+                    title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    body = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    type = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ref_id = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    is_read = table.Column<bool>(type: "bit", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NOTIFICATION", x => x.id);
                     table.ForeignKey(
-                        name: "FK_STUDENT_BADGE_STUDENT_PROFILE_student_id",
-                        column: x => x.student_id,
-                        principalTable: "STUDENT_PROFILE",
+                        name: "FK_NOTIFICATION_PARENT_PROFILE_parent_id",
+                        column: x => x.parent_id,
+                        principalTable: "PARENT_PROFILE",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NOTIFICATION_SETTING",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    parent_id = table.Column<int>(type: "int", nullable: false),
+                    type = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    enabled = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NOTIFICATION_SETTING", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_NOTIFICATION_SETTING_PARENT_PROFILE_parent_id",
+                        column: x => x.parent_id,
+                        principalTable: "PARENT_PROFILE",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "STUDENT_PROFILE",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    parent_id = table.Column<int>(type: "int", nullable: false),
+                    full_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    avatar = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    total_points = table.Column<int>(type: "int", nullable: false),
+                    gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    stars = table.Column<int>(type: "int", nullable: false),
+                    streak_days = table.Column<int>(type: "int", nullable: false),
+                    is_active = table.Column<bool>(type: "bit", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_STUDENT_PROFILE", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_STUDENT_PROFILE_PARENT_PROFILE_parent_id",
+                        column: x => x.parent_id,
+                        principalTable: "PARENT_PROFILE",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -313,25 +374,79 @@ namespace ToanTuDuy.Migrations
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    course_id = table.Column<int>(type: "int", nullable: false),
-                    teacher_id = table.Column<int>(type: "int", nullable: false),
+                    course_level_id = table.Column<int>(type: "int", nullable: false),
+                    teacher_id = table.Column<int>(type: "int", nullable: true),
                     name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     max_capacity = table.Column<int>(type: "int", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    start_date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    end_date = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CLASSES", x => x.id);
                     table.ForeignKey(
-                        name: "FK_CLASSES_COURSE_course_id",
-                        column: x => x.course_id,
-                        principalTable: "COURSE",
+                        name: "FK_CLASSES_COURSE_LEVEL_course_level_id",
+                        column: x => x.course_level_id,
+                        principalTable: "COURSE_LEVEL",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_CLASSES_TEACHER_PROFILE_teacher_id",
                         column: x => x.teacher_id,
                         principalTable: "TEACHER_PROFILE",
+                        principalColumn: "id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QUESTION",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    bank_id = table.Column<int>(type: "int", nullable: false),
+                    type = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    image_url = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    difficulty = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    answer = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QUESTION", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_QUESTION_QUESTION_BANK_bank_id",
+                        column: x => x.bank_id,
+                        principalTable: "QUESTION_BANK",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StudentBadge",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    student_id = table.Column<int>(type: "int", nullable: false),
+                    badge_id = table.Column<int>(type: "int", nullable: false),
+                    earned_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StudentBadge", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_StudentBadge_BADGE_badge_id",
+                        column: x => x.badge_id,
+                        principalTable: "BADGE",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudentBadge_STUDENT_PROFILE_student_id",
+                        column: x => x.student_id,
+                        principalTable: "STUDENT_PROFILE",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -343,11 +458,12 @@ namespace ToanTuDuy.Migrations
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     class_id = table.Column<int>(type: "int", nullable: false),
-                    teacher_id = table.Column<int>(type: "int", nullable: false),
+                    stage_id = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     start_time = table.Column<DateTime>(type: "datetime2", nullable: false),
                     deadline = table.Column<DateTime>(type: "datetime2", nullable: false),
                     time_limit_minutes = table.Column<int>(type: "int", nullable: false),
+                    max_attempt = table.Column<int>(type: "int", nullable: true),
                     status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -359,12 +475,6 @@ namespace ToanTuDuy.Migrations
                         principalTable: "CLASSES",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ASSIGNMENT_TEACHER_PROFILE_teacher_id",
-                        column: x => x.teacher_id,
-                        principalTable: "TEACHER_PROFILE",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -374,9 +484,12 @@ namespace ToanTuDuy.Migrations
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     class_id = table.Column<int>(type: "int", nullable: false),
-                    day_of_week = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    day_of_week = table.Column<int>(type: "int", nullable: false),
                     start_time = table.Column<TimeSpan>(type: "time", nullable: false),
-                    end_time = table.Column<TimeSpan>(type: "time", nullable: false)
+                    end_time = table.Column<TimeSpan>(type: "time", nullable: false),
+                    room = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -393,13 +506,16 @@ namespace ToanTuDuy.Migrations
                 name: "CLASS_STUDENT",
                 columns: table => new
                 {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     class_id = table.Column<int>(type: "int", nullable: false),
                     student_id = table.Column<int>(type: "int", nullable: false),
-                    joined_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    joined_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CLASS_STUDENT", x => new { x.class_id, x.student_id });
+                    table.PrimaryKey("PK_CLASS_STUDENT", x => x.id);
                     table.ForeignKey(
                         name: "FK_CLASS_STUDENT_CLASSES_class_id",
                         column: x => x.class_id,
@@ -423,10 +539,11 @@ namespace ToanTuDuy.Migrations
                     parent_id = table.Column<int>(type: "int", nullable: false),
                     student_id = table.Column<int>(type: "int", nullable: false),
                     class_id = table.Column<int>(type: "int", nullable: false),
-                    amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    amount = table.Column<int>(type: "int", nullable: false),
                     status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    payment_method = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    transaction_id = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    payment_method = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    transaction_id = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -459,7 +576,10 @@ namespace ToanTuDuy.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     class_id = table.Column<int>(type: "int", nullable: false),
                     lesson_date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    start_time = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    end_time = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    is_importan = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -468,6 +588,34 @@ namespace ToanTuDuy.Migrations
                         name: "FK_LESSON_CLASSES_class_id",
                         column: x => x.class_id,
                         principalTable: "CLASSES",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QUESTION_ASSIGNMENT",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    assignment_id = table.Column<int>(type: "int", nullable: false),
+                    question_id = table.Column<int>(type: "int", nullable: false),
+                    order_index = table.Column<int>(type: "int", nullable: false),
+                    point_value = table.Column<float>(type: "real", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QUESTION_ASSIGNMENT", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_QUESTION_ASSIGNMENT_ASSIGNMENT_assignment_id",
+                        column: x => x.assignment_id,
+                        principalTable: "ASSIGNMENT",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_QUESTION_ASSIGNMENT_QUESTION_question_id",
+                        column: x => x.question_id,
+                        principalTable: "QUESTION",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -482,7 +630,8 @@ namespace ToanTuDuy.Migrations
                     student_id = table.Column<int>(type: "int", nullable: false),
                     score = table.Column<float>(type: "real", nullable: true),
                     status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    teacher_feedback = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    teacher_feedback = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    completed_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -509,7 +658,8 @@ namespace ToanTuDuy.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     lesson_id = table.Column<int>(type: "int", nullable: false),
                     student_id = table.Column<int>(type: "int", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    teacher_notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -534,10 +684,11 @@ namespace ToanTuDuy.Migrations
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    lesson_id = table.Column<int>(type: "int", nullable: false),
                     student_id = table.Column<int>(type: "int", nullable: false),
-                    reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    lesson_id = table.Column<int>(type: "int", nullable: false),
+                    reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -601,11 +752,6 @@ namespace ToanTuDuy.Migrations
                 column: "class_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ASSIGNMENT_teacher_id",
-                table: "ASSIGNMENT",
-                column: "teacher_id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ATTENDANCE_lesson_id",
                 table: "ATTENDANCE",
                 column: "lesson_id");
@@ -621,19 +767,29 @@ namespace ToanTuDuy.Migrations
                 column: "class_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CLASS_STUDENT_class_id",
+                table: "CLASS_STUDENT",
+                column: "class_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CLASS_STUDENT_student_id",
                 table: "CLASS_STUDENT",
                 column: "student_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CLASSES_course_id",
+                name: "IX_CLASSES_course_level_id",
                 table: "CLASSES",
-                column: "course_id");
+                column: "course_level_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CLASSES_teacher_id",
                 table: "CLASSES",
                 column: "teacher_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_COURSE_LEVEL_course_id",
+                table: "COURSE_LEVEL",
+                column: "course_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_INVOICE_class_id",
@@ -666,14 +822,39 @@ namespace ToanTuDuy.Migrations
                 column: "class_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_NOTIFICATION_parent_id",
+                table: "NOTIFICATION",
+                column: "parent_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NOTIFICATION_SETTING_parent_id",
+                table: "NOTIFICATION_SETTING",
+                column: "parent_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PARENT_PROFILE_account_id",
                 table: "PARENT_PROFILE",
                 column: "account_id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_QUESTION_course_id",
+                name: "IX_QUESTION_bank_id",
                 table: "QUESTION",
+                column: "bank_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QUESTION_ASSIGNMENT_assignment_id",
+                table: "QUESTION_ASSIGNMENT",
+                column: "assignment_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QUESTION_ASSIGNMENT_question_id",
+                table: "QUESTION_ASSIGNMENT",
+                column: "question_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QUESTION_BANK_course_id",
+                table: "QUESTION_BANK",
                 column: "course_id");
 
             migrationBuilder.CreateIndex(
@@ -687,14 +868,19 @@ namespace ToanTuDuy.Migrations
                 column: "student_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_STUDENT_BADGE_badge_id",
-                table: "STUDENT_BADGE",
+                name: "IX_STUDENT_PROFILE_parent_id",
+                table: "STUDENT_PROFILE",
+                column: "parent_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentBadge_badge_id",
+                table: "StudentBadge",
                 column: "badge_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_STUDENT_PROFILE_parent_account_id",
-                table: "STUDENT_PROFILE",
-                column: "parent_account_id");
+                name: "IX_StudentBadge_student_id",
+                table: "StudentBadge",
+                column: "student_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TEACHER_PROFILE_account_id",
@@ -737,22 +923,28 @@ namespace ToanTuDuy.Migrations
                 name: "LEAVE_REQUEST");
 
             migrationBuilder.DropTable(
-                name: "QUESTION");
+                name: "NOTIFICATION");
+
+            migrationBuilder.DropTable(
+                name: "NOTIFICATION_SETTING");
+
+            migrationBuilder.DropTable(
+                name: "QUESTION_ASSIGNMENT");
 
             migrationBuilder.DropTable(
                 name: "STUDENT_ASSIGNMENT");
 
             migrationBuilder.DropTable(
-                name: "STUDENT_BADGE");
+                name: "StudentBadge");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "PARENT_PROFILE");
+                name: "LESSON");
 
             migrationBuilder.DropTable(
-                name: "LESSON");
+                name: "QUESTION");
 
             migrationBuilder.DropTable(
                 name: "ASSIGNMENT");
@@ -764,13 +956,22 @@ namespace ToanTuDuy.Migrations
                 name: "STUDENT_PROFILE");
 
             migrationBuilder.DropTable(
+                name: "QUESTION_BANK");
+
+            migrationBuilder.DropTable(
                 name: "CLASSES");
 
             migrationBuilder.DropTable(
-                name: "COURSE");
+                name: "PARENT_PROFILE");
+
+            migrationBuilder.DropTable(
+                name: "COURSE_LEVEL");
 
             migrationBuilder.DropTable(
                 name: "TEACHER_PROFILE");
+
+            migrationBuilder.DropTable(
+                name: "COURSE");
 
             migrationBuilder.DropTable(
                 name: "ACCOUNT");
