@@ -37,7 +37,6 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
-        [RequirePin]
         public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
         {
             var student = await _studentService.CreateAsync(User.GetAccountId(), request);

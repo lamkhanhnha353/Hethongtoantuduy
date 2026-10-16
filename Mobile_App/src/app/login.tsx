@@ -9,8 +9,8 @@ import { FormField } from '@/components/FormField';
 import { PasswordField } from '@/components/PasswordField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Divider, SocialAuthButtons } from '@/components/SocialAuthButtons';
-import { toApiError, useLoginMutation } from '@/hooks/useAuthMutations';
-
+import { toApiError } from '@/services/apiError';
+import { useLoginMutation } from '@/hooks/useAuthMutations';
 type FieldErrors = Partial<Record<'phone' | 'password', string>>;
 
 const SOCIAL_NOT_READY_MESSAGE =

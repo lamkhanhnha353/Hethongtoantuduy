@@ -20,8 +20,12 @@ export const SESSION_STORAGE_MODE = Platform.select({
   default: 'secure',
 }) as 'local' | 'secure';
 
+/**
+ * Không đặt `Content-Type` cố định: axios tự gắn `application/json` cho body
+ * là object, còn khi gửi `FormData` (upload avatar) nó để trống để trình duyệt /
+ * React Native tự gắn `multipart/form-data` kèm boundary.
+ */
 export const REQUEST_HEADERS = {
-  'Content-Type': 'application/json',
   Accept: 'application/json',
 };
 
