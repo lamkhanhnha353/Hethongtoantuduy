@@ -9,15 +9,15 @@ import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ROLE_LABELS } from '@/content/homeContent';
 import { toApiError } from '@/services/apiError';
-import { useClearSessionMutation, useSessionQuery } from '@/hooks/useSession';
+import { useLogout, useSession } from '@/hooks/useSession';
 import { useProfileQuery, useUpdateProfileMutation } from '@/hooks/useProfile';
 
 export default function ScreenProfile() {
   const router = useRouter();
-  const { isPending: isSessionPending } = useSessionQuery();
+  const { isHydrated: isSessionHydrated } = useSession();
   const { data: profile, isPending, isError, error, refetch } = useProfileQuery();
   const updateMutation = useUpdateProfileMutation();
-  const clearSession = useClearSessionMutation();
+  const logout = useLogout();
 
   const [notice, setNotice] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -26,7 +26,7 @@ export default function ScreenProfile() {
   const saveError = updateMutation.isError ? toApiError(updateMutation.error) : null;
   const fieldErrors = saveError ? { fullName: saveError.fieldErrors.fullName?.[0] } : {};
 
-  if (isSessionPending || isPending) {
+  if (!isSessionHydrated || isPending) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-slate-50" edges={['top']}>
         <ActivityIndicator size="large" color="#0284c7" />
@@ -63,7 +63,7 @@ export default function ScreenProfile() {
     setIsLoggingOut(true);
 
     try {
-      await clearSession();
+      await logout();
       router.replace('/login');
     } finally {
       setIsLoggingOut(false);

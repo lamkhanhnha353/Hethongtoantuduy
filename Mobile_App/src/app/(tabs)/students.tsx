@@ -8,12 +8,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { StudentCard } from '@/components/StudentCard';
 import { toApiError } from '@/services/apiError';
 import { useStudentsQuery } from '@/hooks/useStudents';
-import { useSessionQuery } from '@/hooks/useSession';
+import { useSession } from '@/hooks/useSession';
 
 export default function ScreenStudents() {
-  const { data: session, isPending } = useSessionQuery();
+  const { session, isHydrated } = useSession();
 
-  if (isPending) {
+  if (!isHydrated) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-slate-50" edges={['top']}>
         <ActivityIndicator size="large" color="#0284c7" />
