@@ -42,13 +42,10 @@ namespace ToanTuDuy.Models
         [Column("full_name")]
         public string FullName { get; set; }
 
-        // ✅ THÊM MỚI: email (từ script SQL)
-        [Column("email")]
-        public string? Email { get; set; }
-
-        // ✅ ĐỔI TÊN: pin → pin_hash (từ script SQL)
-        [Column("pin_hash")]
-        public string? PinHash { get; set; }
+        // Lưu hash của PIN (không bao giờ lưu plaintext).
+        [Column("pin")]
+        [MaxLength(255)]
+        public string? Pin { get; set; }
 
         [Column("avatar")]
         public string? Avatar { get; set; }

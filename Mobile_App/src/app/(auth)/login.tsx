@@ -1,13 +1,15 @@
 import { useRef, useState } from 'react';
-import { Link, router } from 'expo-router';
-import { Text, TextInput, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Link, router, useLocalSearchParams } from 'expo-router';
+import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, FontAwesome5 } from '@expo/vector-icons'; // Sử dụng bộ Icon có sẵn của Expo
+import Svg, { Path } from 'react-native-svg';
 
 import { AlertBanner } from '@/components/AlertBanner';
-import { toApiError, useLoginMutation } from '@/hooks/useAuthMutations';
-import Svg, { Path } from 'react-native-svg';
+import { SESSION_EXPIRED_MESSAGE } from '@/lib/sessionExpiry';
+import { toApiError } from '@/services/apiError';
+import { useLoginMutation } from '@/hooks/useAuthMutations';
 
 type FieldErrors = Partial<Record<'phone' | 'password', string>>;
 
@@ -15,7 +17,7 @@ const SOCIAL_NOT_READY_MESSAGE =
   'Đăng nhập bằng Google hoặc Facebook đang được phát triển. Bạn vui lòng dùng số điện thoại.';
 
 export default function ScreenLogin() {
-  
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false); 
@@ -26,6 +28,7 @@ export default function ScreenLogin() {
   const loginMutation = useLoginMutation();
 
   const apiError = loginMutation.isError ? toApiError(loginMutation.error) : null;
+  const isSessionExpired = reason === 'expired';
 
   const fieldErrors: FieldErrors = apiError
     ? {
@@ -72,7 +75,8 @@ export default function ScreenLogin() {
           <View className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 mb-6">
             <Text className="text-lg font-bold text-slate-800 mb-4">Chào mừng trở lại</Text>
 
-            {/* Hiển thị lỗi/thông bá*/}
+            {/* Hiển thị lỗi/thông báo */}
+            {isSessionExpired ? <AlertBanner tone="error" message={SESSION_EXPIRED_MESSAGE} /> : null}
             {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
             {notice ? <AlertBanner tone="info" message={notice} /> : null}
 

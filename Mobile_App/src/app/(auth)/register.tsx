@@ -11,7 +11,8 @@ import { PasswordField } from '@/components/PasswordField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { RoleSelector } from '@/components/RoleSelector';
 import { Divider, SocialAuthButtons } from '@/components/SocialAuthButtons';
-import { toApiError, useRegisterMutation } from '@/hooks/useAuthMutations';
+import { toApiError } from '@/services/apiError';
+import { useRegisterMutation } from '@/hooks/useAuthMutations';
 import type { UserRole } from '@/types/auth';
 
 type FieldName = 'phone' | 'password' | 'fullName' | 'email' | 'role';

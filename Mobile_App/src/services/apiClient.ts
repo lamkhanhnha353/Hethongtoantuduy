@@ -1,6 +1,7 @@
 import { create, isCancel, type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 
 import { API_TIMEOUT_MS, API_URL, REQUEST_HEADERS } from '@/config/env';
+import { handleSessionExpired, SESSION_EXPIRED_MESSAGE } from '@/lib/sessionExpiry';
 import {
   ApiError,
   readErrorMessage,
@@ -11,6 +12,12 @@ import { getAccessToken } from '@/store/authStore';
 
 const NETWORK_ERROR_STATUS = 0;
 const INVALID_JSON_STATUS = 502;
+
+/**
+ * Các endpoint auth trả 401 cho LỖI ĐĂNG NHẬP (sai mật khẩu) chứ không phải
+ * token hết hạn, nên phải loại trừ để không đăng xuất/đá về login nhầm.
+ */
+const AUTH_ENDPOINTS = ['/api/auth/login', '/api/auth/register'];
 
 function toApiError(status: number, payload: ApiErrorPayload): ApiError {
   const fieldErrors = readValidationErrors(payload);
@@ -64,6 +71,17 @@ apiClient.interceptors.response.use(
         NETWORK_ERROR_STATUS,
         'Không kết nối được tới máy chủ. Kiểm tra mạng và cấu hình API URL.',
       );
+    }
+
+    // Token hết hạn: JwtBearer challenge trả 401 body rỗng (không phải envelope
+    // lỗi) nên phải xử lý TRƯỚC khi đọc payload. Loại trừ endpoint auth vì 401 ở
+    // đó là lỗi đăng nhập, không phải hết hạn phiên.
+    if (
+      error.response.status === 401 &&
+      !AUTH_ENDPOINTS.some((endpoint) => error.config?.url?.includes(endpoint))
+    ) {
+      void handleSessionExpired();
+      throw new ApiError(401, SESSION_EXPIRED_MESSAGE);
     }
 
     const payload = error.response.data;

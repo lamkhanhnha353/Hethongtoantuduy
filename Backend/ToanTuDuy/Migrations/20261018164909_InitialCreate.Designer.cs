@@ -12,8 +12,8 @@ using ToanTuDuy.Data;
 namespace ToanTuDuy.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261016073206_Initial_Create_Clean")]
-    partial class Initial_Create_Clean
+    [Migration("20261018164909_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -837,18 +837,15 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("email");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("full_name");
 
-                    b.Property<string>("PinHash")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("pin_hash");
+                    b.Property<string>("Pin")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("pin");
 
                     b.HasKey("Id");
 

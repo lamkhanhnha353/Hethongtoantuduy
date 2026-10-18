@@ -39,7 +39,7 @@ namespace ToanTuDuy.Services
                 FullName = p.FullName,
                 Phone = p.Account.PhoneNumber ?? "",
                 // Pin được ánh xạ qua PinHash theo Entity mới
-                Pin = p.PinHash,
+                Pin = p.Pin,
                 Avatar = p.Avatar,
                 IsActive = p.Account.IsActive,
                 Students = p.StudentProfiles.Select(s => new StudentResponseDto
@@ -74,7 +74,7 @@ namespace ToanTuDuy.Services
                 AccountId = parent.AccountId,
                 FullName = parent.FullName,
                 Phone = parent.Account.PhoneNumber ?? "",
-                Pin = parent.PinHash,
+                Pin = parent.Pin,
                 Avatar = parent.Avatar,
                 IsActive = parent.Account.IsActive,
                 Students = parent.StudentProfiles.Select(s => new StudentResponseDto
@@ -117,7 +117,7 @@ namespace ToanTuDuy.Services
                 {
                     AccountId = user.Id,
                     FullName = dto.FullName.Trim(),
-                    PinHash = dto.Pin, // Gán Pin từ DTO vào PinHash
+                    Pin = dto.Pin,
                     Avatar = dto.Avatar,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -132,7 +132,7 @@ namespace ToanTuDuy.Services
                     AccountId = user.Id,
                     FullName = parent.FullName,
                     Phone = user.PhoneNumber ?? "",
-                    Pin = parent.PinHash,
+Pin = parent.Pin,
                     Avatar = parent.Avatar,
                     IsActive = true
                 };
@@ -150,7 +150,7 @@ namespace ToanTuDuy.Services
             if (parent == null) return false;
 
             parent.FullName = dto.FullName.Trim();
-            if (!string.IsNullOrEmpty(dto.Pin)) parent.PinHash = dto.Pin;
+            if (!string.IsNullOrEmpty(dto.Pin)) parent.Pin = dto.Pin;
             if (!string.IsNullOrEmpty(dto.Avatar)) parent.Avatar = dto.Avatar;
 
             await _context.SaveChangesAsync();

@@ -11,16 +11,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AppQueryClientProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="register" />
-          <Stack.Screen name="forgot-password" />
-         
-          <Stack.Screen name="select-profile" />
-          <Stack.Screen name="parent" />
-          <Stack.Screen name="student" />
-        </Stack>
+        <Stack screenOptions={{ headerShown: false }} />
       </AppQueryClientProvider>
     </SafeAreaProvider>
   );

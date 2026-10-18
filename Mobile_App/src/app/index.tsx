@@ -1,12 +1,12 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 
-import { useSessionQuery } from '@/hooks/useSession';
+import { useSession } from '@/hooks/useSession';
 
 export default function ScreenIndex() {
-  const { data: session, isPending } = useSessionQuery();
+  const { session, isHydrated } = useSession();
 
-  if (isPending) {
+  if (!isHydrated) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-50">
         <ActivityIndicator size="large" color="#0284c7" />
@@ -15,5 +15,5 @@ export default function ScreenIndex() {
     );
   }
 
-  return <Redirect href={session ? '/select-profile' : '/login'} />;
+  return <Redirect href={session ? '/(tabs)/home' : '/login'} />;
 }

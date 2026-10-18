@@ -100,3 +100,15 @@ export class ApiError extends Error {
     this.fieldErrors = fieldErrors;
   }
 }
+
+/**
+ * Chuẩn hóa lỗi từ `mutation.error` / `query.error` về ApiError để tầng UI hiển
+ * thị thống nhất, kể cả khi lỗi không phải ApiError (lỗi mạng, lỗi lạ).
+ */
+export function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiError) {
+    return error;
+  }
+
+  return new ApiError(0, 'Đã xảy ra lỗi, vui lòng thử lại.');
+}

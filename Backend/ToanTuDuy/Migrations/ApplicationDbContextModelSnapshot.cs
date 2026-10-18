@@ -834,18 +834,15 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("email");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("full_name");
 
-                    b.Property<string>("PinHash")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("pin_hash");
+                    b.Property<string>("Pin")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("pin");
 
                     b.HasKey("Id");
 
