@@ -23,7 +23,8 @@ builder.Services.AddProblemDetails();
 
 // Setup DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Server=(localdb)\\mssqllocaldb;Database=ToanTuDuyDb;Trusted_Connection=True;MultipleActiveResultSets=true"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=(localdb)\\mssqllocaldb;Database=ToanTuDuyDb;Trusted_Connection=True;MultipleActiveResultSets=true"));
 
 // Setup Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
@@ -44,6 +45,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -55,6 +58,7 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
             RoleClaimType = ClaimTypes.Role,
             NameClaimType = ClaimTypes.NameIdentifier,
+            ClockSkew = TimeSpan.Zero,
         };
     });
 
@@ -72,6 +76,12 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IPinService, PinService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ICourseLevelService, CourseLevelService>();
+builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
+builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
 
 // Hasher riêng cho PIN của phụ huynh (không lưu plaintext)
 builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<ParentProfile>>();
@@ -89,8 +99,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
 app.UseCors("DevCors");
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

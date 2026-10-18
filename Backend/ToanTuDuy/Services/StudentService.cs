@@ -35,7 +35,7 @@ namespace ToanTuDuy.Services
         public async Task<IReadOnlyList<StudentResponse>> GetByParentAsync(int accountId) =>
             await _context.StudentProfiles
                 .AsNoTracking()
-                .Where(s => s.ParentAccountId == accountId)
+                .Where(s => s.Parent!.AccountId == accountId)
                 .OrderBy(s => s.Id)
                 .Select(s => Map(s))
                 .ToListAsync();
@@ -48,9 +48,14 @@ namespace ToanTuDuy.Services
 
         public async Task<StudentResponse> CreateAsync(int accountId, CreateStudentRequest request)
         {
+            var parent = await _context.ParentProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.AccountId == accountId)
+                ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
+
             var student = new StudentProfile
             {
-                ParentAccountId = accountId,
+                ParentId = parent.Id,
                 FullName = request.FullName,
             };
 
@@ -136,7 +141,7 @@ namespace ToanTuDuy.Services
 
         private async Task<StudentProfile> FindAsync(int accountId, int studentId) =>
             await _context.StudentProfiles
-                .FirstOrDefaultAsync(s => s.Id == studentId && s.ParentAccountId == accountId)
+                .FirstOrDefaultAsync(s => s.Id == studentId && s.Parent!.AccountId == accountId)
             ?? throw ApiException.NotFound("Không tìm thấy học sinh.");
 
         private async Task<bool> HasRelatedDataAsync(int studentId) =>

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-export const DEFAULT_API_URL = 'http://172.16.3.56:5114';
+export const DEFAULT_API_URL = 'http://192.168.1.9:5114';
 
 function normalize(url: string) {
   return url.replace(/\/+$/, '');

@@ -15,5 +15,5 @@ export default function ScreenIndex() {
     );
   }
 
-  return <Redirect href={session ? '/home' : '/login'} />;
+  return <Redirect href={session ? '/(tabs)/home' : '/login'} />;
 }

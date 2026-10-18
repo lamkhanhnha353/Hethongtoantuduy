@@ -3,6 +3,8 @@ import type {
   ProfileResponseDto,
   SetPinRequestDto,
   UpdateProfileRequestDto,
+  VerifyPinRequestDto,
+  VerifyPinResponseDto,
 } from '@/types/profile';
 
 export async function getProfile(): Promise<ProfileResponseDto> {
@@ -17,4 +19,9 @@ export async function updateProfile(payload: UpdateProfileRequestDto): Promise<P
 
 export async function setPin(payload: SetPinRequestDto): Promise<void> {
   await apiClient.put('/api/profile/pin', payload);
+}
+
+export async function verifyPin(payload: VerifyPinRequestDto): Promise<VerifyPinResponseDto> {
+  const { data } = await apiClient.post<VerifyPinResponseDto>('/api/profile/pin/verify', payload);
+  return data;
 }
