@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
 import { useSession } from '@/hooks/useSession';
@@ -42,6 +42,20 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons color={color} name="person-outline" size={size} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          title: 'Lịch học',
+          tabBarIcon: ({ color, size }) => <Feather name="calendar" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          title: 'Tiến độ',
+          tabBarIcon: ({ color, size }) => <Feather name="bar-chart-2" size={24} color={color} />,
         }}
       />
     </Tabs>

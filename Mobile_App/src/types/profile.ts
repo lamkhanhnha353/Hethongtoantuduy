@@ -18,3 +18,11 @@ export type SetPinRequestDto = {
   newPin: string;
   currentPin?: string;
 };
+
+export type VerifyPinRequestDto = {
+  pin: string;
+};
+
+export type VerifyPinResponseDto = {
+  valid: boolean;
+};

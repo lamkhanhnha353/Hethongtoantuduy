@@ -3,9 +3,10 @@ import { Redirect, useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
+
 import { AlertBanner } from '@/components/AlertBanner';
-import { FeatureGrid, HomeOverview } from '@/components/home/HomeOverview';
-import { WelcomeHeader } from '@/components/home/WelcomeHeader';
+import { WelcomeHeader } from '@/components/parent/WelcomeHeader';
 import type { HomeFeature } from '@/content/homeContent';
 import { useProfileQuery } from '@/hooks/useProfile';
 import { useSession } from '@/hooks/useSession';
@@ -56,14 +57,8 @@ export default function ScreenHome() {
       <ScrollView className="flex-1" contentContainerClassName="px-6 py-6">
         {notice ? <AlertBanner tone="info" message={notice} /> : null}
 
-        <WelcomeHeader displayName={displayName} role={session.role} />
+        <WelcomeHeader />
 
-        <View className="mt-6">
-          <HomeOverview session={session} />
-        </View>
-
-        <FeatureGrid onSelect={handleSelectFeature} role={session.role} />
-        
       </ScrollView>
     </SafeAreaView>
   );
