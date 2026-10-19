@@ -25,6 +25,12 @@ export type ChangePasswordRequestDto = {
 export type ChangePasswordResponseDto = {
   message: string;
 };
+export type ForgotPasswordRequestDto = {
+  email: string;
+};
+export type ForgotPasswordResponseDto = {
+  message: string;
+};
 export type StoredSession = AuthResponseDto & {
   phone: string;
   fullName: string;

@@ -1,10 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { changePassword, login, register } from '@/services/authService';
+import { changePassword, forgotPassword, login, register } from '@/services/authService';
 import { useAuthStore } from '@/store/authStore';
 import type {
   ChangePasswordRequestDto,
   ChangePasswordResponseDto,
+  ForgotPasswordRequestDto,
+  ForgotPasswordResponseDto,
   LoginRequestDto,
   RegisterRequestDto,
   StoredSession,
@@ -63,5 +65,16 @@ export function useRegisterMutation() {
 export function useChangePasswordMutation() {
   return useMutation<ChangePasswordResponseDto, unknown, ChangePasswordRequestDto>({
     mutationFn: (payload) => changePassword(payload),
+  });
+}
+
+/**
+ * Quên mật khẩu: backend sinh mật khẩu tạm và gửi tới email ĐÃ ĐĂNG KÝ + ĐÃ XÁC MINH.
+ * Email không tồn tại trong hệ thống vẫn trả 200 (message chung) nên không phân
+ * biệt được có/gửi thành công — màn hình hiển thị message server trả về.
+ */
+export function useForgotPasswordMutation() {
+  return useMutation<ForgotPasswordResponseDto, unknown, ForgotPasswordRequestDto>({
+    mutationFn: (payload) => forgotPassword(payload),
   });
 }

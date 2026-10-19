@@ -17,7 +17,11 @@ const SOCIAL_NOT_READY_MESSAGE =
   'Đăng nhập bằng Google hoặc Facebook đang được phát triển. Bạn vui lòng dùng số điện thoại.';
 
 export default function ScreenLogin() {
-  const { reason } = useLocalSearchParams<{ reason?: string }>();
+  const { reason, resetNotice, resetTone } = useLocalSearchParams<{
+    reason?: string;
+    resetNotice?: string;
+    resetTone?: string;
+  }>();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false); 
@@ -77,6 +81,12 @@ export default function ScreenLogin() {
 
             {/* Hiển thị lỗi/thông báo */}
             {isSessionExpired ? <AlertBanner tone="error" message={SESSION_EXPIRED_MESSAGE} /> : null}
+            {resetNotice ? (
+              <AlertBanner
+                tone={resetTone === 'success' ? 'success' : 'info'}
+                message={resetNotice}
+              />
+            ) : null}
             {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
             {notice ? <AlertBanner tone="info" message={notice} /> : null}
 

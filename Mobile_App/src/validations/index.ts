@@ -5,6 +5,11 @@ export {
   type ChangePasswordValues,
 } from '@/validations/changePassword';
 export {
+  validateForgotPassword,
+  type ForgotPasswordFieldErrors,
+  type ForgotPasswordValues,
+} from '@/validations/forgotPassword';
+export {
   validateProfileForm,
   type ProfileFieldErrors,
   type ProfileFormOptions,

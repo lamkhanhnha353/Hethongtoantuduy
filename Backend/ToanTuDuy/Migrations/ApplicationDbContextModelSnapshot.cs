@@ -204,6 +204,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("password_hash");
 
+                    b.Property<DateTime?>("PasswordResetSentAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("password_reset_sent_at");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("phone");

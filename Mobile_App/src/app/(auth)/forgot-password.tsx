@@ -7,16 +7,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertBanner } from '@/components/AlertBanner';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { useForgotPasswordMutation } from '@/hooks/useAuthMutations';
+import { toApiError } from '@/services/apiError';
+import { validateForgotPassword, type ForgotPasswordFieldErrors } from '@/validations';
 
-const FORGOT_PASSWORD_PENDING_MESSAGE =
-  'Tính năng khôi phục mật khẩu đang được phát triển. Nếu nhớ mật khẩu, hãy đăng nhập như bình thường.';
+type FieldErrors = ForgotPasswordFieldErrors;
 
 export default function ScreenForgotPassword() {
-  const [phone, setPhone] = useState('');
-  const [notice, setNotice] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [localErrors, setLocalErrors] = useState<FieldErrors>({});
+
+  const forgotPasswordMutation = useForgotPasswordMutation();
+
+  const apiError = forgotPasswordMutation.isError
+    ? toApiError(forgotPasswordMutation.error)
+    : null;
+
+  const serverErrors: FieldErrors = apiError ? { email: apiError.fieldErrors.email?.[0] } : {};
+  const errors: FieldErrors = { ...localErrors, ...serverErrors };
 
   function handleSubmit() {
-    setNotice(FORGOT_PASSWORD_PENDING_MESSAGE);
+    const validation = validateForgotPassword({ email });
+    setLocalErrors(validation);
+
+    if (Object.keys(validation).length > 0) {
+      return;
+    }
+
+    forgotPasswordMutation.mutate(
+      { email: email.trim() },
+      {
+        onSuccess: (response) => {
+          // Message chung (email không tồn tại) → tone info; gửi thật → tone success.
+          const tone = response.message.startsWith('Nếu tài khoản') ? 'info' : 'success';
+
+          router.replace({
+            pathname: '/login',
+            params: { resetNotice: response.message, resetTone: tone },
+          });
+        },
+      },
+    );
   }
 
   return (
@@ -41,30 +72,35 @@ export default function ScreenForgotPassword() {
         <View className="mb-6">
           <Text className="text-3xl font-bold text-slate-900">Quên mật khẩu?</Text>
           <Text className="mt-2 text-sm leading-5 text-slate-600">
-            Nhập số điện thoại đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.
+            Nhập email đã đăng ký tài khoản, chúng tôi sẽ gửi mật khẩu tạm đến email đó.
           </Text>
         </View>
 
-        {notice ? <AlertBanner tone="info" message={notice} /> : null}
+        {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
 
         <FormField
           autoCapitalize="none"
-          autoComplete="tel"
-          keyboardType="phone-pad"
-          label="Số điện thoại"
-          onChangeText={setPhone}
+          autoComplete="email"
+          error={errors.email}
+          keyboardType="email-address"
+          label="Email"
+          onChangeText={setEmail}
           onSubmitEditing={handleSubmit}
-          placeholder="0987654321"
+          placeholder="ten@gmail.com"
           returnKeyType="go"
-          textContentType="telephoneNumber"
-          value={phone}
+          textContentType="emailAddress"
+          value={email}
         />
 
-        <PrimaryButton label="Gửi mã khôi phục" onPress={handleSubmit} />
+        <PrimaryButton
+          label="Gửi mật khẩu tạm"
+          loading={forgotPasswordMutation.isPending}
+          onPress={handleSubmit}
+        />
 
         <Text className="mt-6 text-center text-xs leading-4 text-slate-400">
-          Muốn đổi mật khẩu khi còn nhớ mật khẩu hiện tại? Vào tab Cá nhân → Bảo mật → Đổi mật
-          khẩu.
+          Mật khẩu tạm chỉ được gửi nếu email đã xác minh. Sau khi đăng nhập, hãy đổi mật khẩu
+          ngay tại tab Cá nhân → Bảo mật → Đổi mật khẩu.
         </Text>
       </KeyboardAwareScrollView>
     </SafeAreaView>

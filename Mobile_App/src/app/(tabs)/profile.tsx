@@ -1,4 +1,4 @@
-import { useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,33 +27,32 @@ function PencilButton({ inputRef }: { inputRef: RefObject<TextInput | null> }) {
 }
 
 export default function ScreenProfile() {
+  const router = useRouter();
   const { isHydrated: isSessionHydrated } = useSession();
-  const { data: profile, isPending, isError, error, refetch } = useProfileQuery();
+  const logout = useLogout();
+  const { data: profile, isPending, isError } = useProfileQuery();
 
-  const apiError = isError ? toApiError(error) : null;
+  useEffect(() => {
+    if (!isError) return;
 
-  if (!isSessionHydrated || isPending) {
+    let isCancelled = false;
+
+    void logout().finally(() => {
+      if (!isCancelled) {
+        router.replace('/login');
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isError, logout, router]);
+
+  if (!isSessionHydrated || isPending || isError || !profile) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-slate-50" edges={['top']}>
         <ActivityIndicator size="large" color="#0284c7" />
         <Text className="mt-3 text-sm text-slate-500">Đang tải hồ sơ...</Text>
-      </SafeAreaView>
-    );
-  }
-
-  if (apiError || !profile) {
-    return (
-      <SafeAreaView className="flex-1 bg-slate-50 px-6 py-6" edges={['top']}>
-        <Text className="text-2xl font-bold text-slate-900">Cá nhân</Text>
-        <View className="mt-4">
-          <AlertBanner message={apiError?.message ?? 'Không tải được hồ sơ.'} tone="error" />
-        </View>
-        <PrimaryButton
-          label="Thử lại"
-          onPress={() => {
-            void refetch();
-          }}
-        />
       </SafeAreaView>
     );
   }

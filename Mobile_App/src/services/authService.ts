@@ -3,6 +3,8 @@ import type {
   AuthResponseDto,
   ChangePasswordRequestDto,
   ChangePasswordResponseDto,
+  ForgotPasswordRequestDto,
+  ForgotPasswordResponseDto,
   LoginRequestDto,
   RegisterRequestDto,
 } from '@/types/auth';
@@ -22,6 +24,16 @@ export async function changePassword(
 ): Promise<ChangePasswordResponseDto> {
   const { data } = await apiClient.post<ChangePasswordResponseDto>(
     '/api/auth/change-password',
+    payload,
+  );
+  return data;
+}
+
+export async function forgotPassword(
+  payload: ForgotPasswordRequestDto,
+): Promise<ForgotPasswordResponseDto> {
+  const { data } = await apiClient.post<ForgotPasswordResponseDto>(
+    '/api/auth/forgot-password',
     payload,
   );
   return data;

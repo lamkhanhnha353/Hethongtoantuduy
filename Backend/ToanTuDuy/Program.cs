@@ -93,6 +93,11 @@ builder.Services.Configure<EmailVerificationSettings>(
     builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 
+// Khôi phục mật khẩu khi quên: sinh mật khẩu tạm và gửi qua email đã xác minh
+builder.Services.Configure<PasswordResetSettings>(
+    builder.Configuration.GetSection(PasswordResetSettings.SectionName));
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+
 // Hasher riêng cho PIN của phụ huynh (không lưu plaintext)
 builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<ParentProfile>>();
 
