@@ -236,7 +236,7 @@ export default function ScreenStudentDetail() {
             onSave={handleSave}
           />
         </View>
-
+1
         <View className="mt-5">
           <PrimaryButton label="Xóa học sinh" onPress={() => setPinVisible(true)} variant="ghost" />
           <Text className="mt-2 text-center text-xs leading-4 text-slate-500">

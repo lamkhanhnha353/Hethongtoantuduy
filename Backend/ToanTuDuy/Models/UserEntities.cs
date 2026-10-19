@@ -23,6 +23,10 @@ namespace ToanTuDuy.Models
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
 
+        // Lần cuối gửi mật khẩu tạm khi quên mật khẩu — dùng làm cooldown chống spam email.
+        [Column("password_reset_sent_at")]
+        public DateTime? PasswordResetSentAt { get; set; }
+
         // Navigation Properties
         public ParentProfile ParentProfile { get; set; }
         public TeacherProfile TeacherProfile { get; set; }

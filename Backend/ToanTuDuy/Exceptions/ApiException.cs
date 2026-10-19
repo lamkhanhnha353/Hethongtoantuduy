@@ -22,5 +22,6 @@ namespace ToanTuDuy.Exceptions
         public static ApiException Forbidden(string message) => new(403, message);
         public static ApiException NotFound(string message) => new(404, message);
         public static ApiException Conflict(string message) => new(409, message);
+        public static ApiException TooManyRequests(string message) => new(429, message);
     }
 }

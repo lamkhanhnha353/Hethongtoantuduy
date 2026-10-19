@@ -19,15 +19,18 @@ namespace ToanTuDuy.Services
         private readonly ApplicationDbContext _context;
         private readonly IImageStorage _imageStorage;
         private readonly ILogger<ProfileService> _logger;
+        private readonly IParentStudentService _parentStudentService;
 
         public ProfileService(
             ApplicationDbContext context,
             IImageStorage imageStorage,
-            ILogger<ProfileService> logger)
+            ILogger<ProfileService> logger,
+            IParentStudentService parentStudentService)
         {
             _context = context;
             _imageStorage = imageStorage;
             _logger = logger;
+            _parentStudentService = parentStudentService;
         }
 
         public async Task<ProfileResponse> GetAsync(int accountId)
@@ -62,7 +65,7 @@ namespace ToanTuDuy.Services
                     parent.FullName = request.FullName;
                     await _context.SaveChangesAsync();
 
-                    return MapParent(user.PhoneNumber ?? string.Empty, parent);
+                    return MapParent(user.PhoneNumber ?? string.Empty, user.Email, user.EmailConfirmed, parent);
 
                 case TeacherRole:
                     var teacher = await _context.TeacherProfiles
@@ -77,6 +80,28 @@ namespace ToanTuDuy.Services
                 default:
                     throw ApiException.BadRequest("Role không hợp lệ.");
             }
+        }
+
+        public async Task<ProfileResponse> UpdateEmailAsync(int accountId, string email)
+        {
+            var parentId = await _context.ParentProfiles
+                .AsNoTracking()
+                .Where(p => p.AccountId == accountId)
+                .Select(p => p.Id)
+                .FirstOrDefaultAsync();
+
+            if (parentId == 0)
+            {
+                throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
+            }
+
+            var success = await _parentStudentService.UpdateParentEmailAsync(parentId, email);
+            if (!success)
+            {
+                throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
+            }
+
+            return await BuildParentResponseAsync(accountId);
         }
 
         public async Task<ProfileResponse> UpdateAvatarAsync(int accountId, IFormFile? file, CancellationToken cancellationToken = default)
@@ -96,8 +121,8 @@ namespace ToanTuDuy.Services
             parent.Avatar = url;
             await _context.SaveChangesAsync(cancellationToken);
 
-            var phone = await GetPhoneAsync(accountId);
-            return MapParent(phone, parent);
+            var (phone, email, emailConfirm) = await GetContactAsync(accountId);
+            return MapParent(phone, email, emailConfirm, parent);
         }
 
         public async Task<ProfileResponse> RemoveAvatarAsync(int accountId, CancellationToken cancellationToken = default)
@@ -113,8 +138,8 @@ namespace ToanTuDuy.Services
                 await _context.SaveChangesAsync(cancellationToken);
             }
 
-            var phone = await GetPhoneAsync(accountId);
-            return MapParent(phone, parent);
+            var (phone, email, emailConfirm) = await GetContactAsync(accountId);
+            return MapParent(phone, email, emailConfirm, parent);
         }
 
         private async Task SafeDeleteAsync(string? url, CancellationToken cancellationToken)
@@ -142,8 +167,8 @@ namespace ToanTuDuy.Services
                 .FirstOrDefaultAsync(p => p.AccountId == accountId)
                 ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
 
-            var phone = await GetPhoneAsync(accountId);
-            return MapParent(phone, profile);
+            var (phone, email, emailConfirm) = await GetContactAsync(accountId);
+            return MapParent(phone, email, emailConfirm, profile);
         }
 
         private async Task<ProfileResponse> BuildTeacherResponseAsync(int accountId)
@@ -153,24 +178,33 @@ namespace ToanTuDuy.Services
                 .FirstOrDefaultAsync(t => t.AccountId == accountId)
                 ?? throw ApiException.NotFound("Không tìm thấy hồ sơ giáo viên.");
 
-            var phone = await GetPhoneAsync(accountId);
+            var (phone, _, _) = await GetContactAsync(accountId);
             return MapTeacher(phone, profile);
         }
 
-        private async Task<string> GetPhoneAsync(int accountId) =>
-            await _context.Users
+        private async Task<(string Phone, string? Email, bool EmailConfirmed)> GetContactAsync(int accountId)
+        {
+            var user = await _context.Users
                 .AsNoTracking()
                 .Where(u => u.Id == accountId)
-                .Select(u => u.PhoneNumber ?? string.Empty)
-                .FirstOrDefaultAsync() ?? string.Empty;
+                .Select(u => new { u.PhoneNumber, u.Email, u.EmailConfirmed })
+                .FirstOrDefaultAsync();
 
-        private static ProfileResponse MapParent(string phone, Models.ParentProfile profile) => new()
+            return (user?.PhoneNumber ?? string.Empty, user?.Email, user?.EmailConfirmed ?? false);
+        }
+
+        private static ProfileResponse MapParent(
+            string phone,
+            string? email,
+            bool emailConfirm,
+            Models.ParentProfile profile) => new()
         {
             AccountId = profile.AccountId,
             Phone = phone,
             Role = ParentRole,
             FullName = profile.FullName,
-            Email = null,
+            Email = email,
+            EmailConfirm = emailConfirm,
             Avatar = profile.Avatar,
             HasPin = !string.IsNullOrEmpty(profile.Pin),
         };

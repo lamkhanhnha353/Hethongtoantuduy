@@ -15,7 +15,7 @@ export default function ScreenStudents() {
 
   if (!isHydrated) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50" edges={['top']}>
+      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50" edges={[]}>
         <ActivityIndicator size="large" color="#0284c7" />
       </SafeAreaView>
     );
@@ -23,7 +23,7 @@ export default function ScreenStudents() {
 
   if (session?.role !== 'Parent') {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50 px-6 py-6" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-slate-50 px-6 py-6" edges={[]}>
         <Text className="text-2xl font-bold text-slate-900">Học sinh</Text>
         <View className="mt-4">
           <AlertBanner
@@ -45,7 +45,7 @@ function ParentStudents() {
   const apiError = isError ? toApiError(error) : null;
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-slate-50" edges={[]}>
       <View className="flex-row items-center justify-between px-6 pb-4 pt-2">
         <Text className="text-2xl font-bold text-slate-900">Học sinh</Text>
 
