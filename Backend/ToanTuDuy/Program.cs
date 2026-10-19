@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Resend;
 using System.Security.Claims;
 using System.Text;
 using ToanTuDuy.Data;
@@ -42,6 +43,7 @@ builder.Services.AddAuthentication(options =>
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+
     })
     .AddJwtBearer(options =>
     {
@@ -82,6 +84,20 @@ builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+
+// Gửi email xác minh tài khoản qua Resend
+builder.Services.AddResend(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiToken"] ?? string.Empty;
+});
+builder.Services.Configure<EmailVerificationSettings>(
+    builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
+builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+
+// Khôi phục mật khẩu khi quên: sinh mật khẩu tạm và gửi qua email đã xác minh
+builder.Services.Configure<PasswordResetSettings>(
+    builder.Configuration.GetSection(PasswordResetSettings.SectionName));
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 
 // Hasher riêng cho PIN của phụ huynh (không lưu plaintext)
 builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<ParentProfile>>();

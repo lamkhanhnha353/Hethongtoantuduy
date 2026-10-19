@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ToanTuDuy.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class AddPasswordResetSentAt : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,6 +21,7 @@ namespace ToanTuDuy.Migrations
                     refresh_token = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     is_active = table.Column<bool>(type: "bit", nullable: false),
                     created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    password_reset_sent_at = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -150,6 +151,30 @@ namespace ToanTuDuy.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserTokens_ACCOUNT_UserId",
                         column: x => x.UserId,
+                        principalTable: "ACCOUNT",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EMAIL_VERIFICATION_TOKEN",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    account_id = table.Column<int>(type: "int", nullable: false),
+                    token_hash = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    email_at_issue = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    expires_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    used_at = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EMAIL_VERIFICATION_TOKEN", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_EMAIL_VERIFICATION_TOKEN_ACCOUNT_account_id",
+                        column: x => x.account_id,
                         principalTable: "ACCOUNT",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
@@ -791,6 +816,17 @@ namespace ToanTuDuy.Migrations
                 column: "course_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EMAIL_VERIFICATION_TOKEN_account_id",
+                table: "EMAIL_VERIFICATION_TOKEN",
+                column: "account_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EMAIL_VERIFICATION_TOKEN_token_hash",
+                table: "EMAIL_VERIFICATION_TOKEN",
+                column: "token_hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_INVOICE_class_id",
                 table: "INVOICE",
                 column: "class_id");
@@ -914,6 +950,9 @@ namespace ToanTuDuy.Migrations
 
             migrationBuilder.DropTable(
                 name: "CLASS_STUDENT");
+
+            migrationBuilder.DropTable(
+                name: "EMAIL_VERIFICATION_TOKEN");
 
             migrationBuilder.DropTable(
                 name: "INVOICE");

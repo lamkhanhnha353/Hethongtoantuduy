@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
+using ToanTuDuy.DTOs;
 using ToanTuDuy.DTOs.Profile;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
@@ -34,6 +35,14 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> Update([FromBody] UpdateProfileRequest request)
         {
             var response = await _profileService.UpdateAsync(User.GetAccountId(), request);
+            return Ok(response);
+        }
+
+        [HttpPut("email")]
+        [Authorize(Roles = "Parent")]
+        public async Task<IActionResult> UpdateEmail([FromBody] UpdateParentEmailDto dto)
+        {
+            var response = await _profileService.UpdateEmailAsync(User.GetAccountId(), dto.Email);
             return Ok(response);
         }
 

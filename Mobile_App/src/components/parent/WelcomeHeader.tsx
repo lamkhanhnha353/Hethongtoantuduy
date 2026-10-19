@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/Avatar';
 import { useProfileQuery } from '@/hooks/useProfile';
@@ -15,7 +14,6 @@ function shortName(fullName: string): string {
 }
 
 export function WelcomeHeader() {
-  const insets = useSafeAreaInsets();
   const { session } = useSession();
   const { data: profile } = useProfileQuery();
   const { data: students } = useStudentsQuery(session?.role === 'Parent');
@@ -28,7 +26,7 @@ export function WelcomeHeader() {
   return (
     <View
       className="bg-indigo-600 relative overflow-hidden"
-      style={{ paddingTop: insets.top + 10, paddingBottom: 15 }}
+      style={{ paddingTop: 10, paddingBottom: 15 }}
     >
       <View className="absolute -top-16 -right-10 w-48 h-48 rounded-full bg-cyan-300/20 opacity-50" />
       <View className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-indigo-300/20 opacity-50" />
@@ -66,18 +64,18 @@ export function WelcomeHeader() {
           style={
             selectedStudentId === null
               ? {
-                  backgroundColor: '#ffffff',
-                  shadowColor: '#000000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 2,
-                  elevation: 2,
-                }
+                backgroundColor: '#ffffff',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.06,
+                shadowRadius: 2,
+                elevation: 2,
+              }
               : {
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.3)',
-                }
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.3)',
+              }
           }
           onPress={() => setSelectedStudentId(null)}
         >
@@ -90,9 +88,8 @@ export function WelcomeHeader() {
             <Text className="text-white text-[10px] font-bold">All</Text>
           </View>
           <Text
-            className={`text-xs font-bold ${
-              selectedStudentId === null ? 'text-indigo-900' : 'text-white font-semibold'
-            }`}
+            className={`text-xs font-bold ${selectedStudentId === null ? 'text-indigo-900' : 'text-white font-semibold'
+              }`}
           >
             Tất cả con
           </Text>
@@ -108,26 +105,25 @@ export function WelcomeHeader() {
               style={
                 isSelected
                   ? {
-                      backgroundColor: '#ffffff',
-                      shadowColor: '#000000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.06,
-                      shadowRadius: 2,
-                      elevation: 2,
-                    }
+                    backgroundColor: '#ffffff',
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.06,
+                    shadowRadius: 2,
+                    elevation: 2,
+                  }
                   : {
-                      backgroundColor: 'rgba(255,255,255,0.2)',
-                      borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.3)',
-                    }
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.3)',
+                  }
               }
               onPress={() => setSelectedStudentId(student.id)}
             >
               <Avatar name={student.fullName} uri={student.avatar} size={20} />
               <Text
-                className={`text-xs ${
-                  isSelected ? 'text-indigo-900 font-bold' : 'text-white font-semibold'
-                }`}
+                className={`text-xs ${isSelected ? 'text-indigo-900 font-bold' : 'text-white font-semibold'
+                  }`}
                 numberOfLines={1}
               >
                 {shortName(student.fullName)}

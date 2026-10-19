@@ -1,7 +1,9 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -10,11 +12,16 @@ namespace ToanTuDuy.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailVerificationService _verificationService;
 
-        public ParentStudentService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ParentStudentService(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            IEmailVerificationService verificationService)
         {
             _context = context;
             _userManager = userManager;
+            _verificationService = verificationService;
         }
 
         // --- NGHỆP VỤ PHỤ HUYNH ---
@@ -29,7 +36,8 @@ namespace ToanTuDuy.Services
             {
                 var kw = keyword.Trim().ToLower();
                 query = query.Where(p => p.FullName.ToLower().Contains(kw) ||
-                                         (p.Account.PhoneNumber != null && p.Account.PhoneNumber.Contains(kw)));
+                                         (p.Account.PhoneNumber != null && p.Account.PhoneNumber.Contains(kw)) ||
+                                         (p.Account.Email != null && p.Account.Email.ToLower().Contains(kw)));
             }
 
             return await query.Select(p => new ParentResponseDto
@@ -38,6 +46,7 @@ namespace ToanTuDuy.Services
                 AccountId = p.AccountId,
                 FullName = p.FullName,
                 Phone = p.Account.PhoneNumber ?? "",
+                Email = p.Account.Email,
                 // Pin được ánh xạ qua PinHash theo Entity mới
                 Pin = p.Pin,
                 Avatar = p.Avatar,
@@ -74,6 +83,7 @@ namespace ToanTuDuy.Services
                 AccountId = parent.AccountId,
                 FullName = parent.FullName,
                 Phone = parent.Account.PhoneNumber ?? "",
+                Email = parent.Account.Email,
                 Pin = parent.Pin,
                 Avatar = parent.Avatar,
                 IsActive = parent.Account.IsActive,
@@ -132,7 +142,8 @@ namespace ToanTuDuy.Services
                     AccountId = user.Id,
                     FullName = parent.FullName,
                     Phone = user.PhoneNumber ?? "",
-Pin = parent.Pin,
+                    Email = user.Email,
+                    Pin = parent.Pin,
                     Avatar = parent.Avatar,
                     IsActive = true
                 };
@@ -154,6 +165,51 @@ Pin = parent.Pin,
             if (!string.IsNullOrEmpty(dto.Avatar)) parent.Avatar = dto.Avatar;
 
             await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateParentEmailAsync(int id, string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw ApiException.BadRequest("Email không được để trống.");
+            }
+
+            email = email.Trim();
+            if (!new EmailAddressAttribute().IsValid(email))
+            {
+                throw ApiException.BadRequest("Email không hợp lệ.");
+            }
+
+            var parent = await _context.ParentProfiles
+                .Include(p => p.Account)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (parent == null || parent.Account == null) return false;
+
+            if (parent.Account.EmailConfirmed)
+            {
+                throw ApiException.Forbidden("Email đã xác nhận, không thể thay đổi.");
+            }
+
+            var existingAccount = await _userManager.FindByEmailAsync(email);
+            if (existingAccount != null && existingAccount.Id != parent.AccountId)
+            {
+                throw ApiException.Conflict("Email đã được sử dụng bởi tài khoản khác.");
+            }
+
+            var result = await _userManager.SetEmailAsync(parent.Account, email);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw ApiException.BadRequest($"Không thể cập nhật email: {errors}");
+            }
+
+            // Email mới chưa xác nhận → cấp token + gửi link xác minh ngay.
+            // SendEmailAsync không ném lỗi (tự LogWarning + in link ra console).
+            var rawToken = await _verificationService.IssueAsync(parent.AccountId, email);
+            await _verificationService.SendEmailAsync(email, rawToken);
+            // console.WriteLine($"[DEBUG] Link xác minh email mới: {rawToken}");/
             return true;
         }
 

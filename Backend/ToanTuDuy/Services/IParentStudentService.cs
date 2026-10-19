@@ -10,6 +10,7 @@ namespace ToanTuDuy.Services
         Task<ParentResponseDto?> GetParentByIdAsync(int id);
         Task<ParentResponseDto> CreateParentAsync(CreateParentDto dto);
         Task<bool> UpdateParentAsync(int id, UpdateParentDto dto);
+        Task<bool> UpdateParentEmailAsync(int id, string email);
         Task<bool> DeleteParentAsync(int id);
 
         // CRUD Học sinh

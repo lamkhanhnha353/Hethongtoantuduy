@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -21,15 +22,18 @@ namespace ToanTuDuy.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IEmailVerificationService _verificationService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IEmailVerificationService verificationService)
         {
             _userManager = userManager;
             _context = context;
             _configuration = configuration;
+            _verificationService = verificationService;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -61,6 +65,17 @@ namespace ToanTuDuy.Services
                     throw new InvalidOperationException($"Lỗi tạo tài khoản: {errors}");
                 }
 
+                // Teacher đăng ký kèm email — gán vào Identity account để EmailConfirmed có ý nghĩa
+                if (request.Role == "Teacher" && !string.IsNullOrEmpty(request.Email))
+                {
+                    var setEmailResult = await _userManager.SetEmailAsync(user, request.Email);
+                    if (!setEmailResult.Succeeded)
+                    {
+                        var errors = string.Join("; ", setEmailResult.Errors.Select(e => e.Description));
+                        throw new InvalidOperationException($"Lỗi gán email tài khoản: {errors}");
+                    }
+                }
+
                 int profileId = 0;
 
                 // 4. Tạo Profile tương ứng theo Role
@@ -88,6 +103,17 @@ namespace ToanTuDuy.Services
                     profileId = teacher.Id;
                 }
 
+                // 4.1. Cấp token xác minh email (trong transaction).
+                //     Parent không có email lúc đăng ký nên chỉ Teacher nhận link ngay;
+                //     Parent sẽ nhận link khi đặt email ở trang Cá nhân.
+                string? verificationEmail = null;
+                string? verificationRawToken = null;
+                if (!string.IsNullOrWhiteSpace(user.Email))
+                {
+                    verificationEmail = user.Email;
+                    verificationRawToken = await _verificationService.IssueAsync(user.Id, verificationEmail);
+                }
+
                 // 5. Nếu mọi thứ thành công => Sinh Token
                 var accessToken = GenerateJwtToken(user);
                 var refreshToken = GenerateRefreshToken();
@@ -97,6 +123,13 @@ namespace ToanTuDuy.Services
 
                 // 6. Hoàn tất chuỗi hành động và Commit Db
                 await transaction.CommitAsync();
+
+                // 7. Gửi email xác minh sau khi commit — service tự nuốt lỗi gửi,
+                //    không bao giờ rollback được việc đăng ký vì lỗi gửi mail.
+                if (verificationRawToken != null && verificationEmail != null)
+                {
+                    await _verificationService.SendEmailAsync(verificationEmail, verificationRawToken);
+                }
 
                 return new AuthResponse
                 {
@@ -151,6 +184,35 @@ namespace ToanTuDuy.Services
                 RefreshToken = refreshToken,
                 Role = user.Role,
                 ProfileId = profileId
+            };
+        }
+
+        public async Task<ChangePasswordResponse> ChangePasswordAsync(int accountId, ChangePasswordRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(accountId.ToString());
+            if (user == null)
+                throw ApiException.Unauthorized("Người dùng không tồn tại.");
+
+            if (!await _userManager.CheckPasswordAsync(user, request.CurrentPassword))
+                throw ApiException.Unauthorized("Mật khẩu hiện tại không chính xác.");
+
+            if (request.NewPassword == request.CurrentPassword)
+                throw ApiException.BadRequest("Mật khẩu mới phải khác mật khẩu hiện tại.");
+
+            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw ApiException.BadRequest($"Không thể đổi mật khẩu: {errors}");
+            }
+
+            // Thu hồi refresh token cũ: mọi phiên đang lưu refresh token sẽ không dùng được nữa.
+            user.RefreshToken = null;
+            await _userManager.UpdateAsync(user);
+
+            return new ChangePasswordResponse
+            {
+                Message = "Đổi mật khẩu thành công."
             };
         }
 

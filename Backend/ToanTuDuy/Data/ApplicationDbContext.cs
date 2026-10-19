@@ -22,6 +22,9 @@ namespace ToanTuDuy.Data
         // ✅ THÊM MỚI
         public DbSet<NotificationSetting> NotificationSettings { get; set; }
 
+        // Token xác minh email qua liên kết (magic link)
+        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+
         // --- Learning DbSets ---
         public DbSet<Course> Courses { get; set; }
         // ✅ THÊM MỚI
@@ -76,6 +79,11 @@ namespace ToanTuDuy.Data
 
             modelBuilder.Entity<TeacherProfile>()
                 .HasIndex(t => t.AccountId)
+                .IsUnique();
+
+            // Tra cứu token theo hash khi nhận link xác minh — hash phải là duy nhất.
+            modelBuilder.Entity<EmailVerificationToken>()
+                .HasIndex(t => t.TokenHash)
                 .IsUnique();
 
             // 4. Giải quyết triệt để lỗi vòng lặp xóa chuỗi (Multiple Cascade Paths)
