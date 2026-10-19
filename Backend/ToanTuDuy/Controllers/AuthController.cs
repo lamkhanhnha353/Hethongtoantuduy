@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
 
 namespace ToanTuDuy.Controllers
@@ -26,6 +28,14 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var response = await _authService.LoginAsync(request);
+            return Ok(response);
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var response = await _authService.ChangePasswordAsync(User.GetAccountId(), request);
             return Ok(response);
         }
     }

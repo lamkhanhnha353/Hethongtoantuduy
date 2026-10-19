@@ -16,8 +16,7 @@ import {
   useUpdateProfileMutation,
 } from '@/hooks/useProfile';
 import type { ProfileResponseDto } from '@/types/profile';
-
-type FieldErrors = { fullName?: string; email?: string };
+import { validateProfileForm, type ProfileFieldErrors } from '@/validations';
 
 function PencilButton({ inputRef }: { inputRef: RefObject<TextInput | null> }) {
   return (
@@ -80,7 +79,7 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [fullName, setFullName] = useState(profile.fullName);
   const [email, setEmail] = useState(profile.email ?? '');
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
 
   const saveError = updateMutation.isError ? toApiError(updateMutation.error) : null;
   const emailError = emailMutation.isError ? toApiError(emailMutation.error) : null;
@@ -95,9 +94,10 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
     const nameChanged = trimmedName !== profile.fullName;
     const emailChanged = emailEditable && trimmedEmail !== (profile.email ?? '');
 
-    const nextErrors: FieldErrors = {};
-    if (!trimmedName) nextErrors.fullName = 'Họ và tên không được để trống.';
-    if (emailEditable && !trimmedEmail) nextErrors.email = 'Email không được để trống.';
+    const nextErrors = validateProfileForm(
+      { fullName, email },
+      { requireEmail: emailEditable },
+    );
 
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -214,26 +214,36 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
           </View>
         </View>
 
-        {isParent ? (
-          <View className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
-            <Text className="text-base font-semibold text-slate-900">Bảo mật</Text>
+        <View className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+          <Text className="text-base font-semibold text-slate-900">Bảo mật</Text>
 
-            <View className="mt-3 flex-row items-center justify-between border-t border-slate-100 pt-4">
-              <Text className="text-sm text-slate-500">Mã PIN giao dịch</Text>
-              <Text className="text-sm font-medium text-slate-900">
-                {profile.hasPin ? 'Đã thiết lập' : 'Chưa thiết lập'}
-              </Text>
-            </View>
-
-            <View className="mt-4">
-              <PrimaryButton
-                label="Đặt / đổi PIN"
-                onPress={() => router.push('/profile-pin')}
-                variant="ghost"
-              />
-            </View>
+          <View className="mt-4">
+            <PrimaryButton
+              label="Đổi mật khẩu"
+              onPress={() => router.push('/change-password')}
+              variant="ghost"
+            />
           </View>
-        ) : null}
+
+          {isParent ? (
+            <>
+              <View className="mt-4 flex-row items-center justify-between border-t border-slate-100 pt-4">
+                <Text className="text-sm text-slate-500">Mã PIN giao dịch</Text>
+                <Text className="text-sm font-medium text-slate-900">
+                  {profile.hasPin ? 'Đã thiết lập' : 'Chưa thiết lập'}
+                </Text>
+              </View>
+
+              <View className="mt-4">
+                <PrimaryButton
+                  label="Đặt / đổi PIN"
+                  onPress={() => router.push('/profile-pin')}
+                  variant="ghost"
+                />
+              </View>
+            </>
+          ) : null}
+        </View>
 
         <View className="mt-6">
           <PrimaryButton

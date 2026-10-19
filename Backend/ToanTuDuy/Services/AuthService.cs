@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -183,6 +184,35 @@ namespace ToanTuDuy.Services
                 RefreshToken = refreshToken,
                 Role = user.Role,
                 ProfileId = profileId
+            };
+        }
+
+        public async Task<ChangePasswordResponse> ChangePasswordAsync(int accountId, ChangePasswordRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(accountId.ToString());
+            if (user == null)
+                throw ApiException.Unauthorized("Người dùng không tồn tại.");
+
+            if (!await _userManager.CheckPasswordAsync(user, request.CurrentPassword))
+                throw ApiException.Unauthorized("Mật khẩu hiện tại không chính xác.");
+
+            if (request.NewPassword == request.CurrentPassword)
+                throw ApiException.BadRequest("Mật khẩu mới phải khác mật khẩu hiện tại.");
+
+            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw ApiException.BadRequest($"Không thể đổi mật khẩu: {errors}");
+            }
+
+            // Thu hồi refresh token cũ: mọi phiên đang lưu refresh token sẽ không dùng được nữa.
+            user.RefreshToken = null;
+            await _userManager.UpdateAsync(user);
+
+            return new ChangePasswordResponse
+            {
+                Message = "Đổi mật khẩu thành công."
             };
         }
 

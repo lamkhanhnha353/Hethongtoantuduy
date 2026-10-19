@@ -8,15 +8,15 @@ import { AlertBanner } from '@/components/AlertBanner';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 
-const NOT_READY_MESSAGE =
-  'Tính năng khôi phục mật khẩu đang được phát triển. Khi hoàn tất, bạn sẽ nhận được mã xác thực qua số điện thoại đã đăng ký.';
+const FORGOT_PASSWORD_PENDING_MESSAGE =
+  'Tính năng khôi phục mật khẩu đang được phát triển. Nếu nhớ mật khẩu, hãy đăng nhập như bình thường.';
 
 export default function ScreenForgotPassword() {
   const [phone, setPhone] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
 
   function handleSubmit() {
-    setNotice(NOT_READY_MESSAGE);
+    setNotice(FORGOT_PASSWORD_PENDING_MESSAGE);
   }
 
   return (
@@ -40,9 +40,9 @@ export default function ScreenForgotPassword() {
 
         <View className="mb-6">
           <Text className="text-3xl font-bold text-slate-900">Quên mật khẩu?</Text>
-          {/* <Text className="mt-2 text-sm leading-5 text-slate-600">
-            Nhập số điện thoại đã đăng ký, chúng tôi sẽ gửi mã đặt lại mật khẩu.
-          </Text> */}
+          <Text className="mt-2 text-sm leading-5 text-slate-600">
+            Nhập số điện thoại đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.
+          </Text>
         </View>
 
         {notice ? <AlertBanner tone="info" message={notice} /> : null}
@@ -63,7 +63,8 @@ export default function ScreenForgotPassword() {
         <PrimaryButton label="Gửi mã khôi phục" onPress={handleSubmit} />
 
         <Text className="mt-6 text-center text-xs leading-4 text-slate-400">
-          Nếu bạn nhớ mật khẩu, hãy đăng nhập bằng số điện thoại và mật khẩu hiện tại.
+          Muốn đổi mật khẩu khi còn nhớ mật khẩu hiện tại? Vào tab Cá nhân → Bảo mật → Đổi mật
+          khẩu.
         </Text>
       </KeyboardAwareScrollView>
     </SafeAreaView>

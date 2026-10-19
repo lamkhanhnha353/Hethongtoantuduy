@@ -17,6 +17,14 @@ export type AuthResponseDto = {
   role: UserRole;
   profileId: number;
 };
+export type ChangePasswordRequestDto = {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+};
+export type ChangePasswordResponseDto = {
+  message: string;
+};
 export type StoredSession = AuthResponseDto & {
   phone: string;
   fullName: string;
