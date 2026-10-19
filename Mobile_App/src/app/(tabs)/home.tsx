@@ -25,7 +25,7 @@ export default function ScreenHome() {
     return (
       <SafeAreaView
         className="flex-1 items-center justify-center bg-slate-50"
-        edges={['top', 'bottom']}
+        edges={['bottom']}
       >
         <ActivityIndicator size="large" color="#0284c7" />
         <Text className="mt-3 text-sm text-slate-500">Đang tải thông tin tài khoản...</Text>
@@ -53,7 +53,7 @@ export default function ScreenHome() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-slate-50" edges={[]}>
       <ScrollView className="flex-1" contentContainerClassName="px-6 py-6">
         {notice ? <AlertBanner tone="info" message={notice} /> : null}
 

@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 
 export default function ScheduleScreen() {
   return (
-    <SafeAreaView className="flex-1 items-center justify-center bg-[#f1f5f9]">
+    <SafeAreaView className="flex-1 items-center justify-center bg-[#f1f5f9]" edges={[]}>
       <View className="w-16 h-16 rounded-full bg-indigo-100 items-center justify-center mb-4">
         <Feather name="calendar" size={28} color="#4f46e5" />
       </View>

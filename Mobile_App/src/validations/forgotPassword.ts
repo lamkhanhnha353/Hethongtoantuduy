@@ -18,7 +18,10 @@ export function validateForgotPassword(values: ForgotPasswordValues): ForgotPass
   if (emailRequiredError) {
     errors.email = emailRequiredError;
   } else {
-    errors.email = emailFormat(values.email, 'Email không đúng định dạng.');
+    const emailFormatError = emailFormat(values.email, 'Email không đúng định dạng.');
+    if (emailFormatError) {
+      errors.email = emailFormatError;
+    }
   }
 
   return errors;

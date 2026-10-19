@@ -120,7 +120,7 @@ export default function ScreenSelectProfile() {
             {isParent ? (
               <View>
                 <Text className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-4 mb-2">
-                  Học sinh của bạn
+                    Hồ sơ của con bạn
                 </Text>
 
                 {studentsPending ? (
