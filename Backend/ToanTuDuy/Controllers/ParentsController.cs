@@ -53,6 +53,17 @@ namespace ToanTuDuy.Controllers
             return Ok(new { message = "Cập nhật thông tin phụ huynh thành công." });
         }
 
+        [HttpPut("{id:int}/email")]
+        public async Task<IActionResult> UpdateEmail(
+            int id,
+            [FromBody] UpdateParentEmailDto dto
+        )
+        {
+            var success = await _service.UpdateParentEmailAsync(id, dto.Email);
+            if (!success) return NotFound(new { message = "Không tìm thấy phụ huynh." });
+            return Ok(new { message = "Cập nhật email phụ huynh thành công." });
+        }
+
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {

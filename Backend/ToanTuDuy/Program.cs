@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Resend;
 using System.Security.Claims;
 using System.Text;
 using ToanTuDuy.Data;
@@ -82,6 +83,15 @@ builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+
+// Gửi email xác minh tài khoản qua Resend
+builder.Services.AddResend(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiToken"] ?? string.Empty;
+});
+builder.Services.Configure<EmailVerificationSettings>(
+    builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
+builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 
 // Hasher riêng cho PIN của phụ huynh (không lưu plaintext)
 builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<ParentProfile>>();

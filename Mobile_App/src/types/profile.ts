@@ -6,12 +6,17 @@ export type ProfileResponseDto = {
   role: UserRole;
   fullName: string;
   email: string | null;
+  emailConfirm: boolean;
   avatar: string | null;
   hasPin: boolean;
 };
 
 export type UpdateProfileRequestDto = {
   fullName: string;
+};
+
+export type UpdateParentEmailRequestDto = {
+  email: string;
 };
 
 export type SetPinRequestDto = {

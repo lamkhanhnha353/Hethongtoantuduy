@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/AlertBanner';
 import { Avatar } from '@/components/Avatar';
@@ -10,21 +10,28 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ROLE_LABELS } from '@/content/homeContent';
 import { toApiError } from '@/services/apiError';
 import { useLogout, useSession } from '@/hooks/useSession';
-import { useProfileQuery, useUpdateProfileMutation } from '@/hooks/useProfile';
+import {
+  useProfileQuery,
+  useUpdateEmailMutation,
+  useUpdateProfileMutation,
+} from '@/hooks/useProfile';
+import type { ProfileResponseDto } from '@/types/profile';
+
+type FieldErrors = { fullName?: string; email?: string };
+
+function PencilButton({ inputRef }: { inputRef: RefObject<TextInput | null> }) {
+  return (
+    <Pressable hitSlop={8} onPress={() => inputRef.current?.focus()}>
+      <Text className="text-base">✏️</Text>
+    </Pressable>
+  );
+}
 
 export default function ScreenProfile() {
-  const router = useRouter();
   const { isHydrated: isSessionHydrated } = useSession();
   const { data: profile, isPending, isError, error, refetch } = useProfileQuery();
-  const updateMutation = useUpdateProfileMutation();
-  const logout = useLogout();
-
-  const [notice, setNotice] = useState<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const apiError = isError ? toApiError(error) : null;
-  const saveError = updateMutation.isError ? toApiError(updateMutation.error) : null;
-  const fieldErrors = saveError ? { fullName: saveError.fieldErrors.fullName?.[0] } : {};
 
   if (!isSessionHydrated || isPending) {
     return (
@@ -52,11 +59,65 @@ export default function ScreenProfile() {
     );
   }
 
+  return <ProfileForm profile={profile} />;
+}
+
+/**
+ * Form chỉ mount sau khi tải được profile nên state khởi tạo thẳng từ props
+ * (không cần effect đồng bộ).
+ */
+function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const updateMutation = useUpdateProfileMutation();
+  const emailMutation = useUpdateEmailMutation();
+  const logout = useLogout();
+
+  const nameInputRef = useRef<TextInput>(null);
+  const emailInputRef = useRef<TextInput>(null);
+
+  const [notice, setNotice] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [fullName, setFullName] = useState(profile.fullName);
+  const [email, setEmail] = useState(profile.email ?? '');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const saveError = updateMutation.isError ? toApiError(updateMutation.error) : null;
+  const emailError = emailMutation.isError ? toApiError(emailMutation.error) : null;
+  const serverError = emailError?.message ?? saveError?.message ?? null;
+
   const isParent = profile.role === 'Parent';
 
-  function handleSave(fullName: string) {
+  function handleSave() {
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+    const emailEditable = isParent && !profile.emailConfirm;
+    const nameChanged = trimmedName !== profile.fullName;
+    const emailChanged = emailEditable && trimmedEmail !== (profile.email ?? '');
+
+    const nextErrors: FieldErrors = {};
+    if (!trimmedName) nextErrors.fullName = 'Họ và tên không được để trống.';
+    if (emailEditable && !trimmedEmail) nextErrors.email = 'Email không được để trống.';
+
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    if (!nameChanged && !emailChanged) {
+      setNotice('Không có thay đổi nào để lưu.');
+      return;
+    }
+
     setNotice(null);
-    updateMutation.mutate({ fullName }, { onSuccess: () => setNotice('Đã lưu thay đổi.') });
+
+    const tasks: Promise<unknown>[] = [];
+    if (nameChanged) tasks.push(updateMutation.mutateAsync({ fullName: trimmedName }));
+    if (emailChanged) tasks.push(emailMutation.mutateAsync({ email: trimmedEmail }));
+
+    void Promise.all(tasks)
+      .then(() => setNotice('Đã lưu thay đổi.'))
+      .catch(() => {
+        // Lỗi hiển thị qua banner serverError từ mutation.
+      });
   }
 
   async function handleLogout() {
@@ -72,7 +133,7 @@ export default function ScreenProfile() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      <ScrollView contentContainerClassName="px-6 py-6">
+      <ScrollView contentContainerClassName="px-6 py-6 pb-32">
         <Text className="mb-5 text-2xl font-bold text-slate-900">Cá nhân</Text>
 
         <View className="flex-row items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5">
@@ -96,13 +157,50 @@ export default function ScreenProfile() {
         <View className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
           <Text className="text-base font-semibold text-slate-900">Thông tin cá nhân</Text>
 
-          <NameForm
-            key={profile.fullName}
-            error={fieldErrors.fullName}
-            initialFullName={profile.fullName}
-            loading={updateMutation.isPending}
-            onSave={handleSave}
-          />
+          {serverError ? (
+            <View className="mt-4">
+              <AlertBanner message={serverError} tone="error" />
+            </View>
+          ) : null}
+
+          <View className="mt-4">
+            <FormField
+              ref={nameInputRef}
+              containerClassName="mb-4"
+              error={fieldErrors.fullName}
+              label="Họ và tên"
+              onChangeText={setFullName}
+              placeholder="Nguyễn Văn A"
+              returnKeyType="done"
+              rightAccessory={<PencilButton inputRef={nameInputRef} />}
+              textContentType="name"
+              value={fullName}
+            />
+
+            {isParent ? (
+              <FormField
+                ref={emailInputRef}
+                autoCapitalize="none"
+                autoComplete="email"
+                className={
+                  profile.emailConfirm ? 'bg-slate-100 text-slate-500' : undefined
+                }
+                containerClassName="mb-4"
+                editable={!profile.emailConfirm}
+                error={fieldErrors.email}
+                hint={profile.emailConfirm ? 'Email đã xác nhận, không thể thay đổi' : undefined}
+                keyboardType="email-address"
+                label="Email"
+                onChangeText={setEmail}
+                placeholder="ten@gmail.com"
+                returnKeyType="done"
+                rightAccessory={
+                  profile.emailConfirm ? undefined : <PencilButton inputRef={emailInputRef} />
+                }
+                value={profile.emailConfirm ? (profile.email ?? '') : email}
+              />
+            ) : null}
+          </View>
         </View>
 
         <View className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
@@ -148,39 +246,18 @@ export default function ScreenProfile() {
           />
         </View>
       </ScrollView>
+
+      <View
+        className="absolute inset-x-0 bottom-0 border-t border-slate-200 bg-white px-6 pt-3"
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+      >
+        <PrimaryButton
+          label="Lưu thay đổi"
+          loading={updateMutation.isPending || emailMutation.isPending}
+          onPress={handleSave}
+        />
+      </View>
     </SafeAreaView>
-  );
-}
-
-type NameFormProps = {
-  initialFullName: string;
-  loading: boolean;
-  error?: string;
-  onSave: (fullName: string) => void;
-};
-
-/**
- * `key` theo giá trị trên máy chủ để tự khởi tạo lại state mỗi khi tên được
- * cập nhật thành công, tránh set state trong useEffect.
- */
-function NameForm({ initialFullName, loading, error, onSave }: NameFormProps) {
-  const [fullName, setFullName] = useState(initialFullName);
-
-  return (
-    <View className="mt-4">
-      <FormField
-        containerClassName="mb-4"
-        error={error}
-        label="Họ và tên"
-        onChangeText={setFullName}
-        placeholder="Nguyễn Văn A"
-        returnKeyType="done"
-        textContentType="name"
-        value={fullName}
-      />
-
-      <PrimaryButton label="Lưu thay đổi" loading={loading} onPress={() => onSave(fullName.trim())} />
-    </View>
   );
 }
 

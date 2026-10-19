@@ -2,6 +2,7 @@ import { apiClient } from '@/services/apiClient';
 import type {
   ProfileResponseDto,
   SetPinRequestDto,
+  UpdateParentEmailRequestDto,
   UpdateProfileRequestDto,
   VerifyPinRequestDto,
   VerifyPinResponseDto,
@@ -17,6 +18,11 @@ export async function updateProfile(payload: UpdateProfileRequestDto): Promise<P
   return data;
 }
 
+export async function updateEmail(payload: UpdateParentEmailRequestDto): Promise<ProfileResponseDto> {
+  const { data } = await apiClient.put<ProfileResponseDto>('/api/profile/email', payload);
+  return data;
+}
+
 export async function setPin(payload: SetPinRequestDto): Promise<void> {
   await apiClient.put('/api/profile/pin', payload);
 }
@@ -25,3 +31,4 @@ export async function verifyPin(payload: VerifyPinRequestDto): Promise<VerifyPin
   const { data } = await apiClient.post<VerifyPinResponseDto>('/api/profile/pin/verify', payload);
   return data;
 }
+
