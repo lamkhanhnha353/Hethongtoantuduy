@@ -51,13 +51,13 @@ namespace ToanTuDuy.Data
             // Bắt buộc gọi base method của IdentityDbContext
             base.OnModelCreating(modelBuilder);
 
-            // ✅ ĐÃ XÓA: decimal config cho Course.Fee (Fee chuyển sang CourseLevel)
-            // ✅ THÊM MỚI: decimal config cho CourseLevel.Fee
+            //  ĐÃ XÓA: decimal config cho Course.Fee (Fee chuyển sang CourseLevel)
+            //  THÊM MỚI: decimal config cho CourseLevel.Fee
             modelBuilder.Entity<CourseLevel>()
                 .Property(c => c.Fee)
                 .HasColumnType("decimal(10,2)");
 
-            // ✅ ĐỔI KIỂU: Invoice.Amount nay là int, không cần decimal config
+            //  ĐỔI KIỂU: Invoice.Amount nay là int, không cần decimal config
             // (đã xóa config decimal cho Invoice.Amount)
 
             // 1. Ánh xạ Identity User về bảng ACCOUNT
@@ -69,8 +69,8 @@ namespace ToanTuDuy.Data
                 entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             });
 
-            // 2. ✅ ĐÃ XÓA: ClassStudent composite key config (nay có Id riêng)
-            // ✅ ĐÃ XÓA: StudentBadge composite key config (nay có Id riêng)
+            // 2.: ClassStudent composite key config (nay có Id riêng)
+            //  StudentBadge composite key config (nay có Id riêng)
 
             // 3. Cấu hình 1-1 Relationship cho các Profiles (Mỗi AccountId là Unique)
             modelBuilder.Entity<ParentProfile>()
@@ -85,6 +85,40 @@ namespace ToanTuDuy.Data
             modelBuilder.Entity<EmailVerificationToken>()
                 .HasIndex(t => t.TokenHash)
                 .IsUnique();
+
+
+            // MODULE THANH TOÁN (PAYOS) - CẤU HÌNH INVOICE & CLASS_STUDENT
+
+            // Ràng buộc mã đơn hàng VNPay không bao giờ trùng
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => i.TxnRef)
+                .IsUnique();
+
+            // Ràng buộc mã giao dịch Unique (bỏ qua hóa đơn chưa trả tiền/tiền mặt)
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => i.TransactionId)
+                .IsUnique()
+                .HasFilter("[transaction_id] IS NOT NULL");
+
+            // Đảm bảo 1 Hóa đơn chỉ khớp đúng 1 chỗ ngồi
+            modelBuilder.Entity<ClassStudent>()
+                .HasIndex(cs => cs.InvoiceId)
+                .IsUnique()
+                .HasFilter("[invoice_id] IS NOT NULL");
+
+            // Chống đăng ký trùng: 1 bé không thể có 2 ghế ACTIVE/PENDING trong cùng 1 lớp
+            modelBuilder.Entity<ClassStudent>()
+                .HasIndex(cs => new { cs.ClassId, cs.StudentId })
+                .IsUnique()
+                .HasFilter("[status] IN ('ACTIVE', 'PENDING')");
+
+            // Cấu hình quan hệ 1-1 tường minh giữa Invoice và ClassStudent
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.ClassStudent)
+                .WithOne(cs => cs.Invoice)
+                .HasForeignKey<ClassStudent>(cs => cs.InvoiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             // 4. Giải quyết triệt để lỗi vòng lặp xóa chuỗi (Multiple Cascade Paths)
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()

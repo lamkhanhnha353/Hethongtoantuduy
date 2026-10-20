@@ -82,6 +82,7 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICourseLevelService, CourseLevelService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();   // thanh toán
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
 
@@ -105,6 +106,7 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 // Lưu ảnh trên Cloudinary (DB chỉ giữ URL trả về)
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
+
 
 var app = builder.Build();
 
