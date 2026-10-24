@@ -19,6 +19,8 @@ const C = {
   slate700: '#334155',
   slate400: '#94a3b8',
   white: '#ffffff',
+  rose500: '#f43f5e',
+  rose50: '#fff1f2',
 };
 
 interface EnrollmentBottomSheetProps {
@@ -49,7 +51,6 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
       
       setIsFetchingData(true);
       try {
-        // --- SỬA LỖI ĐỎ TOKEN Ở ĐÂY ---
         let token = "";
         if (typeof session === 'string') {
           try {
@@ -213,22 +214,33 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
               ) : classes.map((cls) => {
                 const isSelected = selectedClass === cls.id;
                 
-                // --- SỬA LỖI MAPPING DỮ LIỆU HIỂN THỊ TẠI ĐÂY ---
-                const slotCount = cls.availableSlots ?? cls.maxCapacity ?? cls.max_capacity ?? 0;
+                // --- SỬA LỖI MAPPING SỐ SLOT TRỐNG TẠI ĐÂY ---
+               // Lấy trực tiếp con số đếm từ Backend
+               // Lấy trực tiếp con số đếm từ Backend
+                const activeStudentsCount = cls.activeStudentsCount ?? 0;
+
+                // Tính số lượng Slot còn trống
+                const maxCap = cls.maxCapacity ?? cls.max_capacity ?? 0;
+                const slotCount = Math.max(0, maxCap - activeStudentsCount);
+                
+                const isFull = slotCount === 0;
+
                 const teacherName = cls.teacherName ?? cls.teacher?.fullName ?? 'Đang cập nhật';
                 const scheduleStr = cls.schedule ?? (cls.classSchedules && cls.classSchedules.length > 0 ? `${cls.classSchedules[0].dayOfWeek} ${cls.classSchedules[0].startTime}` : 'Đang cập nhật');
 
                 return (
                   <Pressable
                     key={cls.id}
-                    onPress={() => setConfirmingClass(cls)}
-                    className="p-4 rounded-2xl border overflow-hidden"
+                    onPress={() => {
+                        if (!isFull) setConfirmingClass(cls);
+                    }}
+                    className={`p-4 rounded-2xl border overflow-hidden ${isFull ? 'opacity-60' : ''}`}
                     style={{
-                      backgroundColor: isSelected ? C.emerald50 : C.white,
-                      borderColor: isSelected ? C.emerald500 : C.slate200,
+                      backgroundColor: isFull ? '#f8fafc' : isSelected ? C.emerald50 : C.white,
+                      borderColor: isFull ? C.slate200 : isSelected ? C.emerald500 : C.slate200,
                     }}
                   >
-                    {isSelected && (
+                    {isSelected && !isFull && (
                       <View className="absolute top-0 right-0 bg-emerald-500 px-3 py-1 rounded-bl-xl z-10 flex-row items-center gap-1">
                         <Feather name="check-circle" size={12} color="white" />
                         <Text className="text-[10px] font-bold text-white uppercase tracking-wider">Đang chọn</Text>
@@ -237,19 +249,19 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
 
                     <View className="flex-row items-center justify-between">
                       <View className="flex-1 pr-2 mt-1">
-                        <Text className="text-[15px] font-bold mb-2" style={{ color: isSelected ? C.emerald900 : '#0f172a' }}>
+                        <Text className="text-[15px] font-bold mb-2" style={{ color: isSelected && !isFull ? C.emerald900 : '#0f172a' }}>
                           {cls.name}
                         </Text>
                         <View className="flex-row items-center gap-4">
                           <View className="flex-row items-center gap-1.5">
-                            <Feather name="clock" size={14} color={isSelected ? '#059669' : C.slate500} />
-                            <Text className="text-[12px] font-medium" style={{ color: isSelected ? C.emerald700 : C.slate600 }}>
+                            <Feather name="clock" size={14} color={isSelected && !isFull ? '#059669' : C.slate500} />
+                            <Text className="text-[12px] font-medium" style={{ color: isSelected && !isFull ? C.emerald700 : C.slate600 }}>
                               {scheduleStr}
                             </Text>
                           </View>
                           <View className="flex-row items-center gap-1.5">
-                            <Feather name="user" size={14} color={isSelected ? '#059669' : C.slate500} />
-                            <Text className="text-[12px] font-medium" style={{ color: isSelected ? C.emerald700 : C.slate600 }}>
+                            <Feather name="user" size={14} color={isSelected && !isFull ? '#059669' : C.slate500} />
+                            <Text className="text-[12px] font-medium" style={{ color: isSelected && !isFull ? C.emerald700 : C.slate600 }}>
                               GV: {teacherName}
                             </Text>
                           </View>
@@ -259,15 +271,15 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                       <View
                         className="items-center justify-center px-4 py-2.5 rounded-xl border"
                         style={{
-                          backgroundColor: isSelected ? C.emerald500 : '#f8fafc',
-                          borderColor: isSelected ? C.emerald500 : C.slate200,
+                          backgroundColor: isFull ? C.rose50 : isSelected ? C.emerald500 : '#f8fafc',
+                          borderColor: isFull ? C.rose500 : isSelected ? C.emerald500 : C.slate200,
                         }}
                       >
-                        <Text className="text-[18px] font-black leading-none mb-0.5" style={{ color: isSelected ? C.white : C.slate700 }}>
+                        <Text className="text-[18px] font-black leading-none mb-0.5" style={{ color: isFull ? C.rose500 : isSelected ? C.white : C.slate700 }}>
                           {slotCount}
                         </Text>
-                        <Text className="text-[10px] font-bold uppercase" style={{ color: isSelected ? C.emerald50 : C.slate500 }}>
-                          Slot
+                        <Text className="text-[10px] font-bold uppercase" style={{ color: isFull ? C.rose500 : isSelected ? C.emerald50 : C.slate500 }}>
+                          {isFull ? 'HẾT CHỖ' : 'Slot'}
                         </Text>
                       </View>
                     </View>

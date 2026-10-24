@@ -28,25 +28,58 @@ namespace ToanTuDuy.Controllers
         {
             try
             {
-                // 1. Kiểm tra xem bé đã đăng ký lớp này chưa (để tránh đăng ký trùng)
+                // 1. Kiểm tra Lớp học có tồn tại và xem lớp đã đầy chưa
+                var classInfo = await _context.Classes
+                    .Include(c => c.ClassStudents)
+                    .FirstOrDefaultAsync(c => c.Id == request.ClassId);
+
+                if (classInfo == null)
+                    return NotFound(new { message = "Không tìm thấy lớp học này." });
+
+                // Đếm số lượng học sinh đã thanh toán thành công (ACTIVE)
+                int activeStudents = classInfo.ClassStudents.Count(cs => cs.Status == "ACTIVE");
+                if (activeStudents >= classInfo.MaxCapacity)
+                {
+                    return BadRequest(new { message = "Lớp học này đã đủ số lượng học viên." });
+                }
+
+                // 2. Kiểm tra xem bé đã đăng ký lớp này chưa (CHỈ chặn nếu đang PENDING hoặc PAID/ACTIVE)
                 var existingEnrollment = await _context.ClassStudents
                     .FirstOrDefaultAsync(cs => cs.StudentId == request.StudentId && cs.ClassId == request.ClassId);
 
                 if (existingEnrollment != null)
                 {
-                    return BadRequest(new { message = "Học sinh này đã được đăng ký hoặc đang chờ thanh toán cho lớp này!" });
+                    // Truy vấn trực tiếp từ bảng Invoices thay vì dùng .Include()
+                    bool hasValidInvoice = await _context.Invoices
+                        .AnyAsync(i => i.StudentId == request.StudentId &&
+                                       i.ClassId == request.ClassId &&
+                                       (i.Status == "PENDING" || i.Status == "PAID"));
+
+                    if (hasValidInvoice || existingEnrollment.Status == "ACTIVE")
+                    {
+                        return BadRequest(new { message = "Học sinh này đã được đăng ký hoặc đang có hóa đơn chờ thanh toán cho lớp này!" });
+                    }
+                    else
+                    {
+                        // Tái sử dụng chỗ ngồi nếu các hóa đơn trước đó đều FAILED
+                        existingEnrollment.Status = "PENDING";
+                    }
                 }
 
-                // 2. Bắt đầu phiên làm việc với Database (Tạo chỗ ngồi PENDING)
-                var classStudent = new ClassStudent
+                // 3. Nếu chưa từng đăng ký, tạo chỗ ngồi PENDING mới
+                ClassStudent classStudent = existingEnrollment;
+                if (classStudent == null)
                 {
-                    StudentId = request.StudentId,
-                    ClassId = request.ClassId,
-                    Status = "PENDING" // Kích hoạt thành ACTIVE khi VNPay gọi IPN
-                };
-                _context.ClassStudents.Add(classStudent);
+                    classStudent = new ClassStudent
+                    {
+                        StudentId = request.StudentId,
+                        ClassId = request.ClassId,
+                        Status = "PENDING"
+                    };
+                    _context.ClassStudents.Add(classStudent);
+                }
 
-                // 3. Tạo Hóa đơn (INVOICE)
+                // 4. Tạo Hóa đơn (INVOICE)
                 var invoice = new Invoice
                 {
                     ParentId = request.ParentId,
@@ -54,20 +87,17 @@ namespace ToanTuDuy.Controllers
                     ClassId = request.ClassId,
                     Amount = request.Amount > 0 ? request.Amount : 200000,
                     Status = "PENDING",
-                    // Tạo mã tạm thời cho TxnRef để vượt qua Unique Constraint, 
-                    // PaymentService sẽ tự động cập nhật lại mã chuẩn sau.
                     TxnRef = "TEMP_" + Guid.NewGuid().ToString("N").Substring(0, 10),
                     CreatedAt = DateTime.UtcNow,
-                    ClassStudent = classStudent // Gắn kết hóa đơn này với chỗ ngồi của bé
+                    ClassStudent = classStudent // Gắn kết với chỗ ngồi
                 };
 
                 _context.Invoices.Add(invoice);
-                await _context.SaveChangesAsync(); // Lưu xuống SQL để hệ thống sinh ra invoice.Id
+                await _context.SaveChangesAsync();
 
-                // 4. Tự động gọi PaymentService để lấy đường link VNPay
+                // 5. Lấy đường link VNPay
                 var paymentUrl = await _paymentService.CreatePaymentUrl(invoice.Id, HttpContext);
 
-                // 5. Trả kết quả về cho Mobile App
                 return Ok(new
                 {
                     message = "Tạo đơn hàng thành công!",

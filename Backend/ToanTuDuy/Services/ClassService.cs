@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -36,7 +35,10 @@ namespace ToanTuDuy.Services
                 UpdatedAt = c.UpdatedAt,
                 // Lấy tên Level và tên Giáo viên nếu có
                 CourseLevelName = c.CourseLevel != null ? c.CourseLevel.Name : "",
-                TeacherName = c.Teacher != null ? c.Teacher.FullName : null
+                TeacherName = c.Teacher != null ? c.Teacher.FullName : null,
+
+                // Đếm số lượng học sinh ACTIVE từ danh sách ClassStudents
+                ActiveStudentsCount = c.ClassStudents != null ? c.ClassStudents.Count(cs => cs.Status == "ACTIVE") : 0
             };
         }
 
@@ -45,6 +47,7 @@ namespace ToanTuDuy.Services
             var classes = await _context.Classes
                 .Include(c => c.CourseLevel)
                 .Include(c => c.Teacher) // Join với bảng giáo viên
+                .Include(c => c.ClassStudents) // Include để lấy dữ liệu tính slot
                 .ToListAsync();
 
             return classes.Select(MapToResponse);
@@ -55,6 +58,7 @@ namespace ToanTuDuy.Services
             var classes = await _context.Classes
                 .Include(c => c.CourseLevel)
                 .Include(c => c.Teacher)
+                .Include(c => c.ClassStudents) // Include để lấy dữ liệu tính slot
                 .Where(c => c.CourseLevelId == courseLevelId)
                 .ToListAsync();
 
@@ -66,6 +70,7 @@ namespace ToanTuDuy.Services
             var c = await _context.Classes
                 .Include(cls => cls.CourseLevel)
                 .Include(cls => cls.Teacher)
+                .Include(cls => cls.ClassStudents) // Include để lấy dữ liệu tính slot
                 .FirstOrDefaultAsync(cls => cls.Id == id);
 
             if (c == null) return null;

@@ -140,9 +140,10 @@ export default function CourseDetailScreen() {
         setIsProcessingPayment(false);
         Alert.alert("Lỗi thanh toán", "Hệ thống đang bận hoặc không thể kết nối tới VNPay.");
       }
-    } catch (error) {
+    } catch (error: any) {
       setIsProcessingPayment(false);
-      Alert.alert("Lỗi", "Đã xảy ra sự cố không mong muốn trong lúc xử lý thanh toán.");
+      // HIỂN THỊ CÂU LỖI TỪ BACKEND C# (Ví dụ: "Học sinh này đã được đăng ký...")
+      Alert.alert("Thông báo", error.message || "Đã xảy ra sự cố trong lúc xử lý thanh toán.");
     }
   };
 

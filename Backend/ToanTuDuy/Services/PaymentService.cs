@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +36,10 @@ namespace ToanTuDuy.Services
             pay.AddRequestData("vnp_Version", "2.1.0");
             pay.AddRequestData("vnp_Command", "pay");
             pay.AddRequestData("vnp_TmnCode", _configuration["VnPay:TmnCode"]!);
-            pay.AddRequestData("vnp_Amount", (invoice.Amount * 100).ToString()); // VNPay yêu cầu nhân 100
+
+            // SỬA LỖI: VNPay yêu cầu số tiền nhân 100 (Ví dụ: 1500000 -> 150000000)
+            pay.AddRequestData("vnp_Amount", (invoice.Amount * 100).ToString());
+
             pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", "VND");
             pay.AddRequestData("vnp_IpAddr", context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1");
@@ -64,7 +66,7 @@ namespace ToanTuDuy.Services
 
             var vnp_TxnRef = pay.GetResponseData("vnp_TxnRef");
             var vnp_SecureHash = collections.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString();
-            var vnp_ResponseCode = pay.GetResponseData("vnp_ResponseCode"); // Lấy thêm ResponseCode
+            var vnp_ResponseCode = pay.GetResponseData("vnp_ResponseCode");
 
             bool checkSignature = pay.ValidateSignature(vnp_SecureHash, _configuration["VnPay:HashSecret"]!);
             if (!checkSignature) return null; // Chữ ký giả mạo
@@ -76,8 +78,7 @@ namespace ToanTuDuy.Services
 
             if (invoice == null) return null;
 
-            // --- BẮT ĐẦU ĐOẠN CODE CẬP NHẬT TRẠNG THÁI TẠM THỜI CHO MÔI TRƯỜNG TEST ---
-            // Chỉ cập nhật nếu trạng thái đang là PENDING để tránh ghi đè
+            // Chỉ cập nhật nếu trạng thái đang là PENDING để tránh ghi đè dữ liệu
             if (invoice.Status == "PENDING" && vnp_ResponseCode == "00")
             {
                 invoice.Status = "PAID";
@@ -85,6 +86,7 @@ namespace ToanTuDuy.Services
                 invoice.TransactionId = pay.GetResponseData("vnp_TransactionNo");
                 invoice.PaidAt = DateTime.UtcNow;
 
+                // Kích hoạt chỗ ngồi của bé (đây là mấu chốt để Controller đếm Slot)
                 if (invoice.ClassStudent != null)
                 {
                     invoice.ClassStudent.Status = "ACTIVE";
@@ -92,7 +94,12 @@ namespace ToanTuDuy.Services
 
                 await _context.SaveChangesAsync();
             }
-            // --- KẾT THÚC ĐOẠN CODE CẬP NHẬT TRẠNG THÁI TẠM THỜI ---
+            else if (invoice.Status == "PENDING" && vnp_ResponseCode != "00")
+            {
+                // Nếu thanh toán thất bại/hủy, đánh dấu hóa đơn là FAILED
+                invoice.Status = "FAILED";
+                await _context.SaveChangesAsync();
+            }
 
             return invoice;
         }
@@ -126,7 +133,6 @@ namespace ToanTuDuy.Services
 
             if (invoice.Status == "PAID") return "{\"RspCode\":\"02\",\"Message\":\"Order already confirmed\"}";
 
-            // Xử lý trạng thái dựa trên mã VNPay trả về
             if (vnp_ResponseCode == "00")
             {
                 invoice.Status = "PAID";
@@ -136,7 +142,7 @@ namespace ToanTuDuy.Services
 
                 if (invoice.ClassStudent != null)
                 {
-                    invoice.ClassStudent.Status = "ACTIVE"; // Kích hoạt chỗ ngồi cho học sinh
+                    invoice.ClassStudent.Status = "ACTIVE";
                 }
             }
             else
@@ -145,7 +151,7 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
-            return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}"; // Phản hồi lại VNPay
+            return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}";
         }
     }
 }

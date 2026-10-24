@@ -8,7 +8,6 @@ export const paymentService = {
       let parentId = 0;
       try {
         const decoded: any = jwtDecode(token);
-   
         parentId = parseInt(decoded.nameid || decoded.sub || "0", 10);
       } catch (e) {
         console.error("Lỗi giải mã token để lấy ParentId:", e);
@@ -24,6 +23,7 @@ export const paymentService = {
       console.log("Đang gửi Request tạo Đăng ký với data:", requestBody);
 
       // 2. Gọi API Enrollment ( /register)
+      // 2. Gọi API Enrollment ( /register)
       const enrollResponse = await fetch(`${API_URL}/api/enrollment/register`, {
         method: 'POST',
         headers: {
@@ -33,11 +33,26 @@ export const paymentService = {
         body: JSON.stringify(requestBody)
       });
 
+      // --- SỬA ĐOẠN NÀY ĐỂ BẮT ĐÚNG THÔNG BÁO LỖI TỪ C# ---
       if (!enrollResponse.ok) {
-        const errorText = await enrollResponse.text();
-        console.log("CHI TIẾT LỖI TỪ BACKEND ENROLLMENT:", enrollResponse.status, errorText);
-        throw new Error(`Mã lỗi: ${enrollResponse.status} - Chi tiết: ${errorText}`);
+        let errorMessage = "Không thể tạo hóa đơn lúc này.";
+        try {
+            // Cố gắng đọc lỗi dạng JSON
+            const errorData = await enrollResponse.json(); 
+            if (errorData && errorData.message) {
+                errorMessage = errorData.message;
+            }
+        } catch (e) {
+            // Nếu không phải JSON, thử đọc dạng text
+            const errorText = await enrollResponse.text();
+            if (errorText) errorMessage = errorText;
+        }
+        
+        console.log("CHI TIẾT LỖI TỪ BACKEND ENROLLMENT:", enrollResponse.status, errorMessage);
+        // Ném lỗi ra ngoài để màn hình giao diện nhận được
+        throw new Error(errorMessage);
       }
+      // ----------------------------------------------------
 
       const enrollData = await enrollResponse.json();
       console.log("Tạo Đăng ký thành công, dữ liệu trả về:", enrollData);
@@ -49,9 +64,10 @@ export const paymentService = {
           throw new Error('Đăng ký thành công nhưng không lấy được link VNPay từ Server.');
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Lỗi quy trình thanh toán VNPay:', error);
-      return null;
+      // QUAN TRỌNG: Không return null nữa, mà ném (throw) lỗi ra để màn hình giao diện nhận được
+      throw error; 
     }
   }
 };
