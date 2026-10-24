@@ -64,11 +64,36 @@ namespace ToanTuDuy.Services
 
             var vnp_TxnRef = pay.GetResponseData("vnp_TxnRef");
             var vnp_SecureHash = collections.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString();
+            var vnp_ResponseCode = pay.GetResponseData("vnp_ResponseCode"); // Lấy thêm ResponseCode
 
             bool checkSignature = pay.ValidateSignature(vnp_SecureHash, _configuration["VnPay:HashSecret"]!);
             if (!checkSignature) return null; // Chữ ký giả mạo
 
-            var invoice = await _context.Invoices.FirstOrDefaultAsync(i => i.TxnRef == vnp_TxnRef);
+            // Load Invoice kèm theo ClassStudent
+            var invoice = await _context.Invoices
+                .Include(i => i.ClassStudent)
+                .FirstOrDefaultAsync(i => i.TxnRef == vnp_TxnRef);
+
+            if (invoice == null) return null;
+
+            // --- BẮT ĐẦU ĐOẠN CODE CẬP NHẬT TRẠNG THÁI TẠM THỜI CHO MÔI TRƯỜNG TEST ---
+            // Chỉ cập nhật nếu trạng thái đang là PENDING để tránh ghi đè
+            if (invoice.Status == "PENDING" && vnp_ResponseCode == "00")
+            {
+                invoice.Status = "PAID";
+                invoice.PaymentMethod = "VNPAY";
+                invoice.TransactionId = pay.GetResponseData("vnp_TransactionNo");
+                invoice.PaidAt = DateTime.UtcNow;
+
+                if (invoice.ClassStudent != null)
+                {
+                    invoice.ClassStudent.Status = "ACTIVE";
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            // --- KẾT THÚC ĐOẠN CODE CẬP NHẬT TRẠNG THÁI TẠM THỜI ---
+
             return invoice;
         }
 
