@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+.filter-select {
+  @apply w-full text-sm bg-white border border-orange-200 rounded-xl px-3 py-2
+         text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300
+         transition-all duration-150;
+}
+
 /* Custom scrollbar for sidebar */
 .sidebar-scroll::-webkit-scrollbar {
   width: 4px;

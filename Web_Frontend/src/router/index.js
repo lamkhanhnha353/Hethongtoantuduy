@@ -3,6 +3,11 @@ import Layout from '@/layouts/Layout.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
+// Training
+import CoursesView      from '@/views/training/CoursesView.vue'
+import CourseDetailView from '@/views/training/CourseDetailView.vue'
+import ClassesView      from '@/views/training/ClassesView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -17,9 +22,14 @@ const router = createRouter({
         { path: 'users/teachers', component: PlaceholderView, meta: { title: 'Giáo viên' } },
         { path: 'users/roles', component: PlaceholderView, meta: { title: 'Phân quyền & Bảo mật' } },
 
-        // Training
-        { path: 'training/courses', component: PlaceholderView, meta: { title: 'Danh mục Khóa học' } },
-        { path: 'training/classes', component: PlaceholderView, meta: { title: 'Danh sách Lớp học' } },
+        // Training — Courses
+        { path: 'training/courses', name: 'courses', component: CoursesView, meta: { title: 'Danh mục Khóa học' } },
+        { path: 'training/courses/:id', name: 'course-detail', component: CourseDetailView, meta: { title: 'Chi tiết Khóa học' } },
+
+        // Training — Classes
+        { path: 'training/classes', name: 'classes', component: ClassesView, meta: { title: 'Danh sách Lớp học' } },
+
+        // Training — Schedule
         { path: 'training/schedule', component: PlaceholderView, meta: { title: 'Lịch học & Thời khóa biểu' } },
 
         // Learning

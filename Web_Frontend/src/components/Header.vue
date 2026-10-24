@@ -221,7 +221,9 @@ const routeTitleMap = {
   '/account/profile': 'Thông tin cá nhân',
   '/account/password': 'Đổi mật khẩu / PIN',
 }
-const pageTitle = computed(() => routeTitleMap[route.path] ?? 'EduAdmin')
+const pageTitle = computed(() =>
+  route.meta?.title ?? routeTitleMap[route.path] ?? 'EduAdmin'
+)
 
 // ─── User info ───────────────────────────────────────────────────────────────
 const userName = ref('Nguyễn Admin')
