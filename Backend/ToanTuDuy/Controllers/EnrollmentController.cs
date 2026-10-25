@@ -1,10 +1,13 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 using ToanTuDuy.Services;
 
@@ -23,6 +26,56 @@ namespace ToanTuDuy.Controllers
             _paymentService = paymentService;
         }
 
+        [Authorize(Roles = "Parent")]
+        [HttpGet("course-level/{courseLevelId:int}/registrations")]
+        public async Task<IActionResult> GetCourseLevelRegistrations(int courseLevelId)
+        {
+            var accountId = User.GetAccountId();
+            var studentIds = _context.StudentProfiles
+                .Where(s => s.Parent!.AccountId == accountId)
+                .Select(s => s.Id);
+
+            var invoiceRegistrations = await _context.Invoices
+                .AsNoTracking()
+                .Where(i => studentIds.Contains(i.StudentId)
+                    && i.Class.CourseLevelId == courseLevelId
+                    && (i.Status == "PENDING" || i.Status == "PAID"))
+                .Select(i => new
+                {
+                    studentId = i.StudentId,
+                    classId = i.ClassId,
+                    className = i.Class.Name,
+                    studentName = i.Student.FullName,
+                    status = i.Status == "PAID" ? "ACTIVE" : "PENDING"
+                })
+                .ToListAsync();
+
+            var activeRegistrations = await _context.ClassStudents
+                .AsNoTracking()
+                .Where(cs => studentIds.Contains(cs.StudentId)
+                    && cs.Class.CourseLevelId == courseLevelId
+                    && cs.Status == "ACTIVE")
+                .Select(cs => new
+                {
+                    studentId = cs.StudentId,
+                    classId = cs.ClassId,
+                    className = cs.Class.Name,
+                    studentName = cs.Student.FullName,
+                    status = "ACTIVE"
+                })
+                .ToListAsync();
+
+            var registrations = invoiceRegistrations
+                .Concat(activeRegistrations)
+                .GroupBy(registration => registration.studentId)
+                .Select(group => group
+                    .OrderBy(registration => registration.status == "ACTIVE" ? 0 : 1)
+                    .First())
+                .ToList();
+
+            return Ok(registrations);
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> RegisterClass([FromBody] EnrollmentRequest request)
         {
@@ -35,6 +88,24 @@ namespace ToanTuDuy.Controllers
 
                 if (classInfo == null)
                     return NotFound(new { message = "Không tìm thấy lớp học này." });
+
+                var hasActiveEnrollment = await _context.ClassStudents
+                    .AnyAsync(cs => cs.StudentId == request.StudentId
+                        && cs.Class.CourseLevelId == classInfo.CourseLevelId
+                        && cs.Status == "ACTIVE");
+
+                var hasValidInvoice = await _context.Invoices
+                    .AnyAsync(i => i.StudentId == request.StudentId
+                        && i.Class.CourseLevelId == classInfo.CourseLevelId
+                        && (i.Status == "PENDING" || i.Status == "PAID"));
+
+                if (hasActiveEnrollment || hasValidInvoice)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Học sinh này đã đăng ký hoặc đang có hóa đơn chờ thanh toán cho khóa học này."
+                    });
+                }
 
                 // Đếm số lượng học sinh đã thanh toán thành công (ACTIVE)
                 int activeStudents = classInfo.ClassStudents.Count(cs => cs.Status == "ACTIVE");
@@ -49,21 +120,8 @@ namespace ToanTuDuy.Controllers
 
                 if (existingEnrollment != null)
                 {
-                    // Truy vấn trực tiếp từ bảng Invoices thay vì dùng .Include()
-                    bool hasValidInvoice = await _context.Invoices
-                        .AnyAsync(i => i.StudentId == request.StudentId &&
-                                       i.ClassId == request.ClassId &&
-                                       (i.Status == "PENDING" || i.Status == "PAID"));
-
-                    if (hasValidInvoice || existingEnrollment.Status == "ACTIVE")
-                    {
-                        return BadRequest(new { message = "Học sinh này đã được đăng ký hoặc đang có hóa đơn chờ thanh toán cho lớp này!" });
-                    }
-                    else
-                    {
-                        // Tái sử dụng chỗ ngồi nếu các hóa đơn trước đó đều FAILED
-                        existingEnrollment.Status = "PENDING";
-                    }
+                    // Tái sử dụng chỗ ngồi nếu các hóa đơn trước đó đều FAILED.
+                    existingEnrollment.Status = "PENDING";
                 }
 
                 // 3. Nếu chưa từng đăng ký, tạo chỗ ngồi PENDING mới

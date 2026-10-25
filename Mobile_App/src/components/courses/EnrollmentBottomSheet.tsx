@@ -30,12 +30,21 @@ interface EnrollmentBottomSheetProps {
   onConfirm: (studentId: number, classId: number) => void;
 }
 
+interface CourseEnrollment {
+  studentId: number;
+  classId: number;
+  className: string;
+  studentName: string;
+  status: 'ACTIVE' | 'PENDING';
+}
+
 export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: EnrollmentBottomSheetProps) {
   const insets = useSafeAreaInsets();
   const { session } = useSession(); 
   
   const [students, setStudents] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
 
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
@@ -77,17 +86,32 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
         let classData = [];
         if (classRes.ok && classText) classData = JSON.parse(classText);
 
+        const enrollmentRes = await fetch(
+          `${API_URL}/api/enrollment/course-level/${course.id}/registrations`,
+          { headers: { Authorization: ['Bearer', token].join(' ') } }
+        );
+        if (!enrollmentRes.ok) {
+          throw new Error('Không thể tải trạng thái đăng ký khóa học.');
+        }
+        const enrollmentData = await enrollmentRes.json();
+
         const safeStudents = Array.isArray(studentData) ? studentData : [];
         const safeClasses = Array.isArray(classData) ? classData : [];
+        const safeEnrollments = Array.isArray(enrollmentData) ? enrollmentData : [];
 
         setStudents(safeStudents);
         setClasses(safeClasses);
+        setEnrollments(safeEnrollments);
+        setSelectedClass(null);
 
         if (safeStudents.length > 0) {
           setSelectedStudent(safeStudents[0].id);
+        } else {
+          setSelectedStudent(null);
         }
       } catch (error) {
         console.error("Lỗi fetch enrollment data:", error);
+        Alert.alert('Lỗi', error instanceof Error ? error.message : 'Không thể tải thông tin đăng ký.');
       } finally {
         setIsFetchingData(false);
       }
@@ -98,10 +122,26 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
 
   if (!visible || !course) return null;
 
-  const canSubmit = !!selectedStudent && !!selectedClass;
+  const selectedEnrollment = enrollments.find(enrollment => enrollment.studentId === selectedStudent);
+  const canSubmit = !!selectedStudent && (!!selectedClass || !!selectedEnrollment);
+  const selectedStudentName = students.find(student => student.id === selectedStudent)?.fullName ?? 'Bé';
+
+  const showAlreadyEnrolledMessage = () => {
+    if (!selectedEnrollment) return false;
+
+    const message = selectedEnrollment.status === 'PENDING'
+      ? `${selectedStudentName} đã có hóa đơn chờ thanh toán cho khóa học này tại lớp ${selectedEnrollment.className}. Vui lòng thanh toán hóa đơn hiện tại, không cần đăng ký lại.`
+      : `${selectedStudentName} đã đăng ký khóa học này tại lớp ${selectedEnrollment.className}.`;
+
+    Alert.alert('Đã đăng ký khóa học', message);
+    return true;
+  };
 
   const handleBookingRequest = () => {
-    if (!selectedStudent || !selectedClass) return;
+    if (!selectedStudent) return;
+    if (showAlreadyEnrolledMessage()) return;
+    if (!selectedClass) return;
+
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
@@ -170,6 +210,7 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
             <View className="flex-row flex-wrap gap-3 mb-6">
               {students.map((student) => {
                 const isSelected = selectedStudent === student.id;
+                const hasEnrollment = enrollments.some(enrollment => enrollment.studentId === student.id);
                 const avatarLetter = student.fullName ? student.fullName.charAt(0).toUpperCase() : 'A';
                 return (
                   <Pressable
@@ -193,6 +234,9 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                       <Text className="text-[14px] font-bold" style={{ color: isSelected ? C.indigo900 : C.slate700 }}>
                         {student.fullName}
                       </Text>
+                      {hasEnrollment && (
+                        <Text className="text-[10px] font-bold text-emerald-700">Đã đăng ký khóa học này</Text>
+                      )}
                     </View>
                   </Pressable>
                 );
@@ -203,6 +247,20 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                 <Text className="text-[13px] font-bold text-slate-600">Thêm hồ sơ</Text>
               </Pressable>
             </View>
+            {selectedEnrollment && (
+              <View className="flex-row items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100 mb-6">
+                <Feather
+                  name={selectedEnrollment.status === 'PENDING' ? 'clock' : 'check-circle'}
+                  size={17}
+                  color={C.emerald700}
+                />
+                <Text className="flex-1 text-[12px] font-semibold text-emerald-900">
+                  {selectedEnrollment.status === 'PENDING'
+                    ? `${selectedStudentName} đang có hóa đơn chờ thanh toán tại lớp ${selectedEnrollment.className}.`
+                    : `${selectedStudentName} đã đăng ký khóa học này tại lớp ${selectedEnrollment.className}.`}
+                </Text>
+              </View>
+            )}
 
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-[14px] font-bold text-slate-900">2. Chọn lịch học phù hợp</Text>
@@ -232,6 +290,7 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                   <Pressable
                     key={cls.id}
                     onPress={() => {
+                        if (showAlreadyEnrolledMessage()) return;
                         if (!isFull) setConfirmingClass(cls);
                     }}
                     className={`p-4 rounded-2xl border overflow-hidden ${isFull ? 'opacity-60' : ''}`}
@@ -288,17 +347,40 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
               })}
             </View>
 
-            <Text className="text-[14px] font-bold text-slate-900 mb-3">3. Thông tin thanh toán</Text>
-            <View className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-[13px] text-slate-500">Học phí gốc</Text>
-                <Text className="text-[13px] font-medium text-slate-700">{course.price?.toLocaleString('vi-VN')}đ</Text>
+           <Text className="text-[14px] font-bold text-slate-900 mb-3">3. Thông tin thanh toán</Text>
+            
+            {/* Cảnh báo trạng thái đăng ký */}
+            {selectedEnrollment && selectedEnrollment.status === 'ACTIVE' && (
+              <View className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 mb-4 flex-row items-center gap-3">
+                <Feather name="check-circle" size={20} color="#059669" />
+                <Text className="text-emerald-700 text-[13px] font-medium flex-1">
+                  Bé đã được ghi danh chính thức vào lớp học này. Bạn không cần thao tác gì thêm.
+                </Text>
               </View>
-              <View className="flex-row justify-between items-center mt-2 pt-2 border-t border-slate-200">
-                <Text className="text-[14px] font-bold text-slate-900">Tổng thanh toán</Text>
-                <Text className="text-[20px] font-black text-indigo-600">{course.price?.toLocaleString('vi-VN')}đ</Text>
+            )}
+
+            {selectedEnrollment && selectedEnrollment.status === 'PENDING' && (
+              <View className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-4 flex-row items-center gap-3">
+                <Feather name="alert-circle" size={20} color="#d97706" />
+                <Text className="text-amber-700 text-[13px] font-medium flex-1">
+                  Bé đang có hóa đơn chờ thanh toán cho lớp này. Vui lòng kiểm tra mục Hóa đơn để tiếp tục.
+                </Text>
               </View>
-            </View>
+            )}
+
+            {/* Chỉ hiển thị khối tiền tệ nếu bé chưa đăng ký lớp này */}
+            {(!selectedEnrollment || (selectedEnrollment && selectedEnrollment.status !== 'ACTIVE')) && (
+              <View className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-[13px] text-slate-500">Học phí gốc</Text>
+                  <Text className="text-[13px] font-medium text-slate-700">{course.price?.toLocaleString('vi-VN')}đ</Text>
+                </View>
+                <View className="flex-row justify-between items-center mt-2 pt-2 border-t border-slate-200">
+                  <Text className="text-[14px] font-bold text-slate-900">Tổng thanh toán</Text>
+                  <Text className="text-[20px] font-black text-indigo-600">{course.price?.toLocaleString('vi-VN')}đ</Text>
+                </View>
+              </View>
+            )}
           </ScrollView>
         )}
 
@@ -316,7 +398,13 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                 <Ionicons name="bookmark" size={18} color={canSubmit ? 'white' : C.slate400} />
               )}
               <Text className="font-black text-[15px]" style={{ color: canSubmit ? C.white : C.slate400 }}>
-                {isSubmitting ? 'ĐANG GIỮ CHỖ...' : 'XÁC NHẬN GIỮ CHỖ'}
+                {isSubmitting
+                  ? 'ĐANG XỬ LÝ...'
+                  : selectedEnrollment
+                    ? selectedEnrollment.status === 'PENDING' 
+                        ? 'ĐANG CHỜ THANH TOÁN' 
+                        : 'BÉ ĐÃ ĐĂNG KÝ'
+                    : 'XÁC NHẬN GIỮ CHỖ'}
               </Text>
             </Pressable>
             <Text className="text-center text-[11px] font-medium text-slate-500 mt-3">

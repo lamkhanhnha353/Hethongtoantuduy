@@ -20,7 +20,7 @@ export const paymentService = {
         amount: coursePrice // Truyền Amount vào request
       };
 
-      console.log("Đang gửi Request tạo Đăng ký với data:", requestBody);
+      // console.log("Đang gửi Request tạo Đăng ký với data:", requestBody);
 
       // 2. Gọi API Enrollment ( /register)
       // 2. Gọi API Enrollment ( /register)
@@ -48,14 +48,14 @@ export const paymentService = {
             if (errorText) errorMessage = errorText;
         }
         
-        console.log("CHI TIẾT LỖI TỪ BACKEND ENROLLMENT:", enrollResponse.status, errorMessage);
+        // console.log("CHI TIẾT LỖI TỪ BACKEND ENROLLMENT:", enrollResponse.status, errorMessage);
         // Ném lỗi ra ngoài để màn hình giao diện nhận được
         throw new Error(errorMessage);
       }
       // ----------------------------------------------------
 
       const enrollData = await enrollResponse.json();
-      console.log("Tạo Đăng ký thành công, dữ liệu trả về:", enrollData);
+      // console.log("Tạo Đăng ký thành công, dữ liệu trả về:", enrollData);
 
       // 3. Backend đã trả về paymentUrl, ta chỉ việc lấy ra dùng
       if (enrollData.paymentUrl) {
