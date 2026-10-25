@@ -86,6 +86,8 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();   // thanh toán
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
 
+// builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
+
 // Gửi email xác minh tài khoản qua Resend
 builder.Services.AddResend(options =>
 {

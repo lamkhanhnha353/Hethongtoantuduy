@@ -27,10 +27,12 @@ interface EnrollmentBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   course: any;
-  onConfirm: (studentId: number, classId: number) => void;
+  onConfirm: (studentId: number, classId: number) => Promise<number>;
+  onPayInvoice: (invoiceId: number, paymentUrl?: string) => void;
 }
 
 interface CourseEnrollment {
+  invoiceId: number | null;
   studentId: number;
   classId: number;
   className: string;
@@ -38,7 +40,10 @@ interface CourseEnrollment {
   status: 'ACTIVE' | 'PENDING';
 }
 
-export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: EnrollmentBottomSheetProps) {
+const isValidInvoiceId = (invoiceId: number | null | undefined): invoiceId is number =>
+  typeof invoiceId === 'number' && Number.isInteger(invoiceId) && invoiceId > 0;
+
+export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm, onPayInvoice }: EnrollmentBottomSheetProps) {
   const insets = useSafeAreaInsets();
   const { session } = useSession(); 
   
@@ -97,7 +102,31 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
 
         const safeStudents = Array.isArray(studentData) ? studentData : [];
         const safeClasses = Array.isArray(classData) ? classData : [];
-        const safeEnrollments = Array.isArray(enrollmentData) ? enrollmentData : [];
+        const safeEnrollments: CourseEnrollment[] = Array.isArray(enrollmentData)
+          ? enrollmentData
+              .map(item => {
+                const rawInvoiceId = item.invoiceId ?? item.InvoiceId;
+                const invoiceId = rawInvoiceId === null || rawInvoiceId === undefined
+                  ? null
+                  : Number(rawInvoiceId);
+                const studentId = Number(item.studentId ?? item.StudentId);
+                const classId = Number(item.classId ?? item.ClassId);
+
+                return {
+                  invoiceId: invoiceId !== null && Number.isInteger(invoiceId) && invoiceId > 0 ? invoiceId : null,
+                  studentId,
+                  classId,
+                  className: item.className ?? item.ClassName ?? 'Lớp đã chọn',
+                  studentName: item.studentName ?? item.StudentName ?? '',
+                  status: (item.status ?? item.Status) as CourseEnrollment['status'],
+                };
+              })
+              .filter(enrollment =>
+                Number.isInteger(enrollment.studentId)
+                && Number.isInteger(enrollment.classId)
+                && (enrollment.status === 'ACTIVE' || enrollment.status === 'PENDING')
+              )
+          : [];
 
         setStudents(safeStudents);
         setClasses(safeClasses);
@@ -123,36 +152,83 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
   if (!visible || !course) return null;
 
   const selectedEnrollment = enrollments.find(enrollment => enrollment.studentId === selectedStudent);
-  const canSubmit = !!selectedStudent && (!!selectedClass || !!selectedEnrollment);
+  const canSubmit = !!selectedStudent && (
+    selectedEnrollment?.status === 'PENDING'
+      ? true
+      : !selectedEnrollment && !!selectedClass
+  );
   const selectedStudentName = students.find(student => student.id === selectedStudent)?.fullName ?? 'Bé';
 
   const showAlreadyEnrolledMessage = () => {
     if (!selectedEnrollment) return false;
 
     const message = selectedEnrollment.status === 'PENDING'
-      ? `${selectedStudentName} đã có hóa đơn chờ thanh toán cho khóa học này tại lớp ${selectedEnrollment.className}. Vui lòng thanh toán hóa đơn hiện tại, không cần đăng ký lại.`
+      ? isValidInvoiceId(selectedEnrollment.invoiceId)
+        ? `${selectedStudentName} đã có hóa đơn chờ thanh toán tại lớp ${selectedEnrollment.className}. Vui lòng thanh toán hóa đơn hiện tại.`
+        : `${selectedStudentName} vẫn đang giữ chỗ tại lớp ${selectedEnrollment.className}. Hãy tạo lại hóa đơn bằng nút bên dưới để tiếp tục.`
       : `${selectedStudentName} đã đăng ký khóa học này tại lớp ${selectedEnrollment.className}.`;
 
     Alert.alert('Đã đăng ký khóa học', message);
     return true;
   };
 
-  const handleBookingRequest = () => {
+  const createReservation = async (studentId: number, classId: number, seatAlreadyReserved = false) => {
+    setIsSubmitting(true);
+    try {
+      const invoiceId = await onConfirm(studentId, classId);
+      const reservedClass = classes.find(cls => cls.id === classId);
+      const enrollment: CourseEnrollment = {
+        invoiceId,
+        studentId,
+        classId,
+        className: reservedClass?.name ?? 'Lớp đã chọn',
+        studentName: students.find(student => student.id === studentId)?.fullName ?? 'Bé',
+        status: 'PENDING',
+      };
+
+      setEnrollments(current => [
+        ...current.filter(item => item.studentId !== studentId),
+        enrollment,
+      ]);
+      if (!seatAlreadyReserved) {
+        setClasses(current => current.map(cls =>
+          cls.id === classId
+            ? { ...cls, activeStudentsCount: (cls.activeStudentsCount ?? 0) + 1 }
+            : cls
+        ));
+      }
+      setShowResult(true);
+    } catch (error) {
+      console.error('Lỗi giữ chỗ khóa học:', error);
+      Alert.alert('Không thể giữ chỗ', error instanceof Error ? error.message : 'Đã xảy ra lỗi khi đăng ký.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBookingRequest = async () => {
     if (!selectedStudent) return;
-    if (showAlreadyEnrolledMessage()) return;
+    if (selectedEnrollment?.status === 'ACTIVE') {
+      showAlreadyEnrolledMessage();
+      return;
+    }
+    if (selectedEnrollment?.status === 'PENDING') {
+      if (isValidInvoiceId(selectedEnrollment.invoiceId)) {
+        onPayInvoice(selectedEnrollment.invoiceId);
+      } else {
+        await createReservation(selectedStudent, selectedEnrollment.classId, true);
+      }
+      return;
+    }
     if (!selectedClass) return;
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setShowResult(true);
-    }, 1500);
+    await createReservation(selectedStudent, selectedClass);
   };
 
   const handlePayNow = () => {
     setShowResult(false);
-    if (selectedStudent && selectedClass) {
-      onConfirm(selectedStudent, selectedClass);
+    if (selectedEnrollment && isValidInvoiceId(selectedEnrollment.invoiceId)) {
+      onPayInvoice(selectedEnrollment.invoiceId);
     }
   };
 
@@ -210,7 +286,8 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
             <View className="flex-row flex-wrap gap-3 mb-6">
               {students.map((student) => {
                 const isSelected = selectedStudent === student.id;
-                const hasEnrollment = enrollments.some(enrollment => enrollment.studentId === student.id);
+                const studentEnrollment = enrollments.find(enrollment => enrollment.studentId === student.id);
+                const hasEnrollment = !!studentEnrollment;
                 const avatarLetter = student.fullName ? student.fullName.charAt(0).toUpperCase() : 'A';
                 return (
                   <Pressable
@@ -235,7 +312,9 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                         {student.fullName}
                       </Text>
                       {hasEnrollment && (
-                        <Text className="text-[10px] font-bold text-emerald-700">Đã đăng ký khóa học này</Text>
+                        <Text className="text-[10px] font-bold text-emerald-700">
+                          {studentEnrollment.status === 'PENDING' ? 'Đã giữ chỗ - chờ thanh toán' : 'Đã đăng ký khóa học'}
+                        </Text>
                       )}
                     </View>
                   </Pressable>
@@ -256,7 +335,9 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                 />
                 <Text className="flex-1 text-[12px] font-semibold text-emerald-900">
                   {selectedEnrollment.status === 'PENDING'
-                    ? `${selectedStudentName} đang có hóa đơn chờ thanh toán tại lớp ${selectedEnrollment.className}.`
+                    ? isValidInvoiceId(selectedEnrollment.invoiceId)
+                      ? `${selectedStudentName} đã giữ chỗ tại lớp ${selectedEnrollment.className}; hóa đơn đang chờ thanh toán.`
+                      : `${selectedStudentName} vẫn đang giữ chỗ tại lớp ${selectedEnrollment.className}; hóa đơn trước chưa thanh toán thành công. Hãy tạo lại hóa đơn để tiếp tục.`
                     : `${selectedStudentName} đã đăng ký khóa học này tại lớp ${selectedEnrollment.className}.`}
                 </Text>
               </View>
@@ -271,6 +352,7 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                  <Text className="text-slate-500 text-sm py-4 text-center">Hiện chưa có lớp học nào được mở cho khóa này.</Text>
               ) : classes.map((cls) => {
                 const isSelected = selectedClass === cls.id;
+                const isReservedForSelectedStudent = selectedEnrollment?.classId === cls.id;
                 
                 // --- SỬA LỖI MAPPING SỐ SLOT TRỐNG TẠI ĐÂY ---
                // Lấy trực tiếp con số đếm từ Backend
@@ -290,7 +372,10 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                   <Pressable
                     key={cls.id}
                     onPress={() => {
-                        if (showAlreadyEnrolledMessage()) return;
+                        if (selectedEnrollment) {
+                          showAlreadyEnrolledMessage();
+                          return;
+                        }
                         if (!isFull) setConfirmingClass(cls);
                     }}
                     className={`p-4 rounded-2xl border overflow-hidden ${isFull ? 'opacity-60' : ''}`}
@@ -308,6 +393,18 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
 
                     <View className="flex-row items-center justify-between">
                       <View className="flex-1 pr-2 mt-1">
+                        {isReservedForSelectedStudent && selectedEnrollment?.status === 'PENDING' && (
+                          <View className="self-start flex-row items-center gap-1 bg-amber-100 px-2 py-1 rounded-lg mb-2">
+                            <Feather name="clock" size={12} color="#b45309" />
+                            <Text className="text-[10px] font-bold text-amber-800">ĐÃ ĐĂNG KÝ - CHỜ THANH TOÁN</Text>
+                          </View>
+                        )}
+                        {isReservedForSelectedStudent && selectedEnrollment?.status === 'ACTIVE' && (
+                          <View className="self-start flex-row items-center gap-1 bg-emerald-100 px-2 py-1 rounded-lg mb-2">
+                            <Feather name="check-circle" size={12} color="#047857" />
+                            <Text className="text-[10px] font-bold text-emerald-800">ĐÃ THANH TOÁN</Text>
+                          </View>
+                        )}
                         <Text className="text-[15px] font-bold mb-2" style={{ color: isSelected && !isFull ? C.emerald900 : '#0f172a' }}>
                           {cls.name}
                         </Text>
@@ -363,7 +460,9 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
               <View className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-4 flex-row items-center gap-3">
                 <Feather name="alert-circle" size={20} color="#d97706" />
                 <Text className="text-amber-700 text-[13px] font-medium flex-1">
-                  Bé đang có hóa đơn chờ thanh toán cho lớp này. Vui lòng kiểm tra mục Hóa đơn để tiếp tục.
+                  {isValidInvoiceId(selectedEnrollment.invoiceId)
+                    ? 'Bé đã được giữ chỗ tại lớp này. Hóa đơn chưa thanh toán; nhấn nút bên dưới để thanh toán ngay hoặc quay lại sau.'
+                    : 'Bé vẫn đang giữ chỗ tại lớp này nhưng hóa đơn trước không còn hiệu lực. Nhấn nút bên dưới để tạo hóa đơn mới.'}
                 </Text>
               </View>
             )}
@@ -402,13 +501,13 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                   ? 'ĐANG XỬ LÝ...'
                   : selectedEnrollment
                     ? selectedEnrollment.status === 'PENDING' 
-                        ? 'ĐANG CHỜ THANH TOÁN' 
+                        ? isValidInvoiceId(selectedEnrollment.invoiceId) ? 'THANH TOÁN HÓA ĐƠN' : 'TẠO LẠI HÓA ĐƠN'
                         : 'BÉ ĐÃ ĐĂNG KÝ'
                     : 'XÁC NHẬN GIỮ CHỖ'}
               </Text>
             </Pressable>
             <Text className="text-center text-[11px] font-medium text-slate-500 mt-3">
-              Không lo mất slot. Giữ chỗ an toàn trong 48 giờ.
+              Slot được giữ khi hóa đơn đang chờ thanh toán. Hãy thanh toán hoặc hủy hóa đơn để giải phóng chỗ.
             </Text>
           </View>
         )}
@@ -457,9 +556,9 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm }: E
                 <Feather name="check" size={40} color="#059669" />
               </View>
 
-              <Text className="text-[20px] font-black text-slate-900 mb-2 text-center">Giữ chỗ thành công!</Text>
+              <Text className="text-[20px] font-black text-slate-900 mb-2 text-center">Đăng ký giữ chỗ thành công!</Text>
               <Text className="text-[14px] text-slate-500 text-center leading-relaxed mb-8 px-2">
-                Slot của bé đã được bảo lưu an toàn. Hóa đơn sẽ hết hạn sau <Text className="font-bold text-rose-500">48 giờ</Text>, bạn có muốn thanh toán ngay bây giờ không?
+                Bé {selectedStudentName} đã được giữ chỗ tại lớp {selectedEnrollment?.className} và đang chờ thanh toán. Vui lòng thanh toán để hoàn tất đăng ký. Bạn có thể thanh toán ngay hoặc quay lại sau.
               </Text>
 
               <View className="w-full gap-3">

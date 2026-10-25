@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
+using ToanTuDuy.Data;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
 
 namespace ToanTuDuy.Controllers
@@ -12,18 +16,43 @@ namespace ToanTuDuy.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
 
-        public PaymentController(IPaymentService paymentService, IConfiguration configuration)
+        public PaymentController(
+            IPaymentService paymentService,
+            IConfiguration configuration,
+            ApplicationDbContext context)
         {
             _paymentService = paymentService;
             _configuration = configuration;
+            _context = context;
         }
 
-        [HttpPost("create-url/{invoiceId}")]
+        [Authorize(Roles = "Parent")]
+        [HttpPost("create-url/{invoiceId:int}")]
         public async Task<IActionResult> CreatePaymentUrl(int invoiceId)
         {
             try
             {
+                if (invoiceId <= 0)
+                    return BadRequest(new { message = "Mã hóa đơn không hợp lệ." });
+
+                var accountId = User.GetAccountId();
+                var invoice = await _context.Invoices
+                    .Include(i => i.Parent)
+                    .Include(i => i.ClassStudent)
+                    .FirstOrDefaultAsync(i => i.Id == invoiceId && i.Parent.AccountId == accountId);
+
+                if (invoice == null)
+                    return NotFound(new { message = "Không tìm thấy hóa đơn của phụ huynh này." });
+
+                if (invoice.Status == "FAILED"
+                    && invoice.ClassStudent?.Status == "PENDING")
+                {
+                    invoice.Status = "PENDING";
+                    await _context.SaveChangesAsync();
+                }
+
                 var url = await _paymentService.CreatePaymentUrl(invoiceId, HttpContext);
                 return Ok(new { paymentUrl = url });
             }

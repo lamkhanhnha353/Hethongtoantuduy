@@ -84,66 +84,57 @@ export default function CourseDetailScreen() {
     if (id) fetchCourseDetail();
   }, [id]);
 
-  // Xử lý khi phụ huynh bấm "Thanh toán VNPay ngay" trên Bottom Sheet
-  // Xử lý khi phụ huynh bấm "Thanh toán VNPay ngay" trên Bottom Sheet
-  const handleConfirmEnrollment = async (studentId: number, classId: number) => {
-    setShowEnrollmentSheet(false); // Ẩn Bottom Sheet
-    setIsProcessingPayment(true);  // Hiển thị Overlay Loading
+  const getAccessToken = () => {
+    if (typeof session === 'string') {
+      try {
+        return JSON.parse(session).accessToken || session;
+      } catch {
+        return session;
+      }
+    }
+
+    return session && typeof session === 'object'
+      ? (session as any).accessToken
+      : '';
+  };
+
+  const handleConfirmEnrollment = (studentId: number, classId: number) =>
+    paymentService.createEnrollmentReservation(studentId, classId, course.price, getAccessToken());
+
+  const handlePayInvoice = async (invoiceId: number, paymentUrl?: string) => {
+    if (!Number.isInteger(invoiceId) || invoiceId <= 0) {
+      Alert.alert('Không thể thanh toán', 'Không tìm thấy mã hóa đơn hợp lệ. Vui lòng tải lại thông tin đăng ký.');
+      return;
+    }
+
+    setShowEnrollmentSheet(false);
+    setIsProcessingPayment(true);
 
     try {
-      // 1. Trích xuất Token chuẩn xác
-      let token = "";
-      if (typeof session === 'string') {
-        try {
-          token = JSON.parse(session).accessToken || session;
-        } catch { token = session; }
-      } else if (session) {
-        token = (session as any).accessToken;
-      }
+      const vnpayUrl = paymentUrl ?? await paymentService.getVNPayUrlForInvoice(invoiceId, getAccessToken());
+      let isLinkHandled = false;
 
-      // 2. Gọi API để Đăng ký và Lấy link thanh toán
-      const vnpayUrl = await paymentService.processEnrollmentAndGetVNPayUrl(studentId, classId, course.price, token);
+      const subscription = Linking.addEventListener('url', (event) => {
+        if (!isLinkHandled && event.url.includes('payment-result')) {
+          isLinkHandled = true;
+          const responseCode = new URL(event.url).searchParams.get('code');
+          WebBrowser.dismissBrowser();
+          router.push(`/payment-result?code=${responseCode}`);
+        }
+      });
 
-      if (vnpayUrl) {
-        // --- BẮT ĐẦU ĐOẠN CODE CẦN SỬA ---
-        
-        // Cờ kiểm soát việc xử lý link, tránh bị gọi 2 lần
-        let isLinkHandled = false;
-
-        // Thiết lập bộ lắng nghe Deep Link chủ động
-        const subscription = Linking.addEventListener('url', (event) => {
-          if (!isLinkHandled && event.url && event.url.includes('payment-result')) {
-            isLinkHandled = true;
-            
-            // Lấy mã code từ URL (ví dụ: ?code=00)
-            const urlObj = new URL(event.url);
-            const responseCode = urlObj.searchParams.get('code');
-
-            // 1. Đóng trình duyệt web ngay lập tức
-            WebBrowser.dismissBrowser();
-
-            // 2. Điều hướng chính quy bằng Expo Router sang trang kết quả
-            router.push(`/payment-result?code=${responseCode}`);
-          }
-        });
-
-        // Mở trình duyệt bằng openBrowserAsync (không dùng AuthSession nữa)
+      try {
         await WebBrowser.openBrowserAsync(vnpayUrl);
-
-        // Hủy lắng nghe sau khi trình duyệt đã đóng 
-        // (Khách tự bấm X hoặc đã nhảy trang qua lệnh dismissBrowser ở trên)
+      } finally {
         subscription.remove();
-        setIsProcessingPayment(false); // Tắt Overlay loading
-
-        // --- KẾT THÚC ĐOẠN CODE CẦN SỬA ---
-      } else {
-        setIsProcessingPayment(false);
-        Alert.alert("Lỗi thanh toán", "Hệ thống đang bận hoặc không thể kết nối tới VNPay.");
       }
-    } catch (error: any) {
+    } catch (error) {
+      Alert.alert(
+        'Lỗi thanh toán',
+        error instanceof Error ? error.message : 'Đã xảy ra sự cố trong lúc xử lý thanh toán.'
+      );
+    } finally {
       setIsProcessingPayment(false);
-      // HIỂN THỊ CÂU LỖI TỪ BACKEND C# (Ví dụ: "Học sinh này đã được đăng ký...")
-      Alert.alert("Thông báo", error.message || "Đã xảy ra sự cố trong lúc xử lý thanh toán.");
     }
   };
 
@@ -304,6 +295,7 @@ export default function CourseDetailScreen() {
         onClose={() => setShowEnrollmentSheet(false)}
         course={course}
         onConfirm={handleConfirmEnrollment}
+        onPayInvoice={handlePayInvoice}
       />
 
       {/* OVERLAY LOADING: Hiển thị khi đang chờ gọi API thanh toán */}

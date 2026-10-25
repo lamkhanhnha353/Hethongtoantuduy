@@ -38,7 +38,8 @@ namespace ToanTuDuy.Services
                 TeacherName = c.Teacher != null ? c.Teacher.FullName : null,
 
                 // Đếm số lượng học sinh ACTIVE từ danh sách ClassStudents
-                ActiveStudentsCount = c.ClassStudents != null ? c.ClassStudents.Count(cs => cs.Status == "ACTIVE") : 0
+                // Đếm số lượng học sinh đã thanh toán (ACTIVE) và đang giữ chỗ (PENDING)
+                ActiveStudentsCount = c.ClassStudents != null ? c.ClassStudents.Count(cs => cs.Status == "ACTIVE" || cs.Status == "PENDING") : 0
             };
         }
 

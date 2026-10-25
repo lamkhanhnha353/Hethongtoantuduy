@@ -25,6 +25,10 @@ namespace ToanTuDuy.Services
         {
             var invoice = await _context.Invoices.FindAsync(invoiceId);
             if (invoice == null) throw new Exception("Không tìm thấy hóa đơn");
+            if (invoice.Status == "FAILED")
+                throw new InvalidOperationException("Hóa đơn thất bại cần được xác nhận lại trước khi thanh toán.");
+            if (invoice.Status != "PENDING")
+                throw new InvalidOperationException("Hóa đơn không ở trạng thái chờ thanh toán.");
 
             // Tạo mã giao dịch riêng biệt gửi VNPay (chống trùng lặp)
             invoice.TxnRef = $"INV{invoice.Id}_{DateTime.Now.Ticks}";
@@ -78,7 +82,6 @@ namespace ToanTuDuy.Services
 
             if (invoice == null) return null;
 
-            // Chỉ cập nhật nếu trạng thái đang là PENDING để tránh ghi đè dữ liệu
             if (invoice.Status == "PENDING" && vnp_ResponseCode == "00")
             {
                 invoice.Status = "PAID";
@@ -86,21 +89,20 @@ namespace ToanTuDuy.Services
                 invoice.TransactionId = pay.GetResponseData("vnp_TransactionNo");
                 invoice.PaidAt = DateTime.UtcNow;
 
-                // Kích hoạt chỗ ngồi của bé (đây là mấu chốt để Controller đếm Slot)
                 if (invoice.ClassStudent != null)
                 {
-                    invoice.ClassStudent.Status = "ACTIVE";
+                    invoice.ClassStudent.Status = "ACTIVE"; // Kích hoạt chỗ ngồi
                 }
-
-                await _context.SaveChangesAsync();
             }
             else if (invoice.Status == "PENDING" && vnp_ResponseCode != "00")
             {
-                // Nếu thanh toán thất bại/hủy, đánh dấu hóa đơn là FAILED
+                // THANH TOÁN THẤT BẠI HOẶC BỊ HỦY (Chỉ hủy hóa đơn, GIỮ NGUYÊN SLOT CỦA BÉ)
                 invoice.Status = "FAILED";
-                await _context.SaveChangesAsync();
+
+                // TUYỆT ĐỐI KHÔNG CANCEL CLASS_STUDENT Ở ĐÂY NỮA
             }
 
+            await _context.SaveChangesAsync();
             return invoice;
         }
 
@@ -148,6 +150,10 @@ namespace ToanTuDuy.Services
             else
             {
                 invoice.Status = "FAILED";
+                if (invoice.ClassStudent != null && invoice.ClassStudent.Status == "PENDING")
+                {
+                    invoice.ClassStudent.Status = "CANCELLED"; // Giải phóng slot
+                }
             }
 
             await _context.SaveChangesAsync();
