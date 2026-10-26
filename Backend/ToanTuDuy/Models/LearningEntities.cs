@@ -179,12 +179,11 @@ namespace ToanTuDuy.Models
         [ForeignKey(nameof(ClassId))]
         public Classes Class { get; set; }
     }
-    
+
 
     [Table("CLASS_STUDENT")]
     public class ClassStudent
     {
-        // ✅ THÊM MỚI: id riêng thay thế composite PK (ClassId, StudentId)
         [Key]
         [Column("id")]
         public int Id { get; set; }
@@ -195,20 +194,29 @@ namespace ToanTuDuy.Models
         [Column("student_id")]
         public int StudentId { get; set; }
 
+        // Cho phép Null để hỗ trợ ghi danh thủ công/học bổng không qua thanh toán app
+        [Column("invoice_id")]
+        public int? InvoiceId { get; set; }
+
         [Column("joined_at")]
-        public DateTime JoinedAt { get; set; }
+        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
-        // ✅ THÊM MỚI: status (từ script SQL)
+        // PENDING | ACTIVE | DROPPED
         [Column("status")]
-        public string? Status { get; set; }
+        public string Status { get; set; } = "ACTIVE";
 
-        // Navigation Properties
+        // --- Navigation Properties ---
         [ForeignKey(nameof(ClassId))]
         public Classes Class { get; set; }
 
         [ForeignKey(nameof(StudentId))]
         public StudentProfile Student { get; set; }
+
+        // Quan hệ ngược 1-1 về Invoice
+        [ForeignKey(nameof(InvoiceId))]
+        public Invoice? Invoice { get; set; }
     }
+
 
     [Table("INVOICE")]
     public class Invoice
@@ -226,24 +234,44 @@ namespace ToanTuDuy.Models
         [Column("class_id")]
         public int ClassId { get; set; }
 
-        // ✅ ĐỔI KIỂU: decimal → int (script SQL dùng INT cho amount)
+        // Mã đơn hàng gửi sang VNPay (vnp_TxnRef), kiểu chuỗi (khác với PayOS)
+        [Column("txn_ref")]
+        [MaxLength(100)]
+        public string TxnRef { get; set; } = null!;
+
         [Column("amount")]
         public int Amount { get; set; }
 
+        // PENDING | PAID | CANCELLED | FAILED | REFUNDED
         [Column("status")]
-        public string Status { get; set; }
+        public string Status { get; set; } = "PENDING";
 
+        // VNPAY | CASH
         [Column("payment_method")]
         public string? PaymentMethod { get; set; }
 
+        // Mã giao dịch do máy chủ VNPay sinh ra và trả về (vnp_TransactionNo)
         [Column("transaction_id")]
         public string? TransactionId { get; set; }
 
-        // ✅ THÊM MỚI: created_at (từ script SQL)
-        [Column("created_at")]
-        public DateTime? CreatedAt { get; set; }
+        // Lưu URL thanh toán để khách mở lại không bị gọi API nhiều lần
+        [Column("checkout_url")]
+        public string? CheckoutUrl { get; set; }
 
-        // Navigation Properties
+        [Column("qr_code")]
+        public string? QrCode { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Hết hạn chờ thanh toán (VD: CreatedAt + 15 phút)
+        [Column("expired_at")]
+        public DateTime? ExpiredAt { get; set; }
+
+        [Column("paid_at")]
+        public DateTime? PaidAt { get; set; }
+
+        // --- Navigation Properties ---
         [ForeignKey(nameof(ParentId))]
         public ParentProfile Parent { get; set; }
 
@@ -252,7 +280,11 @@ namespace ToanTuDuy.Models
 
         [ForeignKey(nameof(ClassId))]
         public Classes Class { get; set; }
+
+        // Quan hệ 1 - 0..1 (1 Hóa đơn tạo ra tối đa 1 chỗ ngồi)
+        public ClassStudent? ClassStudent { get; set; }
     }
+
 
     // ✅ ENTITY MỚI HOÀN TOÀN: Ánh xạ bảng QUESTION_BANK
     [Table("QUESTION_BANK")]

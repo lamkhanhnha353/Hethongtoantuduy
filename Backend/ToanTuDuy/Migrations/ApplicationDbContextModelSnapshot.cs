@@ -426,11 +426,16 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("class_id");
 
+                    b.Property<int?>("InvoiceId")
+                        .HasColumnType("int")
+                        .HasColumnName("invoice_id");
+
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("joined_at");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
@@ -440,9 +445,15 @@ namespace ToanTuDuy.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClassId");
+                    b.HasIndex("InvoiceId")
+                        .IsUnique()
+                        .HasFilter("[invoice_id] IS NOT NULL");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("ClassId", "StudentId")
+                        .IsUnique()
+                        .HasFilter("[status] IN ('ACTIVE', 'PENDING')");
 
                     b.ToTable("CLASS_STUDENT");
                 });
@@ -671,13 +682,25 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("amount");
 
+                    b.Property<string>("CheckoutUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("checkout_url");
+
                     b.Property<int>("ClassId")
                         .HasColumnType("int")
                         .HasColumnName("class_id");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("expired_at");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("paid_at");
 
                     b.Property<int>("ParentId")
                         .HasColumnType("int")
@@ -686,6 +709,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<string>("PaymentMethod")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("payment_method");
+
+                    b.Property<string>("QrCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("qr_code");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -697,8 +724,14 @@ namespace ToanTuDuy.Migrations
                         .HasColumnName("student_id");
 
                     b.Property<string>("TransactionId")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("transaction_id");
+
+                    b.Property<string>("TxnRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("txn_ref");
 
                     b.HasKey("Id");
 
@@ -707,6 +740,13 @@ namespace ToanTuDuy.Migrations
                     b.HasIndex("ParentId");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("TransactionId")
+                        .IsUnique()
+                        .HasFilter("[transaction_id] IS NOT NULL");
+
+                    b.HasIndex("TxnRef")
+                        .IsUnique();
 
                     b.ToTable("INVOICE");
                 });
@@ -1274,6 +1314,11 @@ namespace ToanTuDuy.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ToanTuDuy.Models.Invoice", "Invoice")
+                        .WithOne("ClassStudent")
+                        .HasForeignKey("ToanTuDuy.Models.ClassStudent", "InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ToanTuDuy.Models.StudentProfile", "Student")
                         .WithMany("ClassStudents")
                         .HasForeignKey("StudentId")
@@ -1281,6 +1326,8 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Class");
+
+                    b.Navigation("Invoice");
 
                     b.Navigation("Student");
                 });
@@ -1559,6 +1606,11 @@ namespace ToanTuDuy.Migrations
             modelBuilder.Entity("ToanTuDuy.Models.CourseLevel", b =>
                 {
                     b.Navigation("Classes");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Invoice", b =>
+                {
+                    b.Navigation("ClassStudent");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Lesson", b =>
