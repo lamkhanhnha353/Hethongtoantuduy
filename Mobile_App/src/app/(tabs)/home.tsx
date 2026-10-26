@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
@@ -30,6 +30,10 @@ export default function ScreenHome() {
   if (!session) {
     return <Redirect href="/login" />;
   }
+
+  const showComingSoonAlert = () => {
+    Alert.alert('Thông báo', 'Tính năng này đang được phát triển và sẽ sớm ra mắt.');
+  };
 
   return (
     <View className="flex-1 bg-[#f1f5f9]">
@@ -97,14 +101,18 @@ export default function ScreenHome() {
           <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Tiện ích quản lý</Text>
           
           <View className="flex-row justify-between px-1">
-            <TouchableOpacity activeOpacity={0.7} className="items-center gap-2">
+            <TouchableOpacity activeOpacity={0.7} className="items-center gap-2" onPress={showComingSoonAlert}>
               <View className="w-14 h-14 rounded-2xl bg-rose-500 items-center justify-center shadow-sm">
                 <Feather name="calendar" size={24} color="white" />
               </View>
               <Text className="text-[11px] font-semibold text-slate-700">Xin nghỉ</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity activeOpacity={0.7} className="items-center gap-2">
+            <TouchableOpacity
+              activeOpacity={0.7}
+              className="items-center gap-2"
+              onPress={() => router.push('/invoices')}
+            >
               <View className="w-14 h-14 rounded-2xl bg-amber-500 items-center justify-center shadow-sm">
                 <Feather name="file-text" size={24} color="white" />
               </View>
@@ -122,7 +130,7 @@ export default function ScreenHome() {
               <Text className="text-[11px] font-semibold text-slate-700">Hồ sơ con</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity activeOpacity={0.7} className="items-center gap-2">
+            <TouchableOpacity activeOpacity={0.7} className="items-center gap-2" onPress={showComingSoonAlert}>
               <View className="w-14 h-14 rounded-2xl bg-fuchsia-500 items-center justify-center shadow-sm">
                 <Feather name="headphones" size={24} color="white" />
               </View>
@@ -136,7 +144,6 @@ export default function ScreenHome() {
           <View className="flex-row items-center justify-between mb-3">
             <Text className="font-bold text-slate-800 text-[15px]">Khóa học đang mở</Text>
             
-            {/* VỊ TRÍ GẮN NÚT VÀO ĐÂY */}
             <TouchableOpacity 
               activeOpacity={0.7} 
               className="flex-row items-center gap-1"
@@ -145,12 +152,10 @@ export default function ScreenHome() {
               <Text className="text-xs text-indigo-600 font-semibold">Xem tất cả</Text>
               <Feather name="chevron-right" size={14} color="#4f46e5" />
             </TouchableOpacity>
-            {/* KẾT THÚC NÚT */}
 
           </View>
           
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-            {/* ITEM KHÓA HỌC 1 */}
             <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 w-[260px]">
               <View className="h-28 bg-indigo-500 items-center justify-center relative">
                 <Text className="text-white text-3xl font-bold opacity-90">FM</Text>
@@ -166,7 +171,7 @@ export default function ScreenHome() {
                   <TouchableOpacity 
                     activeOpacity={0.7} 
                     className="bg-indigo-50 px-3 py-1.5 rounded-lg"
-                    onPress={() => router.push('/courses')}// CHUẨN BỊ CHO BƯỚC TIẾP THEO
+                    onPress={() => router.push('/courses')}
                   >
                     <Text className="text-xs font-semibold text-indigo-600">Xem chi tiết</Text>
                   </TouchableOpacity>
@@ -174,7 +179,6 @@ export default function ScreenHome() {
               </View>
             </View>
 
-            {/* ITEM KHÓA HỌC 2 */}
             <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 w-[260px]">
               <View className="h-28 bg-teal-500 items-center justify-center relative">
                 <Text className="text-white text-3xl font-bold opacity-90">SB</Text>
@@ -190,7 +194,7 @@ export default function ScreenHome() {
                   <TouchableOpacity 
                     activeOpacity={0.7} 
                     className="bg-indigo-50 px-3 py-1.5 rounded-lg"
-                    onPress={() => router.push('/courses')} // CHUẨN BỊ CHO BƯỚC TIẾP THEO
+                    onPress={() => router.push('/courses')} 
                   >
                     <Text className="text-xs font-semibold text-indigo-600">Xem chi tiết</Text>
                   </TouchableOpacity>

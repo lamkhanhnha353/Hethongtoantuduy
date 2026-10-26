@@ -40,7 +40,12 @@ namespace ToanTuDuy.Controllers
                     amount = i.Amount,
                     status = i.Status,
                     createdAt = i.CreatedAt,
+                    paidAt = i.PaidAt,
                     txnRef = i.TxnRef,
+                    paymentMethod = i.PaymentMethod,
+                    classId = i.ClassId,
+                    courseLevelId = i.Class.CourseLevelId,
+                    courseLevelName = i.Class.CourseLevel.Name,
                     className = i.Class.Name,
                     studentName = i.Student.FullName
                 })
