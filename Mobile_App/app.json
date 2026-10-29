@@ -42,6 +42,14 @@
           "photosPermission": "Ứng dụng cần quyền truy cập thư viện ảnh để chọn ảnh đại diện cho bé.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
       ]
     ],
     "experiments": {

@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AlertBanner } from '@/components/AlertBanner';
@@ -9,6 +17,7 @@ import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ROLE_LABELS } from '@/content/homeContent';
 import { toApiError } from '@/services/apiError';
+import { useSoundEnabled } from '@/hooks/useAudio';
 import { useLogout, useSession } from '@/hooks/useSession';
 import {
   useProfileQuery,
@@ -75,6 +84,7 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
   const updateMutation = useUpdateProfileMutation();
   const emailMutation = useUpdateEmailMutation();
   const logout = useLogout();
+  const { enabled: soundEnabled, setEnabled: setSoundEnabled } = useSoundEnabled();
 
   const nameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
@@ -280,6 +290,32 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
                 onPress={() => router.push('/profile-pin')}
               />
             ) : null}
+          </View>
+        </View>
+
+        {/* Âm thanh */}
+        <View className="mt-5 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-100">
+          <SectionHeader
+            title="Âm thanh"
+            subtitle="Bật hoặc tắt hiệu ứng âm thanh khi học"
+          />
+
+          <View className="mt-1 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
+            <View className="mr-2 flex-1">
+              <Text className="text-sm font-semibold text-slate-900">Hiệu ứng âm thanh</Text>
+              <Text className="mt-0.5 text-xs text-slate-500">Phát khi trả lời đúng hoặc sai</Text>
+            </View>
+
+            <Switch
+              accessibilityLabel="Bật hiệu ứng âm thanh"
+              ios_backgroundColor="#cbd5e1"
+              onValueChange={(value) => {
+                void setSoundEnabled(value);
+              }}
+              thumbColor={soundEnabled ? '#0284c7' : '#f8fafc'}
+              trackColor={{ false: '#cbd5e1', true: '#7dd3fc' }}
+              value={soundEnabled}
+            />
           </View>
         </View>
 

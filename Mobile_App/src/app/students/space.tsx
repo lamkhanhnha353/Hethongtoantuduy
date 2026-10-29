@@ -7,6 +7,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AlertBanner } from '@/components/AlertBanner';
 import { Avatar } from '@/components/Avatar';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { useGameStore } from '@/store/gameStore';
 import { useStudentQuery } from '@/hooks/useStudents';
 import { toApiError } from '@/services/apiError';
 
@@ -22,6 +23,7 @@ export default function StudentSpaceScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const studentId = Number(id);
   const { data: student, isPending, isError, error, refetch } = useStudentQuery(studentId);
+  const bonus = useGameStore((state) => state.bonusByStudentId[studentId]);
 
   const loadError = isError ? toApiError(error) : null;
 
@@ -86,10 +88,25 @@ export default function StudentSpaceScreen() {
                   <View className="w-9 h-9 rounded-full bg-indigo-50 items-center justify-center mb-2">
                     <MaterialCommunityIcons name={stat.icon} size={16} color="#4f46e5" />
                   </View>
-                  <Text className="text-lg font-bold text-slate-900">{student[stat.key]}</Text>
+                  <Text className="text-lg font-bold text-slate-900">
+                    {stat.key === 'totalPoints'
+                      ? student.totalPoints + (bonus?.points ?? 0)
+                      : stat.key === 'stars'
+                        ? student.stars + (bonus?.stars ?? 0)
+                        : student.streakDays}
+                  </Text>
                   <Text className="text-xs text-slate-500 mt-0.5">{stat.label}</Text>
                 </View>
               ))}
+            </View>
+
+            <View className="mt-5">
+              <PrimaryButton
+                label="Chơi Toán vui"
+                onPress={() =>
+                  router.push({ pathname: '/students/quiz', params: { id: String(student.id) } })
+                }
+              />
             </View>
 
             <Text className="mt-5 text-xs leading-4 text-slate-400 text-center">
