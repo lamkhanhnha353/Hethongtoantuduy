@@ -20,5 +20,8 @@ namespace ToanTuDuy.DTOs
 
         [Required]
         public string Status { get; set; }
+
+        public object? Syllabus { get; set; }
+        public object? Faqs { get; set; }
     }
 }

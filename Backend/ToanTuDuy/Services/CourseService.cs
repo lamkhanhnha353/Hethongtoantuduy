@@ -1,8 +1,8 @@
-
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
@@ -38,12 +38,15 @@ namespace ToanTuDuy.Services
                     CourseLevels = c.CourseLevels.Select(cl => new CourseLevelResponse
                     {
                         Id = cl.Id,
+                        CourseId = cl.CourseId,
                         Code = cl.Code,
                         Name = cl.Name,
                         Fee = cl.Fee,
                         TotalSessions = cl.TotalSessions,
                         OrderIndex = cl.OrderIndex,
-                        Status = cl.Status
+                        Status = cl.Status,
+                        Syllabus = string.IsNullOrEmpty(cl.Syllabus) ? null : JsonSerializer.Deserialize<object>(cl.Syllabus, (JsonSerializerOptions)null),
+                        Faqs = string.IsNullOrEmpty(cl.Faqs) ? null : JsonSerializer.Deserialize<object>(cl.Faqs, (JsonSerializerOptions)null)
                     }).ToList()
                 })
                 .ToListAsync();
@@ -72,19 +75,21 @@ namespace ToanTuDuy.Services
                 CourseLevels = course.CourseLevels.Select(cl => new CourseLevelResponse
                 {
                     Id = cl.Id,
+                    CourseId = cl.CourseId,
                     Code = cl.Code,
                     Name = cl.Name,
                     Fee = cl.Fee,
                     TotalSessions = cl.TotalSessions,
                     OrderIndex = cl.OrderIndex,
-                    Status = cl.Status
+                    Status = cl.Status,
+                    Syllabus = string.IsNullOrEmpty(cl.Syllabus) ? null : JsonSerializer.Deserialize<object>(cl.Syllabus, (JsonSerializerOptions)null),
+                    Faqs = string.IsNullOrEmpty(cl.Faqs) ? null : JsonSerializer.Deserialize<object>(cl.Faqs, (JsonSerializerOptions)null)
                 }).ToList()
             };
         }
 
         public async Task<CourseResponse> CreateCourseAsync(CourseRequest request)
         {
-            // Kiểm tra trùng mã
             if (await _context.Courses.AnyAsync(c => c.Code == request.Code))
                 throw new Exception("Mã khóa học đã tồn tại.");
 
@@ -97,13 +102,17 @@ namespace ToanTuDuy.Services
                 MaxAge = request.MaxAge,
                 ImageUrl = request.ImageUrl,
                 Status = request.Status,
+                VideoUrl = request.VideoUrl,
+                Benefits = request.Benefits != null ? JsonSerializer.Serialize(request.Benefits, (JsonSerializerOptions)null) : null,
+                FacilityImages = request.FacilityImages != null ? JsonSerializer.Serialize(request.FacilityImages, (JsonSerializerOptions)null) : null,
+                Rating = 5.0, // Điểm mặc định
+                Reviews = 0,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Courses.Add(course);
             await _context.SaveChangesAsync();
 
-            // Trả về data sau khi tạo thành công
             return await GetCourseByIdAsync(course.Id);
         }
 
@@ -119,6 +128,9 @@ namespace ToanTuDuy.Services
             course.MaxAge = request.MaxAge;
             course.ImageUrl = request.ImageUrl;
             course.Status = request.Status;
+            course.VideoUrl = request.VideoUrl;
+            course.Benefits = request.Benefits != null ? JsonSerializer.Serialize(request.Benefits, (JsonSerializerOptions)null) : null;
+            course.FacilityImages = request.FacilityImages != null ? JsonSerializer.Serialize(request.FacilityImages, (JsonSerializerOptions)null) : null;
             course.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

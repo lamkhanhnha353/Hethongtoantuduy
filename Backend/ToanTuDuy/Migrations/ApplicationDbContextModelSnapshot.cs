@@ -523,6 +523,10 @@ namespace ToanTuDuy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Benefits")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("benefits");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -535,6 +539,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
+
+                    b.Property<string>("FacilityImages")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("facility_images");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)")
@@ -553,6 +561,14 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
+                    b.Property<double>("Rating")
+                        .HasColumnType("float")
+                        .HasColumnName("rating");
+
+                    b.Property<int>("Reviews")
+                        .HasColumnType("int")
+                        .HasColumnName("reviews");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -561,6 +577,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
+
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("video_url");
 
                     b.HasKey("Id");
 
@@ -589,6 +609,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Faqs")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("faqs");
+
                     b.Property<decimal>("Fee")
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("fee");
@@ -606,6 +630,10 @@ namespace ToanTuDuy.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
+
+                    b.Property<string>("Syllabus")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("syllabus");
 
                     b.Property<int>("TotalSessions")
                         .HasColumnType("int")

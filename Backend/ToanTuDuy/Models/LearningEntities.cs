@@ -21,16 +21,29 @@ namespace ToanTuDuy.Models
         [Column("description")]
         public string? Description { get; set; }
 
-        // ✅ THÊM MỚI: min_age, max_age (từ script SQL — thay thế logic TotalSessions)
         [Column("min_age")]
         public int MinAge { get; set; }
 
         [Column("max_age")]
         public int MaxAge { get; set; }
 
-        // ✅ THÊM MỚI: image_url (từ script SQL)
         [Column("image_url")]
         public string? ImageUrl { get; set; }
+
+        [Column("video_url")]
+        public string? VideoUrl { get; set; } // Link video Cloudinary
+
+        [Column("benefits")]
+        public string? Benefits { get; set; } // Lưu chuỗi JSON: ["Lợi ích 1", "Lợi ích 2"]
+
+        [Column("facility_images")]
+        public string? FacilityImages { get; set; } // Lưu chuỗi JSON: ["link1", "link2"]
+
+        [Column("rating")]
+        public double Rating { get; set; } = 5.0; // Điểm đánh giá mặc định
+
+        [Column("reviews")]
+        public int Reviews { get; set; } = 0; // Số lượt đánh giá
 
         [Column("status")]
         public string Status { get; set; }
@@ -76,7 +89,12 @@ namespace ToanTuDuy.Models
         [Column("total_sessions")]
         public int TotalSessions { get; set; }
 
-       
+        [Column("syllabus")]
+        public string? Syllabus { get; set; } // Lưu JSON Lộ trình học
+
+        [Column("faqs")]
+        public string? Faqs { get; set; } // Lưu JSON Câu hỏi thường gặp
+        
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
