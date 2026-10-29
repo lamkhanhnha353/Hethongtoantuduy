@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Pressable, TextInput, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -17,6 +17,18 @@ const QUICK_FILTERS = [
 
 const ITEMS_PER_PAGE = 4;
 
+function getCourseType(code: string) {
+  const normalizedCode = code.toUpperCase();
+
+  if (normalizedCode.includes('FGM') || normalizedCode.includes('FM')) return 'fm';
+  if (normalizedCode.includes('SRB') || normalizedCode.includes('SB')) return 'sb';
+  if (['TL', 'LG', 'MTN', 'KMN', 'IMT', 'CPA'].some(typeCode => normalizedCode.includes(typeCode))) {
+    return 'lg';
+  }
+
+  return normalizedCode.toLowerCase();
+}
+
 export default function AllCoursesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -29,6 +41,21 @@ export default function AllCoursesScreen() {
   const [coursesData, setCoursesData] = useState<CourseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+  };
+
+  const handleSortToggle = () => {
+    setSortAsc(current => !current);
+    setCurrentPage(1);
+  };
+
   // ĐƯA HÀM LẤY DỮ LIỆU VÀO TRONG USEEFFECT ĐỂ HẾT GẠCH ĐỎ
   useEffect(() => {
     const fetchData = async () => {
@@ -40,12 +67,15 @@ export default function AllCoursesScreen() {
         const formattedCourses: CourseType[] = [];
 
         data.forEach((course: any) => {
-          let colorClass = 'bg-slate-500';
-          const codeCheck = (course.code || '').toUpperCase();
-          
-          if (codeCheck.includes('FM')) colorClass = 'bg-indigo-600';
-          if (codeCheck.includes('SB')) colorClass = 'bg-sky-500';
-          if (codeCheck.includes('TL') || codeCheck.includes('LG')) colorClass = 'bg-blue-500';
+          const codeCheck = String(course.code || '').toUpperCase();
+          const courseType = getCourseType(codeCheck);
+          const colorClass = courseType === 'fm'
+            ? 'bg-indigo-600'
+            : courseType === 'sb'
+              ? 'bg-sky-500'
+              : courseType === 'lg'
+                ? 'bg-blue-500'
+                : 'bg-slate-500';
 
           if (course.courseLevels && Array.isArray(course.courseLevels)) {
             course.courseLevels.forEach((level: any) => {
@@ -58,8 +88,8 @@ export default function AllCoursesScreen() {
                 duration: `${Math.ceil((level.totalSessions || 0) / 8)} tháng`, 
                 price: level.fee || 0,
                 color: colorClass,
-                type: codeCheck.toLowerCase(),
-                status: (level.status || '').toLowerCase() === 'open' ? 'open' : 'soon'
+                type: courseType,
+                status: ['open', 'active'].includes(String(level.status || '').toLowerCase()) ? 'open' : 'soon'
               });
             });
           }
@@ -77,18 +107,11 @@ export default function AllCoursesScreen() {
     fetchData();
   }, []);
 
-  // Đặt lại trang 1 khi thay đổi bộ lọc
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [query, activeFilter, sortAsc]);
-
   const filteredCourses = useMemo(() => {
     return coursesData.filter(course => {
       if (query && !course.name.toLowerCase().includes(query.toLowerCase())) return false;
       
-      if (activeFilter === 'fm' && !course.type.includes('fm')) return false;
-      if (activeFilter === 'sb' && !course.type.includes('sb')) return false;
-      if (activeFilter === 'lg' && !(course.type.includes('tl') || course.type.includes('lg'))) return false;
+      if (['fm', 'sb', 'lg'].includes(activeFilter) && course.type !== activeFilter) return false;
       if (activeFilter === 'open' && course.status !== 'open') return false;
       
       return true;
@@ -121,13 +144,13 @@ export default function AllCoursesScreen() {
             <Feather name="search" size={18} color="#94a3b8" className="absolute left-4 z-10" />
             <TextInput
               value={query}
-              onChangeText={setQuery}
+              onChangeText={handleQueryChange}
               placeholder="Tìm khóa học, độ tuổi…"
               placeholderTextColor="#94a3b8"
               className="w-full bg-slate-100 border border-slate-200 text-slate-900 rounded-2xl py-3 pl-11 pr-10 text-[15px] font-medium"
             />
             {query.length > 0 && (
-              <TouchableOpacity onPress={() => setQuery('')} className="absolute right-3 z-10 p-2">
+              <TouchableOpacity onPress={() => handleQueryChange('')} className="absolute right-3 z-10 p-2">
                 <Feather name="x-circle" size={18} color="#94a3b8" />
               </TouchableOpacity>
             )}
@@ -142,13 +165,31 @@ export default function AllCoursesScreen() {
             {QUICK_FILTERS.map(filter => {
               const isActive = activeFilter === filter.id;
               return (
-                <TouchableOpacity
+                <Pressable
                   key={filter.id}
-                  onPress={() => setActiveFilter(filter.id)}
-                  className={`px-4 py-2 rounded-xl border ${isActive ? 'bg-indigo-600 border-indigo-600 shadow-sm shadow-indigo-200' : 'bg-slate-50 border-slate-200'}`}
+                  onPress={() => handleFilterChange(filter.id)}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    backgroundColor: isActive ? '#4f46e5' : '#f8fafc',
+                    borderColor: isActive ? '#4f46e5' : '#e2e8f0',
+                    ...(isActive
+                      ? {
+                          shadowColor: '#c7d2fe',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.25,
+                          shadowRadius: 2,
+                          elevation: 2,
+                        }
+                      : {}),
+                  }}
                 >
-                  <Text className={`text-[13px] font-bold ${isActive ? 'text-white' : 'text-slate-600'}`}>{filter.label}</Text>
-                </TouchableOpacity>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: isActive ? '#ffffff' : '#475569' }}>
+                    {filter.label}
+                  </Text>
+                </Pressable>
               );
             })}
           </View>
@@ -159,7 +200,7 @@ export default function AllCoursesScreen() {
         <Text className="text-[13px] font-semibold text-slate-500">
           Có <Text className="text-indigo-600 font-extrabold">{filteredCourses.length}</Text> khóa học phù hợp
         </Text>
-        <TouchableOpacity onPress={() => setSortAsc(!sortAsc)} className="flex-row items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+        <TouchableOpacity onPress={handleSortToggle} className="flex-row items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
           <Feather name="bar-chart-2" size={14} color="#4f46e5" />
           <Text className="text-[12px] font-bold text-indigo-600">Học phí {sortAsc ? '↑' : '↓'}</Text>
         </TouchableOpacity>
