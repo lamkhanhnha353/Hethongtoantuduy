@@ -16,10 +16,11 @@ BEGIN TRY
     DELETE FROM [dbo].[STUDENT_ASSIGNMENT];
     DELETE FROM [dbo].[LEAVE_REQUEST];
     DELETE FROM [dbo].[ATTENDANCE];
+    DELETE FROM [dbo].[CLASS_STUDENT];
+    DELETE FROM [dbo].[EMAIL_VERIFICATION_TOKEN];
     DELETE FROM [dbo].[INVOICE];
     DELETE FROM [dbo].[ASSIGNMENT];
     DELETE FROM [dbo].[LESSON];
-    DELETE FROM [dbo].[CLASS_STUDENT];
     DELETE FROM [dbo].[CLASS_SCHEDULE];
     DELETE FROM [dbo].[StudentBadge];
     DELETE FROM [dbo].[QUESTION];
@@ -42,6 +43,7 @@ BEGIN TRY
 -- =============================================================================
 -- 1. BẢNG ACCOUNT (41 dòng: 1 Admin, 8 Giáo viên, 32 Phụ huynh)
 -- =============================================================================
+-- Password hash dưới đây là dữ liệu placeholder; tài khoản seed không đăng nhập được.
 SET IDENTITY_INSERT [dbo].[ACCOUNT] ON;
 INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_active, created_at, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount) VALUES
 (1, '0901000000', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Admin', NULL, 1, '2026-08-01 08:00:00', '0901000000', '0901000000', 'admin@toantuduy.edu.vn', 'ADMIN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
@@ -118,13 +120,13 @@ SET IDENTITY_INSERT [dbo].[BADGE] OFF;
 -- 3. BẢNG COURSE (6 khóa học Toán Tư Duy chủ đạo)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[COURSE] ON;
-INSERT INTO [dbo].[COURSE] (id, code, name, description, min_age, max_age, image_url, status, created_at, updated_at) VALUES
-(1, 'SRB', N'Soroban / UCMAS - Bàn tính Số học Nhật Bản', N'Phương pháp rèn luyện trí não thông qua bàn tính cổ truyền Soroban, giúp trẻ phản xạ tính nhẩm siêu tốc, gia tăng sự tập trung và phát triển não bộ đồng đều cả 2 bán cầu.', 6, 12, 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(2, 'FGM', N'Finger Math - Toán ngón tay Hàn Quốc', N'Phương pháp tính nhẩm toán học bằng đôi bàn tay linh hoạt, giúp trẻ từ 4-8 tuổi làm quen với các phép cộng trừ trong phạm vi 99 một cách trực quan, vui nhộn.', 4, 8, 'https://images.unsplash.com/photo-1509228468518-180dd4864904', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(3, 'MTN', N'Mathnasium - Toán tư duy Hoa Kỳ', N'Chương trình toán tư duy theo lộ trình cá nhân hóa Mathnasium Method từ Mỹ, xây dựng nền tảng từ bản chất toán học, phát triển tư duy định lượng và suy luận logic sâu sắc.', 6, 14, 'https://images.unsplash.com/photo-1580582932707-520aed937b7b', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(4, 'KMN', N'Kumon - Toán tự học Nhật Bản', N'Hệ thống tự học toán Kumon chuẩn Nhật Bản giúp học sinh hình thành thói quen kỷ luật, độc lập suy nghĩ và nắm vững kỹ năng thao tác tính toán tốc độ cao vượt cấp lớp học.', 5, 12, 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(5, 'IMT', N'I-MATH / Maieutic - Toán tư duy gợi mở Socrates', N'Khóa học khơi gợi tư duy phản biện qua phương pháp vấn đáp Maieutic, khuyến khích học sinh tự đặt câu hỏi tại sao, tranh luận và tự khám phá giải pháp cho bài toán.', 7, 14, 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(6, 'CPA', N'Tiến trình CPA - Concrete Pictorial Abstract', N'Phương pháp học toán qua 3 bước: Cụ thể (Vật thể thực) - Minh họa (Hình ảnh biểu diễn) - Trừu tượng (Ký hiệu toán học), giúp trẻ hiểu sâu bản chất, không học vẹt.', 4, 10, 'https://images.unsplash.com/photo-1577896851231-70ef18881754', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00');
+INSERT INTO [dbo].[COURSE] (id, code, name, description, min_age, max_age, image_url, video_url, benefits, facility_images, rating, reviews, status, created_at, updated_at) VALUES
+(1, 'SRB', N'Soroban / UCMAS - Bàn tính Số học Nhật Bản', N'Phương pháp rèn luyện trí não thông qua bàn tính cổ truyền Soroban, giúp trẻ phản xạ tính nhẩm siêu tốc, gia tăng sự tập trung và phát triển não bộ đồng đều cả 2 bán cầu.', 6, 12, 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(2, 'FGM', N'Finger Math - Toán ngón tay Hàn Quốc', N'Phương pháp tính nhẩm toán học bằng đôi bàn tay linh hoạt, giúp trẻ từ 4-8 tuổi làm quen với các phép cộng trừ trong phạm vi 99 một cách trực quan, vui nhộn.', 4, 8, 'https://images.unsplash.com/photo-1509228468518-180dd4864904', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(3, 'MTN', N'Mathnasium - Toán tư duy Hoa Kỳ', N'Chương trình toán tư duy theo lộ trình cá nhân hóa Mathnasium Method từ Mỹ, xây dựng nền tảng từ bản chất toán học, phát triển tư duy định lượng và suy luận logic sâu sắc.', 6, 14, 'https://images.unsplash.com/photo-1580582932707-520aed937b7b', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(4, 'KMN', N'Kumon - Toán tự học Nhật Bản', N'Hệ thống tự học toán Kumon chuẩn Nhật Bản giúp học sinh hình thành thói quen kỷ luật, độc lập suy nghĩ và nắm vững kỹ năng thao tác tính toán tốc độ cao vượt cấp lớp học.', 5, 12, 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(5, 'IMT', N'I-MATH / Maieutic - Toán tư duy gợi mở Socrates', N'Khóa học khơi gợi tư duy phản biện qua phương pháp vấn đáp Maieutic, khuyến khích học sinh tự đặt câu hỏi tại sao, tranh luận và tự khám phá giải pháp cho bài toán.', 7, 14, 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(6, 'CPA', N'Tiến trình CPA - Concrete Pictorial Abstract', N'Phương pháp học toán qua 3 bước: Cụ thể (Vật thể thực) - Minh họa (Hình ảnh biểu diễn) - Trừu tượng (Ký hiệu toán học), giúp trẻ hiểu sâu bản chất, không học vẹt.', 4, 10, 'https://images.unsplash.com/photo-1577896851231-70ef18881754', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[COURSE] OFF;
 
 -- =============================================================================
@@ -145,40 +147,41 @@ SET IDENTITY_INSERT [dbo].[TEACHER_PROFILE] OFF;
 -- =============================================================================
 -- 5. BẢNG PARENT_PROFILE (32 phụ huynh)
 -- =============================================================================
+-- PIN để NULL vì dịch vụ yêu cầu giá trị hash từ ASP.NET PasswordHasher, không phải PIN thô.
 SET IDENTITY_INSERT [dbo].[PARENT_PROFILE] ON;
-INSERT INTO [dbo].[PARENT_PROFILE] (id, account_id, full_name, email, pin_hash, avatar, created_at) VALUES
-(1, 10, N'Trần Quang Huy', 'parent01@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/1.jpg', '2026-08-01 08:00:00'),
-(2, 11, N'Nguyễn Thu Trang', 'parent02@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/2.jpg', '2026-08-01 08:00:00'),
-(3, 12, N'Lê Hoàng Nam', 'parent03@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/3.jpg', '2026-08-01 08:00:00'),
-(4, 13, N'Phạm Mỹ Duyên', 'parent04@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/4.jpg', '2026-08-01 08:00:00'),
-(5, 14, N'Vũ Đình Trọng', 'parent05@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/5.jpg', '2026-08-01 08:00:00'),
-(6, 15, N'Hoàng Lan Anh', 'parent06@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/6.jpg', '2026-08-01 08:00:00'),
-(7, 16, N'Đỗ Quốc Hùng', 'parent07@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/7.jpg', '2026-08-01 08:00:00'),
-(8, 17, N'Bùi Phương Thảo', 'parent08@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/8.jpg', '2026-08-01 08:00:00'),
-(9, 18, N'Ngô Tiến Đạt', 'parent09@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/9.jpg', '2026-08-01 08:00:00'),
-(10, 19, N'Đặng Kim Ngân', 'parent10@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/10.jpg', '2026-08-01 08:00:00'),
-(11, 20, N'Dương Gia Bảo', 'parent11@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/11.jpg', '2026-08-01 08:00:00'),
-(12, 21, N'Lý Khánh Linh', 'parent12@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/12.jpg', '2026-08-01 08:00:00'),
-(13, 22, N'Trịnh Anh Tuấn', 'parent13@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/13.jpg', '2026-08-01 08:00:00'),
-(14, 23, N'Phan Ngọc Ánh', 'parent14@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/14.jpg', '2026-08-01 08:00:00'),
-(15, 24, N'Mai Hữu Nghĩa', 'parent15@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/15.jpg', '2026-08-01 08:00:00'),
-(16, 25, N'Võ Bích Hạnh', 'parent16@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/16.jpg', '2026-08-01 08:00:00'),
-(17, 26, N'Lâm Khải Hoàn', 'parent17@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/17.jpg', '2026-08-01 08:00:00'),
-(18, 27, N'Châu Thùy Dung', 'parent18@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/18.jpg', '2026-08-01 08:00:00'),
-(19, 28, N'Đoàn Minh Triết', 'parent19@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/19.jpg', '2026-08-01 08:00:00'),
-(20, 29, N'Hồ Thu Hà', 'parent20@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/20.jpg', '2026-08-01 08:00:00'),
-(21, 30, N'Tạ Thanh Bình', 'parent21@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/21.jpg', '2026-08-01 08:00:00'),
-(22, 31, N'Đinh Hồng Nhung', 'parent22@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/22.jpg', '2026-08-01 08:00:00'),
-(23, 32, N'Lương Tuấn Khang', 'parent23@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/23.jpg', '2026-08-01 08:00:00'),
-(24, 33, N'Tô Yến Nhi', 'parent24@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/24.jpg', '2026-08-01 08:00:00'),
-(25, 34, N'Quách Văn Thái', 'parent25@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/25.jpg', '2026-08-01 08:00:00'),
-(26, 35, N'Lê Thị Hương', 'parent26@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/26.jpg', '2026-08-01 08:00:00'),
-(27, 36, N'Nguyễn Đức Long', 'parent27@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/27.jpg', '2026-08-01 08:00:00'),
-(28, 37, N'Trần Thị Cẩm Tú', 'parent28@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/28.jpg', '2026-08-01 08:00:00'),
-(29, 38, N'Phạm Quốc Việt', 'parent29@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/29.jpg', '2026-08-01 08:00:00'),
-(30, 39, N'Vũ Thị Hồng', 'parent30@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/30.jpg', '2026-08-01 08:00:00'),
-(31, 40, N'Hoàng Trọng Nghĩa', 'parent31@gmail.com', '123456', 'https://randomuser.me/api/portraits/men/31.jpg', '2026-08-01 08:00:00'),
-(32, 41, N'Đặng Thanh Mai', 'parent32@gmail.com', '123456', 'https://randomuser.me/api/portraits/women/32.jpg', '2026-08-01 08:00:00');
+INSERT INTO [dbo].[PARENT_PROFILE] (id, account_id, full_name, pin, avatar, created_at) VALUES
+(1, 10, N'Trần Quang Huy', NULL, 'https://randomuser.me/api/portraits/men/1.jpg', '2026-08-01 08:00:00'),
+(2, 11, N'Nguyễn Thu Trang', NULL, 'https://randomuser.me/api/portraits/women/2.jpg', '2026-08-01 08:00:00'),
+(3, 12, N'Lê Hoàng Nam', NULL, 'https://randomuser.me/api/portraits/men/3.jpg', '2026-08-01 08:00:00'),
+(4, 13, N'Phạm Mỹ Duyên', NULL, 'https://randomuser.me/api/portraits/women/4.jpg', '2026-08-01 08:00:00'),
+(5, 14, N'Vũ Đình Trọng', NULL, 'https://randomuser.me/api/portraits/men/5.jpg', '2026-08-01 08:00:00'),
+(6, 15, N'Hoàng Lan Anh', NULL, 'https://randomuser.me/api/portraits/women/6.jpg', '2026-08-01 08:00:00'),
+(7, 16, N'Đỗ Quốc Hùng', NULL, 'https://randomuser.me/api/portraits/men/7.jpg', '2026-08-01 08:00:00'),
+(8, 17, N'Bùi Phương Thảo', NULL, 'https://randomuser.me/api/portraits/women/8.jpg', '2026-08-01 08:00:00'),
+(9, 18, N'Ngô Tiến Đạt', NULL, 'https://randomuser.me/api/portraits/men/9.jpg', '2026-08-01 08:00:00'),
+(10, 19, N'Đặng Kim Ngân', NULL, 'https://randomuser.me/api/portraits/women/10.jpg', '2026-08-01 08:00:00'),
+(11, 20, N'Dương Gia Bảo', NULL, 'https://randomuser.me/api/portraits/men/11.jpg', '2026-08-01 08:00:00'),
+(12, 21, N'Lý Khánh Linh', NULL, 'https://randomuser.me/api/portraits/women/12.jpg', '2026-08-01 08:00:00'),
+(13, 22, N'Trịnh Anh Tuấn', NULL, 'https://randomuser.me/api/portraits/men/13.jpg', '2026-08-01 08:00:00'),
+(14, 23, N'Phan Ngọc Ánh', NULL, 'https://randomuser.me/api/portraits/women/14.jpg', '2026-08-01 08:00:00'),
+(15, 24, N'Mai Hữu Nghĩa', NULL, 'https://randomuser.me/api/portraits/men/15.jpg', '2026-08-01 08:00:00'),
+(16, 25, N'Võ Bích Hạnh', NULL, 'https://randomuser.me/api/portraits/women/16.jpg', '2026-08-01 08:00:00'),
+(17, 26, N'Lâm Khải Hoàn', NULL, 'https://randomuser.me/api/portraits/men/17.jpg', '2026-08-01 08:00:00'),
+(18, 27, N'Châu Thùy Dung', NULL, 'https://randomuser.me/api/portraits/women/18.jpg', '2026-08-01 08:00:00'),
+(19, 28, N'Đoàn Minh Triết', NULL, 'https://randomuser.me/api/portraits/men/19.jpg', '2026-08-01 08:00:00'),
+(20, 29, N'Hồ Thu Hà', NULL, 'https://randomuser.me/api/portraits/women/20.jpg', '2026-08-01 08:00:00'),
+(21, 30, N'Tạ Thanh Bình', NULL, 'https://randomuser.me/api/portraits/men/21.jpg', '2026-08-01 08:00:00'),
+(22, 31, N'Đinh Hồng Nhung', NULL, 'https://randomuser.me/api/portraits/women/22.jpg', '2026-08-01 08:00:00'),
+(23, 32, N'Lương Tuấn Khang', NULL, 'https://randomuser.me/api/portraits/men/23.jpg', '2026-08-01 08:00:00'),
+(24, 33, N'Tô Yến Nhi', NULL, 'https://randomuser.me/api/portraits/women/24.jpg', '2026-08-01 08:00:00'),
+(25, 34, N'Quách Văn Thái', NULL, 'https://randomuser.me/api/portraits/men/25.jpg', '2026-08-01 08:00:00'),
+(26, 35, N'Lê Thị Hương', NULL, 'https://randomuser.me/api/portraits/women/26.jpg', '2026-08-01 08:00:00'),
+(27, 36, N'Nguyễn Đức Long', NULL, 'https://randomuser.me/api/portraits/men/27.jpg', '2026-08-01 08:00:00'),
+(28, 37, N'Trần Thị Cẩm Tú', NULL, 'https://randomuser.me/api/portraits/women/28.jpg', '2026-08-01 08:00:00'),
+(29, 38, N'Phạm Quốc Việt', NULL, 'https://randomuser.me/api/portraits/men/29.jpg', '2026-08-01 08:00:00'),
+(30, 39, N'Vũ Thị Hồng', NULL, 'https://randomuser.me/api/portraits/women/30.jpg', '2026-08-01 08:00:00'),
+(31, 40, N'Hoàng Trọng Nghĩa', NULL, 'https://randomuser.me/api/portraits/men/31.jpg', '2026-08-01 08:00:00'),
+(32, 41, N'Đặng Thanh Mai', NULL, 'https://randomuser.me/api/portraits/women/32.jpg', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[PARENT_PROFILE] OFF;
 
 -- =============================================================================
@@ -284,27 +287,27 @@ SET IDENTITY_INSERT [dbo].[STUDENT_PROFILE] OFF;
 -- 9. BẢNG CLASSES (20 lớp học Toán Tư Duy)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[CLASSES] ON;
-INSERT INTO [dbo].[CLASSES] (id, course_level_id, teacher_id, name, max_capacity, start_date, end_date, status) VALUES
-(1, 1, 1, N'Lớp Soroban Cơ bản SRB-01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE'),
-(2, 1, 1, N'Lớp Soroban Cơ bản SRB-02', 15, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE'),
-(3, 2, 1, N'Lớp Soroban Trung cấp SRB-03', 12, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE'),
-(4, 3, 1, N'Lớp Soroban Nâng cao SRB-04', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE'),
-(5, 4, 2, N'Lớp Finger Math Mầm non FGM-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE'),
-(6, 5, 2, N'Lớp Finger Math Cơ bản FGM-02', 15, '2026-09-02 08:00:00', '2026-11-20 17:00:00', 'ACTIVE'),
-(7, 6, 2, N'Lớp Finger Math Nâng cao FGM-03', 12, '2026-09-03 08:00:00', '2026-11-25 17:00:00', 'ACTIVE'),
-(8, 7, 3, N'Lớp Mathnasium Level 1 MTN-01', 10, '2026-09-01 08:00:00', '2026-12-01 17:00:00', 'ACTIVE'),
-(9, 8, 3, N'Lớp Mathnasium Level 2 MTN-02', 10, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE'),
-(10, 9, 3, N'Lớp Mathnasium Level 3 MTN-03', 10, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE'),
-(11, 10, 4, N'Lớp Kumon Starter KMN-01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE'),
-(12, 11, 4, N'Lớp Kumon Elementary KMN-02', 15, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE'),
-(13, 12, 4, N'Lớp Kumon Advanced KMN-03', 12, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE'),
-(14, 13, 5, N'Lớp I-MATH Foundation IMT-01', 12, '2026-09-01 08:00:00', '2026-11-20 17:00:00', 'ACTIVE'),
-(15, 14, 5, N'Lớp I-MATH Explorer IMT-02', 12, '2026-09-05 08:00:00', '2026-11-25 17:00:00', 'ACTIVE'),
-(16, 15, 5, N'Lớp I-MATH Master IMT-03', 10, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE'),
-(17, 16, 6, N'Lớp CPA Concrete CPA-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE'),
-(18, 17, 6, N'Lớp CPA Pictorial CPA-02', 12, '2026-09-05 08:00:00', '2026-11-20 17:00:00', 'ACTIVE'),
-(19, 18, 6, N'Lớp CPA Abstract CPA-03', 12, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE'),
-(20, 8, 7, N'Lớp Tư duy Không gian MTN-SP01', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE');
+INSERT INTO [dbo].[CLASSES] (id, course_level_id, teacher_id, name, max_capacity, start_date, end_date, status, created_at) VALUES
+(1, 1, 1, N'Lớp Soroban Cơ bản SRB-01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(2, 1, 1, N'Lớp Soroban Cơ bản SRB-02', 15, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(3, 2, 1, N'Lớp Soroban Trung cấp SRB-03', 12, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(4, 3, 1, N'Lớp Soroban Nâng cao SRB-04', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(5, 4, 2, N'Lớp Finger Math Mầm non FGM-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(6, 5, 2, N'Lớp Finger Math Cơ bản FGM-02', 15, '2026-09-02 08:00:00', '2026-11-20 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(7, 6, 2, N'Lớp Finger Math Nâng cao FGM-03', 12, '2026-09-03 08:00:00', '2026-11-25 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(8, 7, 3, N'Lớp Mathnasium Level 1 MTN-01', 10, '2026-09-01 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(9, 8, 3, N'Lớp Mathnasium Level 2 MTN-02', 10, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(10, 9, 3, N'Lớp Mathnasium Level 3 MTN-03', 10, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(11, 10, 4, N'Lớp Kumon Starter KMN-01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(12, 11, 4, N'Lớp Kumon Elementary KMN-02', 15, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(13, 12, 4, N'Lớp Kumon Advanced KMN-03', 12, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(14, 13, 5, N'Lớp I-MATH Foundation IMT-01', 12, '2026-09-01 08:00:00', '2026-11-20 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(15, 14, 5, N'Lớp I-MATH Explorer IMT-02', 12, '2026-09-05 08:00:00', '2026-11-25 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(16, 15, 5, N'Lớp I-MATH Master IMT-03', 10, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(17, 16, 6, N'Lớp CPA Concrete CPA-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(18, 17, 6, N'Lớp CPA Pictorial CPA-02', 12, '2026-09-05 08:00:00', '2026-11-20 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(19, 18, 6, N'Lớp CPA Abstract CPA-03', 12, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00'),
+(20, 8, 7, N'Lớp Tư duy Không gian MTN-SP01', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[CLASSES] OFF;
 
 -- =============================================================================
@@ -499,47 +502,47 @@ SET IDENTITY_INSERT [dbo].[StudentBadge] OFF;
 -- 14. BẢNG CLASS_SCHEDULE (40 lịch học: 2 buổi / tuần / lớp)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[CLASS_SCHEDULE] ON;
-INSERT INTO [dbo].[CLASS_SCHEDULE] (id, class_id, day_of_week, start_time, end_time) VALUES
-(1, 1, N'Thứ 2', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(2, 1, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(3, 2, N'Thứ 3', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(4, 2, N'Thứ 5', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(5, 3, N'Thứ 4', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(6, 3, N'Thứ 6', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(7, 4, N'Thứ 7', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(8, 4, N'Chủ Nhật', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(9, 5, N'Thứ 2', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(10, 5, N'Thứ 4', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(11, 6, N'Thứ 3', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(12, 6, N'Thứ 5', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(13, 7, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(14, 7, N'Thứ 6', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(15, 8, N'Thứ 7', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(16, 8, N'Chủ Nhật', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(17, 9, N'Thứ 2', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(18, 9, N'Thứ 4', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(19, 10, N'Thứ 3', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(20, 10, N'Thứ 5', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(21, 11, N'Thứ 4', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(22, 11, N'Thứ 6', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(23, 12, N'Thứ 7', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(24, 12, N'Chủ Nhật', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(25, 13, N'Thứ 2', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(26, 13, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(27, 14, N'Thứ 3', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(28, 14, N'Thứ 5', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(29, 15, N'Thứ 4', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(30, 15, N'Thứ 6', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(31, 16, N'Thứ 7', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(32, 16, N'Chủ Nhật', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(33, 17, N'Thứ 2', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(34, 17, N'Thứ 4', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(35, 18, N'Thứ 3', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(36, 18, N'Thứ 5', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(37, 19, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(38, 19, N'Thứ 6', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(39, 20, N'Thứ 7', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(40, 20, N'Chủ Nhật', '2026-09-01 18:00:00', '2026-09-01 19:30:00');
+INSERT INTO [dbo].[CLASS_SCHEDULE] (id, class_id, day_of_week, start_time, end_time, created_at) VALUES
+(1, 1, 1, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(2, 1, 3, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(3, 2, 2, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(4, 2, 4, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(5, 3, 3, '19:00:00', '20:30:00', '2026-08-01 08:00:00'),
+(6, 3, 5, '19:00:00', '20:30:00', '2026-08-01 08:00:00'),
+(7, 4, 6, '08:30:00', '10:00:00', '2026-08-01 08:00:00'),
+(8, 4, 0, '08:30:00', '10:00:00', '2026-08-01 08:00:00'),
+(9, 5, 1, '10:15:00', '11:45:00', '2026-08-01 08:00:00'),
+(10, 5, 3, '10:15:00', '11:45:00', '2026-08-01 08:00:00'),
+(11, 6, 2, '14:30:00', '16:00:00', '2026-08-01 08:00:00'),
+(12, 6, 4, '14:30:00', '16:00:00', '2026-08-01 08:00:00'),
+(13, 7, 3, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(14, 7, 5, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(15, 8, 6, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(16, 8, 0, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(17, 9, 1, '19:00:00', '20:30:00', '2026-08-01 08:00:00'),
+(18, 9, 3, '19:00:00', '20:30:00', '2026-08-01 08:00:00'),
+(19, 10, 2, '08:30:00', '10:00:00', '2026-08-01 08:00:00'),
+(20, 10, 4, '08:30:00', '10:00:00', '2026-08-01 08:00:00'),
+(21, 11, 3, '10:15:00', '11:45:00', '2026-08-01 08:00:00'),
+(22, 11, 5, '10:15:00', '11:45:00', '2026-08-01 08:00:00'),
+(23, 12, 6, '14:30:00', '16:00:00', '2026-08-01 08:00:00'),
+(24, 12, 0, '14:30:00', '16:00:00', '2026-08-01 08:00:00'),
+(25, 13, 1, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(26, 13, 3, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(27, 14, 2, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(28, 14, 4, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(29, 15, 3, '19:00:00', '20:30:00', '2026-08-01 08:00:00'),
+(30, 15, 5, '19:00:00', '20:30:00', '2026-08-01 08:00:00'),
+(31, 16, 6, '08:30:00', '10:00:00', '2026-08-01 08:00:00'),
+(32, 16, 0, '08:30:00', '10:00:00', '2026-08-01 08:00:00'),
+(33, 17, 1, '10:15:00', '11:45:00', '2026-08-01 08:00:00'),
+(34, 17, 3, '10:15:00', '11:45:00', '2026-08-01 08:00:00'),
+(35, 18, 2, '14:30:00', '16:00:00', '2026-08-01 08:00:00'),
+(36, 18, 4, '14:30:00', '16:00:00', '2026-08-01 08:00:00'),
+(37, 19, 3, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(38, 19, 5, '17:30:00', '19:00:00', '2026-08-01 08:00:00'),
+(39, 20, 6, '18:00:00', '19:30:00', '2026-08-01 08:00:00'),
+(40, 20, 0, '18:00:00', '19:30:00', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[CLASS_SCHEDULE] OFF;
 
 -- =============================================================================
@@ -672,47 +675,47 @@ SET IDENTITY_INSERT [dbo].[ASSIGNMENT] OFF;
 -- 18. BẢNG INVOICE (40 hóa đơn học phí tương ứng 40 học sinh)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[INVOICE] ON;
-INSERT INTO [dbo].[INVOICE] (id, parent_id, student_id, class_id, amount, status, payment_method, transaction_id, created_at) VALUES
-(1, 1, 1, 1, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010001', '2026-08-28 10:00:00'),
-(2, 1, 2, 1, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010002', '2026-08-28 10:00:00'),
-(3, 2, 3, 2, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010003', '2026-08-28 10:00:00'),
-(4, 3, 4, 2, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010004', '2026-08-28 10:00:00'),
-(5, 4, 5, 3, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010005', '2026-08-28 10:00:00'),
-(6, 5, 6, 3, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010006', '2026-08-28 10:00:00'),
-(7, 6, 7, 4, 3200000, 'PAID', 'VNPAY', 'VNPAY202609010007', '2026-08-28 10:00:00'),
-(8, 7, 8, 4, 3200000, 'PAID', 'VNPAY', 'VNPAY202609010008', '2026-08-28 10:00:00'),
-(9, 8, 9, 5, 1800000, 'PAID', 'VNPAY', 'VNPAY202609010009', '2026-08-28 10:00:00'),
-(10, 8, 10, 5, 1800000, 'PAID', 'VNPAY', 'VNPAY202609010010', '2026-08-28 10:00:00'),
-(11, 9, 11, 6, 2200000, 'PAID', 'VNPAY', 'VNPAY202609010011', '2026-08-28 10:00:00'),
-(12, 10, 12, 6, 2200000, 'PAID', 'VNPAY', 'VNPAY202609010012', '2026-08-28 10:00:00'),
-(13, 11, 13, 7, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010013', '2026-08-28 10:00:00'),
-(14, 12, 14, 7, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010014', '2026-08-28 10:00:00'),
-(15, 13, 15, 8, 3000000, 'PAID', 'VNPAY', 'VNPAY202609010015', '2026-08-28 10:00:00'),
-(16, 14, 16, 8, 3000000, 'PAID', 'VNPAY', 'VNPAY202609010016', '2026-08-28 10:00:00'),
-(17, 15, 17, 9, 3400000, 'PAID', 'VNPAY', 'VNPAY202609010017', '2026-08-28 10:00:00'),
-(18, 16, 18, 9, 3400000, 'PAID', 'VNPAY', 'VNPAY202609010018', '2026-08-28 10:00:00'),
-(19, 17, 19, 10, 3800000, 'PAID', 'VNPAY', 'VNPAY202609010019', '2026-08-28 10:00:00'),
-(20, 18, 20, 10, 3800000, 'PAID', 'VNPAY', 'VNPAY202609010020', '2026-08-28 10:00:00'),
-(21, 19, 21, 11, 2000000, 'PAID', 'VNPAY', 'VNPAY202609010021', '2026-08-28 10:00:00'),
-(22, 20, 22, 11, 2000000, 'PAID', 'VNPAY', 'VNPAY202609010022', '2026-08-28 10:00:00'),
-(23, 21, 23, 12, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010023', '2026-08-28 10:00:00'),
-(24, 22, 24, 12, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010024', '2026-08-28 10:00:00'),
-(25, 23, 25, 13, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010025', '2026-08-28 10:00:00'),
-(26, 24, 26, 13, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010026', '2026-08-28 10:00:00'),
-(27, 25, 27, 14, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010027', '2026-08-28 10:00:00'),
-(28, 26, 28, 14, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010028', '2026-08-28 10:00:00'),
-(29, 27, 29, 15, 3100000, 'PAID', 'VNPAY', 'VNPAY202609010029', '2026-08-28 10:00:00'),
-(30, 28, 30, 15, 3100000, 'PAID', 'VNPAY', 'VNPAY202609010030', '2026-08-28 10:00:00'),
-(31, 29, 31, 16, 3600000, 'PAID', 'VNPAY', 'VNPAY202609010031', '2026-08-28 10:00:00'),
-(32, 30, 32, 16, 3600000, 'PAID', 'VNPAY', 'VNPAY202609010032', '2026-08-28 10:00:00'),
-(33, 31, 33, 17, 2200000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00'),
-(34, 32, 34, 17, 2200000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00'),
-(35, 2, 35, 18, 2600000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00'),
-(36, 3, 36, 18, 2600000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00'),
-(37, 5, 37, 19, 3000000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00'),
-(38, 7, 38, 19, 3000000, 'CANCELLED', NULL, NULL, '2026-08-28 10:00:00'),
-(39, 11, 39, 20, 3400000, 'CANCELLED', NULL, NULL, '2026-08-28 10:00:00'),
-(40, 15, 40, 20, 3400000, 'CANCELLED', NULL, NULL, '2026-08-28 10:00:00');
+INSERT INTO [dbo].[INVOICE] (id, parent_id, student_id, class_id, amount, status, payment_method, transaction_id, created_at, txn_ref) VALUES
+(1, 1, 1, 1, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010001', '2026-08-28 10:00:00', 'SEED-INV-0001'),
+(2, 1, 2, 1, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010002', '2026-08-28 10:00:00', 'SEED-INV-0002'),
+(3, 2, 3, 2, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010003', '2026-08-28 10:00:00', 'SEED-INV-0003'),
+(4, 3, 4, 2, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010004', '2026-08-28 10:00:00', 'SEED-INV-0004'),
+(5, 4, 5, 3, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010005', '2026-08-28 10:00:00', 'SEED-INV-0005'),
+(6, 5, 6, 3, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010006', '2026-08-28 10:00:00', 'SEED-INV-0006'),
+(7, 6, 7, 4, 3200000, 'PAID', 'VNPAY', 'VNPAY202609010007', '2026-08-28 10:00:00', 'SEED-INV-0007'),
+(8, 7, 8, 4, 3200000, 'PAID', 'VNPAY', 'VNPAY202609010008', '2026-08-28 10:00:00', 'SEED-INV-0008'),
+(9, 8, 9, 5, 1800000, 'PAID', 'VNPAY', 'VNPAY202609010009', '2026-08-28 10:00:00', 'SEED-INV-0009'),
+(10, 8, 10, 5, 1800000, 'PAID', 'VNPAY', 'VNPAY202609010010', '2026-08-28 10:00:00', 'SEED-INV-0010'),
+(11, 9, 11, 6, 2200000, 'PAID', 'VNPAY', 'VNPAY202609010011', '2026-08-28 10:00:00', 'SEED-INV-0011'),
+(12, 10, 12, 6, 2200000, 'PAID', 'VNPAY', 'VNPAY202609010012', '2026-08-28 10:00:00', 'SEED-INV-0012'),
+(13, 11, 13, 7, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010013', '2026-08-28 10:00:00', 'SEED-INV-0013'),
+(14, 12, 14, 7, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010014', '2026-08-28 10:00:00', 'SEED-INV-0014'),
+(15, 13, 15, 8, 3000000, 'PAID', 'VNPAY', 'VNPAY202609010015', '2026-08-28 10:00:00', 'SEED-INV-0015'),
+(16, 14, 16, 8, 3000000, 'PAID', 'VNPAY', 'VNPAY202609010016', '2026-08-28 10:00:00', 'SEED-INV-0016'),
+(17, 15, 17, 9, 3400000, 'PAID', 'VNPAY', 'VNPAY202609010017', '2026-08-28 10:00:00', 'SEED-INV-0017'),
+(18, 16, 18, 9, 3400000, 'PAID', 'VNPAY', 'VNPAY202609010018', '2026-08-28 10:00:00', 'SEED-INV-0018'),
+(19, 17, 19, 10, 3800000, 'PAID', 'VNPAY', 'VNPAY202609010019', '2026-08-28 10:00:00', 'SEED-INV-0019'),
+(20, 18, 20, 10, 3800000, 'PAID', 'VNPAY', 'VNPAY202609010020', '2026-08-28 10:00:00', 'SEED-INV-0020'),
+(21, 19, 21, 11, 2000000, 'PAID', 'VNPAY', 'VNPAY202609010021', '2026-08-28 10:00:00', 'SEED-INV-0021'),
+(22, 20, 22, 11, 2000000, 'PAID', 'VNPAY', 'VNPAY202609010022', '2026-08-28 10:00:00', 'SEED-INV-0022'),
+(23, 21, 23, 12, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010023', '2026-08-28 10:00:00', 'SEED-INV-0023'),
+(24, 22, 24, 12, 2400000, 'PAID', 'VNPAY', 'VNPAY202609010024', '2026-08-28 10:00:00', 'SEED-INV-0024'),
+(25, 23, 25, 13, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010025', '2026-08-28 10:00:00', 'SEED-INV-0025'),
+(26, 24, 26, 13, 2800000, 'PAID', 'VNPAY', 'VNPAY202609010026', '2026-08-28 10:00:00', 'SEED-INV-0026'),
+(27, 25, 27, 14, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010027', '2026-08-28 10:00:00', 'SEED-INV-0027'),
+(28, 26, 28, 14, 2600000, 'PAID', 'VNPAY', 'VNPAY202609010028', '2026-08-28 10:00:00', 'SEED-INV-0028'),
+(29, 27, 29, 15, 3100000, 'PAID', 'VNPAY', 'VNPAY202609010029', '2026-08-28 10:00:00', 'SEED-INV-0029'),
+(30, 28, 30, 15, 3100000, 'PAID', 'VNPAY', 'VNPAY202609010030', '2026-08-28 10:00:00', 'SEED-INV-0030'),
+(31, 29, 31, 16, 3600000, 'PAID', 'VNPAY', 'VNPAY202609010031', '2026-08-28 10:00:00', 'SEED-INV-0031'),
+(32, 30, 32, 16, 3600000, 'PAID', 'VNPAY', 'VNPAY202609010032', '2026-08-28 10:00:00', 'SEED-INV-0032'),
+(33, 31, 33, 17, 2200000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00', 'SEED-INV-0033'),
+(34, 32, 34, 17, 2200000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00', 'SEED-INV-0034'),
+(35, 2, 35, 18, 2600000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00', 'SEED-INV-0035'),
+(36, 3, 36, 18, 2600000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00', 'SEED-INV-0036'),
+(37, 5, 37, 19, 3000000, 'PENDING', 'CASH', NULL, '2026-08-28 10:00:00', 'SEED-INV-0037'),
+(38, 7, 38, 19, 3000000, 'CANCELLED', NULL, NULL, '2026-08-28 10:00:00', 'SEED-INV-0038'),
+(39, 11, 39, 20, 3400000, 'CANCELLED', NULL, NULL, '2026-08-28 10:00:00', 'SEED-INV-0039'),
+(40, 15, 40, 20, 3400000, 'CANCELLED', NULL, NULL, '2026-08-28 10:00:00', 'SEED-INV-0040');
 SET IDENTITY_INSERT [dbo].[INVOICE] OFF;
 
 -- =============================================================================

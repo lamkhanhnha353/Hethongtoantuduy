@@ -26,12 +26,14 @@ class StudentService {
   }
 
   // Tải lên ảnh đại diện cho học sinh — gửi FormData
-  async uploadAvatar(id, formData) {
-    return (
-      await this.api.post(`/${id}/avatar`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-    ).data;
+  async uploadAvatar(id, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return (await this.api.post(`/${id}/avatar`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    })).data;
   }
 
   // Xóa ảnh đại diện của học sinh

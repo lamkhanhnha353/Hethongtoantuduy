@@ -6,8 +6,8 @@ class ParentService {
   }
 
   // Lấy danh sách phụ huynh
-  async getAll() {
-    return (await this.api.get("/")).data;
+  async getAll(keyword = "") {
+    return (await this.api.get(`/?keyword=${keyword}`)).data;
   }
 
   // Lấy thông tin 1 phụ huynh theo ID
@@ -23,6 +23,11 @@ class ParentService {
   // Cập nhật thông tin phụ huynh
   async update(id, data) {
     return (await this.api.put(`/${id}`, data)).data;
+  }
+
+  // Cập nhật email của phụ huynh
+  async updateEmail(id, data) {
+    return (await this.api.put(`/${id}/email`, data)).data;
   }
 
   // Xóa tài khoản phụ huynh
