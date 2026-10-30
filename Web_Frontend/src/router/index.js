@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layouts/Layout.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
-import ParentStudentView from '@/views/ParentStudentView.vue'
-import TeacherManagementView from '@/views/TeacherManagementView.vue'
+import ParentStudentView from '@/views/manage/ParentStudentView.vue'
+import TeacherManagementView from '@/views/manage/TeacherManagementView.vue'
 
 
 // Training
