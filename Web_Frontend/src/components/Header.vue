@@ -156,7 +156,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import authService from '@/services/auth.service'
 import {
   Bars3Icon,
   ClockIcon,
@@ -202,6 +203,7 @@ onUnmounted(() => {
 
 // ─── Page title from route ───────────────────────────────────────────────────
 const route = useRoute()
+const router = useRouter()
 const routeTitleMap = {
   '/': 'Tổng quan',
   '/users/students': 'Phụ huynh & Học sinh',
@@ -303,7 +305,8 @@ function handleOutsideClick(event) {
 // ─── Logout ──────────────────────────────────────────────────────────────────
 function handleLogout() {
   showUserMenu.value = false
-  console.log('Logging out...')
+  authService.logout()
+  router.replace({ name: 'login' })
 }
 </script>
 

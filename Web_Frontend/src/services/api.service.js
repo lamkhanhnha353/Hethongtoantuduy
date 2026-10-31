@@ -1,7 +1,7 @@
 import axios from "axios";
+import { getAccessToken } from "./auth-storage";
 
-// Đọc địa chỉ backend (mặc định http://localhost:5114)
-const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5114";
+const BACKEND_URL = "http://localhost:5114";
 
 const commonConfig = {
   headers: {
@@ -12,14 +12,24 @@ const commonConfig = {
 
 export default (baseURL = "") => {
   let fullBaseURL = baseURL;
-  if (!baseURL.startsWith("http://") && !baseURL.startsWith("https://")) {
+  if (!/^https?:\/\//i.test(baseURL)) {
     const base = BACKEND_URL.replace(/\/+$/, "");
-    const path = baseURL ? (baseURL.startsWith("/") ? baseURL : `/${baseURL}`) : "";
+    const path = baseURL ? `/${baseURL.replace(/^\/+/, "")}` : "";
     fullBaseURL = `${base}${path}`;
   }
 
-  return axios.create({
+  const api = axios.create({
     baseURL: fullBaseURL,
     ...commonConfig,
   });
+
+  api.interceptors.request.use((config) => {
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  });
+
+  return api;
 };
