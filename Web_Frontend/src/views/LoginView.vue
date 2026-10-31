@@ -29,15 +29,56 @@
           <label for="password" class="mb-2 block text-sm font-medium text-gray-700">
             Mật khẩu
           </label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            autocomplete="current-password"
-            required
-            class="w-full rounded-xl border border-orange-200 px-4 py-3 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-            placeholder="Nhập mật khẩu"
-          />
+          <div class="relative">
+            <input
+              id="password"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              required
+              class="w-full rounded-xl border border-orange-200 px-4 py-3 pr-20 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+              placeholder="Nhập mật khẩu"
+            />
+            <button
+              type="button"
+              :aria-label="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+              :aria-pressed="showPassword"
+              class="absolute inset-y-0 right-3 my-auto flex items-center text-orange-600 hover:text-orange-700"
+              @click="showPassword = !showPassword"
+            >
+              <svg
+                v-if="showPassword"
+                aria-hidden="true"
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.2A10.7 10.7 0 0112 5c5 0 8.3 4.5 9 7-.3 1.1-1 2.2-1.8 3.2M6.2 6.2C4.4 7.4 3.3 9.2 3 12c.7 2.5 4 7 9 7 1.5 0 2.8-.4 4-1.1"
+                />
+              </svg>
+              <svg
+                v-else
+                aria-hidden="true"
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 12s3.3-7 9-7 9 7 9 7-3.3 7-9 7-9-7-9-7z"
+                />
+                <circle cx="12" cy="12" r="3" stroke-width="2" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <p
@@ -68,6 +109,7 @@ import authService from "@/services/auth.service";
 const router = useRouter();
 const phone = ref("");
 const password = ref("");
+const showPassword = ref(false);
 const errorMessage = ref("");
 const isSubmitting = ref(false);
 

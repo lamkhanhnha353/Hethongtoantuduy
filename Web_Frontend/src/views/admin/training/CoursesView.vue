@@ -9,8 +9,9 @@
         </p>
       </div>
       <button
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-400 hover:bg-orange-500
-               text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex-shrink-0"
+        @click="openCreateModal"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600
+               text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex-shrink-0 cursor-pointer"
       >
         <PlusIcon class="w-4 h-4" />
         Thêm khóa học
@@ -23,7 +24,7 @@
         <!-- Search -->
         <SearchBar
           v-model="search"
-          placeholder="Tìm theo mã, tên khóa học..."
+          placeholder="Tìm theo mã, tên khóa học, mô tả..."
           class="flex-1"
         />
         <!-- Filter toggle button -->
@@ -32,7 +33,7 @@
           :class="[
             'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all flex-shrink-0',
             showFilter || hasActiveFilters
-              ? 'bg-orange-400 text-white border-orange-400'
+              ? 'bg-orange-500 text-white border-orange-500'
               : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
           ]"
         >
@@ -57,10 +58,10 @@
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái</label>
             <select v-model="filters.status" class="filter-select">
               <option value="">Tất cả</option>
-              <option value="active">Đang mở</option>
-              <option value="inactive">Tạm dừng</option>
-              <option value="draft">Nháp</option>
-              <option value="upcoming">Sắp mở</option>
+              <option value="active">Đang mở (ACTIVE)</option>
+              <option value="inactive">Tạm dừng (INACTIVE)</option>
+              <option value="draft">Nháp (DRAFT)</option>
+              <option value="upcoming">Sắp mở (UPCOMING)</option>
             </select>
           </div>
           <!-- Fee range -->
@@ -95,8 +96,25 @@
       </transition>
     </div>
 
+    <!-- ─── Error state ────────────────────────────────────────────────── -->
+    <div
+      v-if="errorMessage"
+      class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between gap-3 text-sm"
+    >
+      <div class="flex items-center gap-2">
+        <ExclamationCircleIcon class="w-5 h-5 flex-shrink-0 text-red-500" />
+        <span>{{ errorMessage }}</span>
+      </div>
+      <button
+        @click="loadCourses"
+        class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+      >
+        Thử lại
+      </button>
+    </div>
+
     <!-- ─── Results summary ────────────────────────────────────────────── -->
-    <div class="flex items-center justify-between">
+    <div v-if="!loading && !errorMessage" class="flex items-center justify-between">
       <p class="text-sm text-gray-500">
         Hiển thị <span class="font-semibold text-orange-700">{{ filteredCourses.length }}</span>
         / {{ courses.length }} khóa học
@@ -104,7 +122,7 @@
       <button
         v-if="hasActiveFilters || search"
         @click="clearAll"
-        class="text-xs text-orange-500 hover:text-orange-700 flex items-center gap-1"
+        class="text-xs text-orange-500 hover:text-orange-700 flex items-center gap-1 font-medium"
       >
         <XMarkIcon class="w-3.5 h-3.5" />
         Xóa bộ lọc
@@ -112,14 +130,14 @@
     </div>
 
     <!-- ─── Loading ────────────────────────────────────────────────────── -->
-    <LoadingSpinner v-if="loading" label="Đang tải danh sách khóa học..." />
+    <LoadingSpinner v-if="loading" label="Đang tải danh sách khóa học từ backend..." />
 
     <!-- ─── Empty ──────────────────────────────────────────────────────── -->
     <EmptyState
       v-else-if="!loading && filteredCourses.length === 0"
       :icon="BookOpenIcon"
       message="Không tìm thấy khóa học nào"
-      sub="Thử thay đổi từ khóa hoặc bộ lọc"
+      sub="Thử thay đổi từ khóa hoặc bộ lọc tìm kiếm"
     />
 
     <!-- ─── Grid view ──────────────────────────────────────────────────── -->
@@ -133,6 +151,7 @@
         :course="course"
         :index="i"
         @click="goToDetail"
+        @edit="openEditModal"
       />
     </div>
 
@@ -144,33 +163,63 @@
         :course="course"
         :index="i"
         @click="goToDetail"
+        @edit="openEditModal"
       />
     </div>
+
+    <!-- ─── Add/Edit Course Modal ──────────────────────────────────────── -->
+    <CourseModal
+      :show="showModal"
+      :course="selectedCourse"
+      @close="showModal = false"
+      @saved="loadCourses"
+      @deleted="loadCourses"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { PlusIcon, FunnelIcon, XMarkIcon, BookOpenIcon } from '@heroicons/vue/24/outline'
+import {
+  PlusIcon,
+  FunnelIcon,
+  XMarkIcon,
+  BookOpenIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/vue/24/outline'
 
-import SearchBar    from '@/components/common/SearchBar.vue'
-import ViewToggle   from '@/components/common/ViewToggle.vue'
+import SearchBar      from '@/components/common/SearchBar.vue'
+import ViewToggle     from '@/components/common/ViewToggle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import EmptyState   from '@/components/common/EmptyState.vue'
-import CourseCard   from '@/components/course/CourseCard.vue'
+import EmptyState     from '@/components/common/EmptyState.vue'
+import CourseCard     from '@/components/course/CourseCard.vue'
 import CourseListItem from '@/components/course/CourseListItem.vue'
+import CourseModal    from '@/components/course/CourseModal.vue'
 
 import courseService from '@/services/course.service'
 
 const router = useRouter()
 
 // ─── State ───────────────────────────────────────────────────────────────────
-const loading   = ref(false)
-const courses   = ref([])
-const search    = ref('')
-const viewMode  = ref('grid')
-const showFilter = ref(false)
+const loading        = ref(false)
+const courses        = ref([])
+const errorMessage   = ref('')
+const search         = ref('')
+const viewMode       = ref('grid')
+const showFilter     = ref(false)
+const showModal      = ref(false)
+const selectedCourse = ref(null)
+
+function openCreateModal() {
+  selectedCourse.value = null
+  showModal.value = true
+}
+
+function openEditModal(course) {
+  selectedCourse.value = course
+  showModal.value = true
+}
 
 const filters = ref({
   status: '',
@@ -179,33 +228,57 @@ const filters = ref({
   sort: 'name_asc',
 })
 
+// ─── Course normalizer ────────────────────────────────────────────────────────
+function normalizeCourse(item) {
+  if (!item) return null
+  const levels = Array.isArray(item.courseLevels) ? item.courseLevels : []
+  const fees = levels
+    .map(l => Number(l.fee))
+    .filter(f => !isNaN(f) && f > 0)
+  
+  const minFee = fees.length > 0 ? Math.min(...fees) : (Number(item.fee) || 0)
+  const maxFee = fees.length > 0 ? Math.max(...fees) : minFee
+
+  return {
+    ...item,
+    courseLevels: levels,
+    totalLevels: item.totalLevels ?? levels.length,
+    fee: minFee,
+    minFee,
+    maxFee,
+    totalStudents: item.totalStudents ?? 0,
+  }
+}
+
 // ─── Derived ──────────────────────────────────────────────────────────────────
 const hasActiveFilters = computed(() =>
-  filters.value.status || filters.value.feeMin || filters.value.feeMax
+  Boolean(filters.value.status || filters.value.feeMin != null || filters.value.feeMax != null)
 )
 const activeFilterCount = computed(() =>
-  [filters.value.status, filters.value.feeMin, filters.value.feeMax].filter(Boolean).length
+  [filters.value.status, filters.value.feeMin, filters.value.feeMax].filter(v => v !== '' && v != null).length
 )
 
 const filteredCourses = computed(() => {
   let list = [...courses.value]
 
-  // Text search — mã hoặc tên
+  // Text search — mã, tên khóa học, mô tả
   const q = search.value.toLowerCase().trim()
   if (q) {
     list = list.filter(c =>
       c.name?.toLowerCase().includes(q) ||
       c.code?.toLowerCase().includes(q) ||
+      c.description?.toLowerCase().includes(q) ||
       String(c.id).includes(q)
     )
   }
 
-  // Status filter
+  // Status filter (case-insensitive)
   if (filters.value.status) {
-    list = list.filter(c => String(c.status).toLowerCase() === filters.value.status)
+    const targetStatus = filters.value.status.toLowerCase()
+    list = list.filter(c => String(c.status || '').toLowerCase() === targetStatus)
   }
 
-  // Fee range
+  // Fee range (so sánh theo fee/minFee)
   if (filters.value.feeMin != null && filters.value.feeMin !== '') {
     list = list.filter(c => (c.fee ?? 0) >= filters.value.feeMin)
   }
@@ -238,34 +311,24 @@ function goToDetail(course) {
   router.push({ name: 'course-detail', params: { id: course.id } })
 }
 
-// ─── Load data ────────────────────────────────────────────────────────────────
+// ─── Load real data from backend ─────────────────────────────────────────────
 async function loadCourses() {
   loading.value = true
+  errorMessage.value = ''
   try {
     const data = await courseService.getAll()
-    courses.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+    const rawList = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+    courses.value = rawList.map(normalizeCourse)
   } catch (err) {
-    console.error('Không tải được danh sách khóa học:', err)
-    // Fallback mock data for development
-    courses.value = mockCourses
+    console.error('Lỗi khi tải danh sách khóa học từ backend:', err)
+    errorMessage.value = 'Không thể kết nối đến máy chủ backend (cổng localhost 5114). Vui lòng kiểm tra dịch vụ backend.'
+    courses.value = []
   } finally {
     loading.value = false
   }
 }
 
 onMounted(loadCourses)
-
-// ─── Mock data (used when API is unavailable) ─────────────────────────────────
-const mockCourses = [
-  { id: 1, code: 'KH-001', name: 'Toán Nâng Cao', description: 'Khóa học toán nâng cao cho học sinh THPT', status: 'active', fee: 1500000, totalLevels: 3, totalStudents: 124 },
-  { id: 2, code: 'KH-002', name: 'Vật Lý Cơ Bản', description: 'Lý thuyết và bài tập vật lý phổ thông', status: 'active', fee: 1200000, totalLevels: 2, totalStudents: 89 },
-  { id: 3, code: 'KH-003', name: 'Hóa Học Ứng Dụng', description: 'Hóa học thực nghiệm và ứng dụng thực tế', status: 'inactive', fee: 1350000, totalLevels: 2, totalStudents: 56 },
-  { id: 4, code: 'KH-004', name: 'Tiếng Anh Giao Tiếp', description: 'Phát triển kỹ năng nghe nói tiếng Anh', status: 'active', fee: 1800000, totalLevels: 4, totalStudents: 210 },
-  { id: 5, code: 'KH-005', name: 'Lập Trình Python', description: 'Nhập môn lập trình Python từ cơ bản đến nâng cao', status: 'upcoming', fee: 2000000, totalLevels: 3, totalStudents: 0 },
-  { id: 6, code: 'KH-006', name: 'Ngữ Văn THPT', description: 'Ôn luyện văn học và kỹ năng làm văn thi THPT QG', status: 'active', fee: 1100000, totalLevels: 2, totalStudents: 78 },
-  { id: 7, code: 'KH-007', name: 'Sinh Học Phân Tử', description: 'Chuyên sâu sinh học cấp độ phân tử và tế bào', status: 'draft', fee: 1600000, totalLevels: 1, totalStudents: 0 },
-  { id: 8, code: 'KH-008', name: 'Lịch Sử Việt Nam', description: 'Lịch sử dân tộc từ thời tiền sử đến hiện đại', status: 'active', fee: 950000, totalLevels: 2, totalStudents: 45 },
-]
 </script>
 
 <style scoped>

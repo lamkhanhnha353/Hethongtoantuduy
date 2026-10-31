@@ -15,6 +15,8 @@ import TeacherManagementView from '@/views/admin/manage/TeacherManagementView.vu
 import CoursesView      from '@/views/admin/training/CoursesView.vue'
 import CourseDetailView from '@/views/admin/training/CourseDetailView.vue'
 import ClassesView      from '@/views/admin/training/ClassesView.vue'
+import ClassDetailView  from '@/views/admin/training/ClassDetailView.vue'
+import ScheduleView     from '@/views/admin/training/ScheduleView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,9 +46,10 @@ const router = createRouter({
 
         // Training — Classes
         { path: 'training/classes', name: 'classes', component: ClassesView, meta: { title: 'Danh sách Lớp học' } },
+        { path: 'training/classes/:id', name: 'class-detail', component: ClassDetailView, meta: { title: 'Chi tiết Lớp học' } },
 
         // Training — Schedule
-        { path: 'training/schedule', component: PlaceholderView, meta: { title: 'Lịch học & Thời khóa biểu' } },
+        { path: 'training/schedule', name: 'schedule', component: ScheduleView, meta: { title: 'Lịch học & Thời khóa biểu' } },
 
         // Learning
         { path: 'learning/questions', component: PlaceholderView, meta: { title: 'Ngân hàng câu hỏi' } },
@@ -77,9 +80,14 @@ router.beforeEach((to) => {
   const role = authService.getRole()?.toLowerCase()
   const isAdmin = role === 'admin'
   const isTeacher = role === 'teacher'
+  const homeRoute = isAdmin ? 'dashboard' : 'teacher-dashboard'
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  if (to.name !== 'login' && !isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.name === 'login' && isAuthenticated) {
+    return { name: homeRoute }
   }
 
   if (to.meta.adminOnly && !isAdmin) {
@@ -90,8 +98,8 @@ router.beforeEach((to) => {
     return { name: 'dashboard' }
   }
 
-  if (to.name === 'login' && isAuthenticated) {
-    return isAdmin ? { name: 'dashboard' } : { name: 'teacher-dashboard' }
+  if (!to.matched.length) {
+    return { name: homeRoute }
   }
 })
 
