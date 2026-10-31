@@ -7,8 +7,9 @@
         <p class="text-sm text-gray-500 mt-0.5">Tất cả lớp học đang hoạt động trong hệ thống</p>
       </div>
       <button
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-400 hover:bg-orange-500
-               text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex-shrink-0"
+        @click="openCreateModal"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600
+               text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex-shrink-0 cursor-pointer"
       >
         <PlusIcon class="w-4 h-4" />
         Mở lớp mới
@@ -115,6 +116,7 @@
         :key="cls.id"
         :cls="cls"
         @click="goToDetail"
+        @edit="openEditModal"
       />
     </div>
 
@@ -125,13 +127,24 @@
         :key="cls.id"
         :cls="cls"
         @click="goToDetail"
+        @edit="openEditModal"
       />
     </div>
+
+    <!-- ─── Add/Edit Class Modal ───────────────────────────────────────────── -->
+    <ClassModal
+      :show="showModal"
+      :cls="selectedClass"
+      @close="showModal = false"
+      @saved="loadClasses"
+      @deleted="loadClasses"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { PlusIcon, FunnelIcon, XMarkIcon, RectangleGroupIcon } from '@heroicons/vue/24/outline'
 
 import SearchBar      from '@/components/common/SearchBar.vue'
@@ -140,15 +153,30 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import EmptyState     from '@/components/common/EmptyState.vue'
 import ClassCard      from '@/components/class/ClassCard.vue'
 import ClassListItem  from '@/components/class/ClassListItem.vue'
+import ClassModal     from '@/components/class/ClassModal.vue'
 
 import classService from '@/services/class.service'
 
+const router = useRouter()
+
 // ─── State ───────────────────────────────────────────────────────────────────
-const loading  = ref(false)
-const classes  = ref([])
-const search   = ref('')
-const viewMode = ref('grid')
-const showFilter = ref(false)
+const loading       = ref(false)
+const classes       = ref([])
+const search        = ref('')
+const viewMode      = ref('grid')
+const showFilter    = ref(false)
+const showModal     = ref(false)
+const selectedClass = ref(null)
+
+function openCreateModal() {
+  selectedClass.value = null
+  showModal.value = true
+}
+
+function openEditModal(cls) {
+  selectedClass.value = cls
+  showModal.value = true
+}
 
 const filters = ref({
   status: '',
@@ -179,7 +207,7 @@ const filteredClasses = computed(() => {
   }
 
   if (filters.value.status) {
-    list = list.filter(c => String(c.status).toLowerCase() === filters.value.status)
+    list = list.filter(c => String(c.status || '').toLowerCase() === filters.value.status.toLowerCase())
   }
 
   if (filters.value.capacity === 'available') {
@@ -208,7 +236,7 @@ function clearAll() {
   resetFilters()
 }
 function goToDetail(cls) {
-  console.log('Navigate to class detail:', cls.id)
+  router.push({ name: 'schedule', query: { classId: cls.id } })
 }
 
 // ─── Load data ────────────────────────────────────────────────────────────────
@@ -216,9 +244,15 @@ async function loadClasses() {
   loading.value = true
   try {
     const data = await classService.getAll()
-    classes.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
-  } catch {
-    classes.value = mockClasses
+    const raw = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+    classes.value = raw.map(c => ({
+      ...c,
+      currentStudents: c.activeStudentsCount ?? c.currentStudents ?? 0,
+      maxStudents: c.maxCapacity ?? c.maxStudents ?? 0,
+    }))
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách lớp học:', err)
+    classes.value = []
   } finally {
     loading.value = false
   }
