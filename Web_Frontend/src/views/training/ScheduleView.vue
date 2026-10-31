@@ -168,9 +168,12 @@
 
                 <!-- Class Name -->
                 <td class="py-3 px-4">
-                  <p class="font-bold text-gray-900 hover:text-orange-600 transition-colors">
+                  <router-link
+                    :to="{ name: 'class-detail', params: { id: s.classId } }"
+                    class="font-bold text-gray-900 hover:text-orange-600 transition-colors inline-block"
+                  >
                     {{ s.className }}
-                  </p>
+                  </router-link>
                   <p class="text-[11px] text-gray-400 mt-0.5 font-mono">
                     Mã lớp: ID {{ s.classId }}
                   </p>

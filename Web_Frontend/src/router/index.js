@@ -7,6 +7,7 @@ import PlaceholderView from '@/views/PlaceholderView.vue'
 import CoursesView      from '@/views/training/CoursesView.vue'
 import CourseDetailView from '@/views/training/CourseDetailView.vue'
 import ClassesView      from '@/views/training/ClassesView.vue'
+import ClassDetailView  from '@/views/training/ClassDetailView.vue'
 import ScheduleView     from '@/views/training/ScheduleView.vue'
 
 const router = createRouter({
@@ -29,6 +30,7 @@ const router = createRouter({
 
         // Training — Classes
         { path: 'training/classes', name: 'classes', component: ClassesView, meta: { title: 'Danh sách Lớp học' } },
+        { path: 'training/classes/:id', name: 'class-detail', component: ClassDetailView, meta: { title: 'Chi tiết Lớp học' } },
 
         // Training — Schedule
         { path: 'training/schedule', name: 'schedule', component: ScheduleView, meta: { title: 'Lịch học & Thời khóa biểu' } },

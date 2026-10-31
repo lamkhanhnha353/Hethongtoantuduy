@@ -236,7 +236,7 @@ function clearAll() {
   resetFilters()
 }
 function goToDetail(cls) {
-  router.push({ name: 'schedule', query: { classId: cls.id } })
+  router.push({ name: 'class-detail', params: { id: cls.id } })
 }
 
 // ─── Load data ────────────────────────────────────────────────────────────────

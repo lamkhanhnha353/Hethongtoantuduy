@@ -474,7 +474,7 @@ function selectLevelAndScroll(levelId) {
 }
 
 function goToClass(cls) {
-  router.push({ name: 'schedule', query: { classId: cls.id } })
+  router.push({ name: 'class-detail', params: { id: cls.id } })
 }
 
 function formatFee(fee) {

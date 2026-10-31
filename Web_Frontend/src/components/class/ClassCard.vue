@@ -68,15 +68,21 @@
         <span>Thời khóa biểu</span>
       </router-link>
 
-      <button
-        type="button"
-        @click.stop="$emit('edit', cls)"
-        class="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-orange-600 py-1 px-2 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer"
-        title="Chỉnh sửa lớp học"
-      >
-        <PencilSquareIcon class="w-3.5 h-3.5 text-orange-500" />
-        <span>Sửa</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click.stop="$emit('edit', cls)"
+          class="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-orange-600 py-1 px-2 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer"
+          title="Chỉnh sửa lớp học"
+        >
+          <PencilSquareIcon class="w-3.5 h-3.5 text-orange-500" />
+          <span>Sửa</span>
+        </button>
+
+        <span class="text-[11px] text-orange-500 group-hover:translate-x-0.5 transition-transform font-medium">
+          Chi tiết →
+        </span>
+      </div>
     </div>
   </div>
 </template>
