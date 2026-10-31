@@ -1,113 +1,188 @@
 <template>
-  <div class="space-y-5">
+  <div class="space-y-6">
     <!-- ─── Back + Loading ────────────────────────────────────────────────── -->
-    <LoadingSpinner v-if="loadingCourse" label="Đang tải khóa học..." />
+    <LoadingSpinner v-if="loadingCourse" label="Đang tải thông tin khóa học từ backend..." />
 
     <template v-else-if="course">
       <!-- ─── Breadcrumb ───────────────────────────────────────────────── -->
       <nav class="flex items-center gap-2 text-sm text-gray-400">
-        <router-link to="/training/courses" class="hover:text-orange-500 transition-colors flex items-center gap-1">
+        <router-link to="/training/courses" class="hover:text-orange-600 transition-colors flex items-center gap-1 font-medium">
           <HomeIcon class="w-4 h-4" />
           Danh mục Khóa học
         </router-link>
         <ChevronRightIcon class="w-4 h-4" />
-        <span class="text-orange-700 font-medium">{{ course.name }}</span>
+        <span class="text-orange-800 font-semibold truncate">{{ course.name }}</span>
       </nav>
 
       <!-- ─── Course info card ─────────────────────────────────────────── -->
       <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
-        <div class="h-2 w-full bg-gradient-to-r from-orange-300 via-orange-400 to-orange-500" />
+        <div class="h-2 w-full bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500" />
         <div class="p-6">
-          <div class="flex flex-col lg:flex-row lg:items-start gap-4">
-            <!-- Icon/Avatar -->
-            <div class="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <BookOpenIcon class="w-8 h-8 text-orange-400" />
+          <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+            <!-- Course Image / Avatar -->
+            <div class="w-full sm:w-44 h-40 rounded-2xl overflow-hidden bg-orange-50 flex-shrink-0 border border-orange-200 shadow-inner">
+              <img
+                v-if="course.imageUrl && !imageError"
+                :src="course.imageUrl"
+                :alt="course.name"
+                class="w-full h-full object-cover"
+                @error="imageError = true"
+              />
+              <div v-else class="w-full h-full flex flex-col items-center justify-center bg-orange-100 text-orange-600">
+                <BookOpenIcon class="w-12 h-12 text-orange-400 mb-1" />
+                <span class="font-bold text-xs uppercase">{{ course.code }}</span>
+              </div>
             </div>
 
             <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 mb-1">
-                <span class="text-xs font-mono font-semibold text-orange-400 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+              <div class="flex flex-wrap items-center gap-2 mb-2">
+                <span class="text-xs font-mono font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-200">
                   {{ course.code ?? `#${course.id}` }}
                 </span>
                 <StatusBadge :status="course.status" />
+                <span v-if="course.minAge || course.maxAge" class="text-xs text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200 font-medium">
+                  Độ tuổi: {{ course.minAge ?? '?' }} - {{ course.maxAge ?? '?' }} tuổi
+                </span>
               </div>
-              <h1 class="text-2xl font-bold text-orange-900 mb-2">{{ course.name }}</h1>
-              <p v-if="course.description" class="text-sm text-gray-500 mb-4 max-w-2xl">{{ course.description }}</p>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-orange-950 mb-3 leading-tight">
+                {{ course.name }}
+              </h1>
+              <p v-if="course.description" class="text-sm text-gray-600 mb-5 leading-relaxed max-w-3xl">
+                {{ course.description }}
+              </p>
 
               <!-- Stats row -->
-              <div class="flex flex-wrap gap-6 text-sm text-gray-500">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
-                    <AcademicCapIcon class="w-4 h-4 text-orange-400" />
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-600 border-t border-orange-100 pt-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <AcademicCapIcon class="w-5 h-5 text-orange-500" />
                   </div>
                   <div>
-                    <p class="font-bold text-gray-800 leading-none">{{ course.totalLevels ?? levels.length }}</p>
-                    <p class="text-[11px]">Cấp độ</p>
+                    <p class="font-bold text-gray-800 leading-none text-base">{{ levels.length }}</p>
+                    <p class="text-[11px] text-gray-500 mt-1">Cấp độ đào tạo</p>
                   </div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-                    <UserGroupIcon class="w-4 h-4 text-blue-400" />
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <UserGroupIcon class="w-5 h-5 text-blue-500" />
                   </div>
                   <div>
-                    <p class="font-bold text-gray-800 leading-none">{{ course.totalStudents ?? 0 }}</p>
-                    <p class="text-[11px]">Học viên</p>
+                    <p class="font-bold text-gray-800 leading-none text-base">{{ totalClassStudents }}</p>
+                    <p class="text-[11px] text-gray-500 mt-1">Học viên đang học</p>
                   </div>
                 </div>
-                <div v-if="course.fee" class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-xl bg-green-100 flex items-center justify-center">
-                    <CurrencyDollarIcon class="w-4 h-4 text-green-500" />
+                <div v-if="feeDisplay" class="flex items-center gap-3 sm:col-span-2">
+                  <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <CurrencyDollarIcon class="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <p class="font-bold text-gray-800 leading-none">{{ formatFee(course.fee) }}</p>
-                    <p class="text-[11px]">Học phí/tháng</p>
+                    <p class="font-bold text-gray-800 leading-none text-base text-green-700">{{ feeDisplay }}</p>
+                    <p class="text-[11px] text-gray-500 mt-1">Học phí theo cấp độ</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Action buttons -->
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <button class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-orange-600 bg-orange-100 hover:bg-orange-200 rounded-xl transition-colors">
+            <div class="flex items-center gap-2 flex-shrink-0 self-start">
+              <button
+                @click="openEditCourseModal"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-xl transition-colors cursor-pointer"
+              >
                 <PencilIcon class="w-3.5 h-3.5" />
-                Chỉnh sửa
+                Chỉnh sửa khóa học
               </button>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- ─── Course Levels (Cấp độ khóa học) ────────────────────────── -->
+      <div v-if="levels.length > 0" class="bg-white rounded-2xl border border-orange-100 shadow-sm p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-orange-950 flex items-center gap-2">
+              <AcademicCapIcon class="w-5 h-5 text-orange-500" />
+              Lộ trình Cấp độ (Course Levels)
+            </h2>
+            <p class="text-xs text-gray-500 mt-0.5">Khóa học gồm {{ levels.length }} cấp độ giảng dạy liên tiếp</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="(lv, idx) in levels"
+            :key="lv.id"
+            @click="selectLevelAndScroll(lv.id)"
+            :class="[
+              'p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3',
+              selectedLevel === lv.id
+                ? 'border-orange-400 bg-orange-50/60 shadow-sm ring-1 ring-orange-300'
+                : 'border-orange-100 bg-white hover:border-orange-300 hover:shadow-sm'
+            ]"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800">
+                  {{ lv.code ?? `L${idx + 1}` }}
+                </span>
+                <StatusBadge :status="lv.status" />
+              </div>
+              <h3 class="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
+                {{ lv.name }}
+              </h3>
+              <p v-if="lv.description" class="text-xs text-gray-500 line-clamp-2 mt-1">
+                {{ lv.description }}
+              </p>
+            </div>
+
+            <div class="pt-3 border-t border-orange-100 flex items-center justify-between text-xs">
+              <span class="font-bold text-orange-600 text-sm">
+                {{ formatFee(lv.fee) }}
+              </span>
+              <span class="text-gray-500 font-medium">
+                {{ lv.totalSessions ?? 0 }} buổi học
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ─── Classes section ──────────────────────────────────────────── -->
-      <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
+      <div id="classes-section" class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-orange-100">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 class="font-bold text-orange-900">Danh sách Lớp học</h2>
+              <h2 class="font-bold text-orange-900 text-base">Danh sách Lớp học trực thuộc</h2>
               <p class="text-xs text-gray-500 mt-0.5">
-                {{ filteredClasses.length }} lớp
-                <template v-if="selectedLevel"> · Cấp độ: <span class="font-medium text-orange-600">{{ selectedLevelName }}</span></template>
+                Hiển thị {{ filteredClasses.length }} lớp
+                <template v-if="selectedLevel"> · Đang lọc theo cấp độ: <span class="font-semibold text-orange-600">{{ selectedLevelName }}</span></template>
               </p>
             </div>
-            <button class="inline-flex items-center gap-2 px-3 py-2 bg-orange-400 hover:bg-orange-500 text-white text-xs font-semibold rounded-xl transition-colors flex-shrink-0">
+            <button
+              @click="openCreateClassModal"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-xl transition-colors flex-shrink-0 shadow-sm cursor-pointer"
+            >
               <PlusIcon class="w-3.5 h-3.5" />
               Mở lớp mới
             </button>
           </div>
         </div>
 
-        <div class="p-4 space-y-4">
+        <div class="p-5 space-y-4">
           <!-- Level tabs -->
-          <div v-if="levels.length > 0" class="flex flex-wrap gap-2">
+          <div v-if="levels.length > 0" class="flex flex-wrap gap-2 items-center">
+            <span class="text-xs text-gray-400 font-medium mr-1">Lọc cấp độ:</span>
             <button
               @click="selectedLevel = null"
               :class="[
                 'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
                 selectedLevel === null
-                  ? 'bg-orange-400 text-white border-orange-400'
-                  : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
+                  ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                  : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50',
               ]"
             >
-              Tất cả
+              Tất cả ({{ classes.length }})
             </button>
             <button
               v-for="lv in levels"
@@ -116,8 +191,8 @@
               :class="[
                 'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
                 selectedLevel === lv.id
-                  ? 'bg-orange-400 text-white border-orange-400'
-                  : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
+                  ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                  : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50',
               ]"
             >
               {{ lv.name }}
@@ -126,14 +201,14 @@
 
           <!-- Toolbar for classes -->
           <div class="flex flex-col sm:flex-row gap-3">
-            <SearchBar v-model="classSearch" placeholder="Tìm theo mã, tên lớp học..." />
+            <SearchBar v-model="classSearch" placeholder="Tìm theo mã lớp, tên lớp, giáo viên..." class="flex-1" />
             <!-- Class filter -->
             <button
               @click="showClassFilter = !showClassFilter"
               :class="[
                 'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all flex-shrink-0',
                 showClassFilter || classFilters.status
-                  ? 'bg-orange-400 text-white border-orange-400'
+                  ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
               ]"
             >
@@ -150,10 +225,10 @@
                 <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái lớp</label>
                 <select v-model="classFilters.status" class="filter-select">
                   <option value="">Tất cả</option>
-                  <option value="active">Đang mở</option>
-                  <option value="full">Đã đầy</option>
-                  <option value="upcoming">Sắp khai giảng</option>
-                  <option value="inactive">Đã kết thúc</option>
+                  <option value="active">Đang mở (ACTIVE)</option>
+                  <option value="full">Đã đầy (FULL)</option>
+                  <option value="upcoming">Sắp khai giảng (UPCOMING)</option>
+                  <option value="inactive">Đã kết thúc (INACTIVE)</option>
                 </select>
               </div>
               <div>
@@ -173,14 +248,14 @@
           </transition>
 
           <!-- Loading classes -->
-          <LoadingSpinner v-if="loadingClasses" label="Đang tải danh sách lớp..." />
+          <LoadingSpinner v-if="loadingClasses" label="Đang tải danh sách lớp học từ backend..." />
 
           <!-- Empty classes -->
           <EmptyState
             v-else-if="!loadingClasses && filteredClasses.length === 0"
             :icon="RectangleGroupIcon"
-            message="Không có lớp học nào"
-            sub="Hãy mở lớp mới cho khóa học này"
+            message="Không tìm thấy lớp học nào"
+            sub="Hãy mở lớp mới cho cấp độ hoặc khóa học này"
           />
 
           <!-- Classes Grid -->
@@ -193,6 +268,7 @@
               :key="cls.id"
               :cls="cls"
               @click="goToClass"
+              @edit="openEditClassModal"
             />
           </div>
 
@@ -203,25 +279,46 @@
               :key="cls.id"
               :cls="cls"
               @click="goToClass"
+              @edit="openEditClassModal"
             />
           </div>
         </div>
       </div>
+
+      <!-- ─── Add/Edit Course Modal ────────────────────────────────────── -->
+      <CourseModal
+        :show="showCourseModal"
+        :course="course"
+        @close="showCourseModal = false"
+        @saved="handleCourseSaved"
+        @deleted="handleCourseDeleted"
+      />
+
+      <!-- ─── Add/Edit Class Modal ─────────────────────────────────────── -->
+      <ClassModal
+        :show="showClassModal"
+        :cls="selectedClass"
+        :preselected-level-id="selectedLevel"
+        @close="showClassModal = false"
+        @saved="loadClasses"
+        @deleted="loadClasses"
+      />
     </template>
 
     <!-- ─── Error / not found ──────────────────────────────────────────── -->
-    <div v-else class="flex flex-col items-center justify-center py-20 gap-3">
-      <ExclamationCircleIcon class="w-12 h-12 text-red-300" />
-      <p class="text-gray-500 font-medium">Không tìm thấy khóa học</p>
-      <router-link to="/training/courses" class="text-sm text-orange-500 hover:text-orange-700 underline">
-        Quay lại danh sách
+    <div v-else class="flex flex-col items-center justify-center py-20 gap-3 bg-white rounded-2xl border border-orange-100">
+      <ExclamationCircleIcon class="w-12 h-12 text-red-400" />
+      <p class="text-gray-700 font-bold text-lg">Không tìm thấy khóa học</p>
+      <p class="text-gray-400 text-sm">Khóa học không tồn tại hoặc máy chủ backend không phản hồi.</p>
+      <router-link to="/training/courses" class="mt-2 text-sm text-orange-600 hover:text-orange-700 underline font-semibold">
+        ← Quay lại danh mục khóa học
       </router-link>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   HomeIcon, ChevronRightIcon, BookOpenIcon, AcademicCapIcon, UserGroupIcon,
@@ -236,6 +333,8 @@ import EmptyState     from '@/components/common/EmptyState.vue'
 import StatusBadge    from '@/components/course/StatusBadge.vue'
 import ClassCard      from '@/components/class/ClassCard.vue'
 import ClassListItem  from '@/components/class/ClassListItem.vue'
+import CourseModal    from '@/components/course/CourseModal.vue'
+import ClassModal     from '@/components/class/ClassModal.vue'
 
 import courseService      from '@/services/course.service'
 import courseLevelService from '@/services/courseLevel.service'
@@ -247,9 +346,10 @@ const router = useRouter()
 // ─── State ────────────────────────────────────────────────────────────────────
 const loadingCourse  = ref(false)
 const loadingClasses = ref(false)
-const course   = ref(null)
-const levels   = ref([])
-const classes  = ref([])
+const imageError     = ref(false)
+const course         = ref(null)
+const levels         = ref([])
+const classes        = ref([])
 
 const selectedLevel   = ref(null)
 const classSearch     = ref('')
@@ -257,10 +357,53 @@ const classViewMode   = ref('grid')
 const showClassFilter = ref(false)
 const classFilters    = ref({ status: '', sort: 'name_asc' })
 
+// Modals
+const showCourseModal = ref(false)
+const showClassModal  = ref(false)
+const selectedClass   = ref(null)
+
+function openEditCourseModal() {
+  showCourseModal.value = true
+}
+
+function handleCourseSaved() {
+  loadCourse()
+}
+
+function handleCourseDeleted() {
+  router.push({ name: 'courses' })
+}
+
+function openCreateClassModal() {
+  selectedClass.value = null
+  showClassModal.value = true
+}
+
+function openEditClassModal(cls) {
+  selectedClass.value = cls
+  showClassModal.value = true
+}
+
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const selectedLevelName = computed(() =>
   levels.value.find(l => l.id === selectedLevel.value)?.name ?? ''
 )
+
+const totalClassStudents = computed(() =>
+  classes.value.reduce((acc, c) => acc + (c.currentStudents ?? 0), 0)
+)
+
+const feeDisplay = computed(() => {
+  if (levels.value.length === 0) {
+    return course.value?.fee ? formatFee(course.value.fee) : null
+  }
+  const fees = levels.value.map(l => Number(l.fee)).filter(f => !isNaN(f) && f > 0)
+  if (fees.length === 0) return null
+  const min = Math.min(...fees)
+  const max = Math.max(...fees)
+  if (min === max) return formatFee(min)
+  return `${formatFee(min)} - ${formatFee(max)}`
+})
 
 const filteredClasses = computed(() => {
   let list = [...classes.value]
@@ -277,13 +420,15 @@ const filteredClasses = computed(() => {
       c.name?.toLowerCase().includes(q) ||
       c.code?.toLowerCase().includes(q) ||
       c.teacherName?.toLowerCase().includes(q) ||
+      c.courseLevelName?.toLowerCase().includes(q) ||
       String(c.id).includes(q)
     )
   }
 
   // Status filter
   if (classFilters.value.status) {
-    list = list.filter(c => String(c.status).toLowerCase() === classFilters.value.status)
+    const targetStatus = classFilters.value.status.toLowerCase()
+    list = list.filter(c => String(c.status || '').toLowerCase() === targetStatus)
   }
 
   // Sort
@@ -296,65 +441,106 @@ const filteredClasses = computed(() => {
   return list
 })
 
+// ─── Normalizer ───────────────────────────────────────────────────────────────
+function normalizeCourse(raw) {
+  if (!raw) return null
+  const rawLevels = Array.isArray(raw.courseLevels) ? raw.courseLevels : []
+  const fees = rawLevels.map(l => Number(l.fee)).filter(f => !isNaN(f) && f > 0)
+  const minFee = fees.length > 0 ? Math.min(...fees) : (Number(raw.fee) || 0)
+  const maxFee = fees.length > 0 ? Math.max(...fees) : minFee
+
+  return {
+    ...raw,
+    courseLevels: rawLevels,
+    totalLevels: raw.totalLevels ?? rawLevels.length,
+    fee: minFee,
+    minFee,
+    maxFee,
+  }
+}
+
 // ─── Methods ──────────────────────────────────────────────────────────────────
 function resetClassFilters() {
   classFilters.value = { status: '', sort: 'name_asc' }
   classSearch.value = ''
 }
 
+function selectLevelAndScroll(levelId) {
+  selectedLevel.value = selectedLevel.value === levelId ? null : levelId
+  const el = document.getElementById('classes-section')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
 function goToClass(cls) {
-  // Navigate to class detail (can be added later)
-  console.log('Class clicked:', cls)
+  router.push({ name: 'schedule', query: { classId: cls.id } })
 }
 
 function formatFee(fee) {
-  return Number(fee).toLocaleString('vi-VN') + 'đ'
+  return Number(fee || 0).toLocaleString('vi-VN') + 'đ'
 }
 
-// ─── Load data ─────────────────────────────────────────────────────────────────
+// ─── Data Loading ─────────────────────────────────────────────────────────────
 async function loadCourse() {
   loadingCourse.value = true
   const id = route.params.id
   try {
     const data = await courseService.get(id)
-    course.value = data
-  } catch {
-    // Fallback mock
-    course.value = mockCourses.find(c => String(c.id) === String(id)) ?? null
+    course.value = normalizeCourse(data)
+    if (data?.courseLevels && Array.isArray(data.courseLevels)) {
+      levels.value = data.courseLevels
+    }
+  } catch (err) {
+    console.error('Không tải được thông tin khóa học:', err)
+    course.value = null
   } finally {
     loadingCourse.value = false
   }
 }
 
 async function loadLevels() {
+  if (levels.value.length > 0) return
   const id = route.params.id
   try {
     const data = await courseLevelService.getByCourse(id)
     levels.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
-  } catch {
-    levels.value = mockLevels
+  } catch (err) {
+    console.error('Không tải được cấp độ khóa học:', err)
+    levels.value = []
   }
 }
 
 async function loadClasses() {
   loadingClasses.value = true
-  const id = route.params.id
-
   try {
-    // Try to load classes grouped by levels
     if (levels.value.length > 0) {
-      const allClasses = await Promise.all(
+      const results = await Promise.allSettled(
         levels.value.map(lv => classService.getByCourseLevel(lv.id))
       )
-      classes.value = allClasses
-        .flat()
-        .map((cls, i) => ({ ...cls, levelId: levels.value[Math.floor(i / 10)]?.id }))
+      const allClasses = results
+        .filter(r => r.status === 'fulfilled' && Array.isArray(r.value))
+        .flatMap(r => r.value)
+
+      classes.value = allClasses.map(cls => ({
+        ...cls,
+        currentStudents: cls.activeStudentsCount ?? cls.currentStudents ?? 0,
+        maxStudents: cls.maxCapacity ?? cls.maxStudents ?? 0,
+        levelId: cls.courseLevelId ?? cls.levelId,
+      }))
     } else {
       const data = await classService.getAll()
-      classes.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+      const rawClasses = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+      classes.value = rawClasses.map(cls => ({
+        ...cls,
+        currentStudents: cls.activeStudentsCount ?? cls.currentStudents ?? 0,
+        maxStudents: cls.maxCapacity ?? cls.maxStudents ?? 0,
+        levelId: cls.courseLevelId ?? cls.levelId,
+      }))
     }
-  } catch {
-    classes.value = mockClasses
+  } catch (err) {
+    console.error('Không tải được danh sách lớp học:', err)
+    classes.value = []
   } finally {
     loadingClasses.value = false
   }
@@ -365,29 +551,6 @@ onMounted(async () => {
   await loadLevels()
   await loadClasses()
 })
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const mockCourses = [
-  { id: 1, code: 'KH-001', name: 'Toán Nâng Cao', description: 'Khóa học toán nâng cao cho học sinh THPT', status: 'active', fee: 1500000, totalLevels: 3, totalStudents: 124 },
-  { id: 2, code: 'KH-002', name: 'Vật Lý Cơ Bản', description: 'Lý thuyết và bài tập vật lý phổ thông', status: 'active', fee: 1200000, totalLevels: 2, totalStudents: 89 },
-  { id: 3, code: 'KH-003', name: 'Hóa Học Ứng Dụng', description: 'Hóa học thực nghiệm và ứng dụng thực tế', status: 'inactive', fee: 1350000, totalLevels: 2, totalStudents: 56 },
-  { id: 4, code: 'KH-004', name: 'Tiếng Anh Giao Tiếp', description: 'Phát triển kỹ năng nghe nói tiếng Anh', status: 'active', fee: 1800000, totalLevels: 4, totalStudents: 210 },
-  { id: 5, code: 'KH-005', name: 'Lập Trình Python', description: 'Nhập môn lập trình Python từ cơ bản đến nâng cao', status: 'upcoming', fee: 2000000, totalLevels: 3, totalStudents: 0 },
-]
-
-const mockLevels = [
-  { id: 1, name: 'Cơ bản', order: 1 },
-  { id: 2, name: 'Trung cấp', order: 2 },
-  { id: 3, name: 'Nâng cao', order: 3 },
-]
-
-const mockClasses = [
-  { id: 101, code: 'LH-101', name: 'Toán Cơ Bản - Sáng T2T4T6', status: 'active', teacherName: 'Nguyễn Văn A', room: 'P201', maxStudents: 25, currentStudents: 22, startDate: '2026-09-01', levelId: 1, courseLevelId: 1 },
-  { id: 102, code: 'LH-102', name: 'Toán Cơ Bản - Chiều T3T5', status: 'full', teacherName: 'Trần Thị B', room: 'P301', maxStudents: 20, currentStudents: 20, startDate: '2026-09-05', levelId: 1, courseLevelId: 1 },
-  { id: 103, code: 'LH-103', name: 'Toán Trung Cấp - Tối T2T4', status: 'active', teacherName: 'Lê Văn C', room: 'P103', maxStudents: 20, currentStudents: 15, startDate: '2026-09-10', levelId: 2, courseLevelId: 2 },
-  { id: 104, code: 'LH-104', name: 'Toán Nâng Cao - T7CN', status: 'upcoming', teacherName: 'Phạm Thị D', room: 'P401', maxStudents: 15, currentStudents: 8, startDate: '2026-11-01', levelId: 3, courseLevelId: 3 },
-  { id: 105, code: 'LH-105', name: 'Toán Trung Cấp - Sáng T7', status: 'active', teacherName: 'Hoàng Văn E', room: 'P202', maxStudents: 18, currentStudents: 12, startDate: '2026-09-20', levelId: 2, courseLevelId: 2 },
-]
 </script>
 
 <style scoped>
