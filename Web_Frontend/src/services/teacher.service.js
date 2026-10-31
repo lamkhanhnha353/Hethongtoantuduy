@@ -6,8 +6,8 @@ class TeacherService {
   }
 
   // Lấy danh sách giáo viên
-  async getAll() {
-    return (await this.api.get("/")).data;
+  async getAll(keyword = "") {
+    return (await this.api.get(`/?keyword=${keyword}`)).data;
   }
 
   // Lấy thông tin 1 giáo viên theo ID

@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layouts/Layout.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
+import ParentStudentView from '@/views/manage/ParentStudentView.vue'
+import TeacherManagementView from '@/views/manage/TeacherManagementView.vue'
+
 
 // Training
 import CoursesView      from '@/views/training/CoursesView.vue'
@@ -20,8 +23,8 @@ const router = createRouter({
         { path: '', name: 'dashboard', component: DashboardView, meta: { title: 'Tổng quan' } },
 
         // Users
-        { path: 'users/students', component: PlaceholderView, meta: { title: 'Phụ huynh & Học sinh' } },
-        { path: 'users/teachers', component: PlaceholderView, meta: { title: 'Giáo viên' } },
+        { path: 'users/students', component: ParentStudentView, meta: { title: 'Phụ huynh & Học sinh' } },
+        { path: 'users/teachers', component: TeacherManagementView, meta: { title: 'Giáo viên' } },
         { path: 'users/roles', component: PlaceholderView, meta: { title: 'Phân quyền & Bảo mật' } },
 
         // Training — Courses

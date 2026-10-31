@@ -16,10 +16,11 @@ BEGIN TRY
     DELETE FROM [dbo].[STUDENT_ASSIGNMENT];
     DELETE FROM [dbo].[LEAVE_REQUEST];
     DELETE FROM [dbo].[ATTENDANCE];
+    DELETE FROM [dbo].[CLASS_STUDENT];
+    DELETE FROM [dbo].[EMAIL_VERIFICATION_TOKEN];
     DELETE FROM [dbo].[INVOICE];
     DELETE FROM [dbo].[ASSIGNMENT];
     DELETE FROM [dbo].[LESSON];
-    DELETE FROM [dbo].[CLASS_STUDENT];
     DELETE FROM [dbo].[CLASS_SCHEDULE];
     DELETE FROM [dbo].[StudentBadge];
     DELETE FROM [dbo].[QUESTION];
@@ -42,6 +43,7 @@ BEGIN TRY
 -- =============================================================================
 -- 1. BẢNG ACCOUNT (41 dòng: 1 Admin, 8 Giáo viên, 32 Phụ huynh)
 -- =============================================================================
+-- Password hash dưới đây là dữ liệu placeholder; tài khoản seed không đăng nhập được.
 SET IDENTITY_INSERT [dbo].[ACCOUNT] ON;
 INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_active, created_at, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount) VALUES
 (1, '0901000000', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Admin', NULL, 1, '2026-08-01 08:00:00', '0901000000', '0901000000', 'admin@toantuduy.edu.vn', 'ADMIN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
@@ -118,13 +120,13 @@ SET IDENTITY_INSERT [dbo].[BADGE] OFF;
 -- 3. BẢNG COURSE (6 khóa học Toán Tư Duy chủ đạo)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[COURSE] ON;
-INSERT INTO [dbo].[COURSE] (id, code, name, description, min_age, max_age, image_url, status, created_at, updated_at) VALUES
-(1, 'SRB', N'Soroban / UCMAS - Bàn tính Số học Nhật Bản', N'Phương pháp rèn luyện trí não thông qua bàn tính cổ truyền Soroban, giúp trẻ phản xạ tính nhẩm siêu tốc, gia tăng sự tập trung và phát triển não bộ đồng đều cả 2 bán cầu.', 6, 12, 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(2, 'FGM', N'Finger Math - Toán ngón tay Hàn Quốc', N'Phương pháp tính nhẩm toán học bằng đôi bàn tay linh hoạt, giúp trẻ từ 4-8 tuổi làm quen với các phép cộng trừ trong phạm vi 99 một cách trực quan, vui nhộn.', 4, 8, 'https://images.unsplash.com/photo-1509228468518-180dd4864904', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(3, 'MTN', N'Mathnasium - Toán tư duy Hoa Kỳ', N'Chương trình toán tư duy theo lộ trình cá nhân hóa Mathnasium Method từ Mỹ, xây dựng nền tảng từ bản chất toán học, phát triển tư duy định lượng và suy luận logic sâu sắc.', 6, 14, 'https://images.unsplash.com/photo-1580582932707-520aed937b7b', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(4, 'KMN', N'Kumon - Toán tự học Nhật Bản', N'Hệ thống tự học toán Kumon chuẩn Nhật Bản giúp học sinh hình thành thói quen kỷ luật, độc lập suy nghĩ và nắm vững kỹ năng thao tác tính toán tốc độ cao vượt cấp lớp học.', 5, 12, 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(5, 'IMT', N'I-MATH / Maieutic - Toán tư duy gợi mở Socrates', N'Khóa học khơi gợi tư duy phản biện qua phương pháp vấn đáp Maieutic, khuyến khích học sinh tự đặt câu hỏi tại sao, tranh luận và tự khám phá giải pháp cho bài toán.', 7, 14, 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
-(6, 'CPA', N'Tiến trình CPA - Concrete Pictorial Abstract', N'Phương pháp học toán qua 3 bước: Cụ thể (Vật thể thực) - Minh họa (Hình ảnh biểu diễn) - Trừu tượng (Ký hiệu toán học), giúp trẻ hiểu sâu bản chất, không học vẹt.', 4, 10, 'https://images.unsplash.com/photo-1577896851231-70ef18881754', 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00');
+INSERT INTO [dbo].[COURSE] (id, code, name, description, min_age, max_age, image_url, video_url, benefits, facility_images, rating, reviews, status, created_at, updated_at) VALUES
+(1, 'SRB', N'Soroban / UCMAS - Bàn tính Số học Nhật Bản', N'Phương pháp rèn luyện trí não thông qua bàn tính cổ truyền Soroban, giúp trẻ phản xạ tính nhẩm siêu tốc, gia tăng sự tập trung và phát triển não bộ đồng đều cả 2 bán cầu.', 6, 12, 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(2, 'FGM', N'Finger Math - Toán ngón tay Hàn Quốc', N'Phương pháp tính nhẩm toán học bằng đôi bàn tay linh hoạt, giúp trẻ từ 4-8 tuổi làm quen với các phép cộng trừ trong phạm vi 99 một cách trực quan, vui nhộn.', 4, 8, 'https://images.unsplash.com/photo-1509228468518-180dd4864904', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(3, 'MTN', N'Mathnasium - Toán tư duy Hoa Kỳ', N'Chương trình toán tư duy theo lộ trình cá nhân hóa Mathnasium Method từ Mỹ, xây dựng nền tảng từ bản chất toán học, phát triển tư duy định lượng và suy luận logic sâu sắc.', 6, 14, 'https://images.unsplash.com/photo-1580582932707-520aed937b7b', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(4, 'KMN', N'Kumon - Toán tự học Nhật Bản', N'Hệ thống tự học toán Kumon chuẩn Nhật Bản giúp học sinh hình thành thói quen kỷ luật, độc lập suy nghĩ và nắm vững kỹ năng thao tác tính toán tốc độ cao vượt cấp lớp học.', 5, 12, 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(5, 'IMT', N'I-MATH / Maieutic - Toán tư duy gợi mở Socrates', N'Khóa học khơi gợi tư duy phản biện qua phương pháp vấn đáp Maieutic, khuyến khích học sinh tự đặt câu hỏi tại sao, tranh luận và tự khám phá giải pháp cho bài toán.', 7, 14, 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
+(6, 'CPA', N'Tiến trình CPA - Concrete Pictorial Abstract', N'Phương pháp học toán qua 3 bước: Cụ thể (Vật thể thực) - Minh họa (Hình ảnh biểu diễn) - Trừu tượng (Ký hiệu toán học), giúp trẻ hiểu sâu bản chất, không học vẹt.', 4, 10, 'https://images.unsplash.com/photo-1577896851231-70ef18881754', NULL, NULL, NULL, 5.0, 0, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[COURSE] OFF;
 
 -- =============================================================================
@@ -145,6 +147,7 @@ SET IDENTITY_INSERT [dbo].[TEACHER_PROFILE] OFF;
 -- =============================================================================
 -- 5. BẢNG PARENT_PROFILE (32 phụ huynh)
 -- =============================================================================
+-- PIN để NULL vì dịch vụ yêu cầu giá trị hash từ ASP.NET PasswordHasher, không phải PIN thô.
 SET IDENTITY_INSERT [dbo].[PARENT_PROFILE] ON;
 INSERT INTO [dbo].[PARENT_PROFILE] (id, account_id, full_name, pin, avatar, created_at) VALUES
 (1, 10, N'Trần Quang Huy', 'AQAAAAEAAYagAAAAECcPH8q1HdYNoBPESYOZmY91FexYXCFX3uFrV4DvZAKC3zAg41SMtY1H4Z09+QxvgQ==', 'https://randomuser.me/api/portraits/men/1.jpg', '2026-08-01 08:00:00'),
