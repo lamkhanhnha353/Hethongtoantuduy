@@ -2,6 +2,7 @@
 -- SCRIPT SEED DATA: HỆ THỐNG QUẢN LÝ TRUNG TÂM TOÁN TƯ DUY (MATH THINKING)
 -- Ngữ cảnh: Toán tư duy 4-14 tuổi (Soroban, Finger Math, Mathnasium, Kumon, I-MATH, CPA)
 -- Hệ quản trị CSDL: Microsoft SQL Server
+-- LƯU Ý: Script xóa dữ liệu hiện có trong các bảng bên dưới; chỉ chạy trên DB dev/test.
 -- =============================================================================
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -205,6 +206,63 @@ INSERT INTO [dbo].[COURSE_LEVEL] (id, course_id, code, name, fee, total_sessions
 (17, 6, 'CPA-L2', N'CPA Pictorial - Mô hình hóa sơ đồ & Thanh Bar Model', 2600000, 20, 2, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00'),
 (18, 6, 'CPA-L3', N'CPA Abstract - Chinh phục Ký hiệu & Công thức trừu tượng', 3000000, 24, 3, 'ACTIVE', '2026-08-01 08:00:00', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[COURSE_LEVEL] OFF;
+
+UPDATE [dbo].[COURSE_LEVEL]
+SET [syllabus] = CASE [id]
+    WHEN 1 THEN N'[{"title":"Làm quen bàn tính Soroban"},{"title":"Giá trị các hạt và cách đặt số"},{"title":"Phép cộng trừ không nhớ"},{"title":"Công thức Anh bạn nhỏ"}]'
+    WHEN 2 THEN N'[{"title":"Ôn tập phép cộng trừ trên bàn tính"},{"title":"Công thức Anh bạn lớn"},{"title":"Phép nhân trên bàn tính"},{"title":"Phép chia cơ bản"}]'
+    WHEN 3 THEN N'[{"title":"Ôn tập phép nhân chia"},{"title":"Ảo tính Anzan"},{"title":"Tính nhẩm nhiều chữ số"},{"title":"Thử thách tốc độ Soroban"}]'
+    WHEN 4 THEN N'[{"title":"Nhận diện các ngón tay từ 0 đến 9"},{"title":"Biểu diễn số bằng một bàn tay"},{"title":"Ghép số bằng hai bàn tay"},{"title":"Phép cộng đơn giản"}]'
+    WHEN 5 THEN N'[{"title":"Ôn tập biểu diễn số bằng ngón tay"},{"title":"Phép cộng không nhớ"},{"title":"Phép trừ không nhớ"},{"title":"Tính toán trong phạm vi 99"}]'
+    WHEN 6 THEN N'[{"title":"Ôn tập cộng trừ Finger Math"},{"title":"Phép cộng có nhớ"},{"title":"Phép trừ có nhớ"},{"title":"Luyện phản xạ tính nhanh"}]'
+    WHEN 7 THEN N'[{"title":"Nhận biết số lượng và cấu trúc số"},{"title":"Giá trị hàng và tròn chục"},{"title":"So sánh và ước lượng"},{"title":"Đo lường trong thực tế"}]'
+    WHEN 8 THEN N'[{"title":"Ôn tập cấu trúc số"},{"title":"Hình học phẳng trực quan"},{"title":"Khối hình không gian"},{"title":"Đối xứng và góc xoay"}]'
+    WHEN 9 THEN N'[{"title":"Phân tích bài toán thực tế"},{"title":"Lập kế hoạch giải toán"},{"title":"Logic đại số cơ bản"},{"title":"Thử thách giải quyết vấn đề"}]'
+    WHEN 10 THEN N'[{"title":"Nhận biết quy luật dãy số"},{"title":"Dãy số tăng giảm đều"},{"title":"Tìm số còn thiếu"},{"title":"Ứng dụng quy luật số"}]'
+    WHEN 11 THEN N'[{"title":"Ôn tập cộng trừ"},{"title":"Phép nhân và chia"},{"title":"Tính toán nhiều bước"},{"title":"Luyện tốc độ và độ chính xác"}]'
+    WHEN 12 THEN N'[{"title":"Ôn tập bốn phép tính"},{"title":"Khái niệm phân số"},{"title":"Rút gọn và quy đồng phân số"},{"title":"Giải toán có lời văn"}]'
+    WHEN 13 THEN N'[{"title":"Quan sát và lập luận"},{"title":"Nhận diện lập luận đúng sai"},{"title":"Tìm quy luật logic"},{"title":"Giải thích cách suy luận"}]'
+    WHEN 14 THEN N'[{"title":"Đặt câu hỏi toán học"},{"title":"Phương pháp gợi mở Socrates"},{"title":"Tìm nhiều cách giải"},{"title":"Trình bày và bảo vệ ý tưởng"}]'
+    WHEN 15 THEN N'[{"title":"Ôn tập tư duy phản biện"},{"title":"Nghịch lý toán học"},{"title":"Lập luận nhiều bước"},{"title":"Thử thách tranh luận toán học"}]'
+    WHEN 16 THEN N'[{"title":"Khám phá số bằng học cụ"},{"title":"Đếm và phân nhóm vật thể"},{"title":"Cộng trừ với mô hình cụ thể"},{"title":"Chuyển từ vật thật sang phép tính"}]'
+    WHEN 17 THEN N'[{"title":"Ôn tập mô hình Concrete"},{"title":"Biểu diễn bằng hình ảnh"},{"title":"Sơ đồ thanh Bar Model"},{"title":"Giải bài toán tổng và hiệu"}]'
+    WHEN 18 THEN N'[{"title":"Ôn tập sơ đồ thanh"},{"title":"Chuyển mô hình sang ký hiệu"},{"title":"Lập biểu thức và phương trình"},{"title":"Giải toán trừu tượng"}]'
+    ELSE N'[]'
+END,
+    [faqs] = COALESCE([faqs], N'[]');
+
+;WITH SessionNumbers AS
+(
+    SELECT 1 AS session_number
+    UNION ALL
+    SELECT session_number + 1
+    FROM SessionNumbers
+    WHERE session_number < 24
+)
+UPDATE course_level
+SET course_level.syllabus = syllabus.full_syllabus
+FROM [dbo].[COURSE_LEVEL] AS course_level
+CROSS APPLY
+(
+    SELECT
+        CASE
+            WHEN session.session_number <= 4 THEN JSON_VALUE(
+                course_level.syllabus,
+                CONCAT('$[', session.session_number - 1, '].title'))
+            ELSE CONCAT(
+                N'Ôn tập và vận dụng: ',
+                JSON_VALUE(
+                    course_level.syllabus,
+                    CONCAT('$[', (session.session_number - 1) % 4, '].title')),
+                N' - Buổi ',
+                session.session_number)
+        END AS title
+    FROM SessionNumbers AS session
+    WHERE session.session_number <= course_level.total_sessions
+    ORDER BY session.session_number
+    FOR JSON PATH
+) AS syllabus(full_syllabus)
+OPTION (MAXRECURSION 0);
 
 -- =============================================================================
 -- 7. BẢNG QUESTION_BANK (20 ngân hàng câu hỏi phân theo khóa học)
@@ -499,47 +557,47 @@ SET IDENTITY_INSERT [dbo].[StudentBadge] OFF;
 -- 14. BẢNG CLASS_SCHEDULE (40 lịch học: 2 buổi / tuần / lớp)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[CLASS_SCHEDULE] ON;
-INSERT INTO [dbo].[CLASS_SCHEDULE] (id, class_id, day_of_week, start_time, end_time) VALUES
-(1, 1, N'Thứ 2', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(2, 1, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(3, 2, N'Thứ 3', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(4, 2, N'Thứ 5', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(5, 3, N'Thứ 4', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(6, 3, N'Thứ 6', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(7, 4, N'Thứ 7', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(8, 4, N'Chủ Nhật', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(9, 5, N'Thứ 2', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(10, 5, N'Thứ 4', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(11, 6, N'Thứ 3', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(12, 6, N'Thứ 5', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(13, 7, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(14, 7, N'Thứ 6', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(15, 8, N'Thứ 7', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(16, 8, N'Chủ Nhật', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(17, 9, N'Thứ 2', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(18, 9, N'Thứ 4', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(19, 10, N'Thứ 3', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(20, 10, N'Thứ 5', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(21, 11, N'Thứ 4', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(22, 11, N'Thứ 6', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(23, 12, N'Thứ 7', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(24, 12, N'Chủ Nhật', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(25, 13, N'Thứ 2', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(26, 13, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(27, 14, N'Thứ 3', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(28, 14, N'Thứ 5', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(29, 15, N'Thứ 4', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(30, 15, N'Thứ 6', '2026-09-01 19:00:00', '2026-09-01 20:30:00'),
-(31, 16, N'Thứ 7', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(32, 16, N'Chủ Nhật', '2026-09-01 08:30:00', '2026-09-01 10:00:00'),
-(33, 17, N'Thứ 2', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(34, 17, N'Thứ 4', '2026-09-01 10:15:00', '2026-09-01 11:45:00'),
-(35, 18, N'Thứ 3', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(36, 18, N'Thứ 5', '2026-09-01 14:30:00', '2026-09-01 16:00:00'),
-(37, 19, N'Thứ 4', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(38, 19, N'Thứ 6', '2026-09-01 17:30:00', '2026-09-01 19:00:00'),
-(39, 20, N'Thứ 7', '2026-09-01 18:00:00', '2026-09-01 19:30:00'),
-(40, 20, N'Chủ Nhật', '2026-09-01 18:00:00', '2026-09-01 19:30:00');
+INSERT INTO [dbo].[CLASS_SCHEDULE] (id, class_id, day_of_week, start_time, end_time, room, created_at) VALUES
+(1, 1, 1, '17:30:00', '19:00:00', N'P101', SYSUTCDATETIME()),
+(2, 1, 3, '17:30:00', '19:00:00', N'P101', SYSUTCDATETIME()),
+(3, 2, 2, '18:00:00', '19:30:00', N'P102', SYSUTCDATETIME()),
+(4, 2, 4, '18:00:00', '19:30:00', N'P102', SYSUTCDATETIME()),
+(5, 3, 3, '19:00:00', '20:30:00', N'P103', SYSUTCDATETIME()),
+(6, 3, 5, '19:00:00', '20:30:00', N'P103', SYSUTCDATETIME()),
+(7, 4, 6, '08:30:00', '10:00:00', N'P104', SYSUTCDATETIME()),
+(8, 4, 0, '08:30:00', '10:00:00', N'P104', SYSUTCDATETIME()),
+(9, 5, 1, '10:15:00', '11:45:00', N'P105', SYSUTCDATETIME()),
+(10, 5, 3, '10:15:00', '11:45:00', N'P105', SYSUTCDATETIME()),
+(11, 6, 2, '14:30:00', '16:00:00', N'P106', SYSUTCDATETIME()),
+(12, 6, 4, '14:30:00', '16:00:00', N'P106', SYSUTCDATETIME()),
+(13, 7, 3, '17:30:00', '19:00:00', N'P107', SYSUTCDATETIME()),
+(14, 7, 5, '17:30:00', '19:00:00', N'P107', SYSUTCDATETIME()),
+(15, 8, 6, '18:00:00', '19:30:00', N'P108', SYSUTCDATETIME()),
+(16, 8, 0, '18:00:00', '19:30:00', N'P108', SYSUTCDATETIME()),
+(17, 9, 1, '19:00:00', '20:30:00', N'P109', SYSUTCDATETIME()),
+(18, 9, 3, '19:00:00', '20:30:00', N'P109', SYSUTCDATETIME()),
+(19, 10, 2, '08:30:00', '10:00:00', N'P110', SYSUTCDATETIME()),
+(20, 10, 4, '08:30:00', '10:00:00', N'P110', SYSUTCDATETIME()),
+(21, 11, 3, '10:15:00', '11:45:00', N'P111', SYSUTCDATETIME()),
+(22, 11, 5, '10:15:00', '11:45:00', N'P111', SYSUTCDATETIME()),
+(23, 12, 6, '14:30:00', '16:00:00', N'P112', SYSUTCDATETIME()),
+(24, 12, 0, '14:30:00', '16:00:00', N'P112', SYSUTCDATETIME()),
+(25, 13, 1, '17:30:00', '19:00:00', N'P113', SYSUTCDATETIME()),
+(26, 13, 3, '17:30:00', '19:00:00', N'P113', SYSUTCDATETIME()),
+(27, 14, 2, '18:00:00', '19:30:00', N'P114', SYSUTCDATETIME()),
+(28, 14, 4, '18:00:00', '19:30:00', N'P114', SYSUTCDATETIME()),
+(29, 15, 3, '19:00:00', '20:30:00', N'P115', SYSUTCDATETIME()),
+(30, 15, 5, '19:00:00', '20:30:00', N'P115', SYSUTCDATETIME()),
+(31, 16, 6, '08:30:00', '10:00:00', N'P116', SYSUTCDATETIME()),
+(32, 16, 0, '08:30:00', '10:00:00', N'P116', SYSUTCDATETIME()),
+(33, 17, 1, '10:15:00', '11:45:00', N'P117', SYSUTCDATETIME()),
+(34, 17, 3, '10:15:00', '11:45:00', N'P117', SYSUTCDATETIME()),
+(35, 18, 2, '14:30:00', '16:00:00', N'P118', SYSUTCDATETIME()),
+(36, 18, 4, '14:30:00', '16:00:00', N'P118', SYSUTCDATETIME()),
+(37, 19, 3, '17:30:00', '19:00:00', N'P119', SYSUTCDATETIME()),
+(38, 19, 5, '17:30:00', '19:00:00', N'P119', SYSUTCDATETIME()),
+(39, 20, 6, '18:00:00', '19:30:00', N'P120', SYSUTCDATETIME()),
+(40, 20, 0, '18:00:00', '19:30:00', N'P120', SYSUTCDATETIME());
 SET IDENTITY_INSERT [dbo].[CLASS_SCHEDULE] OFF;
 
 -- =============================================================================
@@ -590,7 +648,7 @@ INSERT INTO [dbo].[CLASS_STUDENT] (id, class_id, student_id, joined_at, status) 
 SET IDENTITY_INSERT [dbo].[CLASS_STUDENT] OFF;
 
 -- =============================================================================
--- 16. BẢNG LESSON (40 buổi học)
+-- 16. BẢNG LESSON (40 buổi đã hoàn thành và các buổi tương lai sinh theo lịch)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[LESSON] ON;
 INSERT INTO [dbo].[LESSON] (id, class_id, lesson_date, start_time, end_time, status, is_importan) VALUES
@@ -636,36 +694,171 @@ INSERT INTO [dbo].[LESSON] (id, class_id, lesson_date, start_time, end_time, sta
 (40, 20, '2026-09-14 00:00:00', '2026-09-14 17:30:00', '2026-09-14 19:00:00', 'COMPLETED', 0);
 SET IDENTITY_INSERT [dbo].[LESSON] OFF;
 
+DECLARE @seedToday date = CONVERT(date, DATEADD(hour, 7, GETUTCDATE()));
+DECLARE @yesterday date = DATEADD(day, -1, @seedToday);
+
+;WITH LessonOrder AS
+(
+    SELECT
+        lesson.id,
+        lesson.class_id,
+        ROW_NUMBER() OVER (PARTITION BY lesson.class_id ORDER BY lesson.id) AS session_order
+    FROM [dbo].[LESSON] AS lesson
+    WHERE lesson.id <= 40
+),
+ScheduleOrder AS
+(
+    SELECT
+        schedule.class_id,
+        schedule.day_of_week,
+        schedule.start_time,
+        schedule.end_time,
+        ROW_NUMBER() OVER (
+            PARTITION BY schedule.class_id
+            ORDER BY CASE schedule.day_of_week
+                WHEN 0 THEN 7
+                ELSE schedule.day_of_week
+            END, schedule.start_time
+        ) AS session_order
+    FROM [dbo].[CLASS_SCHEDULE] AS schedule
+),
+PastLessons AS
+(
+    SELECT
+        lesson.id,
+        lesson.session_order,
+        schedule.start_time,
+        schedule.end_time,
+        DATEADD(
+            day,
+            -((DATEDIFF(day, CONVERT(date, '19000107'), @yesterday) % 7
+                - schedule.day_of_week + 7) % 7),
+            @yesterday
+        ) AS lesson_date,
+        level.syllabus
+    FROM LessonOrder AS lesson
+    INNER JOIN ScheduleOrder AS schedule
+        ON schedule.class_id = lesson.class_id
+        AND schedule.session_order = lesson.session_order
+    INNER JOIN [dbo].[CLASSES] AS course_class
+        ON course_class.id = lesson.class_id
+    INNER JOIN [dbo].[COURSE_LEVEL] AS level
+        ON level.id = course_class.course_level_id
+)
+UPDATE lesson
+SET lesson.lesson_date = CAST(past.lesson_date AS datetime2),
+    lesson.start_time = DATEADD(
+        second,
+        DATEDIFF(second, CONVERT(time, '00:00:00'), past.start_time),
+        CAST(past.lesson_date AS datetime2)
+    ),
+    lesson.end_time = DATEADD(
+        second,
+        DATEDIFF(second, CONVERT(time, '00:00:00'), past.end_time),
+        CAST(past.lesson_date AS datetime2)
+    ),
+    lesson.title = COALESCE(
+        JSON_VALUE(past.syllabus, CONCAT('$[', past.session_order - 1, '].title')),
+        CONCAT(N'Buổi học ', past.session_order)
+    )
+FROM [dbo].[LESSON] AS lesson
+INNER JOIN PastLessons AS past ON past.id = lesson.id;
+
+;WITH CalendarDates AS
+(
+    SELECT DATEADD(day, 1, @seedToday) AS lesson_date
+    UNION ALL
+    SELECT DATEADD(day, 1, lesson_date)
+    FROM CalendarDates
+    WHERE lesson_date < DATEADD(year, 3, @seedToday)
+),
+ExpectedLessons AS
+(
+    SELECT
+        course_class.id AS class_id,
+        level.total_sessions,
+        level.syllabus,
+        dates.lesson_date,
+        schedule.start_time,
+        schedule.end_time,
+        ROW_NUMBER() OVER (
+            PARTITION BY course_class.id
+            ORDER BY dates.lesson_date, schedule.start_time
+        ) AS future_session_order
+    FROM [dbo].[CLASSES] AS course_class
+    INNER JOIN [dbo].[COURSE_LEVEL] AS level
+        ON level.id = course_class.course_level_id
+    INNER JOIN [dbo].[CLASS_SCHEDULE] AS schedule
+        ON schedule.class_id = course_class.id
+    CROSS JOIN CalendarDates AS dates
+    WHERE course_class.status = 'ACTIVE'
+        AND schedule.day_of_week =
+            ((DATEDIFF(day, CONVERT(date, '19000107'), dates.lesson_date) % 7 + 7) % 7)
+)
+INSERT INTO [dbo].[LESSON]
+    (class_id, title, lesson_date, start_time, end_time, status, is_importan)
+SELECT
+    expected.class_id,
+    COALESCE(
+        JSON_VALUE(expected.syllabus, CONCAT('$[', expected.future_session_order + 1, '].title')),
+        CONCAT(N'Buổi học ', expected.future_session_order + 2)
+    ),
+    CAST(expected.lesson_date AS datetime2),
+    DATEADD(
+        second,
+        DATEDIFF(second, CONVERT(time, '00:00:00'), expected.start_time),
+        CAST(expected.lesson_date AS datetime2)
+    ),
+    DATEADD(
+        second,
+        DATEDIFF(second, CONVERT(time, '00:00:00'), expected.end_time),
+        CAST(expected.lesson_date AS datetime2)
+    ),
+    'SCHEDULED',
+    0
+FROM ExpectedLessons AS expected
+WHERE expected.future_session_order <= expected.total_sessions - 2
+OPTION (MAXRECURSION 0);
+
+UPDATE course_class
+SET course_class.end_date =
+    (SELECT MAX(lesson.lesson_date)
+     FROM [dbo].[LESSON] AS lesson
+     WHERE lesson.class_id = course_class.id
+       AND lesson.status IN ('COMPLETED', 'SCHEDULED'))
+FROM [dbo].[CLASSES] AS course_class
+WHERE course_class.status = 'ACTIVE';
+
 -- =============================================================================
--- 17. BẢNG ASSIGNMENT (25 bài tập về nhà và kiểm tra)
+-- 17. BẢNG ASSIGNMENT (25 bài tập gắn với buổi học)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[ASSIGNMENT] ON;
-INSERT INTO [dbo].[ASSIGNMENT] (id, class_id, stage_id, title, start_time, deadline, time_limit_minutes, max_attempt, status) VALUES
+INSERT INTO [dbo].[ASSIGNMENT] (id, lesson_id, stage_id, title, start_time, deadline, time_limit_minutes, max_attempt, status) VALUES
 (1, 1, 'STAGE-SRB-01', N'BTVN Tuần 1: Luyện gảy hạt 1 đến 9 trên bàn tính Soroban', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 2, 'CLOSED'),
 (2, 1, 'STAGE-SRB-02', N'BTVN Tuần 2: Công thức Anh bạn nhỏ +4 và +3', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 30, 2, 'CLOSED'),
-(3, 2, 'STAGE-SRB-01', N'BTVN Tuần 1: Nhận diện cấu tạo bàn tính Soroban', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
-(4, 3, 'STAGE-SRB-03', N'Thử thách Anzan: Tính nhẩm 5 dãy số liên tiếp', '2026-09-12 08:00:00', '2026-09-18 23:59:00', 20, 1, 'CLOSED'),
-(5, 4, 'STAGE-SRB-04', N'Kiểm tra định kỳ: Nhân 2 chữ số với 1 chữ số', '2026-09-20 08:00:00', '2026-09-25 23:59:00', 45, 1, 'OPEN'),
-(6, 5, 'STAGE-FGM-01', N'BTVN Finger Math: Quy ước ngón cái và ngón trỏ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 3, 'CLOSED'),
-(7, 6, 'STAGE-FGM-02', N'BTVN Finger Math: Phép cộng không nhớ trong phạm vi 50', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
-(8, 7, 'STAGE-FGM-03', N'Thử thách ngón tay: Phản xạ nhanh 20 câu tính nhẩm', '2026-09-18 08:00:00', '2026-09-23 23:59:00', 15, 1, 'CLOSED'),
-(9, 8, 'STAGE-MTN-01', N'Phiếu bài tập Mathnasium A1: Cấu trúc số chẵn lẻ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 2, 'CLOSED'),
-(10, 9, 'STAGE-MTN-02', N'Phiếu bài tập Mathnasium B2: Nhận biết hình khối không gian', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 35, 2, 'CLOSED'),
-(11, 10, 'STAGE-MTN-03', N'Bài toán có lời văn: Giải bài toán gà và thỏ', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 40, 1, 'OPEN'),
-(12, 11, 'STAGE-KMN-01', N'Phiếu tự học Kumon 01: Quy luật dãy số tăng đều', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 2, 'CLOSED'),
-(13, 12, 'STAGE-KMN-02', N'Phiếu tự học Kumon 02: Tốc độ cộng trừ có nhớ', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
-(14, 13, 'STAGE-KMN-03', N'Phiếu tự học Kumon 03: Rút gọn phân số tối giản', '2026-09-20 08:00:00', '2026-09-26 23:59:00', 30, 1, 'OPEN'),
-(15, 14, 'STAGE-IMT-01', N'Tư duy phản biện: Nhận diện lập luận đúng và ngụy biện', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 1, 'CLOSED'),
-(16, 15, 'STAGE-IMT-02', N'Phương pháp Socrates: Tìm 3 cách giải cho 1 bài toán', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 40, 1, 'CLOSED'),
-(17, 16, 'STAGE-IMT-03', N'Câu đố logic: Nghịch lý thời gian và ngày trong tuần', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 30, 1, 'OPEN'),
-(18, 17, 'STAGE-CPA-01', N'CPA Giai đoạn 1: Đếm và nhóm vật thể thực hành', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
-(19, 18, 'STAGE-CPA-02', N'CPA Giai đoạn 2: Vẽ sơ đồ thanh Bar Model bài toán Tổng - Tỉ', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 35, 2, 'CLOSED'),
-(20, 19, 'STAGE-CPA-03', N'CPA Giai đoạn 3: Lập phương trình đại số từ mô hình thanh', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 40, 1, 'OPEN'),
-(21, 20, 'STAGE-MTN-04', N'Hình học không gian: Thử thách cắt ghép và đối xứng', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 30, 2, 'CLOSED'),
+(3, 3, 'STAGE-SRB-01', N'BTVN Tuần 1: Nhận diện cấu tạo bàn tính Soroban', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
+(4, 5, 'STAGE-SRB-03', N'Thử thách Anzan: Tính nhẩm 5 dãy số liên tiếp', '2026-09-12 08:00:00', '2026-09-18 23:59:00', 20, 1, 'CLOSED'),
+(5, 7, 'STAGE-SRB-04', N'Kiểm tra định kỳ: Nhân 2 chữ số với 1 chữ số', '2026-09-20 08:00:00', '2026-09-25 23:59:00', 45, 1, 'OPEN'),
+(6, 9, 'STAGE-FGM-01', N'BTVN Finger Math: Quy ước ngón cái và ngón trỏ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 3, 'CLOSED'),
+(7, 11, 'STAGE-FGM-02', N'BTVN Finger Math: Phép cộng không nhớ trong phạm vi 50', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
+(8, 13, 'STAGE-FGM-03', N'Thử thách ngón tay: Phản xạ nhanh 20 câu tính nhẩm', '2026-09-18 08:00:00', '2026-09-23 23:59:00', 15, 1, 'CLOSED'),
+(9, 15, 'STAGE-MTN-01', N'Phiếu bài tập Mathnasium A1: Cấu trúc số chẵn lẻ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 2, 'CLOSED'),
+(10, 17, 'STAGE-MTN-02', N'Phiếu bài tập Mathnasium B2: Nhận biết hình khối không gian', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 35, 2, 'CLOSED'),
+(11, 19, 'STAGE-MTN-03', N'Bài toán có lời văn: Giải bài toán gà và thỏ', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 40, 1, 'OPEN'),
+(12, 21, 'STAGE-KMN-01', N'Phiếu tự học Kumon 01: Quy luật dãy số tăng đều', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 2, 'CLOSED'),
+(13, 23, 'STAGE-KMN-02', N'Phiếu tự học Kumon 02: Tốc độ cộng trừ có nhớ', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
+(14, 25, 'STAGE-KMN-03', N'Phiếu tự học Kumon 03: Rút gọn phân số tối giản', '2026-09-20 08:00:00', '2026-09-26 23:59:00', 30, 1, 'OPEN'),
+(15, 27, 'STAGE-IMT-01', N'Tư duy phản biện: Nhận diện lập luận đúng và ngụy biện', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 1, 'CLOSED'),
+(16, 29, 'STAGE-IMT-02', N'Phương pháp Socrates: Tìm 3 cách giải cho 1 bài toán', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 40, 1, 'CLOSED'),
+(17, 31, 'STAGE-IMT-03', N'Câu đố logic: Nghịch lý thời gian và ngày trong tuần', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 30, 1, 'OPEN'),
+(18, 33, 'STAGE-CPA-01', N'CPA Giai đoạn 1: Đếm và nhóm vật thể thực hành', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
+(19, 35, 'STAGE-CPA-02', N'CPA Giai đoạn 2: Vẽ sơ đồ thanh Bar Model bài toán Tổng - Tỉ', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 35, 2, 'CLOSED'),
+(20, 37, 'STAGE-CPA-03', N'CPA Giai đoạn 3: Lập phương trình đại số từ mô hình thanh', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 40, 1, 'OPEN'),
+(21, 39, 'STAGE-MTN-04', N'Hình học không gian: Thử thách cắt ghép và đối xứng', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 30, 2, 'CLOSED'),
 (22, 1, 'STAGE-SRB-05', N'Ôn tập giữa kỳ: Tổng hợp các công thức Anh bạn nhỏ', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 45, 1, 'OPEN'),
-(23, 6, 'STAGE-FGM-04', N'Kiểm tra định kỳ: Tính nhẩm 50 phép tính liên tục', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 30, 1, 'OPEN'),
-(24, 8, 'STAGE-MTN-05', N'Đố vui toán học: Logic bắt tay và số học vui', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 25, 2, 'OPEN'),
-(25, 18, 'STAGE-CPA-04', N'Bar Model nâng cao: Bài toán Hiệu - Tỉ kết hợp chuyển đổi', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 40, 1, 'OPEN');
+(23, 11, 'STAGE-FGM-04', N'Kiểm tra định kỳ: Tính nhẩm 50 phép tính liên tục', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 30, 1, 'OPEN'),
+(24, 15, 'STAGE-MTN-05', N'Đố vui toán học: Logic bắt tay và số học vui', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 25, 2, 'OPEN'),
+(25, 35, 'STAGE-CPA-04', N'Bar Model nâng cao: Bài toán Hiệu - Tỉ kết hợp chuyển đổi', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 40, 1, 'OPEN');
 SET IDENTITY_INSERT [dbo].[ASSIGNMENT] OFF;
 
 -- =============================================================================
@@ -788,6 +981,52 @@ INSERT INTO [dbo].[LEAVE_REQUEST] (id, lesson_id, student_id, reason, status, cr
 (19, 38, 38, N'Bé bị sốt xuất huyết cần điều trị 1 tuần', 'APPROVED', '2026-09-12 14:00:00'),
 (20, 40, 40, N'Gia đình có việc gia đình đột xuất', 'REJECTED', '2026-09-12 14:00:00');
 SET IDENTITY_INSERT [dbo].[LEAVE_REQUEST] OFF;
+
+UPDATE request
+SET request.lesson_id = next_lesson.id,
+    request.created_at = SYSUTCDATETIME()
+FROM [dbo].[LEAVE_REQUEST] AS request
+INNER JOIN [dbo].[CLASS_STUDENT] AS enrollment
+    ON enrollment.student_id = request.student_id
+    AND enrollment.status = 'ACTIVE'
+CROSS APPLY
+(
+    SELECT TOP (1) lesson.id
+    FROM [dbo].[LESSON] AS lesson
+    WHERE lesson.class_id = enrollment.class_id
+        AND lesson.status = 'SCHEDULED'
+    ORDER BY lesson.lesson_date, lesson.start_time
+) AS next_lesson
+WHERE request.status = 'PENDING';
+
+UPDATE [dbo].[LEAVE_REQUEST]
+SET [status] = 'CANCELLED'
+WHERE [id] = 10;
+
+UPDATE attendance
+SET attendance.status = 'EXCUSED',
+    attendance.teacher_notes = CONCAT(N'Xin phép nghỉ: ', leave_request.reason)
+FROM [dbo].[ATTENDANCE] AS attendance
+INNER JOIN [dbo].[LEAVE_REQUEST] AS leave_request
+    ON leave_request.lesson_id = attendance.lesson_id
+    AND leave_request.student_id = attendance.student_id
+WHERE leave_request.status = 'APPROVED';
+
+INSERT INTO [dbo].[ATTENDANCE] (lesson_id, student_id, status, teacher_notes)
+SELECT
+    leave_request.lesson_id,
+    leave_request.student_id,
+    'EXCUSED',
+    CONCAT(N'Xin phép nghỉ: ', leave_request.reason)
+FROM [dbo].[LEAVE_REQUEST] AS leave_request
+WHERE leave_request.status = 'APPROVED'
+    AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[ATTENDANCE] AS attendance
+        WHERE attendance.lesson_id = leave_request.lesson_id
+            AND attendance.student_id = leave_request.student_id
+    );
 
 -- =============================================================================
 -- 21. BẢNG STUDENT_ASSIGNMENT (40 bài nộp của học sinh)
