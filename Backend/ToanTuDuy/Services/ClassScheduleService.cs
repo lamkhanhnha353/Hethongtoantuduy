@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -60,22 +61,8 @@ namespace ToanTuDuy.Services
 
         public async Task<ClassScheduleResponse> CreateScheduleAsync(ClassScheduleRequest request)
         {
-            // 1. Kiểm tra: Giờ kết thúc phải lớn hơn Giờ bắt đầu
-            if (request.EndTime <= request.StartTime)
-                throw new Exception("Giờ kết thúc phải muộn hơn Giờ bắt đầu!");
-
-            var classExists = await _context.Classes.AnyAsync(c => c.Id == request.ClassId);
-            if (!classExists) throw new Exception("Lớp học không tồn tại!");
-
-            // 2. Kiểm tra trùng lịch (Cùng ngày, cùng giờ cho cùng 1 lớp)
-            var isDuplicate = await _context.ClassSchedules.AnyAsync(cs =>
-                cs.ClassId == request.ClassId &&
-                cs.DayOfWeek == request.DayOfWeek &&
-                cs.StartTime == request.StartTime);
-
-            if (isDuplicate)
-                throw new Exception("Lớp học này đã có lịch học vào khung giờ này rồi!");
-
+            await ValidateScheduleAsync(request);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             var schedule = new ClassSchedule
             {
                 ClassId = request.ClassId,
@@ -88,30 +75,22 @@ namespace ToanTuDuy.Services
 
             _context.ClassSchedules.Add(schedule);
             await _context.SaveChangesAsync();
-
-            // 3. thuật toán tự tính Ngày bế giảng (EndDate)
-            await CalculateAndSaveClassEndDateAsync(request.ClassId);
+            await GenerateLessonsAndCalculateEndDateAsync(request.ClassId);
+            await transaction.CommitAsync();
 
             return await GetScheduleByIdAsync(schedule.Id);
         }
 
         public async Task<bool> UpdateScheduleAsync(int id, ClassScheduleRequest request)
         {
-            if (request.EndTime <= request.StartTime)
-                throw new Exception("Giờ kết thúc phải muộn hơn Giờ bắt đầu!");
-
             var schedule = await _context.ClassSchedules.FindAsync(id);
             if (schedule == null) return false;
 
-            // Kiểm tra trùng lịch với id khác
-            var isDuplicate = await _context.ClassSchedules.AnyAsync(cs =>
-                cs.Id != id &&
-                cs.ClassId == request.ClassId &&
-                cs.DayOfWeek == request.DayOfWeek &&
-                cs.StartTime == request.StartTime);
+            await ValidateScheduleAsync(request, id);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var previousClassId = schedule.ClassId;
 
-            if (isDuplicate) throw new Exception("Lớp học này đã có lịch học vào khung giờ này rồi!");
-
+            // Vượt qua kiểm duyệt, tiến hành cập nhật dữ liệu
             schedule.ClassId = request.ClassId;
             schedule.DayOfWeek = request.DayOfWeek;
             schedule.StartTime = request.StartTime;
@@ -120,7 +99,15 @@ namespace ToanTuDuy.Services
             schedule.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            await CalculateAndSaveClassEndDateAsync(request.ClassId); // Tính lại lịch
+
+            // Gọi thuật toán tự động rải lại buổi học vật lý vào bảng LESSON
+            if (previousClassId != request.ClassId)
+            {
+                await GenerateLessonsAndCalculateEndDateAsync(previousClassId);
+            }
+            await GenerateLessonsAndCalculateEndDateAsync(request.ClassId);
+            await transaction.CommitAsync();
+
             return true;
         }
 
@@ -129,62 +116,232 @@ namespace ToanTuDuy.Services
             var schedule = await _context.ClassSchedules.FindAsync(id);
             if (schedule == null) return false;
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             int classId = schedule.ClassId;
             _context.ClassSchedules.Remove(schedule);
             await _context.SaveChangesAsync();
 
-            await CalculateAndSaveClassEndDateAsync(classId); // Tính lại lịch (có thể thành null nếu xóa hết)
+            await GenerateLessonsAndCalculateEndDateAsync(classId);
+            await transaction.CommitAsync();
             return true;
         }
 
-       
+
         // THUẬT TOÁN TÍNH TỰ ĐỘNG END_DATE CỦA LỚP
-      
-        private async Task CalculateAndSaveClassEndDateAsync(int classId)
+
+        // Hàm này sẽ Sinh ra danh sách Buổi học vật lý (Lesson) và Tính toán ngày Bế giảng (EndDate)
+        private async Task GenerateLessonsAndCalculateEndDateAsync(int classId)
         {
             var targetClass = await _context.Classes
                 .Include(c => c.CourseLevel)
                 .Include(c => c.ClassSchedules)
+                .Include(c => c.Lessons)
                 .FirstOrDefaultAsync(c => c.Id == classId);
 
-            if (targetClass == null || targetClass.CourseLevel == null) return;
-
-            var totalSessions = targetClass.CourseLevel.TotalSessions;
-            var schedules = targetClass.ClassSchedules.ToList();
-
-            // Nếu không có lịch học nào hoặc số buổi = 0 -> không tính được
-            if (totalSessions <= 0 || !schedules.Any())
+            if (targetClass == null || targetClass.CourseLevel == null)
             {
-                targetClass.EndDate = null;
-                await _context.SaveChangesAsync();
                 return;
             }
 
-            // Lấy ra danh sách các Thứ có lịch (ví dụ: Thứ 3 và Thứ 5 -> [2, 4])
-            var activeDaysOfWeek = schedules.Select(s => s.DayOfWeek).Distinct().ToList();
+            var today = DateTime.UtcNow.Date;
+            var schedules = targetClass.ClassSchedules
+                .OrderBy(schedule => schedule.DayOfWeek)
+                .ThenBy(schedule => schedule.StartTime)
+                .ToList();
+            var futureScheduledLessons = targetClass.Lessons
+                .Where(lesson => lesson.Status == "SCHEDULED" && lesson.LessonDate.Date >= today)
+                .OrderBy(lesson => lesson.LessonDate)
+                .ThenBy(lesson => lesson.StartTime)
+                .ThenBy(lesson => lesson.Id)
+                .ToList();
+            var lessonIds = futureScheduledLessons.Select(lesson => lesson.Id).ToList();
+            var lessonsWithLeaveRequests = await _context.LeaveRequests
+                .AsNoTracking()
+                .Where(request =>
+                    lessonIds.Contains(request.LessonId) &&
+                    request.Status != "CANCELLED")
+                .Select(request => request.LessonId)
+                .Distinct()
+                .ToHashSetAsync();
 
-            var currentDate = targetClass.StartDate;
-            int count = 0;
+            var syllabus = string.IsNullOrWhiteSpace(targetClass.CourseLevel.Syllabus)
+                ? new List<Dictionary<string, string>>()
+                : System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(
+                    targetClass.CourseLevel.Syllabus) ?? new List<Dictionary<string, string>>();
 
-            // Duyệt từ ngày bắt đầu, cộng dồn lịch cho đến khi đủ số buổi
-            while (count < totalSessions)
+            var fixedLessons = targetClass.Lessons
+                .Where(lesson =>
+                    (lesson.Status != "SCHEDULED" &&
+                     lesson.Status != "CANCELED" &&
+                     lesson.Status != "CANCELLED") ||
+                    lesson.LessonDate.Date < today)
+                .ToList();
+            var completedSessionCount = fixedLessons.Count;
+            var remainingSessions = Math.Max(
+                0,
+                targetClass.CourseLevel.TotalSessions - completedSessionCount);
+            var expectedLessons = new List<Lesson>();
+            var currentDate = targetClass.StartDate.Date > today
+                ? targetClass.StartDate.Date
+                : today;
+
+            while (expectedLessons.Count < remainingSessions && schedules.Count > 0)
             {
-                // DayOfWeek của C# tự trả về số từ 0 (CN) đến 6 (T7)
-                if (activeDaysOfWeek.Contains((int)currentDate.DayOfWeek))
+                foreach (var schedule in schedules.Where(
+                    item => item.DayOfWeek == (int)currentDate.DayOfWeek))
                 {
-                    count++;
+                    if (expectedLessons.Count >= remainingSessions)
+                    {
+                        break;
+                    }
+
+                    var sessionIndex = completedSessionCount + expectedLessons.Count;
+                    var title = sessionIndex < syllabus.Count &&
+                                syllabus[sessionIndex].TryGetValue("title", out var syllabusTitle)
+                        ? syllabusTitle
+                        : $"Buổi học {sessionIndex + 1}";
+
+                    expectedLessons.Add(new Lesson
+                    {
+                        ClassId = targetClass.Id,
+                        Title = title,
+                        LessonDate = currentDate,
+                        StartTime = currentDate.Add(schedule.StartTime),
+                        EndTime = currentDate.Add(schedule.EndTime),
+                        Status = "SCHEDULED",
+                        IsImportan = false
+                    });
                 }
 
-                // Tránh cộng lố ngày ở buổi học cuối cùng
-                if (count < totalSessions)
+                currentDate = currentDate.AddDays(1);
+            }
+
+            for (var index = 0; index < futureScheduledLessons.Count; index++)
+            {
+                var existingLesson = futureScheduledLessons[index];
+                if (index >= expectedLessons.Count)
                 {
-                    currentDate = currentDate.AddDays(1);
+                    if (lessonsWithLeaveRequests.Contains(existingLesson.Id))
+                    {
+                        throw ApiException.Conflict(
+                            "Không thể thay đổi lịch vì buổi học sắp bị hủy đã có đơn xin nghỉ. Hãy xử lý đơn trước.");
+                    }
+
+                    existingLesson.Status = "CANCELED";
+                    continue;
+                }
+
+                var expectedLesson = expectedLessons[index];
+                var scheduleChanged =
+                    existingLesson.LessonDate.Date != expectedLesson.LessonDate.Date ||
+                    existingLesson.StartTime != expectedLesson.StartTime ||
+                    existingLesson.EndTime != expectedLesson.EndTime ||
+                    existingLesson.Title != expectedLesson.Title;
+                if (scheduleChanged && lessonsWithLeaveRequests.Contains(existingLesson.Id))
+                {
+                    throw ApiException.Conflict(
+                        "Không thể thay đổi ngày, giờ hoặc chủ đề của buổi học đã có đơn xin nghỉ.");
+                }
+
+                existingLesson.LessonDate = expectedLesson.LessonDate;
+                existingLesson.StartTime = expectedLesson.StartTime;
+                existingLesson.EndTime = expectedLesson.EndTime;
+                existingLesson.Title = expectedLesson.Title;
+            }
+
+            if (expectedLessons.Count > futureScheduledLessons.Count)
+            {
+                _context.Lessons.AddRange(expectedLessons.Skip(futureScheduledLessons.Count));
+            }
+
+            var activeLessons = fixedLessons.Concat(expectedLessons).ToList();
+            targetClass.EndDate = activeLessons.Count == 0
+                ? null
+                : activeLessons.Max(lesson => lesson.LessonDate);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task ValidateScheduleAsync(
+            ClassScheduleRequest request,
+            int? excludedScheduleId = null)
+        {
+            if (request.DayOfWeek < 0 || request.DayOfWeek > 6)
+            {
+                throw ApiException.BadRequest("Ngày trong tuần phải từ 0 đến 6.");
+            }
+
+            if (request.EndTime <= request.StartTime)
+            {
+                throw ApiException.BadRequest("Giờ kết thúc phải muộn hơn giờ bắt đầu.");
+            }
+
+            var targetClass = await _context.Classes
+                .FirstOrDefaultAsync(courseClass => courseClass.Id == request.ClassId);
+            if (targetClass == null)
+            {
+                throw ApiException.NotFound("Lớp học không tồn tại.");
+            }
+
+            var schedulesForClass = _context.ClassSchedules
+                .Where(schedule => schedule.ClassId == request.ClassId);
+            if (excludedScheduleId.HasValue)
+            {
+                schedulesForClass = schedulesForClass.Where(
+                    schedule => schedule.Id != excludedScheduleId.Value);
+            }
+
+            if (await schedulesForClass.AnyAsync(schedule =>
+                    schedule.DayOfWeek == request.DayOfWeek &&
+                    request.StartTime < schedule.EndTime &&
+                    request.EndTime > schedule.StartTime))
+            {
+                throw ApiException.Conflict("Lớp học đã có ca khác bị trùng giờ.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Room))
+            {
+                var schedulesForRoom = _context.ClassSchedules
+                    .Where(schedule =>
+                        schedule.Room == request.Room &&
+                        schedule.DayOfWeek == request.DayOfWeek);
+                if (excludedScheduleId.HasValue)
+                {
+                    schedulesForRoom = schedulesForRoom.Where(
+                        schedule => schedule.Id != excludedScheduleId.Value);
+                }
+
+                if (await schedulesForRoom.AnyAsync(schedule =>
+                        request.StartTime < schedule.EndTime &&
+                        request.EndTime > schedule.StartTime))
+                {
+                    throw ApiException.Conflict(
+                        $"Phòng {request.Room} đã được lớp khác sử dụng vào khung giờ này.");
                 }
             }
 
-            // Cập nhật lại ngày kết thúc cho Lớp học
-            targetClass.EndDate = currentDate;
-            await _context.SaveChangesAsync();
+            if (targetClass.TeacherId.HasValue)
+            {
+                var schedulesForTeacher = _context.ClassSchedules
+                    .Include(schedule => schedule.Class)
+                    .Where(schedule =>
+                        schedule.Class.TeacherId == targetClass.TeacherId &&
+                        schedule.DayOfWeek == request.DayOfWeek);
+                if (excludedScheduleId.HasValue)
+                {
+                    schedulesForTeacher = schedulesForTeacher.Where(
+                        schedule => schedule.Id != excludedScheduleId.Value);
+                }
+
+                if (await schedulesForTeacher.AnyAsync(schedule =>
+                        request.StartTime < schedule.EndTime &&
+                        request.EndTime > schedule.StartTime))
+                {
+                    throw ApiException.Conflict(
+                        "Giáo viên phụ trách lớp này đã có lịch dạy khác bị trùng giờ.");
+                }
+            }
+
         }
     }
 }
