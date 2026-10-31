@@ -43,11 +43,12 @@ BEGIN TRY
 -- =============================================================================
 -- 1. BẢNG ACCOUNT (41 dòng: 1 Admin, 8 Giáo viên, 32 Phụ huynh)
 -- =============================================================================
--- Password hash dưới đây là dữ liệu placeholder; tài khoản seed không đăng nhập được.
+-- Tài khoản kiểm thử local: Admin 0901000000 / Admin@Test123!;
+-- Teacher 0902000001 / Teacher@Test123!. Không dùng các mật khẩu này ở production.
 SET IDENTITY_INSERT [dbo].[ACCOUNT] ON;
 INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_active, created_at, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount) VALUES
-(1, '0901000000', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Admin', NULL, 1, '2026-08-01 08:00:00', '0901000000', '0901000000', 'admin@toantuduy.edu.vn', 'ADMIN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(2, '0902000001', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000001', '0902000001', 'gv.huynhnhathao@toantuduy.edu.vn', 'GV.HUYNHNHATHAO@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(1, '0901000000', 'AQAAAAEAAYagAAAAEPHX7xuOKVB3dhLrVO1Yi+UtUT0LEYIAAvWHfGxn48HxdfEjYAWDlcc12ZIbsLTBAw==', 'Admin', NULL, 1, '2026-08-01 08:00:00', '0901000000', '0901000000', 'admin@toantuduy.edu.vn', 'ADMIN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(2, '0902000001', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000001', '0902000001', 'gv.huynhnhathao@toantuduy.edu.vn', 'GV.HUYNHNHATHAO@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
 (3, '0902000002', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000002', '0902000002', 'gv.nguyenthimai@toantuduy.edu.vn', 'GV.NGUYENTHIMAI@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
 (4, '0902000003', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000003', '0902000003', 'gv.tranminhtuan@toantuduy.edu.vn', 'GV.TRANMINHTUAN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
 (5, '0902000004', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000004', '0902000004', 'gv.levanphuoc@toantuduy.edu.vn', 'GV.LEVANPHUOC@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),

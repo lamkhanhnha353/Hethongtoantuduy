@@ -1,22 +1,35 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import authService from '@/services/auth.service'
 import Layout from '@/layouts/Layout.vue'
-import DashboardView from '@/views/DashboardView.vue'
+import DashboardView from '@/views/admin/DashboardView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
-import ParentStudentView from '@/views/manage/ParentStudentView.vue'
-import TeacherManagementView from '@/views/manage/TeacherManagementView.vue'
+import LoginView from '@/views/LoginView.vue'
+import TeacherDashboardView from '@/views/teacher/TeacherDashboardView.vue'
+
+// User Magement
+import ParentStudentView from '@/views/admin/manage/ParentStudentView.vue'
+import TeacherManagementView from '@/views/admin/manage/TeacherManagementView.vue'
 
 
 // Training
-import CoursesView      from '@/views/training/CoursesView.vue'
-import CourseDetailView from '@/views/training/CourseDetailView.vue'
-import ClassesView      from '@/views/training/ClassesView.vue'
+import CoursesView      from '@/views/admin/training/CoursesView.vue'
+import CourseDetailView from '@/views/admin/training/CourseDetailView.vue'
+import ClassesView      from '@/views/admin/training/ClassesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: '/login', name: 'login', component: LoginView },
+    {
+      path: '/teacher',
+      name: 'teacher-dashboard',
+      component: TeacherDashboardView,
+      meta: { requiresAuth: true, teacherOnly: true },
+    },
     {
       path: '/',
       component: Layout,
+      meta: { requiresAuth: true, adminOnly: true },
       children: [
         { path: '', name: 'dashboard', component: DashboardView, meta: { title: 'Tổng quan' } },
 
@@ -57,6 +70,29 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const isAuthenticated = authService.isAuthenticated()
+  const role = authService.getRole()?.toLowerCase()
+  const isAdmin = role === 'admin'
+  const isTeacher = role === 'teacher'
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.adminOnly && !isAdmin) {
+    return { name: 'teacher-dashboard' }
+  }
+
+  if (to.meta.teacherOnly && !isTeacher) {
+    return { name: 'dashboard' }
+  }
+
+  if (to.name === 'login' && isAuthenticated) {
+    return isAdmin ? { name: 'dashboard' } : { name: 'teacher-dashboard' }
+  }
 })
 
 export default router

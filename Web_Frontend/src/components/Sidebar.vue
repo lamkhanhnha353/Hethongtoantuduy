@@ -172,6 +172,8 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import authService from '@/services/auth.service'
 import {
   AcademicCapIcon,
   XMarkIcon,
@@ -206,6 +208,7 @@ defineProps({
   mobileOpen: { type: Boolean, default: false },
 })
 defineEmits(['closeMobile'])
+const router = useRouter()
 
 // ─── Accordion state ─────────────────────────────────────────────────────────
 const openAccordions = ref(new Set())
@@ -237,8 +240,8 @@ function onLeave(el) {
 
 // ─── Logout ──────────────────────────────────────────────────────────────────
 function handleLogout() {
-  // TODO: dispatch logout action / call API
-  console.log('Logging out...')
+  authService.logout()
+  router.replace({ name: 'login' })
 }
 
 // ─── Menu items ──────────────────────────────────────────────────────────────
