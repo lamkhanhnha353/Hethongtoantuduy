@@ -256,13 +256,13 @@ namespace ToanTuDuy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClassId")
-                        .HasColumnType("int")
-                        .HasColumnName("class_id");
-
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("datetime2")
                         .HasColumnName("deadline");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("int")
+                        .HasColumnName("lesson_id");
 
                     b.Property<int?>("MaxAttempt")
                         .HasColumnType("int")
@@ -292,7 +292,7 @@ namespace ToanTuDuy.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClassId");
+                    b.HasIndex("LessonId");
 
                     b.ToTable("ASSIGNMENT");
                 });
@@ -852,6 +852,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("title");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClassId");
@@ -1295,13 +1299,13 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.Assignment", b =>
                 {
-                    b.HasOne("ToanTuDuy.Models.Classes", "Class")
+                    b.HasOne("ToanTuDuy.Models.Lesson", "Lesson")
                         .WithMany("Assignments")
-                        .HasForeignKey("ClassId")
+                        .HasForeignKey("LessonId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Class");
+                    b.Navigation("Lesson");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Attendance", b =>
@@ -1613,8 +1617,6 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.Classes", b =>
                 {
-                    b.Navigation("Assignments");
-
                     b.Navigation("ClassSchedules");
 
                     b.Navigation("ClassStudents");
@@ -1643,6 +1645,8 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.Lesson", b =>
                 {
+                    b.Navigation("Assignments");
+
                     b.Navigation("Attendances");
 
                     b.Navigation("LeaveRequests");
