@@ -139,7 +139,7 @@
           </router-link>
           <div class="flex items-center gap-1.5">
             <router-link
-              to="/teacher/attendance"
+              :to="{ path: '/teacher/attendance', query: { classId: cls.id } }"
               class="px-3 py-1.5 rounded-xl bg-orange-400 hover:bg-orange-500 text-white text-xs font-semibold shadow-2xs transition-colors"
             >
               Điểm danh
@@ -192,7 +192,7 @@
               Học sinh
             </router-link>
             <router-link
-              to="/teacher/attendance"
+              :to="{ path: '/teacher/attendance', query: { classId: cls.id } }"
               class="px-3.5 py-1.5 rounded-xl bg-orange-400 hover:bg-orange-500 text-white text-xs font-semibold shadow-xs"
             >
               Điểm danh
