@@ -21,17 +21,19 @@
         <AcademicCapIcon class="w-6 h-6 text-white" />
       </div>
       <transition name="label-fade">
-        <span
-          v-if="!collapsed || mobileOpen"
-          class="font-bold text-orange-800 text-base leading-tight whitespace-nowrap overflow-hidden"
-        >
-          EduAdmin
-        </span>
+        <div v-if="!collapsed || mobileOpen" class="flex flex-col whitespace-nowrap overflow-hidden">
+          <span class="font-bold text-orange-950 text-base leading-tight">
+            {{ isTeacherPortal ? 'EduTeacher' : 'EduAdmin' }}
+          </span>
+          <span class="text-[10px] text-orange-700 font-semibold tracking-wide">
+            {{ isTeacherPortal ? 'Cổng Giáo Viên' : 'Quản Trị Hệ Thống' }}
+          </span>
+        </div>
       </transition>
 
       <!-- Mobile close button -->
       <button
-        class="ml-auto lg:hidden text-orange-600 hover:text-orange-800 p-1 rounded-lg"
+        class="ml-auto lg:hidden text-orange-600 hover:text-orange-800 p-1 rounded-lg cursor-pointer"
         @click="$emit('closeMobile')"
       >
         <XMarkIcon class="w-5 h-5" />
@@ -52,7 +54,7 @@
               @click="navigate"
               :class="[
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                'text-sm font-medium transition-all duration-150',
+                'text-sm font-medium transition-all duration-150 cursor-pointer',
                 isActive
                   ? 'bg-orange-400 text-white shadow-sm'
                   : 'text-orange-800 hover:bg-orange-200/70 hover:text-orange-900',
@@ -75,7 +77,7 @@
               @click="toggleAccordion(item.id)"
               :class="[
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                'text-sm font-medium transition-all duration-150',
+                'text-sm font-medium transition-all duration-150 cursor-pointer',
                 isAccordionOpen(item.id)
                   ? 'bg-orange-200 text-orange-900'
                   : 'text-orange-800 hover:bg-orange-200/70 hover:text-orange-900',
@@ -123,7 +125,7 @@
                       @click="navigate"
                       :class="[
                         'w-full flex items-center gap-2 px-2 py-2 rounded-lg',
-                        'text-xs font-medium transition-all duration-150',
+                        'text-xs font-medium transition-all duration-150 cursor-pointer',
                         isActive
                           ? 'bg-orange-300/60 text-orange-900 font-semibold'
                           : 'text-orange-700 hover:bg-orange-200/60 hover:text-orange-900',
@@ -136,14 +138,6 @@
                 </div>
               </div>
             </transition>
-
-            <!-- Collapsed tooltip icon for accordion groups -->
-            <div
-              v-if="collapsed && !mobileOpen"
-              class="hidden lg:block"
-            >
-              <!-- Children shown as a tooltip popover could be added later -->
-            </div>
           </div>
         </template>
       </template>
@@ -154,7 +148,7 @@
       <button
         :class="[
           'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-          'text-sm font-medium text-orange-700',
+          'text-sm font-medium text-orange-700 cursor-pointer',
           'hover:bg-red-100 hover:text-red-600 transition-all duration-150',
           collapsed && !mobileOpen ? 'justify-center' : '',
         ]"
@@ -171,15 +165,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
 import {
   AcademicCapIcon,
   XMarkIcon,
   ChevronDownIcon,
   ArrowRightOnRectangleIcon,
-  // Menu icons
+  // Common & Admin icons
   HomeIcon,
   UsersIcon,
   BookOpenIcon,
@@ -200,6 +194,12 @@ import {
   CurrencyDollarIcon,
   ArrowsRightLeftIcon,
   AcademicCapIcon as GraduationIcon,
+  // Teacher-specific icons
+  ClipboardDocumentCheckIcon,
+  PencilSquareIcon,
+  StarIcon,
+  BellAlertIcon,
+  IdentificationIcon,
 } from '@heroicons/vue/24/outline'
 
 // ─── Props & emits ───────────────────────────────────────────────────────────
@@ -208,10 +208,24 @@ defineProps({
   mobileOpen: { type: Boolean, default: false },
 })
 defineEmits(['closeMobile'])
+
+const route = useRoute()
 const router = useRouter()
 
+// ─── Portal Switcher (Admin vs Teacher) ───────────────────────────────────────
+const isTeacherPortal = computed(() => {
+  return (
+    route.path.startsWith('/teacher') ||
+    (!route.path.startsWith('/training') &&
+      !route.path.startsWith('/users') &&
+      !route.path.startsWith('/reports') &&
+      !route.path.startsWith('/finance') &&
+      authService.getRole()?.toLowerCase() === 'teacher')
+  )
+})
+
 // ─── Accordion state ─────────────────────────────────────────────────────────
-const openAccordions = ref(new Set())
+const openAccordions = ref(new Set(['class-schedule', 'training', 'users']))
 
 function toggleAccordion(id) {
   if (openAccordions.value.has(id)) {
@@ -233,7 +247,6 @@ function onEnter(el) {
 }
 function onLeave(el) {
   el.style.height = el.scrollHeight + 'px'
-  // Force reflow
   void el.offsetHeight
   el.style.height = '0'
 }
@@ -244,8 +257,57 @@ function handleLogout() {
   router.replace({ name: 'login' })
 }
 
-// ─── Menu items ──────────────────────────────────────────────────────────────
-const menuItems = [
+// ─── Teacher Sitemap ─────────────────────────────────────────────────────────
+const teacherMenuItems = [
+  {
+    id: 'teacher-dashboard',
+    label: 'Tổng quan',
+    icon: HomeIcon,
+    to: '/teacher',
+  },
+  {
+    id: 'class-schedule',
+    label: 'Quản lý Lớp & Lịch dạy',
+    icon: AcademicCapIcon,
+    children: [
+      { id: 't-schedule', label: 'Thời khóa biểu cá nhân', icon: CalendarDaysIcon, to: '/teacher/schedule' },
+      { id: 't-classes', label: 'Lớp học đang phụ trách', icon: BookOpenIcon, to: '/teacher/classes' },
+      { id: 't-students', label: 'Danh sách học sinh', icon: UserGroupIcon, to: '/teacher/students' },
+      { id: 't-attendance', label: 'Điểm danh học viên', icon: ClipboardDocumentCheckIcon, to: '/teacher/attendance' },
+    ],
+  },
+  {
+    id: 'learning-space',
+    label: 'Học tập & Đánh giá',
+    icon: PencilSquareIcon,
+    children: [
+      { id: 't-questions', label: 'Ngân hàng câu hỏi', icon: DocumentTextIcon, to: '/teacher/questions' },
+      { id: 't-assignments', label: 'Giao bài tập về nhà', icon: ClipboardDocumentListIcon, to: '/teacher/assignments' },
+      { id: 't-grading', label: 'Chấm điểm & Nhận xét', icon: StarIcon, to: '/teacher/grading' },
+    ],
+  },
+  {
+    id: 'comm-stats',
+    label: 'Giao tiếp & Thống kê',
+    icon: ChatBubbleLeftRightIcon,
+    children: [
+      { id: 't-attendance-rep', label: 'Thống kê chuyên cần', icon: ChartBarIcon, to: '/teacher/reports/attendance' },
+      { id: 't-notices', label: 'Gửi thông báo, nhắc nhở', icon: BellAlertIcon, to: '/teacher/communication/notices' },
+    ],
+  },
+  {
+    id: 'my-account',
+    label: 'Tài khoản của tôi',
+    icon: UserCircleIcon,
+    children: [
+      { id: 't-profile', label: 'Hồ sơ & Chuyên môn', icon: IdentificationIcon, to: '/teacher/account/profile' },
+      { id: 't-password', label: 'Đổi mật khẩu / PIN', icon: ShieldCheckIcon, to: '/teacher/account/password' },
+    ],
+  },
+]
+
+// ─── Admin Sitemap ───────────────────────────────────────────────────────────
+const adminMenuItems = [
   {
     id: 'dashboard',
     label: 'Tổng quan',
@@ -318,6 +380,8 @@ const menuItems = [
     ],
   },
 ]
+
+const menuItems = computed(() => (isTeacherPortal.value ? teacherMenuItems : adminMenuItems))
 </script>
 
 <style scoped>

@@ -5,7 +5,7 @@
     <!-- ─── Hamburger ──────────────────────────────────────────────────── -->
     <!-- Desktop: collapse/expand sidebar -->
     <button
-      class="hidden lg:flex items-center justify-center w-9 h-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors"
+      class="hidden lg:flex items-center justify-center w-9 h-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
       @click="$emit('toggleSidebar')"
       title="Thu gọn / Mở rộng sidebar"
     >
@@ -14,7 +14,7 @@
 
     <!-- Mobile: open sidebar overlay -->
     <button
-      class="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors"
+      class="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
       @click="$emit('toggleMobileSidebar')"
       title="Mở menu"
     >
@@ -38,8 +38,9 @@
 
       <!-- Notification bell -->
       <button
-        class="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-orange-100 text-orange-600 transition-colors"
+        class="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-orange-100 text-orange-600 transition-colors cursor-pointer"
         @click="toggleNotifications"
+        title="Thông báo"
       >
         <BellIcon class="w-5 h-5" />
         <span
@@ -59,7 +60,7 @@
         >
           <div class="flex items-center justify-between px-4 py-3 border-b border-orange-100">
             <span class="font-semibold text-orange-900 text-sm">Thông báo</span>
-            <button class="text-xs text-orange-500 hover:text-orange-700" @click="markAllRead">
+            <button class="text-xs text-orange-500 hover:text-orange-700 cursor-pointer" @click="markAllRead">
               Đánh dấu đã đọc
             </button>
           </div>
@@ -88,63 +89,148 @@
             </div>
           </div>
           <div class="px-4 py-2 border-t border-orange-100 text-center">
-            <button class="text-xs text-orange-500 hover:text-orange-700 font-medium">
+            <button class="text-xs text-orange-500 hover:text-orange-700 font-medium cursor-pointer">
               Xem tất cả thông báo
             </button>
           </div>
         </div>
       </transition>
 
-      <!-- ─── User profile ────────────────────────────────────────────── -->
-      <div class="relative">
-        <button
-          class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-orange-100 transition-colors"
-          @click="toggleUserMenu"
+      <!-- ─── User profile container ───────────────────────────────────── -->
+      <div class="relative" ref="userContainerRef">
+        <div
+          class="flex items-center bg-orange-50/60 hover:bg-orange-100/70 border border-orange-200/70 rounded-full pl-1.5 pr-1.5 py-1 transition-all shadow-xs"
         >
-          <div
-            class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0"
+          <!-- Clickable Avatar & Name: Navigates to Personal Profile (/account/profile) -->
+          <button
+            type="button"
+            class="flex items-center gap-2 pr-1.5 rounded-full hover:opacity-90 transition-opacity cursor-pointer text-left focus:outline-none"
+            @click="goToProfile"
+            title="Nhấn để xem và chỉnh sửa thông tin cá nhân"
           >
-            {{ userInitials }}
-          </div>
-          <div class="hidden md:block text-left min-w-0">
-            <p class="text-sm font-semibold text-orange-900 leading-none truncate max-w-[120px]">{{ userName }}</p>
-            <p class="text-xs text-orange-500 leading-none mt-0.5">Admin</p>
-          </div>
-          <ChevronDownIcon
-            :class="['w-4 h-4 text-orange-400 transition-transform duration-200', showUserMenu ? 'rotate-180' : '']"
-          />
-        </button>
+            <!-- Avatar image or gradient initials -->
+            <div class="relative flex-shrink-0">
+              <img
+                v-if="profile.avatar"
+                :src="profile.avatar"
+                :alt="profile.fullName"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-orange-300 shadow-xs"
+              />
+              <div
+                v-else
+                class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold shadow-xs ring-2 ring-orange-300/80"
+              >
+                {{ initials }}
+              </div>
+              <!-- Online status dot -->
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+            </div>
+
+            <!-- Name and Role -->
+            <div class="hidden md:block text-left min-w-0 pr-1">
+              <p class="text-sm font-semibold text-orange-950 leading-tight truncate max-w-[130px] hover:text-orange-600 transition-colors">
+                {{ profile.fullName }}
+              </p>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-orange-700 bg-orange-100/90 px-1.5 py-0.2 rounded">
+                  {{ profile.role || 'Admin' }}
+                </span>
+              </div>
+            </div>
+          </button>
+
+          <!-- Toggle dropdown menu button -->
+          <button
+            type="button"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-orange-500 hover:text-orange-800 hover:bg-orange-200/60 transition-colors cursor-pointer focus:outline-none"
+            @click.stop="toggleUserMenu"
+            title="Mở menu tài khoản"
+            aria-label="Mở menu tài khoản"
+          >
+            <ChevronDownIcon
+              :class="['w-4 h-4 transition-transform duration-200', showUserMenu ? 'rotate-180' : '']"
+            />
+          </button>
+        </div>
 
         <!-- User dropdown -->
         <transition name="dropdown">
           <div
             v-if="showUserMenu"
             ref="userDropdown"
-            class="absolute right-0 top-12 w-52 bg-white rounded-2xl shadow-xl border border-orange-100 z-50 overflow-hidden py-1"
+            class="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-orange-100 z-50 overflow-hidden py-1 divide-y divide-orange-50"
           >
-            <div class="px-4 py-3 border-b border-orange-100">
-              <p class="text-sm font-semibold text-gray-800">{{ userName }}</p>
-              <p class="text-xs text-gray-400">admin@eduadmin.vn</p>
+            <!-- Dropdown Header card -->
+            <div
+              class="px-4 py-3 bg-gradient-to-r from-orange-50/80 to-amber-50/40 cursor-pointer hover:bg-orange-50 transition-colors"
+              @click="goToProfile"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-orange-400 text-white flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0">
+                  <img
+                    v-if="profile.avatar"
+                    :src="profile.avatar"
+                    :alt="profile.fullName"
+                    class="w-full h-full rounded-full object-cover"
+                  />
+                  <span v-else>{{ initials }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-bold text-orange-950 truncate">{{ profile.fullName }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ profile.phone || profile.email || 'Hệ thống Quản trị' }}</p>
+                  <div class="mt-1 flex items-center gap-1.5">
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">
+                      ● Đang hoạt động
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <router-link to="/account/profile" @click="showUserMenu = false">
-              <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 transition-colors">
-                <UserCircleIcon class="w-4 h-4 text-orange-400" />
-                Thông tin cá nhân
-              </div>
-            </router-link>
-            <router-link to="/account/password" @click="showUserMenu = false">
-              <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 transition-colors">
-                <ShieldCheckIcon class="w-4 h-4 text-orange-400" />
-                Đổi mật khẩu
-              </div>
-            </router-link>
-            <div class="border-t border-orange-100 mt-1">
+
+            <!-- Menu links -->
+            <div class="py-1">
+              <router-link
+                :to="route.path.startsWith('/teacher') ? '/teacher/account/profile' : '/account/profile'"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-900 transition-colors group"
+                @click="showUserMenu = false"
+              >
+                <div class="w-7 h-7 rounded-lg bg-orange-100/60 group-hover:bg-orange-200/80 text-orange-600 flex items-center justify-center transition-colors">
+                  <UserCircleIcon class="w-4 h-4" />
+                </div>
+                <div>
+                  <p class="font-medium text-sm">Thông tin cá nhân</p>
+                  <p class="text-[11px] text-gray-400">Xem và cập nhật hồ sơ cá nhân</p>
+                </div>
+              </router-link>
+
+              <router-link
+                :to="route.path.startsWith('/teacher') ? '/teacher/account/password' : '/account/password'"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-900 transition-colors group"
+                @click="showUserMenu = false"
+              >
+                <div class="w-7 h-7 rounded-lg bg-amber-100/60 group-hover:bg-amber-200/80 text-amber-600 flex items-center justify-center transition-colors">
+                  <ShieldCheckIcon class="w-4 h-4" />
+                </div>
+                <div>
+                  <p class="font-medium text-sm">Đổi mật khẩu / PIN</p>
+                  <p class="text-[11px] text-gray-400">Bảo mật tài khoản & mật khẩu</p>
+                </div>
+              </router-link>
+            </div>
+
+            <!-- Logout -->
+            <div class="py-1 bg-gray-50/50">
               <button
-                class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer group"
                 @click="handleLogout"
               >
-                <ArrowRightOnRectangleIcon class="w-4 h-4" />
-                Đăng xuất
+                <div class="w-7 h-7 rounded-lg bg-red-100/70 group-hover:bg-red-200/80 text-red-600 flex items-center justify-center transition-colors">
+                  <ArrowRightOnRectangleIcon class="w-4 h-4" />
+                </div>
+                <div class="text-left">
+                  <p class="font-medium text-sm">Đăng xuất</p>
+                  <p class="text-[11px] text-red-400">Thoát khỏi phiên làm việc</p>
+                </div>
               </button>
             </div>
           </div>
@@ -158,6 +244,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
+import { useUserState } from '@/services/user-state'
 import {
   Bars3Icon,
   ClockIcon,
@@ -177,6 +264,9 @@ defineProps({
 })
 defineEmits(['toggleSidebar', 'toggleMobileSidebar'])
 
+// ─── User Profile State ──────────────────────────────────────────────────────
+const { profile, initials, fetchProfile } = useUserState()
+
 // ─── Clock ───────────────────────────────────────────────────────────────────
 const currentTime = ref('')
 
@@ -191,11 +281,14 @@ function updateTime() {
 }
 
 let timer = null
-onMounted(() => {
+onMounted(async () => {
   updateTime()
   timer = setInterval(updateTime, 1000)
   document.addEventListener('click', handleOutsideClick)
+  // Fetch real user info from backend
+  await fetchProfile()
 })
+
 onUnmounted(() => {
   clearInterval(timer)
   document.removeEventListener('click', handleOutsideClick)
@@ -227,16 +320,12 @@ const pageTitle = computed(() =>
   route.meta?.title ?? routeTitleMap[route.path] ?? 'EduAdmin'
 )
 
-// ─── User info ───────────────────────────────────────────────────────────────
-const userName = ref('Nguyễn Admin')
-const userInitials = computed(() => {
-  return userName.value
-    .split(' ')
-    .slice(-2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-})
+// ─── Navigation to Profile ───────────────────────────────────────────────────
+function goToProfile() {
+  showUserMenu.value = false
+  const target = route.path.startsWith('/teacher') ? '/teacher/account/profile' : '/account/profile'
+  router.push(target)
+}
 
 // ─── Notifications ───────────────────────────────────────────────────────────
 const showNotifications = ref(false)
@@ -282,7 +371,7 @@ function markAllRead() {
 
 // ─── User menu ───────────────────────────────────────────────────────────────
 const showUserMenu = ref(false)
-const userDropdown = ref(null)
+const userContainerRef = ref(null)
 
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value
@@ -292,12 +381,11 @@ function toggleUserMenu() {
 // ─── Outside click handler ───────────────────────────────────────────────────
 function handleOutsideClick(event) {
   if (showNotifications.value && notifDropdown.value && !notifDropdown.value.contains(event.target)) {
-    // Check if the click was on the notification button itself
     if (!event.target.closest('[title="Thông báo"]')) {
       showNotifications.value = false
     }
   }
-  if (showUserMenu.value && userDropdown.value && !userDropdown.value.contains(event.target)) {
+  if (showUserMenu.value && userContainerRef.value && !userContainerRef.value.contains(event.target)) {
     showUserMenu.value = false
   }
 }

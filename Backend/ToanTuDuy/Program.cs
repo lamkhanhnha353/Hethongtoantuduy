@@ -85,6 +85,7 @@ builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();   // thanh toán
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 
