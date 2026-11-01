@@ -93,3 +93,19 @@ namespace ToanTuDuy.Controllers
         }
     }
 }
+        // API TRẢ VỀ LỊCH HỌC TIMELINE CHO APP PHỤ HUYNH
+        [HttpGet("student/{studentId}")]
+        public async Task<IActionResult> GetStudentLessons(int studentId)
+        {
+            var result = await _lessonService.GetLessonsByStudentIdAsync(User.GetAccountId(), studentId);
+            return Ok(result);
+        }
+
+        [HttpGet("student/{studentId}/roadmap")]
+        public async Task<IActionResult> GetStudentRoadmaps(int studentId)
+        {
+            var result = await _lessonService.GetRoadmapsByStudentIdAsync(User.GetAccountId(), studentId);
+            return Ok(result);
+        }
+    }
+}

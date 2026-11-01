@@ -141,7 +141,6 @@ namespace ToanTuDuy.Models
         [Column("status")]
         public string Status { get; set; }
 
-        // 4. Thêm CreatedAt và UpdatedAt cho đồng bộ
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -149,7 +148,6 @@ namespace ToanTuDuy.Models
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation Properties
-        // ĐỔI FK TARGET: trỏ vào CourseLevel thay vì Course
         [ForeignKey(nameof(CourseLevelId))]
         public CourseLevel CourseLevel { get; set; }
 
@@ -159,8 +157,9 @@ namespace ToanTuDuy.Models
         public ICollection<ClassSchedule> ClassSchedules { get; set; } = new List<ClassSchedule>();
         public ICollection<ClassStudent> ClassStudents { get; set; } = new List<ClassStudent>();
         public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
-        public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
         public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+
+        // GHI CHÚ: Đã xóa ICollection<Assignment> ở đây vì Assignment giờ thuộc về Lesson
     }
 
 
@@ -370,10 +369,13 @@ namespace ToanTuDuy.Models
         [Column("id")]
         public int Id { get; set; }
 
-        [Column("class_id")]
-        public int ClassId { get; set; }
+        // [Column("class_id")]
+        // public int ClassId { get; set; }
 
-        // ✅ THÊM MỚI: stage_id (từ script SQL)
+        // ✅ ĐÃ SỬA: Đổi khóa ngoại từ class_id sang lesson_id theo yêu cầu UX
+        [Column("lesson_id")]
+        public int LessonId { get; set; }
+
         [Column("stage_id")]
         public string? StageId { get; set; }
 
@@ -389,18 +391,15 @@ namespace ToanTuDuy.Models
         [Column("time_limit_minutes")]
         public int TimeLimitMinutes { get; set; }
 
-        // ✅ THÊM MỚI: max_attempt (từ script SQL)
         [Column("max_attempt")]
         public int? MaxAttempt { get; set; }
 
         [Column("status")]
         public string Status { get; set; }
 
-        // ✅ ĐÃ XÓA: TeacherId và Teacher navigation (ASSIGNMENT không còn teacher_id trong script SQL)
 
-        // Navigation Properties
-        [ForeignKey(nameof(ClassId))]
-        public Classes Class { get; set; }
+        [ForeignKey(nameof(LessonId))]
+        public Lesson Lesson { get; set; }
 
         public ICollection<StudentAssignment> StudentAssignments { get; set; } = new List<StudentAssignment>();
         public ICollection<QuestionAssignment> QuestionAssignments { get; set; } = new List<QuestionAssignment>();
@@ -478,29 +477,34 @@ namespace ToanTuDuy.Models
         [Column("class_id")]
         public int ClassId { get; set; }
 
+        // chủ đề buổi học để Phụ huynh dễ theo dõi
+        [Column("title")]
+        public string? Title { get; set; }
+
         [Column("lesson_date")]
         public DateTime LessonDate { get; set; }
 
-        // ✅ THÊM MỚI: start_time, end_time (từ script SQL)
         [Column("start_time")]
         public DateTime? StartTime { get; set; }
 
         [Column("end_time")]
         public DateTime? EndTime { get; set; }
 
+        // SCHEDULED | COMPLETED | HOLIDAY | CANCELED | MAKE_UP
         [Column("status")]
-        public string Status { get; set; }
+        public string Status { get; set; } = "SCHEDULED";
 
-        // ✅ THÊM MỚI: is_importan — giữ nguyên typo từ UML/script SQL
         [Column("is_importan")]
         public bool IsImportan { get; set; }
 
-        // Navigation Properties
         [ForeignKey(nameof(ClassId))]
         public Classes Class { get; set; }
 
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
         public ICollection<LeaveRequest> LeaveRequests { get; set; } = new List<LeaveRequest>();
+
+        // ✅ THÊM MỚI: Cho phép Bài tập gắn trực tiếp vào Buổi học
+        public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
     }
 
     [Table("ATTENDANCE")]
