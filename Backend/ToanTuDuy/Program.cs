@@ -64,6 +64,15 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddAuthorization(options =>
+{
+    // Tạm cho phép test API thao tác lịch/duyệt đơn không cần Admin trong Development.
+    options.AddPolicy("AdminOrDevelopmentTesting", policy =>
+        policy.RequireAssertion(context =>
+            builder.Environment.IsDevelopment() ||
+            context.User.IsInRole("Admin")));
+});
+
 // Setup CORS for browser clients (Expo web, web frontend)
 builder.Services.AddCors(options =>
 {
@@ -82,8 +91,14 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICourseLevelService, CourseLevelService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();   // thanh toán
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+
+// builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 
 // Gửi email xác minh tài khoản qua Resend
 builder.Services.AddResend(options =>
@@ -105,6 +120,7 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 // Lưu ảnh trên Cloudinary (DB chỉ giữ URL trả về)
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
+
 
 var app = builder.Build();
 

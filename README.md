@@ -251,7 +251,7 @@ npm run build
 npm run preview
 ```
 
-Phần này đang ở trạng thái khung dựng: mảng route còn trống, `App.vue` hiển thị nội dung giữ chỗ, chưa có lớp gọi API hay thư viện giao diện. Vite chưa khai báo cổng dev server và chưa có proxy trỏ về Backend.
+Trong môi trường phát triển, Vite chuyển tiếp các request `/api` tới Backend tại `http://localhost:5114`. Hãy chạy Backend trước khi gọi API từ frontend.
 
 ---
 

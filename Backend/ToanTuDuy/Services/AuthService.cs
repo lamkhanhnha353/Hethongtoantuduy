@@ -152,10 +152,26 @@ namespace ToanTuDuy.Services
             // Dùng request.Phone làm UserName để map với hệ thống Identity
             var user = await _userManager.FindByNameAsync(request.Phone);
             
-            // CheckPasswordAsync sẽ tự động lấy Password gửi lên, Hash và so sánh với HashDB
-            if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
+            // Hash placeholder/corrupt trong dữ liệu seed có thể làm Identity ném FormatException.
+            bool passwordIsValid;
+            try
+            {
+                passwordIsValid = user != null
+                    && await _userManager.CheckPasswordAsync(user, request.Password);
+            }
+            catch (FormatException)
             {
                 throw new UnauthorizedAccessException("Số điện thoại hoặc mật khẩu không chính xác.");
+            }
+
+            if (!passwordIsValid)
+            {
+                throw new UnauthorizedAccessException("Số điện thoại hoặc mật khẩu không chính xác.");
+            }
+
+            if (user.Role != "Admin" && user.Role != "Teacher")
+            {
+                throw new UnauthorizedAccessException("Chỉ tài khoản Admin hoặc Teacher được phép đăng nhập.");
             }
 
             var accessToken = GenerateJwtToken(user);

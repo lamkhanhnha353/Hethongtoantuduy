@@ -13,6 +13,7 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/students")]
     [Authorize(Roles = "Parent")]
+
     public class StudentController : ControllerBase
     {
         private readonly IStudentService _studentService;

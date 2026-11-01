@@ -1,7 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { Tabs, router } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
-
+import { Tabs } from 'expo-router';
 import { useSession } from '@/hooks/useSession';
 
 export default function TabsLayout() {
@@ -11,20 +9,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerLeft: () => (
-          <TouchableOpacity
-            accessibilityLabel="Quay lại chọn hồ sơ"
-            accessibilityRole="button"
-            className="ml-2 h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white"
-            hitSlop={8}
-            onPress={() => router.replace('/select-profile')}
-          >
-            <Ionicons color="#334155" name="arrow-back" size={18} />
-          </TouchableOpacity>
-        ),
-        headerShadowVisible: false,
-        headerStyle: { backgroundColor: '#ffffff' },
-        headerTitle: '',
+        headerShown: false,
         tabBarActiveTintColor: '#0284c7',
         tabBarInactiveTintColor: '#94a3b8',
         tabBarStyle: { borderTopColor: '#e2e8f0' },

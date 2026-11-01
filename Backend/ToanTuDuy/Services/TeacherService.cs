@@ -42,6 +42,7 @@ namespace ToanTuDuy.Services
                 FullName = t.FullName,
                 Email = t.Email,
                 Phone = t.Account != null ? (t.Account.PhoneNumber ?? "") : "",
+                Specialize = t.Specialize,
                 IsActive = t.Account != null && (t.Account.LockoutEnd == null || t.Account.LockoutEnd <= DateTimeOffset.UtcNow)
             }).ToListAsync();
         }
@@ -61,6 +62,7 @@ namespace ToanTuDuy.Services
                 FullName = teacher.FullName,
                 Email = teacher.Email,
                 Phone = teacher.Account.PhoneNumber ?? "",
+                Specialize = teacher.Specialize,
                 IsActive = teacher.Account.LockoutEnd == null || teacher.Account.LockoutEnd <= DateTimeOffset.UtcNow
             };
         }
@@ -102,6 +104,7 @@ namespace ToanTuDuy.Services
                     FullName = teacher.FullName,
                     Email = teacher.Email,
                     Phone = user.PhoneNumber ?? "",
+                    Specialize = teacher.Specialize,
                     IsActive = true
                 };
             }
@@ -124,6 +127,8 @@ namespace ToanTuDuy.Services
             {
                 teacher.Email = dto.Email.Trim();
             }
+
+            teacher.Specialize = string.IsNullOrWhiteSpace(dto.Specialize) ? null : dto.Specialize.Trim();
 
             await _context.SaveChangesAsync();
             return true;

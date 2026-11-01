@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobileapp",
+    "scheme": "toantuduy",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -43,15 +43,11 @@
           "microphonePermission": false
         }
       ],
-      [
-        "expo-audio",
-        {
-          "microphonePermission": false,
-          "recordAudioAndroid": false,
-          "enableBackgroundPlayback": false
-        }
-      ],
-      "expo-asset"
+      "expo-web-browser",
+      "expo-video",
+      "expo-asset",
+      "expo-audio",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,

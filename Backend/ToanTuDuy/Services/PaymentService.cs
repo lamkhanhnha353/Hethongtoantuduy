@@ -1,0 +1,163 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using ToanTuDuy.Data;
+using ToanTuDuy.Models;
+using ToanTuDuy.Utils;
+
+namespace ToanTuDuy.Services
+{
+    public class PaymentService : IPaymentService
+    {
+        private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
+
+        public PaymentService(IConfiguration configuration, ApplicationDbContext context)
+        {
+            _configuration = configuration;
+            _context = context;
+        }
+
+        public async Task<string> CreatePaymentUrl(int invoiceId, HttpContext context)
+        {
+            var invoice = await _context.Invoices.FindAsync(invoiceId);
+            if (invoice == null) throw new Exception("Không tìm thấy hóa đơn");
+            if (invoice.Status == "FAILED")
+                throw new InvalidOperationException("Hóa đơn thất bại cần được xác nhận lại trước khi thanh toán.");
+            if (invoice.Status != "PENDING")
+                throw new InvalidOperationException("Hóa đơn không ở trạng thái chờ thanh toán.");
+
+            // Tạo mã giao dịch riêng biệt gửi VNPay (chống trùng lặp)
+            invoice.TxnRef = $"INV{invoice.Id}_{DateTime.Now.Ticks}";
+            await _context.SaveChangesAsync();
+
+            var pay = new VnPayLibrary();
+            var timeNow = DateTime.UtcNow.AddHours(7); // Giờ Việt Nam
+
+            pay.AddRequestData("vnp_Version", "2.1.0");
+            pay.AddRequestData("vnp_Command", "pay");
+            pay.AddRequestData("vnp_TmnCode", _configuration["VnPay:TmnCode"]!);
+
+            // SỬA LỖI: VNPay yêu cầu số tiền nhân 100 (Ví dụ: 1500000 -> 150000000)
+            pay.AddRequestData("vnp_Amount", (invoice.Amount * 100).ToString());
+
+            pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_CurrCode", "VND");
+            pay.AddRequestData("vnp_IpAddr", context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1");
+            pay.AddRequestData("vnp_Locale", "vn");
+            pay.AddRequestData("vnp_OrderInfo", $"Thanh toan hoa don {invoice.Id}");
+            pay.AddRequestData("vnp_OrderType", "other");
+            pay.AddRequestData("vnp_ReturnUrl", _configuration["VnPay:ReturnUrl"]!);
+            pay.AddRequestData("vnp_TxnRef", invoice.TxnRef);
+
+            var paymentUrl = pay.CreateRequestUrl(_configuration["VnPay:BaseUrl"]!, _configuration["VnPay:HashSecret"]!);
+            return paymentUrl;
+        }
+
+        public async Task<Invoice?> PaymentExecuteReturn(IQueryCollection collections)
+        {
+            var pay = new VnPayLibrary();
+            foreach (var (key, value) in collections)
+            {
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                {
+                    pay.AddResponseData(key, value.ToString());
+                }
+            }
+
+            var vnp_TxnRef = pay.GetResponseData("vnp_TxnRef");
+            var vnp_SecureHash = collections.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString();
+            var vnp_ResponseCode = pay.GetResponseData("vnp_ResponseCode");
+
+            bool checkSignature = pay.ValidateSignature(vnp_SecureHash, _configuration["VnPay:HashSecret"]!);
+            if (!checkSignature) return null; // Chữ ký giả mạo
+
+            // Load Invoice kèm theo ClassStudent
+            var invoice = await _context.Invoices
+                .Include(i => i.ClassStudent)
+                .FirstOrDefaultAsync(i => i.TxnRef == vnp_TxnRef);
+
+            if (invoice == null) return null;
+
+            if (invoice.Status == "PENDING" && vnp_ResponseCode == "00")
+            {
+                invoice.Status = "PAID";
+                invoice.PaymentMethod = "VNPAY";
+                invoice.TransactionId = pay.GetResponseData("vnp_TransactionNo");
+                invoice.PaidAt = DateTime.UtcNow;
+
+                if (invoice.ClassStudent != null)
+                {
+                    invoice.ClassStudent.Status = "ACTIVE"; // Kích hoạt chỗ ngồi
+                }
+            }
+            else if (invoice.Status == "PENDING" && vnp_ResponseCode != "00")
+            {
+                // THANH TOÁN THẤT BẠI HOẶC BỊ HỦY (Chỉ hủy hóa đơn, GIỮ NGUYÊN SLOT CỦA BÉ)
+                invoice.Status = "FAILED";
+
+                // TUYỆT ĐỐI KHÔNG CANCEL CLASS_STUDENT Ở ĐÂY NỮA
+            }
+
+            await _context.SaveChangesAsync();
+            return invoice;
+        }
+
+        public async Task<string> PaymentExecuteIpn(IQueryCollection collections)
+        {
+            var pay = new VnPayLibrary();
+            foreach (var (key, value) in collections)
+            {
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                {
+                    pay.AddResponseData(key, value.ToString());
+                }
+            }
+
+            var vnp_TxnRef = pay.GetResponseData("vnp_TxnRef");
+            var vnp_SecureHash = collections.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString();
+            var vnp_ResponseCode = pay.GetResponseData("vnp_ResponseCode");
+
+            bool checkSignature = pay.ValidateSignature(vnp_SecureHash, _configuration["VnPay:HashSecret"]!);
+            if (!checkSignature) return "{\"RspCode\":\"97\",\"Message\":\"Invalid signature\"}";
+
+            var invoice = await _context.Invoices
+                .Include(i => i.ClassStudent)
+                .FirstOrDefaultAsync(i => i.TxnRef == vnp_TxnRef);
+
+            if (invoice == null) return "{\"RspCode\":\"01\",\"Message\":\"Order not found\"}";
+
+            var vnp_Amount = Convert.ToInt64(pay.GetResponseData("vnp_Amount")) / 100;
+            if (invoice.Amount != vnp_Amount) return "{\"RspCode\":\"04\",\"Message\":\"Invalid amount\"}";
+
+            if (invoice.Status == "PAID") return "{\"RspCode\":\"02\",\"Message\":\"Order already confirmed\"}";
+
+            if (vnp_ResponseCode == "00")
+            {
+                invoice.Status = "PAID";
+                invoice.PaymentMethod = "VNPAY";
+                invoice.TransactionId = pay.GetResponseData("vnp_TransactionNo");
+                invoice.PaidAt = DateTime.UtcNow;
+
+                if (invoice.ClassStudent != null)
+                {
+                    invoice.ClassStudent.Status = "ACTIVE";
+                }
+            }
+            else
+            {
+                invoice.Status = "FAILED";
+                if (invoice.ClassStudent != null && invoice.ClassStudent.Status == "PENDING")
+                {
+                    invoice.ClassStudent.Status = "CANCELLED"; // Giải phóng slot
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}";
+        }
+    }
+}

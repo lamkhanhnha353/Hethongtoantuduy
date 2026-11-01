@@ -1,8 +1,8 @@
-
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
@@ -21,25 +21,42 @@ namespace ToanTuDuy.Services
 
         public async Task<IEnumerable<CourseLevelResponse>> GetLevelsByCourseIdAsync(int courseId)
         {
-            return await _context.CourseLevels
+            var levels = await _context.CourseLevels
+                .Include(cl => cl.Course)
                 .Where(cl => cl.CourseId == courseId)
-                .Select(cl => new CourseLevelResponse
-                {
-                    Id = cl.Id,
-                    CourseId = cl.CourseId, // Nhớ thêm thuộc tính này vào CourseLevelResponse
-                    Code = cl.Code,
-                    Name = cl.Name,
-                    Fee = cl.Fee,
-                    TotalSessions = cl.TotalSessions,
-                    OrderIndex = cl.OrderIndex,
-                    Status = cl.Status
-                })
                 .ToListAsync();
+
+            return levels.Select(cl => new CourseLevelResponse
+            {
+                Id = cl.Id,
+                CourseId = cl.CourseId,
+                Code = cl.Code,
+                Name = cl.Name,
+                Fee = cl.Fee,
+                TotalSessions = cl.TotalSessions,
+                OrderIndex = cl.OrderIndex,
+                Status = cl.Status,
+
+                CourseName = cl.Course?.Name,
+                Description = cl.Course?.Description,
+                MinAge = cl.Course?.MinAge ?? 0,
+                MaxAge = cl.Course?.MaxAge ?? 0,
+                Rating = cl.Course?.Rating ?? 5.0,
+                Reviews = cl.Course?.Reviews ?? 0,
+                VideoUrl = cl.Course?.VideoUrl,
+                Benefits = string.IsNullOrEmpty(cl.Course?.Benefits) ? null : JsonSerializer.Deserialize<List<string>>(cl.Course.Benefits, (JsonSerializerOptions)null),
+                FacilityImages = string.IsNullOrEmpty(cl.Course?.FacilityImages) ? null : JsonSerializer.Deserialize<List<string>>(cl.Course.FacilityImages, (JsonSerializerOptions)null),
+                Syllabus = string.IsNullOrEmpty(cl.Syllabus) ? null : JsonSerializer.Deserialize<object>(cl.Syllabus, (JsonSerializerOptions)null),
+                Faqs = string.IsNullOrEmpty(cl.Faqs) ? null : JsonSerializer.Deserialize<object>(cl.Faqs, (JsonSerializerOptions)null)
+            }).ToList();
         }
 
         public async Task<CourseLevelResponse> GetLevelByIdAsync(int id)
         {
-            var cl = await _context.CourseLevels.FindAsync(id);
+            var cl = await _context.CourseLevels
+                .Include(x => x.Course)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (cl == null) return null;
 
             return new CourseLevelResponse
@@ -51,13 +68,24 @@ namespace ToanTuDuy.Services
                 Fee = cl.Fee,
                 TotalSessions = cl.TotalSessions,
                 OrderIndex = cl.OrderIndex,
-                Status = cl.Status
+                Status = cl.Status,
+
+                CourseName = cl.Course?.Name,
+                Description = cl.Course?.Description,
+                MinAge = cl.Course?.MinAge ?? 0,
+                MaxAge = cl.Course?.MaxAge ?? 0,
+                Rating = cl.Course?.Rating ?? 5.0,
+                Reviews = cl.Course?.Reviews ?? 0,
+                VideoUrl = cl.Course?.VideoUrl,
+                Benefits = string.IsNullOrEmpty(cl.Course?.Benefits) ? null : JsonSerializer.Deserialize<List<string>>(cl.Course.Benefits, (JsonSerializerOptions)null),
+                FacilityImages = string.IsNullOrEmpty(cl.Course?.FacilityImages) ? null : JsonSerializer.Deserialize<List<string>>(cl.Course.FacilityImages, (JsonSerializerOptions)null),
+                Syllabus = string.IsNullOrEmpty(cl.Syllabus) ? null : JsonSerializer.Deserialize<object>(cl.Syllabus, (JsonSerializerOptions)null),
+                Faqs = string.IsNullOrEmpty(cl.Faqs) ? null : JsonSerializer.Deserialize<object>(cl.Faqs, (JsonSerializerOptions)null)
             };
         }
 
         public async Task<CourseLevelResponse> CreateLevelAsync(CourseLevelRequest request)
         {
-            // Kiểm tra xem CourseId có tồn tại không
             var courseExists = await _context.Courses.AnyAsync(c => c.Id == request.CourseId);
             if (!courseExists) throw new Exception("Khóa học cha không tồn tại!");
 
@@ -70,6 +98,8 @@ namespace ToanTuDuy.Services
                 TotalSessions = request.TotalSessions,
                 OrderIndex = request.OrderIndex,
                 Status = request.Status,
+                Syllabus = request.Syllabus != null ? JsonSerializer.Serialize(request.Syllabus, (JsonSerializerOptions)null) : null,
+                Faqs = request.Faqs != null ? JsonSerializer.Serialize(request.Faqs, (JsonSerializerOptions)null) : null,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -90,6 +120,8 @@ namespace ToanTuDuy.Services
             level.TotalSessions = request.TotalSessions;
             level.OrderIndex = request.OrderIndex;
             level.Status = request.Status;
+            level.Syllabus = request.Syllabus != null ? JsonSerializer.Serialize(request.Syllabus, (JsonSerializerOptions)null) : null;
+            level.Faqs = request.Faqs != null ? JsonSerializer.Serialize(request.Faqs, (JsonSerializerOptions)null) : null;
             level.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -101,7 +133,6 @@ namespace ToanTuDuy.Services
             var level = await _context.CourseLevels.Include(l => l.Classes).FirstOrDefaultAsync(l => l.Id == id);
             if (level == null) return false;
 
-            // Chặn xóa nếu Level này đã có Lớp học được mở
             if (level.Classes.Any())
                 throw new Exception("Không thể xóa Cấp độ đang có Lớp học (Classes).");
 

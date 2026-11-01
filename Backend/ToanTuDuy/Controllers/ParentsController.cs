@@ -8,6 +8,8 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [AllowAnonymous] // 👈 Thêm dòng này: Bỏ qua kiểm tra Token cho toàn bộ API Giáo viên
+
     public class ParentsController : ControllerBase
     {
         private readonly IParentStudentService _service;
