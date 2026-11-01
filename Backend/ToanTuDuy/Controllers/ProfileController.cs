@@ -39,24 +39,24 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPut("email")]
-        [Authorize(Roles = "Parent")]
-        public async Task<IActionResult> UpdateEmail([FromBody] UpdateParentEmailDto dto)
+        [Authorize(Roles = "Parent,Admin")]
+        public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailRequest dto)
         {
             var response = await _profileService.UpdateEmailAsync(User.GetAccountId(), dto.Email);
             return Ok(response);
         }
 
         [HttpPost("avatar")]
-        [Authorize(Roles = "Parent")]
+        [Authorize(Roles = "Parent,Admin")]
         [RequestSizeLimit(6 * 1024 * 1024)]
-        public async Task<IActionResult> UploadAvatar(IFormFile? file, CancellationToken cancellationToken)
+        public async Task<IActionResult> UploadAvatar([FromForm(Name = "file")] IFormFile? file, CancellationToken cancellationToken)
         {
             var response = await _profileService.UpdateAvatarAsync(User.GetAccountId(), file, cancellationToken);
             return Ok(response);
         }
 
         [HttpDelete("avatar")]
-        [Authorize(Roles = "Parent")]
+        [Authorize(Roles = "Parent,Admin")]
         public async Task<IActionResult> DeleteAvatar(CancellationToken cancellationToken)
         {
             var response = await _profileService.RemoveAvatarAsync(User.GetAccountId(), cancellationToken);

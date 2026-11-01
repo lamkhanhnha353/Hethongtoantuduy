@@ -155,6 +155,40 @@ namespace ToanTuDuy.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int")
+                        .HasColumnName("account_id");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("avatar");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("full_name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
+                    b.ToTable("ADMIN_PROFILE");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.ApplicationUser", b =>
                 {
                     b.Property<int>("Id")
@@ -207,6 +241,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<DateTime?>("PasswordResetSentAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("password_reset_sent_at");
+
+                    b.Property<string>("PendingEmail")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("pending_email");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)")
@@ -1297,6 +1335,17 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.AdminProfile", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.ApplicationUser", "Account")
+                        .WithOne("AdminProfile")
+                        .HasForeignKey("ToanTuDuy.Models.AdminProfile", "AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.Assignment", b =>
                 {
                     b.HasOne("ToanTuDuy.Models.Lesson", "Lesson")
@@ -1596,6 +1645,8 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("AdminProfile");
+
                     b.Navigation("ParentProfile")
                         .IsRequired();
 

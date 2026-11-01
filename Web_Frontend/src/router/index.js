@@ -5,6 +5,7 @@ import DashboardView from '@/views/admin/DashboardView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 import LoginView from '@/views/LoginView.vue'
 import TeacherDashboardView from '@/views/teacher/TeacherDashboardView.vue'
+import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
 
 // User Magement
 import ParentStudentView from '@/views/admin/manage/ParentStudentView.vue'
@@ -68,8 +69,7 @@ const router = createRouter({
         { path: 'reports/attendance', component: PlaceholderView, meta: { title: 'Thống kê chuyên cần' } },
 
         // Account
-        { path: 'account/profile', component: PlaceholderView, meta: { title: 'Thông tin cá nhân' } },
-        { path: 'account/password', component: PlaceholderView, meta: { title: 'Đổi mật khẩu / PIN' } },
+        { path: 'account/profile', component: AdminProfileView, meta: { title: 'Thông tin cá nhân' } }
       ],
     },
   ],

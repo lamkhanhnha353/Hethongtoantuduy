@@ -14,6 +14,7 @@ namespace ToanTuDuy.Data
         }
 
         // --- User DbSets ---
+        public DbSet<AdminProfile> AdminProfiles { get; set; }
         public DbSet<ParentProfile> ParentProfiles { get; set; }
         public DbSet<StudentProfile> StudentProfiles { get; set; }
         public DbSet<TeacherProfile> TeacherProfiles { get; set; }
@@ -79,6 +80,10 @@ namespace ToanTuDuy.Data
 
             modelBuilder.Entity<TeacherProfile>()
                 .HasIndex(t => t.AccountId)
+                .IsUnique();
+
+            modelBuilder.Entity<AdminProfile>()
+                .HasIndex(a => a.AccountId)
                 .IsUnique();
 
             // Tra cứu token theo hash khi nhận link xác minh — hash phải là duy nhất.

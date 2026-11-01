@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs.Profile;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Models;
 using ToanTuDuy.Services.Storage;
 
 namespace ToanTuDuy.Services
@@ -14,23 +17,31 @@ namespace ToanTuDuy.Services
     {
         private const string ParentRole = "Parent";
         private const string TeacherRole = "Teacher";
+        private const string AdminRole = "Admin";
         private const string AvatarFolder = "avatars/parents";
+        private const string AdminAvatarFolder = "avatars/admins";
 
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IImageStorage _imageStorage;
         private readonly ILogger<ProfileService> _logger;
         private readonly IParentStudentService _parentStudentService;
+        private readonly IEmailVerificationService _verificationService;
 
         public ProfileService(
             ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
             IImageStorage imageStorage,
             ILogger<ProfileService> logger,
-            IParentStudentService parentStudentService)
+            IParentStudentService parentStudentService,
+            IEmailVerificationService verificationService)
         {
             _context = context;
+            _userManager = userManager;
             _imageStorage = imageStorage;
             _logger = logger;
             _parentStudentService = parentStudentService;
+            _verificationService = verificationService;
         }
 
         public async Task<ProfileResponse> GetAsync(int accountId)
@@ -40,11 +51,12 @@ namespace ToanTuDuy.Services
                 .FirstOrDefaultAsync(u => u.Id == accountId)
                 ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
 
-            return user.Role switch
+            return NormalizeRole(user.Role) switch
             {
                 ParentRole => await BuildParentResponseAsync(user.Id),
                 TeacherRole => await BuildTeacherResponseAsync(user.Id),
-                _ => throw ApiException.BadRequest("Role không hợp lệ."),
+                AdminRole => await BuildAdminResponseAsync(user.Id),
+                _ => throw UnsupportedRole(user.Role),
             };
         }
 
@@ -55,8 +67,63 @@ namespace ToanTuDuy.Services
                 .FirstOrDefaultAsync(u => u.Id == accountId)
                 ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
 
-            switch (user.Role)
+            switch (NormalizeRole(user.Role))
             {
+                case AdminRole:
+                {
+                    var admin = await _userManager.FindByIdAsync(accountId.ToString())
+                        ?? throw ApiException.NotFound("Không tìm thấy tài khoản Admin.");
+                    var fullName = request.FullName.Trim();
+                    if (string.IsNullOrWhiteSpace(fullName))
+                    {
+                        throw ApiException.BadRequest("Họ và tên là bắt buộc.");
+                    }
+
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+                    if (!string.IsNullOrWhiteSpace(request.Phone)
+                        && !string.Equals(admin.PhoneNumber, request.Phone.Trim(), System.StringComparison.Ordinal))
+                    {
+                        var phone = request.Phone.Trim();
+                        var existingUser = await _userManager.FindByNameAsync(phone);
+                        if (existingUser != null && existingUser.Id != accountId)
+                        {
+                            throw ApiException.Conflict("Số điện thoại đã được sử dụng.");
+                        }
+
+                        var usernameResult = await _userManager.SetUserNameAsync(admin, phone);
+                        if (!usernameResult.Succeeded)
+                        {
+                            throw ApiException.BadRequest(
+                                $"Không thể cập nhật số điện thoại: {string.Join("; ", usernameResult.Errors.Select(error => error.Description))}");
+                        }
+
+                        var phoneResult = await _userManager.SetPhoneNumberAsync(admin, phone);
+                        if (!phoneResult.Succeeded)
+                        {
+                            throw ApiException.BadRequest(
+                                $"Không thể cập nhật số điện thoại: {string.Join("; ", phoneResult.Errors.Select(error => error.Description))}");
+                        }
+
+                        admin.RefreshToken = null;
+                    }
+
+                    var updateResult = await _userManager.UpdateAsync(admin);
+                    if (!updateResult.Succeeded)
+                    {
+                        throw ApiException.BadRequest(
+                            $"Không thể cập nhật hồ sơ: {string.Join("; ", updateResult.Errors.Select(error => error.Description))}");
+                    }
+
+                    var adminProfile = await _context.AdminProfiles
+                        .FirstOrDefaultAsync(profile => profile.AccountId == accountId)
+                        ?? throw ApiException.NotFound("Không tìm thấy hồ sơ Admin.");
+                    adminProfile.FullName = fullName;
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                    return MapAdmin(admin, adminProfile);
+                }
+
                 case ParentRole:
                     var parent = await _context.ParentProfiles
                         .FirstOrDefaultAsync(p => p.AccountId == accountId)
@@ -78,12 +145,60 @@ namespace ToanTuDuy.Services
                     return MapTeacher(user.PhoneNumber ?? string.Empty, teacher);
 
                 default:
-                    throw ApiException.BadRequest("Role không hợp lệ.");
+                    throw UnsupportedRole(user.Role);
             }
         }
 
         public async Task<ProfileResponse> UpdateEmailAsync(int accountId, string email)
         {
+            var user = await _userManager.FindByIdAsync(accountId.ToString())
+                ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
+            email = email.Trim();
+
+            if (NormalizeRole(user.Role) == AdminRole)
+            {
+                if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email))
+                {
+                    throw ApiException.BadRequest("Email không hợp lệ.");
+                }
+
+                if (string.Equals(user.Email, email, System.StringComparison.OrdinalIgnoreCase)
+                    && user.EmailConfirmed)
+                {
+                    return await BuildAdminResponseAsync(accountId);
+                }
+
+                var existingUser = await _userManager.FindByEmailAsync(email);
+                if (existingUser != null && existingUser.Id != accountId)
+                {
+                    throw ApiException.Conflict("Email đã được sử dụng bởi tài khoản khác.");
+                }
+
+                var emailIsPendingForAnotherAccount = await _context.Users
+                    .AnyAsync(candidate => candidate.Id != accountId && candidate.PendingEmail == email);
+                if (emailIsPendingForAnotherAccount)
+                {
+                    throw ApiException.Conflict("Email đang chờ xác minh cho một tài khoản khác.");
+                }
+
+                if (string.Equals(user.PendingEmail, email, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    throw ApiException.Conflict("Email này đang chờ xác minh. Hãy kiểm tra hộp thư.");
+                }
+
+                user.PendingEmail = email;
+                var updateResult = await _userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    throw ApiException.BadRequest(
+                        $"Không thể cập nhật email: {string.Join("; ", updateResult.Errors.Select(error => error.Description))}");
+                }
+
+                var rawToken = await _verificationService.IssueAsync(accountId, email);
+                await _verificationService.SendEmailAsync(email, rawToken);
+                return await BuildAdminResponseAsync(accountId);
+            }
+
             var parentId = await _context.ParentProfiles
                 .AsNoTracking()
                 .Where(p => p.AccountId == accountId)
@@ -108,34 +223,88 @@ namespace ToanTuDuy.Services
         {
             ImageUploadRules.EnsureValid(file);
 
+            var user = await _userManager.FindByIdAsync(accountId.ToString())
+                ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
+
+            if (NormalizeRole(user.Role) == AdminRole)
+            {
+                var adminProfile = await _context.AdminProfiles
+                    .FirstOrDefaultAsync(profile => profile.AccountId == accountId)
+                    ?? throw ApiException.NotFound("Không tìm thấy hồ sơ Admin.");
+                await using var adminStream = file!.OpenReadStream();
+                var adminUrl = await _imageStorage.UploadAsync(
+                    adminStream, file.FileName, file.ContentType, AdminAvatarFolder, cancellationToken);
+                var previousAvatar = adminProfile.Avatar;
+                adminProfile.Avatar = adminUrl;
+                try
+                {
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                catch
+                {
+                    await SafeDeleteAsync(adminUrl, CancellationToken.None);
+                    throw;
+                }
+
+                await SafeDeleteAsync(previousAvatar, cancellationToken);
+                return MapAdmin(user, adminProfile);
+            }
+
             var parent = await _context.ParentProfiles
                 .FirstOrDefaultAsync(p => p.AccountId == accountId, cancellationToken)
                 ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
 
             await using var stream = file!.OpenReadStream();
             var url = await _imageStorage.UploadAsync(stream, file.FileName, file.ContentType, AvatarFolder, cancellationToken);
-
-            // Xóa ảnh cũ (nếu có) sau khi upload ảnh mới thành công.
-            await SafeDeleteAsync(parent.Avatar, cancellationToken);
-
+            var previousParentAvatar = parent.Avatar;
             parent.Avatar = url;
-            await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch
+            {
+                await SafeDeleteAsync(url, CancellationToken.None);
+                throw;
+            }
 
+            await SafeDeleteAsync(previousParentAvatar, cancellationToken);
             var (phone, email, emailConfirm) = await GetContactAsync(accountId);
             return MapParent(phone, email, emailConfirm, parent);
         }
 
         public async Task<ProfileResponse> RemoveAvatarAsync(int accountId, CancellationToken cancellationToken = default)
         {
+            var user = await _userManager.FindByIdAsync(accountId.ToString())
+                ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
+
+            if (NormalizeRole(user.Role) == AdminRole)
+            {
+                var adminProfile = await _context.AdminProfiles
+                    .FirstOrDefaultAsync(profile => profile.AccountId == accountId)
+                    ?? throw ApiException.NotFound("Không tìm thấy hồ sơ Admin.");
+
+                var previousAvatar = adminProfile.Avatar;
+                if (!string.IsNullOrWhiteSpace(previousAvatar))
+                {
+                    adminProfile.Avatar = null;
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await SafeDeleteAsync(previousAvatar, cancellationToken);
+                }
+
+                return MapAdmin(user, adminProfile);
+            }
+
             var parent = await _context.ParentProfiles
                 .FirstOrDefaultAsync(p => p.AccountId == accountId, cancellationToken)
                 ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
 
-            if (!string.IsNullOrWhiteSpace(parent.Avatar))
+            var previousParentAvatar = parent.Avatar;
+            if (!string.IsNullOrWhiteSpace(previousParentAvatar))
             {
-                await SafeDeleteAsync(parent.Avatar, cancellationToken);
                 parent.Avatar = null;
                 await _context.SaveChangesAsync(cancellationToken);
+                await SafeDeleteAsync(previousParentAvatar, cancellationToken);
             }
 
             var (phone, email, emailConfirm) = await GetContactAsync(accountId);
@@ -181,6 +350,45 @@ namespace ToanTuDuy.Services
             var (phone, _, _) = await GetContactAsync(accountId);
             return MapTeacher(phone, profile);
         }
+
+        private async Task<ProfileResponse> BuildAdminResponseAsync(int accountId)
+        {
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(account => account.Id == accountId)
+                ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
+            var profile = await _context.AdminProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(admin => admin.AccountId == accountId)
+                ?? throw ApiException.NotFound("Không tìm thấy hồ sơ Admin.");
+
+            return MapAdmin(user, profile);
+        }
+
+        private static ProfileResponse MapAdmin(ApplicationUser user, AdminProfile profile) => new()
+        {
+            AccountId = user.Id,
+            Phone = user.PhoneNumber ?? string.Empty,
+            Role = AdminRole,
+            FullName = profile.FullName,
+            Email = user.Email,
+            PendingEmail = user.PendingEmail,
+            EmailConfirm = user.EmailConfirmed,
+            Avatar = profile.Avatar,
+            HasPin = false,
+        };
+
+        private static string NormalizeRole(string? role) => role?.Trim().ToUpperInvariant() switch
+        {
+            "ADMIN" => AdminRole,
+            "TEACHER" => TeacherRole,
+            "PARENT" => ParentRole,
+            _ => string.Empty,
+        };
+
+        private static ApiException UnsupportedRole(string? role) =>
+            ApiException.BadRequest(
+                $"Role tài khoản không được hỗ trợ: '{role ?? "(trống)"}'.");
 
         private async Task<(string Phone, string? Email, bool EmailConfirmed)> GetContactAsync(int accountId)
         {

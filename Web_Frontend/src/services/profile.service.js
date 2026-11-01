@@ -15,6 +15,15 @@ class ProfileService {
     return (await this.api.put("/", data)).data;
   }
 
+  async updateEmail(data) {
+    return (await this.api.put("/email", data)).data;
+  }
+
+  async resendEmailVerification() {
+    const api = createApiClient("/api/email-verification");
+    return (await api.post("/resend")).data;
+  }
+
   // Thiết lập mã PIN lần đầu hoặc đổi mã PIN
   async updatePin(data) {
     return (await this.api.put("/pin", data)).data;

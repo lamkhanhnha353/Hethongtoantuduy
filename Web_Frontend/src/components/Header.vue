@@ -101,10 +101,9 @@
           class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-orange-100 transition-colors"
           @click="toggleUserMenu"
         >
-          <div
-            class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0"
-          >
-            {{ userInitials }}
+          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-500 text-sm font-bold text-white shadow-sm">
+            <img v-if="userAvatar" :src="userAvatar" alt="" class="h-full w-full object-cover" />
+            <span v-else>{{ userInitials }}</span>
           </div>
           <div class="hidden md:block text-left min-w-0">
             <p class="text-sm font-semibold text-orange-900 leading-none truncate max-w-[120px]">{{ userName }}</p>
@@ -124,18 +123,12 @@
           >
             <div class="px-4 py-3 border-b border-orange-100">
               <p class="text-sm font-semibold text-gray-800">{{ userName }}</p>
-              <p class="text-xs text-gray-400">admin@eduadmin.vn</p>
+              <p class="text-xs text-gray-400">{{ userEmail || 'Chưa cập nhật email' }}</p>
             </div>
             <router-link to="/account/profile" @click="showUserMenu = false">
               <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 transition-colors">
                 <UserCircleIcon class="w-4 h-4 text-orange-400" />
                 Thông tin cá nhân
-              </div>
-            </router-link>
-            <router-link to="/account/password" @click="showUserMenu = false">
-              <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 transition-colors">
-                <ShieldCheckIcon class="w-4 h-4 text-orange-400" />
-                Đổi mật khẩu
               </div>
             </router-link>
             <div class="border-t border-orange-100 mt-1">
@@ -155,9 +148,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
+import profileService from '@/services/profile.service'
 import {
   Bars3Icon,
   ClockIcon,
@@ -175,6 +169,17 @@ import {
 defineProps({
   sidebarCollapsed: { type: Boolean, default: false },
 })
+
+async function loadUserProfile() {
+  try {
+    const profile = await profileService.get()
+    userName.value = profile.fullName || 'Admin'
+    userEmail.value = profile.email || ''
+    userAvatar.value = profile.avatar || ''
+  } catch (error) {
+    console.error('Không thể tải thông tin Admin trên thanh tiêu đề.', error)
+  }
+}
 defineEmits(['toggleSidebar', 'toggleMobileSidebar'])
 
 // ─── Clock ───────────────────────────────────────────────────────────────────
@@ -193,12 +198,15 @@ function updateTime() {
 let timer = null
 onMounted(() => {
   updateTime()
+  loadUserProfile()
   timer = setInterval(updateTime, 1000)
   document.addEventListener('click', handleOutsideClick)
+  window.addEventListener('admin-profile-updated', loadUserProfile)
 })
 onUnmounted(() => {
   clearInterval(timer)
   document.removeEventListener('click', handleOutsideClick)
+  window.removeEventListener('admin-profile-updated', loadUserProfile)
 })
 
 // ─── Page title from route ───────────────────────────────────────────────────
@@ -221,14 +229,16 @@ const routeTitleMap = {
   '/reports/growth': 'Tăng trưởng học viên',
   '/reports/attendance': 'Thống kê chuyên cần',
   '/account/profile': 'Thông tin cá nhân',
-  '/account/password': 'Đổi mật khẩu / PIN',
 }
 const pageTitle = computed(() =>
   route.meta?.title ?? routeTitleMap[route.path] ?? 'EduAdmin'
 )
 
 // ─── User info ───────────────────────────────────────────────────────────────
-const userName = ref('Nguyễn Admin')
+const userName = ref('Admin')
+const userEmail = ref('')
+const userAvatar = ref('')
+watch(() => route.fullPath, loadUserProfile)
 const userInitials = computed(() => {
   return userName.value
     .split(' ')
