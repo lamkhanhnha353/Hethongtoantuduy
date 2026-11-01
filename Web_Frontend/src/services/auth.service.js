@@ -51,6 +51,11 @@ class AuthService {
   logout() {
     clearAuthSession();
   }
+
+  // Đổi mật khẩu tài khoản
+  async changePassword(data) {
+    return (await this.api.post("/change-password", data)).data;
+  }
 }
 
 export default new AuthService();
