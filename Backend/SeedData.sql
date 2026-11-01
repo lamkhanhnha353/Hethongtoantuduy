@@ -2,6 +2,7 @@
 -- SCRIPT SEED DATA: HỆ THỐNG QUẢN LÝ TRUNG TÂM TOÁN TƯ DUY (MATH THINKING)
 -- Ngữ cảnh: Toán tư duy 4-14 tuổi (Soroban, Finger Math, Mathnasium, Kumon, I-MATH, CPA)
 -- Hệ quản trị CSDL: Microsoft SQL Server
+-- sqlcmd -S "(localdb)\mssqllocaldb" -d ToanTuDuyDb -i SeedData.sql -f 65001
 -- =============================================================================
 SET NOCOUNT ON;
 SET XACT_ABORT ON;

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
 
 namespace ToanTuDuy.Controllers
@@ -91,8 +92,7 @@ namespace ToanTuDuy.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-    }
-}
+
         // API TRẢ VỀ LỊCH HỌC TIMELINE CHO APP PHỤ HUYNH
         [HttpGet("student/{studentId}")]
         public async Task<IActionResult> GetStudentLessons(int studentId)
