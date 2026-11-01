@@ -138,6 +138,7 @@ export function ClassroomBoard({ question, status, selectedIndex, onSelect, onNe
           {question.options.map((option, index) => (
             <AnswerChip
               disabled={!isPlaying}
+              index={index}
               key={`${question.id}-${index}`}
               onDragStart={measureSlot}
               onDrop={handleDrop}
