@@ -63,6 +63,34 @@ namespace ToanTuDuy.Services
                 .ToListAsync();
         }
 
+        public async Task<LessonResponse?> GetLessonByIdAsync(int id)
+        {
+            var lesson = await _context.Lessons
+                .Include(l => l.Class)
+                .Include(l => l.Attendances)
+                .Include(l => l.LeaveRequests)
+                .FirstOrDefaultAsync(l => l.Id == id);
+
+            if (lesson == null)
+            {
+                return null;
+            }
+
+            return new LessonResponse
+            {
+                Id = lesson.Id,
+                ClassId = lesson.ClassId,
+                ClassName = lesson.Class?.Name ?? string.Empty,
+                LessonDate = lesson.LessonDate,
+                StartTime = lesson.StartTime,
+                EndTime = lesson.EndTime,
+                Status = lesson.Status,
+                IsImportan = lesson.IsImportan,
+                AttendancesCount = lesson.Attendances.Count,
+                LeaveRequestsCount = lesson.LeaveRequests.Count
+            };
+        }
+
         public async Task<IEnumerable<StudentLessonResponse>> GetLessonsByStudentIdAsync(int accountId, int studentId)
         {
             var isParentOfStudent = await _context.StudentProfiles
@@ -90,21 +118,21 @@ namespace ToanTuDuy.Services
                 .ToListAsync();
 
             return lessons.Select(l => new StudentLessonResponse
-                {
-                    LessonId = l.Id,
-                    ClassId = l.ClassId,
-                    ClassName = l.Class.Name,
-                    LessonDate = l.LessonDate,
-                    StartTime = l.StartTime,
-                    EndTime = l.EndTime,
-                    Title = l.Title ?? "Buổi học",
-                    Status = l.Status,
-                    IsImportant = l.IsImportan,
-                    TeacherName = l.Class.Teacher?.FullName,
-                    Room = l.Class.ClassSchedules
-                        .FirstOrDefault(schedule => schedule.DayOfWeek == (int)l.LessonDate.DayOfWeek)
-                        ?.Room
-                });
+            {
+                LessonId = l.Id,
+                ClassId = l.ClassId,
+                ClassName = l.Class.Name,
+                LessonDate = l.LessonDate,
+                StartTime = l.StartTime,
+                EndTime = l.EndTime,
+                Title = l.Title ?? "Buổi học",
+                Status = l.Status,
+                IsImportant = l.IsImportan,
+                TeacherName = l.Class.Teacher?.FullName,
+                Room = l.Class.ClassSchedules
+                    .FirstOrDefault(schedule => schedule.DayOfWeek == (int)l.LessonDate.DayOfWeek)
+                    ?.Room
+            });
         }
 
         public async Task<IEnumerable<StudentRoadmapResponse>> GetRoadmapsByStudentIdAsync(int accountId, int studentId)
@@ -186,57 +214,6 @@ namespace ToanTuDuy.Services
             }).ToList();
         }
 
-        private static List<string> ReadSyllabusTitles(string? syllabus)
-        {
-            if (string.IsNullOrWhiteSpace(syllabus))
-            {
-                return new List<string>();
-            }
-
-            using var document = JsonDocument.Parse(syllabus);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
-            {
-                return new List<string>();
-            }
-
-            return document.RootElement
-                .EnumerateArray()
-                .Select(item =>
-                    item.ValueKind == JsonValueKind.Object &&
-                    item.TryGetProperty("title", out var title) &&
-                    title.ValueKind == JsonValueKind.String
-                        ? title.GetString()
-                        : null)
-                .Where(title => !string.IsNullOrWhiteSpace(title))
-                .Select(title => title!)
-                .ToList();
-        }
-
-        public async Task<LessonResponse?> GetLessonByIdAsync(int id)
-        {
-            var l = await _context.Lessons
-                .Include(l => l.Class)
-                .Include(l => l.Attendances)
-                .Include(l => l.LeaveRequests)
-                .FirstOrDefaultAsync(l => l.Id == id);
-
-            if (l == null) return null;
-
-            return new LessonResponse
-            {
-                Id = l.Id,
-                ClassId = l.ClassId,
-                ClassName = l.Class?.Name ?? string.Empty,
-                LessonDate = l.LessonDate,
-                StartTime = l.StartTime,
-                EndTime = l.EndTime,
-                Status = l.Status,
-                IsImportan = l.IsImportan,
-                AttendancesCount = l.Attendances.Count,
-                LeaveRequestsCount = l.LeaveRequests.Count
-            };
-        }
-
         public async Task<LessonResponse> CreateLessonAsync(LessonRequest request)
         {
             var classExists = await _context.Classes.AnyAsync(c => c.Id == request.ClassId);
@@ -269,7 +246,10 @@ namespace ToanTuDuy.Services
         public async Task<bool> UpdateLessonAsync(int id, LessonRequest request)
         {
             var lesson = await _context.Lessons.FindAsync(id);
-            if (lesson == null) return false;
+            if (lesson == null)
+            {
+                return false;
+            }
 
             var classExists = await _context.Classes.AnyAsync(c => c.Id == request.ClassId);
             if (!classExists)
@@ -300,7 +280,10 @@ namespace ToanTuDuy.Services
                 .Include(l => l.LeaveRequests)
                 .FirstOrDefaultAsync(l => l.Id == id);
 
-            if (lesson == null) return false;
+            if (lesson == null)
+            {
+                return false;
+            }
 
             if (lesson.Attendances.Any())
             {
@@ -315,6 +298,32 @@ namespace ToanTuDuy.Services
             _context.Lessons.Remove(lesson);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        private static List<string> ReadSyllabusTitles(string? syllabus)
+        {
+            if (string.IsNullOrWhiteSpace(syllabus))
+            {
+                return new List<string>();
+            }
+
+            using var document = JsonDocument.Parse(syllabus);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return new List<string>();
+            }
+
+            return document.RootElement
+                .EnumerateArray()
+                .Select(item =>
+                    item.ValueKind == JsonValueKind.Object &&
+                    item.TryGetProperty("title", out var title) &&
+                    title.ValueKind == JsonValueKind.String
+                        ? title.GetString()
+                        : null)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .Select(title => title!)
+                .ToList();
         }
     }
 }

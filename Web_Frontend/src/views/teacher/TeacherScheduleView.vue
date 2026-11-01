@@ -120,7 +120,7 @@
               <div class="flex items-center justify-between text-[11px] text-gray-500 mt-1.5">
                 <span>{{ session.studentsCount }} HS</span>
                 <router-link
-                  to="/teacher/attendance"
+                  :to="{ path: '/teacher/attendance', query: { lessonId: session.id, classId: session.classId } }"
                   class="text-[10px] font-semibold text-orange-600 hover:underline"
                 >
                   Điểm danh
@@ -179,7 +179,7 @@
 
         <div class="flex items-center gap-2 self-end sm:self-center">
           <router-link
-            to="/teacher/attendance"
+            :to="{ path: '/teacher/attendance', query: { lessonId: session.id, classId: session.classId } }"
             class="px-3 py-1.5 rounded-xl bg-orange-400 hover:bg-orange-500 text-white text-xs font-semibold shadow-xs cursor-pointer"
           >
             Điểm danh
