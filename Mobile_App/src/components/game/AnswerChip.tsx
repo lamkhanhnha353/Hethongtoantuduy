@@ -232,15 +232,14 @@ export function AnswerChip({
         ]}
       >
         <View
-          className={`relative h-full w-full items-center justify-center rounded-2xl border-t-2 border-l-2 border-r-2 border-b-4 ${theme.bg} ${theme.border} ${theme.borderBottom} ${
-            dimmed ? 'opacity-50' : 'opacity-100'
-          }`}
+          className={`relative h-full w-full items-center justify-center rounded-2xl border-t-2 border-l-2 border-r-2 border-b-4 ${theme.bg} ${theme.border} ${theme.borderBottom} ${dimmed ? 'opacity-50' : 'opacity-100'
+            }`}
         >
           {/* Lớp phản chiếu ánh sáng bóng bẩy trên đỉnh chip */}
-          <View
+          {/* <View
             pointerEvents="none"
             className="absolute top-1.5 left-2 right-2 h-2 rounded-full bg-white/35"
-          />
+          /> */}
 
           {/* Số đáp án */}
           <Text className={`text-2xl font-black tracking-wider ${theme.text}`}>
