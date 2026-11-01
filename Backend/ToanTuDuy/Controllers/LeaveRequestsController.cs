@@ -36,21 +36,22 @@ namespace ToanTuDuy.Controllers
             return NoContent();
         }
 
-        // API ĐỂ ADMIN XEM ĐƠN ĐANG CHỜ DUYỆT (GET)
+        // Giáo viên xem các đơn xin vắng của lớp mình phụ trách.
         [HttpGet("pending")]
-        [Authorize(Policy = "AdminOrDevelopmentTesting")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> GetPending()
         {
-            var result = await _leaveRequestService.GetPendingRequestsAsync();
+            var result = await _leaveRequestService.GetPendingRequestsAsync(User.GetAccountId());
             return Ok(result);
         }
 
-        // API ĐỂ ADMIN DUYỆT/TỪ CHỐI ĐƠN (PUT)
+        // Giáo viên duyệt/từ chối đơn xin vắng của lớp mình phụ trách.
         [HttpPut("{id}/process")]
-        [Authorize(Policy = "AdminOrDevelopmentTesting")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> ProcessRequest(int id, [FromQuery] bool isApproved)
         {
-            var success = await _leaveRequestService.ProcessLeaveRequestAsync(id, isApproved);
+            var success = await _leaveRequestService.ProcessLeaveRequestAsync(
+                User.GetAccountId(), id, isApproved);
             if (!success) return NotFound(new { message = "Không tìm thấy đơn xin nghỉ hoặc đơn đã được xử lý!" });
 
             string msg = isApproved ? "Đã CHẤP THUẬN và tự động lưu Điểm danh (Có phép)." : "Đã TỪ CHỐI đơn.";

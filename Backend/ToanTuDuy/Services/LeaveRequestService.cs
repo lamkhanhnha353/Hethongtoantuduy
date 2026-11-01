@@ -111,12 +111,14 @@ namespace ToanTuDuy.Services
             return true;
         }
 
-        public async Task<IEnumerable<LeaveRequestResponse>> GetPendingRequestsAsync()
+        public async Task<IEnumerable<LeaveRequestResponse>> GetPendingRequestsAsync(int teacherAccountId)
         {
             return await _context.LeaveRequests
                 .Include(lr => lr.Student)
                 .Include(lr => lr.Lesson)
-                .Where(lr => lr.Status == "PENDING")
+                .Where(lr => lr.Status == "PENDING"
+                    && lr.Lesson.Class.Teacher != null
+                    && lr.Lesson.Class.Teacher.AccountId == teacherAccountId)
                 .Select(lr => new LeaveRequestResponse
                 {
                     Id = lr.Id,
@@ -132,16 +134,22 @@ namespace ToanTuDuy.Services
                 .ToListAsync();
         }
 
-        public async Task<bool> ProcessLeaveRequestAsync(int requestId, bool isApproved)
+        public async Task<bool> ProcessLeaveRequestAsync(int teacherAccountId, int requestId, bool isApproved)
         {
-            var leaveRequest = await _context.LeaveRequests.FindAsync(requestId);
+            var leaveRequest = await _context.LeaveRequests
+                .Include(request => request.Lesson)
+                    .ThenInclude(lesson => lesson.Class)
+                .FirstOrDefaultAsync(request =>
+                    request.Id == requestId
+                    && request.Lesson.Class.TeacherId.HasValue
+                    && request.Lesson.Class.Teacher!.AccountId == teacherAccountId);
             if (leaveRequest == null || leaveRequest.Status != "PENDING")
                 return false;
 
             // Đổi trạng thái đơn xin nghỉ
             leaveRequest.Status = isApproved ? "APPROVED" : "REJECTED";
 
-            // NẾU ADMIN DUYỆT -> TỰ ĐỘNG LƯU ĐIỂM DANH VẮNG CÓ PHÉP (EXCUSED)
+            // Khi giáo viên duyệt, tự động lưu điểm danh vắng có phép.
             if (isApproved)
             {
                 // Kiểm tra xem đã có record điểm danh chưa (phòng trường hợp lỗi sinh data)
