@@ -10,6 +10,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { useGameStore } from '@/store/gameStore';
 import { useStudentQuery } from '@/hooks/useStudents';
 import { toApiError } from '@/services/apiError';
+import { audio } from '@/audio';
 
 type StatIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -103,9 +104,10 @@ export default function StudentSpaceScreen() {
             <View className="mt-5">
               <PrimaryButton
                 label="Chơi Toán vui"
-                onPress={() =>
-                  router.push({ pathname: '/students/quiz', params: { id: String(student.id) } })
-                }
+                onPress={() => {
+                  audio.pop();
+                  router.push({ pathname: '/students/quiz', params: { id: String(student.id) } });
+                }}
               />
             </View>
 

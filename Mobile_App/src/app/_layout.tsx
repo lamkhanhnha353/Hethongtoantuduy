@@ -1,5 +1,6 @@
 import '../global.css';
 import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useAudioHydration } from '@/hooks/useAudio';
@@ -11,10 +12,12 @@ export default function RootLayout() {
   useAudioHydration();
 
   return (
-    <SafeAreaProvider>
-      <AppQueryClientProvider>
-        <Stack screenOptions={{ headerShown: false }} />
-      </AppQueryClientProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AppQueryClientProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </AppQueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

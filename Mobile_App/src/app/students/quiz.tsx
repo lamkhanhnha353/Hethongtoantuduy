@@ -1,17 +1,17 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Redirect, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { ActivityIndicator, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { audio } from '@/audio';
+// import Mascot from '@/components/Mascot/mascot';
 import { AlertBanner } from '@/components/AlertBanner';
 import { Banner } from '@/components/Banner';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { AnswerOption, type AnswerOptionState } from '@/components/game/AnswerOption';
-import { FeedbackCard } from '@/components/game/FeedbackCard';
+import { ClassroomBoard } from '@/components/game/ClassroomBoard';
 import { GameIntroCard } from '@/components/game/GameIntroCard';
-import { MathQuestionCard } from '@/components/game/MathQuestionCard';
 import { REWARD, generateQuestion } from '@/lib/mathQuestion';
 import { useGameStore } from '@/store/gameStore';
 import { useSession } from '@/hooks/useSession';
@@ -31,6 +31,19 @@ export default function ScreenMathQuiz() {
   const [selected, setSelected] = useState<number | null>(null);
   const [status, setStatus] = useState<QuizStatus>('idle');
   const rewardedRef = useRef(false);
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+
+  useEffect(() => {
+    void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(
+      () => undefined,
+    );
+    return () => {
+      void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(
+        () => undefined,
+      );
+    };
+  }, []);
 
   const invalidId = !Number.isFinite(studentId);
   const loadError = isError ? toApiError(error) : null;
@@ -76,81 +89,70 @@ export default function ScreenMathQuiz() {
     rewardedRef.current = false;
     setSelected(null);
     setQuestion(generateQuestion());
+    audio.pop();
     setStatus('playing');
   }
 
   function handleSelect(index: number) {
     if (status !== 'playing' || !question) { return; }
+    audio.pop();
     setSelected(index);
     if (index === question.correctIndex) {
       if (!rewardedRef.current) {
         rewardedRef.current = true;
         addReward(studentId);
       }
-      audio.play('correct');
+      audio.correct();
       setStatus('correct');
       return;
     }
-    audio.play('wrong');
+    audio.wrong();
     setStatus('wrong');
   }
 
-  function answerState(index: number): AnswerOptionState {
-    if (status === 'correct' && index === question?.correctIndex) {
-      return 'correct';
-    }
-
-    if (status === 'wrong') {
-      if (index === selected) {
-        return 'wrong';
-      }
-      if (index === question?.correctIndex) {
-        return 'correct';
-      }
-    }
-    return 'default';
+  function handleRetry() {
+    setSelected(null);
+    setStatus('playing');
+    audio.pop();
   }
-  return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
 
-      <View className="relative overflow-hidden bg-indigo-600 px-5 pb-7 pt-14">
+  return (
+    <SafeAreaView
+      className="flex-1 bg-slate-50"
+      edges={isLandscape ? ['left', 'right', 'bottom'] : ['bottom']}
+    >
+      <View
+        className={`relative overflow-hidden bg-indigo-600 px-5 ${isLandscape ? 'pb-3 pt-4' : 'pb-7 pt-14'
+          }`}
+      >
         <View className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-cyan-400/20 opacity-50" />
         <View className="absolute bottom-0 left-4 h-24 w-24 rounded-full bg-indigo-300/20 opacity-50" />
         <Banner student={student} />
+        {/* <Mascot /> */}
       </View>
 
-      <View className="flex-1 px-5 pt-6">
-
+      <View
+        className={`flex-1 px-4 ${isLandscape ? 'pb-3 pt-2' : 'pb-6 pt-4'}`}
+      >
         {status === 'idle' ? (
-          <GameIntroCard
-            title="Sẵn sàng chưa?"
-            description={`Bé sẽ thấy một phép tính cộng hoặc trừ trong phạm vi 20. Chọn đúng đáp án để nhận ${REWARD.points} điểm và ${REWARD.stars} sao nhé!`}
-            onStart={handleStart}
-          />
-        ) : null}
-
-        {status !== 'idle' && question ? (
-          <>
-            <MathQuestionCard expression={question.expression} />
-
-            <View className="mt-4 flex-row flex-wrap gap-3">
-              {question.options.map((option, index) => (
-                <AnswerOption
-                  state={answerState(index)}
-                  value={option}
-                  disabled={status !== 'playing'}
-                  key={`${question.expression}-${index}`}
-                  onPress={() => handleSelect(index)}
-                >
-                </AnswerOption>
-              ))}
+          <View className="flex-1 justify-center">
+            <View className="w-full max-w-xl self-center">
+              <GameIntroCard
+                title="Sẵn sàng chưa?"
+                description={`Bé sẽ thấy phép tính cộng hoặc trừ trong phạm vi 20 qua những hình ảnh ngộ nghĩnh. Kéo số vào ô trống để nhận ${REWARD.points} điểm và ${REWARD.stars} sao nhé!`}
+                onStart={handleStart}
+              />
             </View>
-
-            {status === 'correct' ? (
-              <FeedbackCard variant="correct" points={REWARD.points} stars={REWARD.stars} onAction={handleStart} />) : null}
-            {status === 'wrong' ? (
-              <FeedbackCard variant="wrong" correctAnswer={question.options[question.correctIndex]} onAction={handleStart} />) : null}
-          </>
+          </View>
+        ) : question ? (
+          <ClassroomBoard
+            onNext={handleStart}
+            onRetry={handleRetry}
+            onSelect={handleSelect}
+            question={question}
+            selectedIndex={selected}
+            status={status}
+          />
         ) : null}
       </View>
     </SafeAreaView>
