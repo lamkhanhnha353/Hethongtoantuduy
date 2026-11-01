@@ -124,12 +124,23 @@ namespace ToanTuDuy.Services
             }
 
             var user = await _userManager.FindByIdAsync(token.AccountId.ToString());
-            if (user == null
-                || string.IsNullOrEmpty(user.Email)
-                || !string.Equals(user.Email, token.EmailAtIssue, StringComparison.OrdinalIgnoreCase))
+            var isCurrentEmail = string.Equals(
+                user?.Email, token.EmailAtIssue, StringComparison.OrdinalIgnoreCase);
+            var isPendingEmail = string.Equals(
+                user?.PendingEmail, token.EmailAtIssue, StringComparison.OrdinalIgnoreCase);
+            if (user == null || (!isCurrentEmail && !isPendingEmail))
             {
                 // Email đã bị thay đổi sau khi cấp link — link cũ không còn giá trị.
                 return new VerifyEmailResult(VerifyEmailStatus.EmailChanged, null);
+            }
+
+            if (isPendingEmail)
+            {
+                var existingUser = await _userManager.FindByEmailAsync(token.EmailAtIssue);
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    return new VerifyEmailResult(VerifyEmailStatus.EmailChanged, null);
+                }
             }
 
             var now = DateTime.UtcNow;
@@ -142,6 +153,18 @@ namespace ToanTuDuy.Services
             if (claimed == 0)
             {
                 return new VerifyEmailResult(VerifyEmailStatus.AlreadyUsed, null);
+            }
+
+            if (isPendingEmail)
+            {
+                var setEmailResult = await _userManager.SetEmailAsync(user, token.EmailAtIssue);
+                if (!setEmailResult.Succeeded)
+                {
+                    var errors = string.Join("; ", setEmailResult.Errors.Select(e => e.Description));
+                    throw ApiException.BadRequest($"Không thể cập nhật email đã xác minh: {errors}");
+                }
+
+                user.PendingEmail = null;
             }
 
             user.EmailConfirmed = true;

@@ -376,7 +376,6 @@ const adminMenuItems = [
     icon: UserCircleIcon,
     children: [
       { id: 'profile', label: 'Thông tin cá nhân', icon: UserCircleIcon, to: '/account/profile' },
-      { id: 'password', label: 'Đổi mật khẩu / PIN', icon: ShieldCheckIcon, to: '/account/password' },
     ],
   },
 ]

@@ -9,6 +9,9 @@ namespace ToanTuDuy.Models
     // Bảng ACCOUNT được ánh xạ thành ApplicationUser
     public class ApplicationUser : IdentityUser<int>
     {
+        [Column("pending_email")]
+        public string? PendingEmail { get; set; }
+
         [Column("role")]
         public string Role { get; set; }
 
@@ -30,7 +33,31 @@ namespace ToanTuDuy.Models
         // Navigation Properties
         public ParentProfile ParentProfile { get; set; }
         public TeacherProfile TeacherProfile { get; set; }
+        public AdminProfile? AdminProfile { get; set; }
         // ✅ ĐÃ XÓA: StudentProfiles (StudentProfile nay FK vào PARENT_PROFILE.id, không còn trực tiếp vào ACCOUNT)
+    }
+
+    [Table("ADMIN_PROFILE")]
+    public class AdminProfile
+    {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
+        [Column("account_id")]
+        public int AccountId { get; set; }
+
+        [Column("full_name")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Column("avatar")]
+        public string? Avatar { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+
+        [ForeignKey(nameof(AccountId))]
+        public ApplicationUser Account { get; set; } = null!;
     }
 
     [Table("PARENT_PROFILE")]
