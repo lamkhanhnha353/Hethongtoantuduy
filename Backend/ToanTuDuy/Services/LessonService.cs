@@ -48,6 +48,35 @@ namespace ToanTuDuy.Services
                 .Select(l => new LessonResponse
                 {
                     Id = l.Id,
+        public async Task<IEnumerable<StudentLessonResponse>> GetLessonsByStudentIdAsync(int accountId, int studentId)
+        {
+            var isParentOfStudent = await _context.StudentProfiles
+                .AnyAsync(s => s.Id == studentId && s.Parent!.AccountId == accountId);
+
+            if (!isParentOfStudent)
+            {
+                throw ApiException.NotFound("Không tìm thấy học sinh.");
+            }
+
+            var activeClassIds = await _context.ClassStudents
+                .Where(cs => cs.StudentId == studentId && cs.Status == "ACTIVE")
+                .Select(cs => cs.ClassId)
+                .ToListAsync();
+
+            var lessons = await _context.Lessons
+                .AsNoTracking()
+                .Include(l => l.Class)
+                    .ThenInclude(c => c.Teacher)
+                .Include(l => l.Class)
+                    .ThenInclude(c => c.ClassSchedules)
+                .Where(l => activeClassIds.Contains(l.ClassId))
+                .OrderBy(l => l.LessonDate)
+                .ThenBy(l => l.StartTime)
+                .ToListAsync();
+
+            return lessons.Select(l => new StudentLessonResponse
+                {
+                    LessonId = l.Id,
                     ClassId = l.ClassId,
                     ClassName = l.Class.Name,
                     LessonDate = l.LessonDate,

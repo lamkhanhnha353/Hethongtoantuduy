@@ -90,12 +90,13 @@ namespace ToanTuDuy.Controllers
                 throw ApiException.NotFound("Không tìm thấy tài khoản.");
             }
 
-            if (string.IsNullOrWhiteSpace(user.Email))
+            var emailToVerify = user.PendingEmail ?? user.Email;
+            if (string.IsNullOrWhiteSpace(emailToVerify))
             {
                 throw ApiException.BadRequest("Tài khoản chưa có email để xác minh.");
             }
 
-            await _verificationService.ResendAsync(accountId, user.Email);
+            await _verificationService.ResendAsync(accountId, emailToVerify);
 
             return Ok(new { message = "Đã gửi lại link xác minh đến email của bạn." });
         }

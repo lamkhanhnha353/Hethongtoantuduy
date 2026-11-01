@@ -64,6 +64,15 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddAuthorization(options =>
+{
+    // Tạm cho phép test API thao tác lịch/duyệt đơn không cần Admin trong Development.
+    options.AddPolicy("AdminOrDevelopmentTesting", policy =>
+        policy.RequireAssertion(context =>
+            builder.Environment.IsDevelopment() ||
+            context.User.IsInRole("Admin")));
+});
+
 // Setup CORS for browser clients (Expo web, web frontend)
 builder.Services.AddCors(options =>
 {
@@ -85,6 +94,7 @@ builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();   // thanh toán
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 

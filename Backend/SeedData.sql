@@ -30,6 +30,7 @@ BEGIN TRY
     DELETE FROM [dbo].[STUDENT_PROFILE];
     DELETE FROM [dbo].[QUESTION_BANK];
     DELETE FROM [dbo].[COURSE_LEVEL];
+    DELETE FROM [dbo].[ADMIN_PROFILE];
     DELETE FROM [dbo].[PARENT_PROFILE];
     DELETE FROM [dbo].[TEACHER_PROFILE];
     DELETE FROM [dbo].[COURSE];
@@ -89,6 +90,11 @@ INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_a
 (40, '0903000031', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000031', '0903000031', 'parent31@gmail.com', 'PARENT31@GMAIL.COM', 1, 1, 0, 0, 0),
 (41, '0903000032', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000032', '0903000032', 'parent32@gmail.com', 'PARENT32@GMAIL.COM', 1, 1, 0, 0, 0);
 SET IDENTITY_INSERT [dbo].[ACCOUNT] OFF;
+
+INSERT INTO [dbo].[ADMIN_PROFILE] (account_id, full_name, avatar, created_at)
+SELECT id, N'Quản trị viên', NULL, created_at
+FROM [dbo].[ACCOUNT]
+WHERE role = 'Admin';
 
 -- =============================================================================
 -- 2. BẢNG BADGE (20 dòng huy hiệu Toán Tư Duy)
@@ -644,32 +650,32 @@ SET IDENTITY_INSERT [dbo].[LESSON] OFF;
 -- 17. BẢNG ASSIGNMENT (25 bài tập về nhà và kiểm tra)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[ASSIGNMENT] ON;
-INSERT INTO [dbo].[ASSIGNMENT] (id, class_id, stage_id, title, start_time, deadline, time_limit_minutes, max_attempt, status) VALUES
+INSERT INTO [dbo].[ASSIGNMENT] (id, lesson_id, stage_id, title, start_time, deadline, time_limit_minutes, max_attempt, status) VALUES
 (1, 1, 'STAGE-SRB-01', N'BTVN Tuần 1: Luyện gảy hạt 1 đến 9 trên bàn tính Soroban', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 2, 'CLOSED'),
-(2, 1, 'STAGE-SRB-02', N'BTVN Tuần 2: Công thức Anh bạn nhỏ +4 và +3', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 30, 2, 'CLOSED'),
-(3, 2, 'STAGE-SRB-01', N'BTVN Tuần 1: Nhận diện cấu tạo bàn tính Soroban', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
-(4, 3, 'STAGE-SRB-03', N'Thử thách Anzan: Tính nhẩm 5 dãy số liên tiếp', '2026-09-12 08:00:00', '2026-09-18 23:59:00', 20, 1, 'CLOSED'),
-(5, 4, 'STAGE-SRB-04', N'Kiểm tra định kỳ: Nhân 2 chữ số với 1 chữ số', '2026-09-20 08:00:00', '2026-09-25 23:59:00', 45, 1, 'OPEN'),
-(6, 5, 'STAGE-FGM-01', N'BTVN Finger Math: Quy ước ngón cái và ngón trỏ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 3, 'CLOSED'),
-(7, 6, 'STAGE-FGM-02', N'BTVN Finger Math: Phép cộng không nhớ trong phạm vi 50', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
-(8, 7, 'STAGE-FGM-03', N'Thử thách ngón tay: Phản xạ nhanh 20 câu tính nhẩm', '2026-09-18 08:00:00', '2026-09-23 23:59:00', 15, 1, 'CLOSED'),
-(9, 8, 'STAGE-MTN-01', N'Phiếu bài tập Mathnasium A1: Cấu trúc số chẵn lẻ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 2, 'CLOSED'),
-(10, 9, 'STAGE-MTN-02', N'Phiếu bài tập Mathnasium B2: Nhận biết hình khối không gian', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 35, 2, 'CLOSED'),
-(11, 10, 'STAGE-MTN-03', N'Bài toán có lời văn: Giải bài toán gà và thỏ', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 40, 1, 'OPEN'),
-(12, 11, 'STAGE-KMN-01', N'Phiếu tự học Kumon 01: Quy luật dãy số tăng đều', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 2, 'CLOSED'),
-(13, 12, 'STAGE-KMN-02', N'Phiếu tự học Kumon 02: Tốc độ cộng trừ có nhớ', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
-(14, 13, 'STAGE-KMN-03', N'Phiếu tự học Kumon 03: Rút gọn phân số tối giản', '2026-09-20 08:00:00', '2026-09-26 23:59:00', 30, 1, 'OPEN'),
-(15, 14, 'STAGE-IMT-01', N'Tư duy phản biện: Nhận diện lập luận đúng và ngụy biện', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 1, 'CLOSED'),
-(16, 15, 'STAGE-IMT-02', N'Phương pháp Socrates: Tìm 3 cách giải cho 1 bài toán', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 40, 1, 'CLOSED'),
-(17, 16, 'STAGE-IMT-03', N'Câu đố logic: Nghịch lý thời gian và ngày trong tuần', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 30, 1, 'OPEN'),
-(18, 17, 'STAGE-CPA-01', N'CPA Giai đoạn 1: Đếm và nhóm vật thể thực hành', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
-(19, 18, 'STAGE-CPA-02', N'CPA Giai đoạn 2: Vẽ sơ đồ thanh Bar Model bài toán Tổng - Tỉ', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 35, 2, 'CLOSED'),
-(20, 19, 'STAGE-CPA-03', N'CPA Giai đoạn 3: Lập phương trình đại số từ mô hình thanh', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 40, 1, 'OPEN'),
-(21, 20, 'STAGE-MTN-04', N'Hình học không gian: Thử thách cắt ghép và đối xứng', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 30, 2, 'CLOSED'),
-(22, 1, 'STAGE-SRB-05', N'Ôn tập giữa kỳ: Tổng hợp các công thức Anh bạn nhỏ', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 45, 1, 'OPEN'),
-(23, 6, 'STAGE-FGM-04', N'Kiểm tra định kỳ: Tính nhẩm 50 phép tính liên tục', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 30, 1, 'OPEN'),
-(24, 8, 'STAGE-MTN-05', N'Đố vui toán học: Logic bắt tay và số học vui', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 25, 2, 'OPEN'),
-(25, 18, 'STAGE-CPA-04', N'Bar Model nâng cao: Bài toán Hiệu - Tỉ kết hợp chuyển đổi', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 40, 1, 'OPEN');
+(2, 2, 'STAGE-SRB-02', N'BTVN Tuần 2: Công thức Anh bạn nhỏ +4 và +3', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 30, 2, 'CLOSED'),
+(3, 3, 'STAGE-SRB-01', N'BTVN Tuần 1: Nhận diện cấu tạo bàn tính Soroban', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
+(4, 5, 'STAGE-SRB-03', N'Thử thách Anzan: Tính nhẩm 5 dãy số liên tiếp', '2026-09-12 08:00:00', '2026-09-18 23:59:00', 20, 1, 'CLOSED'),
+(5, 7, 'STAGE-SRB-04', N'Kiểm tra định kỳ: Nhân 2 chữ số với 1 chữ số', '2026-09-20 08:00:00', '2026-09-25 23:59:00', 45, 1, 'OPEN'),
+(6, 9, 'STAGE-FGM-01', N'BTVN Finger Math: Quy ước ngón cái và ngón trỏ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 3, 'CLOSED'),
+(7, 11, 'STAGE-FGM-02', N'BTVN Finger Math: Phép cộng không nhớ trong phạm vi 50', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
+(8, 13, 'STAGE-FGM-03', N'Thử thách ngón tay: Phản xạ nhanh 20 câu tính nhẩm', '2026-09-18 08:00:00', '2026-09-23 23:59:00', 15, 1, 'CLOSED'),
+(9, 15, 'STAGE-MTN-01', N'Phiếu bài tập Mathnasium A1: Cấu trúc số chẵn lẻ', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 2, 'CLOSED'),
+(10, 17, 'STAGE-MTN-02', N'Phiếu bài tập Mathnasium B2: Nhận biết hình khối không gian', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 35, 2, 'CLOSED'),
+(11, 19, 'STAGE-MTN-03', N'Bài toán có lời văn: Giải bài toán gà và thỏ', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 40, 1, 'OPEN'),
+(12, 21, 'STAGE-KMN-01', N'Phiếu tự học Kumon 01: Quy luật dãy số tăng đều', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 20, 2, 'CLOSED'),
+(13, 23, 'STAGE-KMN-02', N'Phiếu tự học Kumon 02: Tốc độ cộng trừ có nhớ', '2026-09-15 08:00:00', '2026-09-20 23:59:00', 25, 2, 'CLOSED'),
+(14, 25, 'STAGE-KMN-03', N'Phiếu tự học Kumon 03: Rút gọn phân số tối giản', '2026-09-20 08:00:00', '2026-09-26 23:59:00', 30, 1, 'OPEN'),
+(15, 27, 'STAGE-IMT-01', N'Tư duy phản biện: Nhận diện lập luận đúng và ngụy biện', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 30, 1, 'CLOSED'),
+(16, 29, 'STAGE-IMT-02', N'Phương pháp Socrates: Tìm 3 cách giải cho 1 bài toán', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 40, 1, 'CLOSED'),
+(17, 31, 'STAGE-IMT-03', N'Câu đố logic: Nghịch lý thời gian và ngày trong tuần', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 30, 1, 'OPEN'),
+(18, 33, 'STAGE-CPA-01', N'CPA Giai đoạn 1: Đếm và nhóm vật thể thực hành', '2026-09-08 08:00:00', '2026-09-13 23:59:00', 25, 2, 'CLOSED'),
+(19, 35, 'STAGE-CPA-02', N'CPA Giai đoạn 2: Vẽ sơ đồ thanh Bar Model bài toán Tổng - Tỉ', '2026-09-16 08:00:00', '2026-09-21 23:59:00', 35, 2, 'CLOSED'),
+(20, 37, 'STAGE-CPA-03', N'CPA Giai đoạn 3: Lập phương trình đại số từ mô hình thanh', '2026-09-22 08:00:00', '2026-09-28 23:59:00', 40, 1, 'OPEN'),
+(21, 39, 'STAGE-MTN-04', N'Hình học không gian: Thử thách cắt ghép và đối xứng', '2026-09-18 08:00:00', '2026-09-24 23:59:00', 30, 2, 'CLOSED'),
+(22, 2, 'STAGE-SRB-05', N'Ôn tập giữa kỳ: Tổng hợp các công thức Anh bạn nhỏ', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 45, 1, 'OPEN'),
+(23, 12, 'STAGE-FGM-04', N'Kiểm tra định kỳ: Tính nhẩm 50 phép tính liên tục', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 30, 1, 'OPEN'),
+(24, 16, 'STAGE-MTN-05', N'Đố vui toán học: Logic bắt tay và số học vui', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 25, 2, 'OPEN'),
+(25, 36, 'STAGE-CPA-04', N'Bar Model nâng cao: Bài toán Hiệu - Tỉ kết hợp chuyển đổi', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 40, 1, 'OPEN');
 SET IDENTITY_INSERT [dbo].[ASSIGNMENT] OFF;
 
 -- =============================================================================

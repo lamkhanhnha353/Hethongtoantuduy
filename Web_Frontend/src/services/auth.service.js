@@ -16,6 +16,10 @@ class AuthService {
     return (await this.api.post("/register", data)).data;
   }
 
+  async changePassword(data) {
+    return (await this.api.post("/change-password", data)).data;
+  }
+
   // Đăng nhập vào hệ thống
   async login(data) {
     const response = (await this.api.post("/login", data)).data;

@@ -17,8 +17,8 @@ import ClassDetailView from "@/views/admin/training/ClassDetailView.vue";
 import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 
 // Account Module
-import ProfileView from "@/views/account/ProfileView.vue";
-import PasswordView from "@/views/account/PasswordView.vue";
+import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
+
 
 // Teacher Views
 import TeacherDashboardView from "@/views/teacher/TeacherDashboardView.vue";
@@ -242,18 +242,10 @@ const router = createRouter({
         },
 
         // Account
-        {
-          path: "account/profile",
-          name: "account-profile",
-          component: ProfileView,
-          meta: { title: "Thông tin cá nhân" },
-        },
-        {
-          path: "account/password",
-          name: "account-password",
-          component: PasswordView,
-          meta: { title: "Đổi mật khẩu / PIN" },
-        },
+        { path: 'account/profile',
+        name: "account-profile",
+        component: AdminProfileView, 
+        meta: { title: 'Thông tin cá nhân' } }
       ],
     },
   ],
