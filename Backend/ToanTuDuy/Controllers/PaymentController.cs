@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
+using System.Net;
 using System.Threading.Tasks;
-using ToanTuDuy.Data;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
 
@@ -12,100 +10,84 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Parent")]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
         private readonly IConfiguration _configuration;
-        private readonly ApplicationDbContext _context;
 
-        public PaymentController(
-            IPaymentService paymentService,
-            IConfiguration configuration,
-            ApplicationDbContext context)
+        public PaymentController(IPaymentService paymentService, IConfiguration configuration)
         {
             _paymentService = paymentService;
             _configuration = configuration;
-            _context = context;
         }
 
-        [Authorize(Roles = "Parent")]
         [HttpPost("create-url/{invoiceId:int}")]
         public async Task<IActionResult> CreatePaymentUrl(int invoiceId)
         {
-            try
+            if (invoiceId <= 0)
             {
-                if (invoiceId <= 0)
-                    return BadRequest(new { message = "Mã hóa đơn không hợp lệ." });
-
-                var accountId = User.GetAccountId();
-                var invoice = await _context.Invoices
-                    .Include(i => i.Parent)
-                    .Include(i => i.ClassStudent)
-                    .FirstOrDefaultAsync(i => i.Id == invoiceId && i.Parent.AccountId == accountId);
-
-                if (invoice == null)
-                    return NotFound(new { message = "Không tìm thấy hóa đơn của phụ huynh này." });
-
-                if (invoice.Status == "FAILED"
-                    && invoice.ClassStudent?.Status == "PENDING")
-                {
-                    invoice.Status = "PENDING";
-                    await _context.SaveChangesAsync();
-                }
-
-                var url = await _paymentService.CreatePaymentUrl(invoiceId, HttpContext);
-                return Ok(new { paymentUrl = url });
+                return BadRequest(new { message = "Mã hóa đơn không hợp lệ." });
             }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+
+            var clientIpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+            var paymentUrl = await _paymentService.CreatePaymentUrl(
+                invoiceId,
+                User.GetAccountId(),
+                clientIpAddress);
+
+            return Ok(new { paymentUrl });
         }
 
+        [AllowAnonymous]
         [HttpGet("vnpay-return")]
         public async Task<IActionResult> PaymentReturn()
         {
             var invoice = await _paymentService.PaymentExecuteReturn(Request.Query);
-            var vnp_ResponseCode = Request.Query["vnp_ResponseCode"].ToString();
+            var responseCode = Request.Query["vnp_ResponseCode"].ToString();
+            var mobileDeepLink = _configuration["VnPay:MobileDeepLink"];
 
-            // Đọc Deep Link động từ file appsettings.json
-            string mobileDeepLink = _configuration["VnPay:MobileDeepLink"];
-
-            // Gắn mã kết quả vào cuối đường link
-            string finalRedirectUrl = $"{mobileDeepLink}?code={vnp_ResponseCode}";
-
-            string htmlContent;
-
-            string headContent = @"
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        </head>";
-
-            // Nút bấm đã được thiết kế lại. Thay vì dùng href đơn giản, ta dùng onclick 
-            // với window.location.href để trình duyệt xử lý chuyển hướng ổn định hơn.
-            string redirectButton = $@"
-        <button onclick=""window.location.href='{finalRedirectUrl}'"" 
-           style='display:inline-block; margin-top:20px; padding:12px 24px; background-color:#4f46e5; color:white; border:none; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;'>
-            QUAY LẠI ỨNG DỤNG
-        </button>";
-
-            if (invoice == null)
+            if (string.IsNullOrWhiteSpace(mobileDeepLink))
             {
-                htmlContent = $"<html>{headContent}<body style='display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;text-align:center;'><h2 style='color:red;'>Giao dịch không hợp lệ</h2>{redirectButton}</body></html>";
-                return Content(htmlContent, "text/html; charset=utf-8");
+                throw new InvalidOperationException("Thiếu cấu hình VnPay:MobileDeepLink.");
             }
 
-            if (vnp_ResponseCode == "00")
-            {
-                htmlContent = $"<html>{headContent}<body style='display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;text-align:center;'><h1 style='color:green;font-size:70px;margin:0;'>✓</h1><h2 style='color:green;'>Thanh toán thành công!</h2>{redirectButton}</body></html>";
-            }
-            else
-            {
-                htmlContent = $"<html>{headContent}<body style='display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;text-align:center;'><h1 style='color:orange;font-size:70px;margin:0;'>⚠</h1><h2 style='color:orange;'>Giao dịch bị hủy hoặc lỗi</h2>{redirectButton}</body></html>";
-            }
+            var redirectUrl = WebUtility.HtmlEncode(
+                $"{mobileDeepLink}?code={WebUtility.UrlEncode(responseCode)}");
+            var isSuccessful = invoice != null && responseCode == "00";
+            var statusColor = isSuccessful ? "green" : invoice == null ? "red" : "orange";
+            var statusIcon = isSuccessful ? "✓" : invoice == null ? string.Empty : "⚠";
+            var statusMessage = isSuccessful
+                ? "Thanh toán thành công!"
+                : invoice == null
+                    ? "Giao dịch không hợp lệ"
+                    : "Giao dịch bị hủy hoặc lỗi";
+
+            var htmlContent = $"""
+                <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;text-align:center;">
+                        <h1 style="color:{statusColor};font-size:70px;margin:0;">{statusIcon}</h1>
+                        <h2 style="color:{statusColor};">{statusMessage}</h2>
+                        <a href="{redirectUrl}" style="display:inline-block;margin-top:20px;padding:12px 24px;background-color:#4f46e5;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">
+                            QUAY LẠI ỨNG DỤNG
+                        </a>
+                    </body>
+                </html>
+                """;
 
             return Content(htmlContent, "text/html; charset=utf-8");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("vnpay-ipn")]
+        public async Task<IActionResult> PaymentIpn()
+        {
+            var response = await _paymentService.PaymentExecuteIpn(Request.Query);
+            return Ok(response);
         }
     }
 }
