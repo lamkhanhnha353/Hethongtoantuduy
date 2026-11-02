@@ -62,6 +62,41 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimTypes.NameIdentifier,
             ClockSkew = TimeSpan.Zero,
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async validationContext =>
+            {
+                var accountId = validationContext.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+                var tokenSecurityStamp = validationContext.Principal?
+                    .FindFirstValue(AuthService.SecurityStampClaimType);
+
+                if (!int.TryParse(accountId, out var parsedAccountId) ||
+                    string.IsNullOrWhiteSpace(tokenSecurityStamp))
+                {
+                    validationContext.Fail("Phiên đăng nhập không hợp lệ.");
+                    return;
+                }
+
+                var dbContext = validationContext.HttpContext.RequestServices
+                    .GetRequiredService<ApplicationDbContext>();
+                var account = await dbContext.Users
+                    .AsNoTracking()
+                    .Where(user => user.Id == parsedAccountId)
+                    .Select(user => new { user.IsActive, user.SecurityStamp })
+                    .FirstOrDefaultAsync(validationContext.HttpContext.RequestAborted);
+
+                if (account == null ||
+                    !account.IsActive ||
+                    !string.Equals(
+                        account.SecurityStamp,
+                        tokenSecurityStamp,
+                        StringComparison.Ordinal))
+                {
+                    validationContext.Fail("Phiên đăng nhập đã bị thu hồi hoặc tài khoản đã bị khóa.");
+                }
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
