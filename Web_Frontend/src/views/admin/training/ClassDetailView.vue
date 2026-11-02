@@ -42,7 +42,7 @@
           </div>
           <button
             @click="syncAlertMessage = ''"
-            class="text-gray-400 hover:text-gray-600 p-1 rounded-md"
+            class="text-gray-400 hover:text-gray-600 p-1 rounded-md cursor-pointer"
           >
             <XMarkIcon class="w-4 h-4" />
           </button>
@@ -61,6 +61,9 @@
                   {{ cls.code ?? `LH-${cls.id}` }}
                 </span>
                 <StatusBadge :status="cls.status" />
+                <span v-if="cls.courseName" class="text-xs text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-300 font-bold">
+                  Khóa: {{ cls.courseName }}
+                </span>
                 <span v-if="cls.courseLevelName" class="text-xs text-orange-800 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200 font-semibold">
                   Cấp độ: {{ cls.courseLevelName }}
                 </span>
@@ -98,6 +101,16 @@
 
             <!-- Top Actions -->
             <div class="flex items-center gap-2.5 flex-wrap flex-shrink-0">
+              <!-- Nút Phân công GV -->
+              <button
+                @click="openAssignTeacherModal"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors cursor-pointer"
+                title="Phân công giáo viên giảng dạy từ danh sách teacher.service"
+              >
+                <AcademicCapIcon class="w-4 h-4 text-purple-600" />
+                <span>{{ cls.teacherName ? 'Đổi giáo viên' : 'Phân công GV' }}</span>
+              </button>
+
               <button
                 @click="triggerManualSync"
                 :disabled="isSyncing"
@@ -187,25 +200,30 @@
             </div>
 
             <!-- Teacher -->
-            <div class="p-3.5 bg-purple-50/60 rounded-xl border border-purple-100">
+            <div
+              @click="openAssignTeacherModal"
+              class="p-3.5 bg-purple-50/60 hover:bg-purple-100/70 rounded-xl border border-purple-100 transition-colors cursor-pointer group"
+              title="Bấm để phân công hoặc đổi giáo viên"
+            >
               <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-                <span class="flex items-center gap-1 text-purple-700">
+                <span class="flex items-center gap-1 text-purple-700 font-semibold">
                   <AcademicCapIcon class="w-4 h-4 text-purple-500" />
                   Giáo viên
                 </span>
+                <span class="text-[10px] text-purple-600 group-hover:underline">Đổi GV →</span>
               </div>
               <p class="text-sm font-bold text-purple-950 truncate">
                 {{ cls.teacherName || 'Chưa phân công' }}
               </p>
               <p class="text-[11px] text-purple-600 mt-1 truncate">
-                {{ teacher?.phone || teacher?.email || 'Tài khoản giảng dạy' }}
+                {{ teacher?.phone || teacher?.email || 'Bấm để phân công' }}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ─── Grid: Course Info (Left) + Schedules/Lessons (Right) ──────── -->
+      <!-- ─── Grid: Course Info (Left) + Schedules/Lessons/Students (Right) ─ -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- ─── LEFT: Associated Course & Level Info (5 cols) ──────────── -->
         <div class="lg:col-span-5 space-y-6">
@@ -294,43 +312,58 @@
             </div>
           </div>
 
-          <!-- Teacher Details Card -->
+          <!-- Teacher Details Card (Phân công giáo viên từ teacher.service) -->
           <div class="bg-white rounded-2xl border border-orange-100 shadow-sm p-6 space-y-3">
-            <h2 class="font-bold text-orange-950 text-base flex items-center gap-2 pb-3 border-b border-orange-100">
-              <AcademicCapIcon class="w-5 h-5 text-orange-500" />
-              Giáo viên Phụ trách
-            </h2>
+            <div class="flex items-center justify-between pb-3 border-b border-orange-100">
+              <h2 class="font-bold text-orange-950 text-base flex items-center gap-2">
+                <AcademicCapIcon class="w-5 h-5 text-orange-500" />
+                Giáo viên Phụ trách
+              </h2>
+              <button
+                @click="openAssignTeacherModal"
+                class="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <PencilSquareIcon class="w-3.5 h-3.5" />
+                <span>{{ cls.teacherName ? 'Đổi giáo viên' : 'Phân công' }}</span>
+              </button>
+            </div>
+
             <div v-if="cls.teacherName" class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-400 to-amber-500 text-white font-bold flex items-center justify-center text-lg shadow-sm">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-white font-bold flex items-center justify-center text-lg shadow-sm">
                 {{ cls.teacherName.charAt(0) }}
               </div>
               <div class="min-w-0 flex-1">
                 <h4 class="font-bold text-gray-900 text-sm truncate">{{ cls.teacherName }}</h4>
                 <p class="text-xs text-gray-500 mt-0.5">Giảng viên bộ môn Toán Tư Duy</p>
-                <p v-if="teacher?.phone" class="text-xs text-orange-600 font-mono mt-0.5">
+                <p v-if="teacher?.phone" class="text-xs text-purple-700 font-mono mt-0.5">
                   SĐT: {{ teacher.phone }}
+                </p>
+                <p v-if="teacher?.email" class="text-xs text-gray-400 truncate mt-0.5">
+                  Email: {{ teacher.email }}
                 </p>
               </div>
             </div>
+
             <div v-else class="p-4 bg-gray-50 rounded-xl text-center text-xs text-gray-400">
               Lớp học chưa được chỉ định giáo viên phụ trách.
               <button
-                @click="openEditClassModal"
-                class="block mx-auto mt-2 text-orange-600 font-bold hover:underline"
+                @click="openAssignTeacherModal"
+                class="block mx-auto mt-2 text-purple-700 font-bold hover:underline cursor-pointer"
               >
-                + Phân công ngay
+                + Phân công giáo viên ngay
               </button>
             </div>
           </div>
         </div>
 
-        <!-- ─── RIGHT: Schedules & Lessons Tabs (7 cols) ─────────────────── -->
+        <!-- ─── RIGHT: Schedules, Lessons & Students Tabs (7 cols) ───────── -->
         <div class="lg:col-span-7 space-y-6">
           <!-- Main Tabs Controller -->
           <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
             <!-- Tab Buttons Header -->
             <div class="px-6 pt-4 border-b border-orange-100 flex items-center justify-between flex-wrap gap-3 bg-gradient-to-r from-orange-50/40 to-white">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Tab Lịch tuần -->
                 <button
                   @click="activeTab = 'schedules'"
                   :class="[
@@ -344,6 +377,7 @@
                   <span>Lịch tuần ({{ schedules.length }} ca/tuần)</span>
                 </button>
 
+                <!-- Tab Buổi học -->
                 <button
                   @click="activeTab = 'lessons'"
                   :class="[
@@ -355,6 +389,20 @@
                 >
                   <ClockIcon class="w-4 h-4 text-orange-500" />
                   <span>Danh sách Buổi học ({{ lessons.length }}/{{ level?.totalSessions || '?' }})</span>
+                </button>
+
+                <!-- Tab Danh sách Học viên hiện tại -->
+                <button
+                  @click="activeTab = 'students'"
+                  :class="[
+                    'pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer',
+                    activeTab === 'students'
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-orange-500'
+                  ]"
+                >
+                  <UserGroupIcon class="w-4 h-4 text-orange-500" />
+                  <span>Danh sách Học viên ({{ classStudents.length }})</span>
                 </button>
               </div>
 
@@ -370,12 +418,21 @@
                 </button>
 
                 <button
-                  v-else
+                  v-else-if="activeTab === 'lessons'"
                   @click="openAddLessonModal"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
                   <PlusIcon class="w-3.5 h-3.5" />
                   <span>Thêm buổi học</span>
+                </button>
+
+                <button
+                  v-else-if="activeTab === 'students'"
+                  @click="openAddStudentModal"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  <UserPlusIcon class="w-3.5 h-3.5" />
+                  <span>Thêm học viên</span>
                 </button>
               </div>
             </div>
@@ -447,7 +504,7 @@
                 </div>
               </div>
 
-              <!-- Weekly Schedule Visual Map (Thứ 2 -> Chủ nhật) -->
+              <!-- Weekly Schedule Visual Map -->
               <div class="pt-3 border-t border-orange-100 space-y-3">
                 <h3 class="font-bold text-orange-950 text-sm flex items-center gap-2">
                   <CalendarIcon class="w-4 h-4 text-orange-500" />
@@ -504,7 +561,7 @@
             </div>
 
             <!-- Tab 2: LESSONS (Danh sách từng buổi học cụ thể) -->
-            <div v-else class="p-6 space-y-4">
+            <div v-else-if="activeTab === 'lessons'" class="p-6 space-y-4">
               <!-- Helper status banner -->
               <div class="flex items-center justify-between flex-wrap gap-2 p-3 bg-orange-50/70 rounded-xl border border-orange-200 text-xs">
                 <div>
@@ -600,9 +657,430 @@
                 </div>
               </div>
             </div>
+
+            <!-- Tab 3: STUDENTS (Danh sách học viên hiện tại của lớp) -->
+            <div v-else-if="activeTab === 'students'" class="p-6 space-y-4">
+              <!-- Summary & Search bar -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-orange-50/70 rounded-xl border border-orange-200 text-xs">
+                <div>
+                  <span class="font-bold text-orange-950">
+                    Sĩ số lớp: {{ classStudents.length }} / {{ maxCapacityDisplay }} học viên
+                  </span>
+                  <span class="text-gray-600 ml-2">
+                    ({{ activeEnrolledCount }} đang học, {{ pendingEnrolledCount }} chờ xác nhận)
+                  </span>
+                </div>
+                <div class="w-full sm:w-64">
+                  <div class="relative">
+                    <input
+                      v-model="searchStudent"
+                      type="text"
+                      placeholder="Tìm kiếm học viên..."
+                      class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-orange-200 rounded-lg focus:outline-hidden focus:border-orange-500"
+                    />
+                    <MagnifyingGlassIcon class="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading students -->
+              <LoadingSpinner v-if="loadingStudents" label="Đang tải danh sách học viên trong lớp..." />
+
+              <!-- Empty students -->
+              <EmptyState
+                v-else-if="classStudents.length === 0"
+                :icon="UserGroupIcon"
+                message="Lớp học chưa có học viên nào"
+                sub="Bấm nút 'Thêm học viên' để ghi danh học viên vào lớp từ danh sách profile học viên"
+              />
+
+              <!-- Filtered empty -->
+              <div v-else-if="filteredClassStudents.length === 0" class="text-center py-10 text-xs text-gray-400">
+                Không tìm thấy học viên nào phù hợp với từ khóa "{{ searchStudent }}".
+              </div>
+
+              <!-- Student Table -->
+              <div v-else class="overflow-x-auto border border-orange-100 rounded-xl">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-orange-50/80 text-orange-900 font-bold border-b border-orange-100 uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th class="py-3 px-3 text-center w-10">STT</th>
+                      <th class="py-3 px-3">Học viên</th>
+                      <th class="py-3 px-3">Phụ huynh liên hệ</th>
+                      <th class="py-3 px-3">Ngày tham gia</th>
+                      <th class="py-3 px-3 text-center">Trạng thái</th>
+                      <th class="py-3 px-3 text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-orange-50 bg-white">
+                    <tr
+                      v-for="(st, idx) in filteredClassStudents"
+                      :key="st.id || st.studentId"
+                      class="hover:bg-orange-50/40 transition-colors"
+                    >
+                      <td class="py-3 px-3 text-center text-gray-400 font-medium">{{ idx + 1 }}</td>
+                      <td class="py-3 px-3">
+                        <div class="flex items-center gap-2.5">
+                          <img
+                            v-if="st.avatar"
+                            :src="st.avatar"
+                            :alt="st.studentName"
+                            class="w-8 h-8 rounded-full object-cover border border-orange-200 flex-shrink-0"
+                          />
+                          <div
+                            v-else
+                            class="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-400 to-amber-500 text-white font-bold flex items-center justify-center text-xs flex-shrink-0"
+                          >
+                            {{ (st.studentName || 'H').charAt(0) }}
+                          </div>
+                          <div>
+                            <div class="font-bold text-gray-900">{{ st.studentName }}</div>
+                            <div class="text-[10px] text-gray-400 flex items-center gap-2 mt-0.5">
+                              <span>⭐ {{ st.stars || 0 }} sao</span>
+                              <span>🏆 {{ st.totalPoints || 0 }} đ</span>
+                              <span>🔥 {{ st.streakDays || 0 }} ngày</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="py-3 px-3">
+                        <div class="font-medium text-gray-800">{{ st.parentName || '--' }}</div>
+                        <div class="text-[11px] text-orange-600 font-mono mt-0.5">{{ st.parentPhone || st.parentEmail || '--' }}</div>
+                      </td>
+                      <td class="py-3 px-3 text-gray-500">
+                        {{ formatDate(st.joinedAt) }}
+                      </td>
+                      <td class="py-3 px-3 text-center">
+                        <span
+                          :class="[
+                            'px-2 py-0.5 rounded-full text-[10px] font-bold border',
+                            st.status === 'ACTIVE'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          ]"
+                        >
+                          {{ st.status === 'ACTIVE' ? 'Đang học' : 'Chờ xác nhận' }}
+                        </span>
+                      </td>
+                      <td class="py-3 px-3 text-right">
+                        <button
+                          @click="confirmRemoveStudent(st)"
+                          class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          title="Rút học viên khỏi lớp"
+                        >
+                          <TrashIcon class="w-3.5 h-3.5" />
+                          <span>Xóa</span>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- ─── Modal Thêm Học Viên vào Lớp ──────────────────────────────── -->
+      <transition name="modal-fade">
+        <div
+          v-if="showAddStudentModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          @click.self="showAddStudentModal = false"
+        >
+          <div class="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-lg overflow-hidden transform transition-all my-8">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-orange-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-xs">
+                  <UserPlusIcon class="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-orange-950">Thêm học viên vào lớp</h3>
+                  <p class="text-xs text-gray-500">Lớp: {{ cls.name }} (Sĩ số hiện tại: {{ classStudents.length }}/{{ maxCapacityDisplay }})</p>
+                </div>
+              </div>
+              <button
+                @click="showAddStudentModal = false"
+                class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-orange-100/60 transition-colors cursor-pointer"
+              >
+                <XMarkIcon class="w-5 h-5" />
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <!-- Capacity Warning if full -->
+              <div
+                v-if="maxCapacity && classStudents.length >= maxCapacity"
+                class="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2"
+              >
+                <ExclamationCircleIcon class="w-4 h-4 text-red-500 flex-shrink-0" />
+                <span>Lớp học đã đạt sĩ số tối đa ({{ maxCapacity }} học viên). Việc thêm học viên sẽ vượt định mức sĩ số lớp.</span>
+              </div>
+
+              <!-- Search student profile from Backend -->
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1.5">
+                  Tìm kiếm học viên theo tên <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="studentSearchQuery"
+                    type="text"
+                    placeholder="Nhập tên học sinh để tìm (VD: Minh Khang, Bảo Ngọc...)"
+                    class="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+                  />
+                  <MagnifyingGlassIcon class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <!-- List of available student profiles -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="block text-xs font-bold text-gray-700">
+                    Danh sách profile học viên (Lấy từ Backend):
+                  </label>
+                  <span class="text-[11px] text-gray-400">
+                    {{ filteredAvailableStudents.length }} học viên
+                  </span>
+                </div>
+
+                <div v-if="loadingAvailableStudents" class="py-6 text-center text-xs text-gray-400">
+                  <LoadingSpinner label="Đang tải danh sách profile học viên từ backend..." />
+                </div>
+
+                <div
+                  v-else
+                  class="space-y-1.5 max-h-56 overflow-y-auto border border-gray-200 rounded-xl p-2 bg-gray-50/50"
+                >
+                  <div
+                    v-for="st in filteredAvailableStudents"
+                    :key="st.id"
+                    @click="!isStudentInClass(st.id) && selectStudentToAdd(st)"
+                    :class="[
+                      'p-2.5 rounded-xl border flex items-center justify-between gap-3 transition-all',
+                      isStudentInClass(st.id)
+                        ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
+                        : selectedStudentToAdd?.id === st.id
+                          ? 'border-orange-500 bg-orange-50/90 shadow-2xs cursor-pointer'
+                          : 'border-transparent bg-white hover:border-orange-200 hover:bg-orange-50/40 cursor-pointer'
+                    ]"
+                  >
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <img
+                        v-if="st.avatar"
+                        :src="st.avatar"
+                        :alt="st.fullName"
+                        class="w-8 h-8 rounded-full object-cover border border-orange-200 flex-shrink-0"
+                      />
+                      <div
+                        v-else
+                        class="w-8 h-8 rounded-full bg-orange-200 text-orange-800 font-bold flex items-center justify-center text-xs flex-shrink-0"
+                      >
+                        {{ (st.fullName || 'H').charAt(0) }}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="font-bold text-gray-900 text-xs truncate">{{ st.fullName }}</div>
+                        <div class="text-[11px] text-gray-500 truncate">
+                          PH: {{ st.parentName || '--' }} · {{ st.parentPhone || '' }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        v-if="isStudentInClass(st.id)"
+                        class="text-[10px] font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full"
+                      >
+                        Đã trong lớp
+                      </span>
+                      <span
+                        v-else-if="selectedStudentToAdd?.id === st.id"
+                        class="text-[10px] font-bold text-white bg-orange-500 px-2 py-0.5 rounded-full"
+                      >
+                        Đã chọn
+                      </span>
+                    </div>
+                  </div>
+
+                  <div v-if="filteredAvailableStudents.length === 0" class="py-4 text-center text-xs text-gray-400">
+                    Không tìm thấy học viên nào phù hợp với từ khóa.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selected Student Preview Card -->
+              <div
+                v-if="selectedStudentToAdd"
+                class="p-3.5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200 space-y-2"
+              >
+                <div class="text-[11px] font-bold text-orange-900 uppercase tracking-wide">
+                  Học viên được chọn:
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <img
+                      v-if="selectedStudentToAdd.avatar"
+                      :src="selectedStudentToAdd.avatar"
+                      class="w-10 h-10 rounded-full border border-orange-300"
+                    />
+                    <div v-else class="w-10 h-10 rounded-full bg-orange-400 text-white font-bold flex items-center justify-center text-sm">
+                      {{ (selectedStudentToAdd.fullName || 'H').charAt(0) }}
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900 text-sm">{{ selectedStudentToAdd.fullName }}</div>
+                      <div class="text-xs text-gray-600">
+                        Phụ huynh: {{ selectedStudentToAdd.parentName }} · {{ selectedStudentToAdd.parentPhone }}
+                      </div>
+                    </div>
+                  </div>
+                  <CheckCircleIcon class="w-6 h-6 text-emerald-600" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-2.5 bg-gray-50">
+              <button
+                type="button"
+                @click="showAddStudentModal = false"
+                class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                @click="handleAddStudentSubmit"
+                :disabled="!selectedStudentToAdd || isAddingStudent"
+                class="px-4 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {{ isAddingStudent ? 'Đang thêm...' : 'Xác nhận thêm vào lớp' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <!-- ─── Modal Phân công Giáo viên cho Lớp học ─────────────────────── -->
+      <transition name="modal-fade">
+        <div
+          v-if="showAssignTeacherModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          @click.self="showAssignTeacherModal = false"
+        >
+          <div class="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-md overflow-hidden transform transition-all my-8">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-orange-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-orange-50">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                  <AcademicCapIcon class="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-purple-950">Phân công Giáo viên</h3>
+                  <p class="text-xs text-gray-500">Lớp: {{ cls.name }}</p>
+                </div>
+              </div>
+              <button
+                @click="showAssignTeacherModal = false"
+                class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-orange-100/60 transition-colors cursor-pointer"
+              >
+                <XMarkIcon class="w-5 h-5" />
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <p class="text-xs text-gray-600">
+                Chọn giáo viên phụ trách giảng dạy cho lớp học này (danh sách được lấy từ <code class="font-mono text-purple-600">teacher.service</code>):
+              </p>
+
+              <div v-if="loadingTeachers" class="py-6 text-center text-xs text-gray-400">
+                <LoadingSpinner label="Đang tải danh sách giáo viên từ teacher.service..." />
+              </div>
+
+              <div v-else class="space-y-2">
+                <!-- Option: Không phân công -->
+                <div
+                  @click="selectedTeacherId = null"
+                  :class="[
+                    'p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all',
+                    selectedTeacherId === null
+                      ? 'border-purple-500 bg-purple-50 shadow-2xs'
+                      : 'border-gray-200 hover:border-purple-200 bg-white'
+                  ]"
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center text-xs">
+                      --
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-700 text-xs">Chưa phân công giáo viên</div>
+                      <div class="text-[11px] text-gray-400">Để trống thông tin giáo viên phụ trách</div>
+                    </div>
+                  </div>
+                  <input
+                    type="radio"
+                    name="assign-teacher"
+                    :checked="selectedTeacherId === null"
+                    class="text-purple-600 focus:ring-purple-500"
+                  />
+                </div>
+
+                <!-- Teacher options from teacher.service -->
+                <div
+                  v-for="t in availableTeachers"
+                  :key="t.id"
+                  @click="selectedTeacherId = t.id"
+                  :class="[
+                    'p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all',
+                    selectedTeacherId === t.id
+                      ? 'border-purple-500 bg-purple-50 shadow-2xs'
+                      : 'border-gray-200 hover:border-purple-200 bg-white'
+                  ]"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
+                      {{ (t.fullName || 'G').charAt(0) }}
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-bold text-gray-900 text-xs truncate">{{ t.fullName }}</div>
+                      <div class="text-[11px] text-gray-500 truncate">
+                        {{ t.phone || t.email || `Mã GV: GV-${t.id}` }}
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="radio"
+                    name="assign-teacher"
+                    :checked="selectedTeacherId === t.id"
+                    class="text-purple-600 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-2.5 bg-gray-50">
+              <button
+                type="button"
+                @click="showAssignTeacherModal = false"
+                class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                @click="handleAssignTeacherSubmit"
+                :disabled="isAssigningTeacher"
+                class="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {{ isAssigningTeacher ? 'Đang lưu...' : 'Lưu phân công' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
 
       <!-- ─── Add / Edit Class Modal ───────────────────────────────────── -->
       <ClassModal
@@ -652,10 +1130,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  UserGroupIcon, ChevronRightIcon, BookOpenIcon, AcademicCapIcon,
+  UserGroupIcon, UserPlusIcon, ChevronRightIcon, BookOpenIcon, AcademicCapIcon,
   CalendarDaysIcon, CalendarIcon, ClockIcon, MapPinIcon, CurrencyDollarIcon,
   PencilSquareIcon, PlusIcon, TrashIcon, SparklesIcon, CheckCircleIcon,
   ExclamationCircleIcon, InformationCircleIcon, ArrowPathIcon, XMarkIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/vue/24/outline'
 
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -671,6 +1150,7 @@ import lessonService        from '@/services/lesson.service'
 import courseLevelService   from '@/services/courseLevel.service'
 import courseService        from '@/services/course.service'
 import teacherService       from '@/services/teacher.service'
+import parentService        from '@/services/parent.service'
 import { syncClassLessonsAndEndDate, calculateScheduleSessions } from '@/services/scheduleSync.helper'
 
 const route  = useRoute()
@@ -680,15 +1160,17 @@ const router = useRouter()
 const loading          = ref(true)
 const loadingSchedules = ref(false)
 const loadingLessons   = ref(false)
+const loadingStudents  = ref(false)
 const isSyncing        = ref(false)
 const activeTab        = ref('schedules')
 
-const cls       = ref(null)
-const level     = ref(null)
-const course    = ref(null)
-const teacher   = ref(null)
-const schedules = ref([])
-const lessons   = ref([])
+const cls           = ref(null)
+const level         = ref(null)
+const course        = ref(null)
+const teacher       = ref(null)
+const schedules     = ref([])
+const lessons       = ref([])
+const classStudents = ref([])
 
 // Toast / Notification
 const syncAlertMessage = ref('')
@@ -703,6 +1185,22 @@ const scheduleModalMode = ref('create')
 const showLessonModal   = ref(false)
 const selectedLesson    = ref(null)
 
+// ─── Add Student Modal State ──────────────────────────────────────────────────
+const showAddStudentModal      = ref(false)
+const availableStudents        = ref([])
+const loadingAvailableStudents = ref(false)
+const studentSearchQuery       = ref('')
+const selectedStudentToAdd     = ref(null)
+const isAddingStudent          = ref(false)
+const searchStudent            = ref('')
+
+// ─── Assign Teacher Modal State ───────────────────────────────────────────────
+const showAssignTeacherModal = ref(false)
+const availableTeachers      = ref([])
+const loadingTeachers        = ref(false)
+const selectedTeacherId      = ref(null)
+const isAssigningTeacher     = ref(false)
+
 // ─── Days of Week Constants ───────────────────────────────────────────────────
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Thứ 2', full: 'Thứ Hai', color: 'border-blue-200 bg-blue-50 text-blue-700' },
@@ -715,7 +1213,7 @@ const DAYS_OF_WEEK = [
 ]
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
-const activeCount = computed(() => cls.value?.activeStudentsCount ?? cls.value?.currentStudents ?? 0)
+const activeCount = computed(() => classStudents.value.length || cls.value?.activeStudentsCount || cls.value?.currentStudents || 0)
 const maxCapacity = computed(() => cls.value?.maxCapacity ?? cls.value?.maxStudents)
 const maxCapacityDisplay = computed(() => maxCapacity.value ?? '∞')
 
@@ -763,6 +1261,44 @@ const sortedLessons = computed(() => {
   const list = [...lessons.value]
   return list.sort((a, b) => new Date(a.lessonDate) - new Date(b.lessonDate))
 })
+
+// Students Computed
+const activeEnrolledCount = computed(() =>
+  classStudents.value.filter(s => s.status === 'ACTIVE').length
+)
+const pendingEnrolledCount = computed(() =>
+  classStudents.value.filter(s => s.status === 'PENDING').length
+)
+
+const filteredClassStudents = computed(() => {
+  if (!searchStudent.value.trim()) return classStudents.value
+  const q = searchStudent.value.toLowerCase().trim()
+  return classStudents.value.filter(s =>
+    (s.studentName || '').toLowerCase().includes(q) ||
+    (s.parentName || '').toLowerCase().includes(q) ||
+    (s.parentPhone || '').includes(q) ||
+    String(s.studentId).includes(q)
+  )
+})
+
+const filteredAvailableStudents = computed(() => {
+  if (!studentSearchQuery.value.trim()) return availableStudents.value
+  const q = studentSearchQuery.value.toLowerCase().trim()
+  return availableStudents.value.filter(s =>
+    (s.fullName || '').toLowerCase().includes(q) ||
+    (s.parentName || '').toLowerCase().includes(q) ||
+    (s.parentPhone || '').includes(q) ||
+    String(s.id).includes(q)
+  )
+})
+
+function isStudentInClass(studentId) {
+  return classStudents.value.some(s => s.studentId === studentId)
+}
+
+function selectStudentToAdd(st) {
+  selectedStudentToAdd.value = st
+}
 
 // ─── Day & Status Helpers ─────────────────────────────────────────────────────
 function getDayBadge(dow) {
@@ -836,7 +1372,6 @@ async function handleClassSaved(updatedData) {
     cls.value = { ...cls.value, ...updatedData }
   }
   await loadAllData()
-  // Tự động kiểm tra và tính toán lại nếu ngày khai giảng thay đổi
   await triggerAutoSync()
 }
 
@@ -919,6 +1454,123 @@ async function confirmDeleteLesson(l) {
   }
 }
 
+// ─── Modal Actions: Student Management ────────────────────────────────────────
+async function openAddStudentModal() {
+  selectedStudentToAdd.value = null
+  studentSearchQuery.value = ''
+  showAddStudentModal.value = true
+  if (availableStudents.value.length === 0) {
+    await loadAvailableStudents()
+  }
+}
+
+async function loadAvailableStudents() {
+  loadingAvailableStudents.value = true
+  try {
+    const data = await parentService.getAllStudents()
+    availableStudents.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách profile học viên từ backend:', err)
+    availableStudents.value = []
+  } finally {
+    loadingAvailableStudents.value = false
+  }
+}
+
+async function handleAddStudentSubmit() {
+  if (!cls.value || !selectedStudentToAdd.value) return
+  isAddingStudent.value = true
+  try {
+    await classService.addStudent(cls.value.id, selectedStudentToAdd.value.id)
+    await loadClassStudents()
+    if (cls.value) {
+      cls.value.activeStudentsCount = classStudents.value.length
+    }
+    showAddStudentModal.value = false
+    syncAlertSuccess.value = true
+    syncAlertMessage.value = `Đã thêm học viên "${selectedStudentToAdd.value.fullName}" vào lớp "${cls.value.name}" thành công!`
+    selectedStudentToAdd.value = null
+    studentSearchQuery.value = ''
+  } catch (err) {
+    console.error('Lỗi khi thêm học viên vào lớp:', err)
+    alert(err?.response?.data?.message || 'Không thể thêm học viên vào lớp.')
+  } finally {
+    isAddingStudent.value = false
+  }
+}
+
+async function confirmRemoveStudent(st) {
+  const studentName = st.studentName || 'học viên này'
+  if (!window.confirm(`Bạn có chắc chắn muốn xóa học viên "${studentName}" khỏi lớp "${cls.value?.name}" không?`)) {
+    return
+  }
+  try {
+    await classService.removeStudent(cls.value.id, st.studentId)
+    await loadClassStudents()
+    if (cls.value) {
+      cls.value.activeStudentsCount = classStudents.value.length
+    }
+    syncAlertSuccess.value = true
+    syncAlertMessage.value = `Đã xóa học viên "${studentName}" khỏi lớp học.`
+  } catch (err) {
+    console.error('Lỗi khi xóa học viên khỏi lớp:', err)
+    alert(err?.response?.data?.message || 'Không thể xóa học viên khỏi lớp.')
+  }
+}
+
+// ─── Modal Actions: Assign Teacher (teacher.service) ──────────────────────────
+async function openAssignTeacherModal() {
+  selectedTeacherId.value = cls.value?.teacherId ?? null
+  showAssignTeacherModal.value = true
+  if (availableTeachers.value.length === 0) {
+    await loadAvailableTeachers()
+  }
+}
+
+async function loadAvailableTeachers() {
+  loadingTeachers.value = true
+  try {
+    const data = await teacherService.getAll()
+    availableTeachers.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách giáo viên từ teacher.service:', err)
+    availableTeachers.value = []
+  } finally {
+    loadingTeachers.value = false
+  }
+}
+
+async function handleAssignTeacherSubmit() {
+  if (!cls.value) return
+  isAssigningTeacher.value = true
+  try {
+    const payload = {
+      courseLevelId: cls.value.courseLevelId,
+      teacherId: selectedTeacherId.value,
+      name: cls.value.name,
+      maxCapacity: cls.value.maxCapacity ?? 15,
+      startDate: cls.value.startDate,
+      endDate: cls.value.endDate,
+      status: cls.value.status ?? 'ACTIVE',
+    }
+    await classService.update(cls.value.id, payload)
+
+    cls.value.teacherId = selectedTeacherId.value
+    const foundTeacher = availableTeachers.value.find(t => t.id === selectedTeacherId.value)
+    cls.value.teacherName = foundTeacher ? foundTeacher.fullName : null
+    teacher.value = foundTeacher || null
+
+    showAssignTeacherModal.value = false
+    syncAlertSuccess.value = true
+    syncAlertMessage.value = `Đã cập nhật phân công giáo viên cho lớp "${cls.value.name}": ${cls.value.teacherName || 'Chưa phân công'}!`
+  } catch (err) {
+    console.error('Lỗi khi phân công giáo viên:', err)
+    alert(err?.response?.data?.message || 'Không thể phân công giáo viên. Vui lòng thử lại.')
+  } finally {
+    isAssigningTeacher.value = false
+  }
+}
+
 // ─── Auto Sync & EndDate Calculation ──────────────────────────────────────────
 async function triggerAutoSync() {
   if (!cls.value || !level.value) return
@@ -982,6 +1634,20 @@ async function loadLessons() {
   }
 }
 
+async function loadClassStudents() {
+  const classId = route.params.id
+  loadingStudents.value = true
+  try {
+    const data = await classService.getStudents(classId)
+    classStudents.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+  } catch (err) {
+    console.error('Lỗi khi tải học viên của lớp:', err)
+    classStudents.value = []
+  } finally {
+    loadingStudents.value = false
+  }
+}
+
 async function loadAllData() {
   const classId = route.params.id
   loading.value = true
@@ -1011,7 +1677,7 @@ async function loadAllData() {
       }
     }
 
-    await Promise.all([loadSchedules(), loadLessons()])
+    await Promise.all([loadSchedules(), loadLessons(), loadClassStudents()])
   } catch (err) {
     console.error('Không tìm thấy lớp học:', err)
     cls.value = null
@@ -1020,7 +1686,11 @@ async function loadAllData() {
   }
 }
 
-onMounted(loadAllData)
+onMounted(() => {
+  loadAllData()
+  loadAvailableTeachers()
+  loadAvailableStudents()
+})
 </script>
 
 <style scoped>
@@ -1040,5 +1710,14 @@ onMounted(loadAllData)
   opacity: 1;
   max-height: 100px;
   transform: translateY(0);
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>
