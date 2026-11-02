@@ -286,3 +286,4 @@ Mỗi phần làm việc trên một nhánh riêng theo dạng `<module>/feat/<m
 | Mobile | `mobile/feat/add-nativewind` |
 
 Trước khi merge, cần commit hoặc `git stash -u` các thay đổi chưa commit vì Git thường từ chối merge trên cây làm việc bẩn.
+
