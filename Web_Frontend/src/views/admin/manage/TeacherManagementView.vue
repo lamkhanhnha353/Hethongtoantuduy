@@ -1,9 +1,16 @@
 <template>
     <div class="space-y-6">
         <!-- Header Page -->
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Quản lý Giáo viên</h1>
-            <p class="text-sm text-gray-500 mt-1">Tra cứu và cập nhật hồ sơ, chuyên môn giáo viên</p>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Quản lý Giáo viên</h1>
+                <p class="text-sm text-gray-500 mt-1">Tra cứu và cập nhật hồ sơ, chuyên môn giáo viên</p>
+            </div>
+            <button @click="openCreateModal"
+                class="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600">
+                <span aria-hidden="true">+</span>
+                Thêm giáo viên
+            </button>
         </div>
 
         <!-- Search Bar -->
@@ -48,10 +55,12 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <span :class="[
-                                'px-2.5 py-0.5 rounded-full text-xs font-medium inline-block',
-                                teacher.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                            ]">
+                            <span
+                                class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                :class="teacher.isActive
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'"
+                                :aria-label="`Trạng thái tài khoản của ${teacher.fullName}`">
                                 {{ teacher.isActive ? 'Hoạt động' : 'Đã khóa' }}
                             </span>
                         </td>
@@ -70,12 +79,12 @@
             </table>
         </div>
 
-        <!-- Modal Form Sửa Giáo Viên -->
+        <!-- Modal Form Giáo Viên -->
         <div v-if="showModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl">
                 <div class="px-6 py-4 border-b border-gray-100 bg-orange-50 flex justify-between items-center">
-                    <h3 class="font-bold text-orange-900">Sửa thông tin Giáo viên</h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+                    <h3 class="font-bold text-orange-900">{{ isCreating ? 'Thêm Giáo viên mới' : 'Sửa thông tin Giáo viên' }}</h3>
+                    <button type="button" @click="closeModal" class="text-gray-400 hover:text-gray-600">&times;</button>
                 </div>
                 <form @submit.prevent="saveTeacher" class="p-6 space-y-4">
                     <div>
@@ -86,15 +95,24 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại (Tài khoản đăng
                             nhập)</label>
-                        <input :value="form.phone" disabled type="tel"
+                        <input v-if="!isCreating" :value="form.phone" disabled type="tel"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm font-mono cursor-not-allowed" />
+                        <input v-else v-model.trim="form.phone" required type="tel" autocomplete="tel"
+                            placeholder="Nhập số điện thoại đăng nhập"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm font-mono" />
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input v-model="form.email" type="email"
+                    <div v-if="isCreating">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu ban đầu *</label>
+                        <input v-model="form.password" required minlength="6" type="password" autocomplete="new-password"
+                            placeholder="Ít nhất 6 ký tự"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input v-model.trim="form.email" type="email" autocomplete="email"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
+                    </div>
+                    <div v-if="!isCreating">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Chuyên môn / Lĩnh vực giảng
                             dạy</label>
                         <input v-model="form.specialize" type="text"
@@ -102,13 +120,13 @@
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div class="flex justify-end gap-3 mt-6">
-                        <button type="button" @click="showModal = false"
+                        <button type="button" @click="closeModal" :disabled="isSaving"
                             class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm">
                             Hủy
                         </button>
-                        <button type="submit"
-                            class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600 text-sm font-medium">
-                            Lưu thay đổi
+                        <button type="submit" :disabled="isSaving"
+                            class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60">
+                            {{ isSaving ? 'Đang lưu...' : (isCreating ? 'Tạo giáo viên' : 'Lưu thay đổi') }}
                         </button>
                     </div>
                 </form>
@@ -126,9 +144,12 @@ const teachers = ref([])
 const keyword = ref('')
 const isLoading = ref(false)
 const showModal = ref(false)
+const isCreating = ref(false)
+const isSaving = ref(false)
 const errorMessage = ref('')
 
-const form = ref({ id: null, fullName: '', phone: '', email: '', specialize: '' })
+const emptyForm = () => ({ id: null, fullName: '', phone: '', email: '', specialize: '', password: '' })
+const form = ref(emptyForm())
 
 const filteredTeachers = computed(() => {
     const query = keyword.value.toLowerCase().trim()
@@ -154,27 +175,55 @@ async function fetchTeachers() {
 }
 
 function openEditModal(teacher) {
+    isCreating.value = false
     form.value = {
         id: teacher.id,
         fullName: teacher.fullName,
         phone: teacher.phone,
         email: teacher.email || '',
-        specialize: teacher.specialize || ''
+        specialize: teacher.specialize || '',
+        password: ''
     }
     showModal.value = true
 }
 
+function openCreateModal() {
+    isCreating.value = true
+    form.value = emptyForm()
+    showModal.value = true
+}
+
+function closeModal() {
+    if (isSaving.value) return
+    showModal.value = false
+}
+
 async function saveTeacher() {
+    isSaving.value = true
     try {
-        await teacherService.update(form.value.id, {
-            fullName: form.value.fullName,
-            email: form.value.email,
-            specialize: form.value.specialize
-        })
+        if (isCreating.value) {
+            await teacherService.create({
+                phone: form.value.phone,
+                password: form.value.password,
+                fullName: form.value.fullName,
+                email: form.value.email || null
+            })
+        } else {
+            await teacherService.update(form.value.id, {
+                fullName: form.value.fullName,
+                email: form.value.email,
+                specialize: form.value.specialize
+            })
+        }
+
         showModal.value = false
         await fetchTeachers()
     } catch (err) {
-        alert(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật hồ sơ giáo viên.')
+        alert(err.response?.data?.message || (isCreating.value
+            ? 'Có lỗi xảy ra khi tạo tài khoản giáo viên.'
+            : 'Có lỗi xảy ra khi cập nhật hồ sơ giáo viên.'))
+    } finally {
+        isSaving.value = false
     }
 }
 

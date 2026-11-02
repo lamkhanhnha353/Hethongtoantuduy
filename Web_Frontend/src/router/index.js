@@ -8,6 +8,7 @@ import LoginView from "@/views/LoginView.vue";
 // Admin - User Management
 import ParentStudentView from "@/views/admin/manage/ParentStudentView.vue";
 import TeacherManagementView from "@/views/admin/manage/TeacherManagementView.vue";
+import AccountSecurityView from "@/views/admin/manage/AccountSecurityView.vue";
 
 // Admin - Training
 import CoursesView from "@/views/admin/training/CoursesView.vue";
@@ -153,8 +154,8 @@ const router = createRouter({
         },
         {
           path: "users/roles",
-          component: PlaceholderView,
-          meta: { title: "Phân quyền & Bảo mật" },
+          component: AccountSecurityView,
+          meta: { title: "Tài khoản & Bảo mật" },
         },
 
         // Training — Courses

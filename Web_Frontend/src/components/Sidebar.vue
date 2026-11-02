@@ -321,7 +321,7 @@ const adminMenuItems = [
     children: [
       { id: 'parents-students', label: 'Phụ huynh & Học sinh', icon: UserGroupIcon, to: '/users/students' },
       { id: 'teachers', label: 'Giáo viên', icon: AcademicCapIcon, to: '/users/teachers' },
-      { id: 'roles', label: 'Phân quyền & Bảo mật', icon: ShieldCheckIcon, to: '/users/roles' },
+      { id: 'roles', label: 'Tài khoản & Bảo mật', icon: ShieldCheckIcon, to: '/users/roles' },
     ],
   },
   {

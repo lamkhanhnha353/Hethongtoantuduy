@@ -168,6 +168,32 @@ namespace ToanTuDuy.Services
             return true;
         }
 
+        public async Task<bool> UpdateParentStatusAsync(int id, bool isActive)
+        {
+            var parent = await _context.ParentProfiles
+                .Include(profile => profile.Account)
+                .FirstOrDefaultAsync(profile => profile.Id == id);
+
+            if (parent == null) return false;
+            if (parent.Account == null)
+            {
+                throw new InvalidOperationException("Tài khoản phụ huynh không tồn tại.");
+            }
+
+            parent.Account.IsActive = isActive;
+            parent.Account.LockoutEnd = isActive ? null : DateTimeOffset.MaxValue;
+            parent.Account.RefreshToken = null;
+
+            var result = await _userManager.UpdateSecurityStampAsync(parent.Account);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(error => error.Description));
+                throw new InvalidOperationException($"Không thể thu hồi phiên đăng nhập: {errors}");
+            }
+
+            return true;
+        }
+
         public async Task<bool> UpdateParentEmailAsync(int id, string email)
         {
             if (string.IsNullOrWhiteSpace(email))

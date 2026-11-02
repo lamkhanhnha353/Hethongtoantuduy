@@ -6,5 +6,6 @@ namespace ToanTuDuy.Services
     public interface IPasswordResetService
     {
         Task<ForgotPasswordResponse> ForgotPasswordAsync(string email);
+        Task<ForgotPasswordResponse> ResetPasswordForAdminAsync(int accountId);
     }
 }
