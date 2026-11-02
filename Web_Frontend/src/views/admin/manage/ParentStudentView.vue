@@ -37,17 +37,14 @@
                         <!-- Tên Phụ huynh & Trạng thái -->
                         <td class="px-6 py-4 align-top">
                             <div class="font-semibold text-gray-900 text-base">{{ parent.fullName }}</div>
-                            <select :value="parent.isActive ? 'active' : 'blocked'"
-                                :disabled="statusUpdating[parent.id]"
-                                :aria-label="`Trạng thái tài khoản của ${parent.fullName}`"
-                                @change="updateParentStatus(parent, $event)"
-                                :class="[
-                                    'mt-1 rounded-lg border px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:opacity-60',
-                                    parent.isActive ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'
-                                ]">
-                                <option value="active">Active</option>
-                                <option value="blocked">Blocked</option>
-                            </select>
+                            <span
+                                class="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                :class="parent.isActive
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'"
+                                :aria-label="`Trạng thái tài khoản của ${parent.fullName}`">
+                                {{ parent.isActive ? 'Hoạt động' : 'Đã khóa' }}
+                            </span>
                         </td>
 
                         <!-- Liên hệ -->
@@ -139,7 +136,6 @@ const parents = ref([])
 const keyword = ref('')
 const isLoading = ref(false)
 const showModal = ref(false)
-const statusUpdating = ref({})
 const errorMessage = ref('')
 
 const form = ref({ id: null, fullName: '', pin: '' })
@@ -191,25 +187,6 @@ async function saveParent() {
         await fetchParents()
     } catch (err) {
         alert(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin.')
-    }
-}
-
-async function updateParentStatus(parent, event) {
-    const previousStatus = parent.isActive
-    const isActive = event.target.value === 'active'
-    if (previousStatus === isActive) return
-
-    statusUpdating.value = { ...statusUpdating.value, [parent.id]: true }
-    try {
-        await parentService.updateStatus(parent.id, isActive)
-        parent.isActive = isActive
-    } catch (err) {
-        event.target.value = previousStatus ? 'active' : 'blocked'
-        alert(err.response?.data?.message || 'Không thể cập nhật trạng thái phụ huynh.')
-    } finally {
-        const updating = { ...statusUpdating.value }
-        delete updating[parent.id]
-        statusUpdating.value = updating
     }
 }
 
