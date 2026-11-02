@@ -52,7 +52,17 @@
 
       <!-- Filter panel (collapsible) -->
       <transition name="slide-down">
-        <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 border-t border-orange-100">
+        <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1 border-t border-orange-100">
+          <!-- Khóa học filter -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Khóa học</label>
+            <select v-model="filters.courseId" class="filter-select">
+              <option value="">Tất cả khóa học</option>
+              <option v-for="c in courses" :key="c.id" :value="c.id">
+                {{ c.name }} ({{ c.code }})
+              </option>
+            </select>
+          </div>
           <!-- Status -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái</label>
@@ -87,7 +97,7 @@
             </select>
           </div>
           <!-- Actions -->
-          <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-2">
+          <div class="sm:col-span-2 lg:col-span-5 flex justify-end gap-2">
             <button @click="resetFilters" class="text-xs text-gray-500 hover:text-orange-500 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors">
               Đặt lại
             </button>
@@ -222,6 +232,7 @@ function openEditModal(course) {
 }
 
 const filters = ref({
+  courseId: '',
   status: '',
   feeMin: null,
   feeMax: null,
@@ -252,14 +263,19 @@ function normalizeCourse(item) {
 
 // ─── Derived ──────────────────────────────────────────────────────────────────
 const hasActiveFilters = computed(() =>
-  Boolean(filters.value.status || filters.value.feeMin != null || filters.value.feeMax != null)
+  Boolean(filters.value.courseId || filters.value.status || filters.value.feeMin != null || filters.value.feeMax != null)
 )
 const activeFilterCount = computed(() =>
-  [filters.value.status, filters.value.feeMin, filters.value.feeMax].filter(v => v !== '' && v != null).length
+  [filters.value.courseId, filters.value.status, filters.value.feeMin, filters.value.feeMax].filter(v => v !== '' && v != null).length
 )
 
 const filteredCourses = computed(() => {
   let list = [...courses.value]
+
+  // Khóa học filter
+  if (filters.value.courseId) {
+    list = list.filter(c => c.id === Number(filters.value.courseId))
+  }
 
   // Text search — mã, tên khóa học, mô tả
   const q = search.value.toLowerCase().trim()
@@ -300,7 +316,7 @@ const filteredCourses = computed(() => {
 
 // ─── Methods ──────────────────────────────────────────────────────────────────
 function resetFilters() {
-  filters.value = { status: '', feeMin: null, feeMax: null, sort: 'name_asc' }
+  filters.value = { courseId: '', status: '', feeMin: null, feeMax: null, sort: 'name_asc' }
 }
 function clearAll() {
   search.value = ''
