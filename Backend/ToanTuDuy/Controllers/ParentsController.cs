@@ -8,7 +8,7 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    [AllowAnonymous] // 👈 Thêm dòng này: Bỏ qua kiểm tra Token cho toàn bộ API Giáo viên
+    [AllowAnonymous] // 👈 Bỏ qua kiểm tra Token
 
     public class ParentsController : ControllerBase
     {
@@ -23,6 +23,12 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? keyword)
         {
             return Ok(await _service.GetAllParentsAsync(keyword));
+        }
+
+        [HttpGet("students")]
+        public async Task<IActionResult> GetAllStudents([FromQuery] string? keyword)
+        {
+            return Ok(await _service.GetAllStudentsAsync(keyword));
         }
 
         [HttpGet("{id:int}")]
