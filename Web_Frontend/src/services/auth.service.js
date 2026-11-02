@@ -3,6 +3,7 @@ import {
   clearAuthSession,
   getAccessToken,
   getRole,
+  getProfileId,
   saveAuthSession,
 } from "./auth-storage";
 
@@ -16,6 +17,7 @@ class AuthService {
     return (await this.api.post("/register", data)).data;
   }
 
+  // Đổi mật khẩu
   async changePassword(data) {
     return (await this.api.post("/change-password", data)).data;
   }
@@ -25,6 +27,7 @@ class AuthService {
     const response = (await this.api.post("/login", data)).data;
     const accessToken = response.accessToken ?? response.AccessToken;
     const role = response.role ?? response.Role;
+    const profileId = response.profileId ?? response.ProfileId;
 
     if (!accessToken || typeof role !== "string") {
       throw new Error("Phản hồi đăng nhập không hợp lệ.");
@@ -35,8 +38,8 @@ class AuthService {
       throw new Error("Chỉ tài khoản Admin hoặc Teacher được phép đăng nhập.");
     }
 
-    saveAuthSession(accessToken, role);
-    return { ...response, accessToken, role };
+    saveAuthSession(accessToken, role, profileId);
+    return { ...response, accessToken, role, profileId };
   }
 
   getAccessToken() {
@@ -47,6 +50,10 @@ class AuthService {
     return getRole();
   }
 
+  getProfileId() {
+    return getProfileId();
+  }
+
   isAuthenticated() {
     const role = getRole()?.toLowerCase();
     return Boolean(getAccessToken() && ["admin", "teacher"].includes(role));
@@ -54,11 +61,6 @@ class AuthService {
 
   logout() {
     clearAuthSession();
-  }
-
-  // Đổi mật khẩu tài khoản
-  async changePassword(data) {
-    return (await this.api.post("/change-password", data)).data;
   }
 }
 

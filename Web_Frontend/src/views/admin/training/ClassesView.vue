@@ -19,7 +19,7 @@
     <!-- ─── Toolbar ────────────────────────────────────────────────────────── -->
     <div class="bg-white rounded-2xl border border-orange-100 shadow-sm p-4 space-y-3">
       <div class="flex flex-col sm:flex-row gap-3">
-        <SearchBar v-model="search" placeholder="Tìm theo mã, tên lớp, giáo viên..." />
+        <SearchBar v-model="search" placeholder="Tìm theo mã, tên lớp, giáo viên, khóa học..." />
         <button
           @click="showFilter = !showFilter"
           :class="[
@@ -42,6 +42,16 @@
       <!-- Filter panel -->
       <transition name="slide-down">
         <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 border-t border-orange-100">
+          <!-- Filter theo Khóa học (Đồng bộ Backend) -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Khóa học</label>
+            <select v-model="filters.courseId" class="filter-select">
+              <option value="">Tất cả khóa học</option>
+              <option v-for="c in courses" :key="c.id" :value="c.id">
+                {{ c.name }} ({{ c.code }})
+              </option>
+            </select>
+          </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái</label>
             <select v-model="filters.status" class="filter-select">
@@ -70,8 +80,8 @@
               <option value="date_asc">Khai giảng sớm nhất</option>
             </select>
           </div>
-          <div class="flex items-end">
-            <button @click="resetFilters" class="text-xs text-gray-500 hover:text-orange-500 px-3 py-2 rounded-lg hover:bg-orange-50 transition-colors">
+          <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-2">
+            <button @click="resetFilters" class="text-xs text-gray-500 hover:text-orange-500 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors">
               Đặt lại
             </button>
           </div>
@@ -155,13 +165,15 @@ import ClassCard      from '@/components/class/ClassCard.vue'
 import ClassListItem  from '@/components/class/ClassListItem.vue'
 import ClassModal     from '@/components/class/ClassModal.vue'
 
-import classService from '@/services/class.service'
+import classService  from '@/services/class.service'
+import courseService from '@/services/course.service'
 
 const router = useRouter()
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const loading       = ref(false)
 const classes       = ref([])
+const courses       = ref([])
 const search        = ref('')
 const viewMode      = ref('grid')
 const showFilter    = ref(false)
@@ -179,6 +191,7 @@ function openEditModal(cls) {
 }
 
 const filters = ref({
+  courseId: '',
   status: '',
   capacity: '',
   sort: 'name_asc',
@@ -186,30 +199,50 @@ const filters = ref({
 
 // ─── Derived ──────────────────────────────────────────────────────────────────
 const hasActiveFilters = computed(() =>
-  filters.value.status || filters.value.capacity
+  Boolean(filters.value.courseId || filters.value.status || filters.value.capacity)
 )
 const activeFilterCount = computed(() =>
-  [filters.value.status, filters.value.capacity].filter(Boolean).length
+  [filters.value.courseId, filters.value.status, filters.value.capacity].filter(Boolean).length
 )
 
 const filteredClasses = computed(() => {
   let list = [...classes.value]
 
+  // Filter theo Khóa học
+  if (filters.value.courseId) {
+    const selCourseId = Number(filters.value.courseId)
+    const foundCourse = courses.value.find(c => c.id === selCourseId)
+    const levelIds = foundCourse && Array.isArray(foundCourse.courseLevels)
+      ? foundCourse.courseLevels.map(l => l.id)
+      : []
+
+    list = list.filter(c => {
+      if (c.courseId && Number(c.courseId) === selCourseId) return true
+      if (c.courseLevelId && levelIds.includes(Number(c.courseLevelId))) return true
+      return false
+    })
+  }
+
+  // Filter theo Search
   const q = search.value.toLowerCase().trim()
   if (q) {
     list = list.filter(c =>
       c.name?.toLowerCase().includes(q) ||
       c.code?.toLowerCase().includes(q) ||
       c.teacherName?.toLowerCase().includes(q) ||
+      c.courseName?.toLowerCase().includes(q) ||
+      c.courseLevelName?.toLowerCase().includes(q) ||
       c.room?.toLowerCase().includes(q) ||
       String(c.id).includes(q)
     )
   }
 
+  // Filter theo Status
   if (filters.value.status) {
     list = list.filter(c => String(c.status || '').toLowerCase() === filters.value.status.toLowerCase())
   }
 
+  // Filter theo Capacity
   if (filters.value.capacity === 'available') {
     list = list.filter(c => !c.maxStudents || c.currentStudents < c.maxStudents)
   } else if (filters.value.capacity === 'full') {
@@ -218,6 +251,7 @@ const filteredClasses = computed(() => {
     list = list.filter(c => !c.maxStudents || (c.currentStudents / c.maxStudents) < 0.5)
   }
 
+  // Sort
   switch (filters.value.sort) {
     case 'name_desc':     list.sort((a, b) => b.name?.localeCompare(a.name, 'vi')); break
     case 'students_desc': list.sort((a, b) => (b.currentStudents ?? 0) - (a.currentStudents ?? 0)); break
@@ -229,7 +263,7 @@ const filteredClasses = computed(() => {
 
 // ─── Methods ──────────────────────────────────────────────────────────────────
 function resetFilters() {
-  filters.value = { status: '', capacity: '', sort: 'name_asc' }
+  filters.value = { courseId: '', status: '', capacity: '', sort: 'name_asc' }
 }
 function clearAll() {
   search.value = ''
@@ -258,19 +292,20 @@ async function loadClasses() {
   }
 }
 
-onMounted(loadClasses)
+async function loadCourses() {
+  try {
+    const data = await courseService.getAll()
+    courses.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách khóa học cho bộ lọc:', err)
+    courses.value = []
+  }
+}
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const mockClasses = [
-  { id: 101, code: 'LH-101', name: 'Toán Cơ Bản - Sáng T2T4T6', status: 'active', teacherName: 'Nguyễn Văn A', room: 'P201', maxStudents: 25, currentStudents: 22, startDate: '2026-09-01' },
-  { id: 102, code: 'LH-102', name: 'Toán Cơ Bản - Chiều T3T5', status: 'full', teacherName: 'Trần Thị B', room: 'P301', maxStudents: 20, currentStudents: 20, startDate: '2026-09-05' },
-  { id: 103, code: 'LH-103', name: 'Vật Lý Trung Cấp - Tối T2T4', status: 'active', teacherName: 'Lê Văn C', room: 'P103', maxStudents: 20, currentStudents: 15, startDate: '2026-09-10' },
-  { id: 104, code: 'LH-104', name: 'Tiếng Anh Nâng Cao - T7CN', status: 'upcoming', teacherName: 'Phạm Thị D', room: 'P401', maxStudents: 15, currentStudents: 8, startDate: '2026-11-01' },
-  { id: 105, code: 'LH-105', name: 'Hóa Học Cơ Bản - Sáng T7', status: 'active', teacherName: 'Hoàng Văn E', room: 'P202', maxStudents: 18, currentStudents: 7, startDate: '2026-09-20' },
-  { id: 106, code: 'LH-106', name: 'Lập Trình Python - Online', status: 'upcoming', teacherName: 'Vũ Thanh F', room: 'Online', maxStudents: 30, currentStudents: 12, startDate: '2026-11-15' },
-  { id: 107, code: 'LH-107', name: 'Ngữ Văn THPT - Ôn Thi', status: 'inactive', teacherName: 'Ngô Thị G', room: 'P105', maxStudents: 22, currentStudents: 0, startDate: '2026-07-01' },
-  { id: 108, code: 'LH-108', name: 'Sinh Học 12 - Nâng Cao', status: 'active', teacherName: 'Bùi Văn H', room: 'P304', maxStudents: 16, currentStudents: 14, startDate: '2026-09-15' },
-]
+onMounted(() => {
+  loadClasses()
+  loadCourses()
+})
 </script>
 
 <style scoped>
