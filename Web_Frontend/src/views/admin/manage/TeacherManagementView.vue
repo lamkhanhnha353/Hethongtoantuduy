@@ -55,17 +55,14 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <select :value="teacher.isActive ? 'active' : 'blocked'"
-                                :disabled="statusUpdating[teacher.id]"
-                                :aria-label="`Trạng thái tài khoản của ${teacher.fullName}`"
-                                @change="updateTeacherStatus(teacher, $event)"
-                                :class="[
-                                    'rounded-lg border px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:opacity-60',
-                                    teacher.isActive ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'
-                                ]">
-                                <option value="active">Active</option>
-                                <option value="blocked">Blocked</option>
-                            </select>
+                            <span
+                                class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                :class="teacher.isActive
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'"
+                                :aria-label="`Trạng thái tài khoản của ${teacher.fullName}`">
+                                {{ teacher.isActive ? 'Hoạt động' : 'Đã khóa' }}
+                            </span>
                         </td>
                         <td class="px-6 py-4 text-right">
                             <button @click="openEditModal(teacher)"
@@ -149,7 +146,6 @@ const isLoading = ref(false)
 const showModal = ref(false)
 const isCreating = ref(false)
 const isSaving = ref(false)
-const statusUpdating = ref({})
 const errorMessage = ref('')
 
 const emptyForm = () => ({ id: null, fullName: '', phone: '', email: '', specialize: '', password: '' })
@@ -228,25 +224,6 @@ async function saveTeacher() {
             : 'Có lỗi xảy ra khi cập nhật hồ sơ giáo viên.'))
     } finally {
         isSaving.value = false
-    }
-}
-
-async function updateTeacherStatus(teacher, event) {
-    const previousStatus = teacher.isActive
-    const isActive = event.target.value === 'active'
-    if (previousStatus === isActive) return
-
-    statusUpdating.value = { ...statusUpdating.value, [teacher.id]: true }
-    try {
-        await teacherService.updateStatus(teacher.id, isActive)
-        teacher.isActive = isActive
-    } catch (err) {
-        event.target.value = previousStatus ? 'active' : 'blocked'
-        alert(err.response?.data?.message || 'Không thể cập nhật trạng thái giáo viên.')
-    } finally {
-        const updating = { ...statusUpdating.value }
-        delete updating[teacher.id]
-        statusUpdating.value = updating
     }
 }
 
