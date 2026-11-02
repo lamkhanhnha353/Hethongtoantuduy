@@ -44,7 +44,10 @@
         }
       ],
       "expo-web-browser",
-      "expo-video"
+      "expo-video",
+      "expo-asset",
+      "expo-audio",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -94,6 +95,7 @@ namespace ToanTuDuy.Controllers
         }
 
         // API TRẢ VỀ LỊCH HỌC TIMELINE CHO APP PHỤ HUYNH
+        [Authorize(Roles = "Parent")]
         [HttpGet("student/{studentId}")]
         public async Task<IActionResult> GetStudentLessons(int studentId)
         {
@@ -101,6 +103,7 @@ namespace ToanTuDuy.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Parent")]
         [HttpGet("student/{studentId}/roadmap")]
         public async Task<IActionResult> GetStudentRoadmaps(int studentId)
         {
