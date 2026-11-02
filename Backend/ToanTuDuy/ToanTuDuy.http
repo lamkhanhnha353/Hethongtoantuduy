@@ -1,4 +1,5 @@
 @ToanTuDuy_HostAddress = http://localhost:5114
+@parentToken = PASTE_PARENT_ACCESS_TOKEN
 
 ### Đăng ký tài khoản Parent
 POST {{ToanTuDuy_HostAddress}}/api/auth/register
@@ -30,4 +31,15 @@ Content-Type: application/json
 {
   "phone": "0987654321",
   "password": "Password123!"
+}
+
+### Tạo notification test (cần token Parent, chỉ chạy ở Development)
+POST {{ToanTuDuy_HostAddress}}/api/notifications/test
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{
+  "title": "Thông báo test",
+  "body": "Nội dung test",
+  "type": "SYSTEM"
 }

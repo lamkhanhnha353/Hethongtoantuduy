@@ -1,7 +1,9 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using ToanTuDuy.DTOs.Notification;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
@@ -14,10 +16,14 @@ namespace ToanTuDuy.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly IHostEnvironment _environment;
 
-        public NotificationsController(INotificationService notificationService)
+        public NotificationsController(
+            INotificationService notificationService,
+            IHostEnvironment environment)
         {
             _notificationService = notificationService;
+            _environment = environment;
         }
 
         [HttpGet]
@@ -47,6 +53,67 @@ namespace ToanTuDuy.Controllers
                 cancellationToken);
 
             return Ok(new NotificationUnreadCountResponse { UnreadCount = unreadCount });
+        }
+
+        [HttpPost("test")]
+        public async Task<IActionResult> CreateTestNotification(
+            [FromBody] CreateTestNotificationRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!_environment.IsDevelopment())
+            {
+                return NotFound();
+            }
+
+            var type = string.IsNullOrWhiteSpace(request.Type)
+                ? NotificationTypes.System
+                : request.Type.Trim();
+
+            var title = string.IsNullOrWhiteSpace(request.Title)
+                ? "Thông báo test"
+                : request.Title.Trim();
+
+            var body = string.IsNullOrWhiteSpace(request.Body)
+                ? $"Thông báo test được tạo lúc {DateTime.UtcNow:HH:mm:ss dd/MM/yyyy} (UTC)."
+                : request.Body.Trim();
+
+            var refId = string.IsNullOrWhiteSpace(request.RefId)
+                ? $"TEST:{Guid.NewGuid():N}"
+                : request.RefId.Trim();
+
+            var accountId = User.GetAccountId();
+
+            var created = await _notificationService.CreateForParentAccountAsync(
+                accountId,
+                type,
+                title,
+                body,
+                refId,
+                cancellationToken);
+
+            if (!created)
+            {
+                return BadRequest(new
+                {
+                    message = "Không tạo được thông báo. Kiểm tra cài đặt IN_APP_NOTIFICATION hoặc RefId đã tồn tại.",
+                    type,
+                    refId,
+                });
+            }
+
+            var unreadCount = await _notificationService.GetUnreadCountAsync(
+                accountId,
+                cancellationToken);
+
+            return Ok(new
+            {
+                created = true,
+                type,
+                title,
+                body,
+                refId,
+                unreadCount,
+            });
         }
 
         [HttpPut("{id:int}/read")]

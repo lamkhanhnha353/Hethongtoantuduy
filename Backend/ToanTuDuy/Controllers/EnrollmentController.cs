@@ -9,6 +9,7 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services;
 
 namespace ToanTuDuy.Controllers
 {
@@ -17,10 +18,14 @@ namespace ToanTuDuy.Controllers
     public class EnrollmentController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public EnrollmentController(ApplicationDbContext context)
+        public EnrollmentController(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         [Authorize(Roles = "Parent")]
@@ -170,6 +175,13 @@ namespace ToanTuDuy.Controllers
 
                 _context.Invoices.Add(invoice);
                 await _context.SaveChangesAsync();
+
+                await _notificationService.CreateForParentAsync(
+                    validParentId,
+                    NotificationTypes.Tuition,
+                    "Hóa đơn học phí mới",
+                    $"Hóa đơn học phí cho lớp {classInfo.Name} của {student.FullName} đã được tạo. Vui lòng thanh toán để hoàn tất đăng ký.",
+                    $"INVOICE:{invoice.Id}:PENDING");
 
                 return Ok(new
                 {

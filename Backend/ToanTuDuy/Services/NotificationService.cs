@@ -98,6 +98,25 @@ namespace ToanTuDuy.Services
             }
         }
 
+        public async Task<bool> CreateForParentAccountAsync(
+            int accountId,
+            string type,
+            string title,
+            string? body,
+            string? refId,
+            CancellationToken cancellationToken = default)
+        {
+            var parentId = await GetParentIdAsync(accountId, cancellationToken);
+
+            return await CreateForParentAsync(
+                parentId,
+                type,
+                title,
+                body,
+                refId,
+                cancellationToken);
+        }
+
         public async Task<bool> CreateForStudentAsync(
             int studentId,
             string type,

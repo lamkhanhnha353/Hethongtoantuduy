@@ -53,5 +53,13 @@ namespace ToanTuDuy.Services
             int accountId,
             UpdateNotificationSettingsRequest request,
             CancellationToken cancellationToken = default);
+
+        Task<bool> CreateForParentAccountAsync(
+            int accountId,
+            string type,
+            string title,
+            string? body,
+            string? refId,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -14,11 +14,16 @@ namespace ToanTuDuy.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public PaymentService(IConfiguration configuration, ApplicationDbContext context)
+        public PaymentService(
+            IConfiguration configuration,
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _configuration = configuration;
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<string> CreatePaymentUrl(int invoiceId, HttpContext context)
@@ -93,6 +98,17 @@ namespace ToanTuDuy.Services
                 {
                     invoice.ClassStudent.Status = "ACTIVE"; // Kích hoạt chỗ ngồi
                 }
+
+                await _context.SaveChangesAsync();
+
+                await _notificationService.CreateForParentAsync(
+                    invoice.ParentId,
+                    NotificationTypes.Tuition,
+                    "Thanh toán thành công",
+                    $"Hóa đơn #{invoice.Id} đã được thanh toán thành công qua VNPay.",
+                    $"INVOICE:{invoice.Id}:PAID");
+
+                return invoice;
             }
             else if (invoice.Status == "PENDING" && vnp_ResponseCode != "00")
             {
@@ -100,6 +116,16 @@ namespace ToanTuDuy.Services
                 invoice.Status = "FAILED";
 
                 // TUYỆT ĐỐI KHÔNG CANCEL CLASS_STUDENT Ở ĐÂY NỮA
+                await _context.SaveChangesAsync();
+
+                await _notificationService.CreateForParentAsync(
+                    invoice.ParentId,
+                    NotificationTypes.Tuition,
+                    "Thanh toán không thành công",
+                    $"Hóa đơn #{invoice.Id} thanh toán không thành công hoặc bị hủy. Vui lòng thử lại.",
+                    $"INVOICE:{invoice.Id}:FAILED");
+
+                return invoice;
             }
 
             await _context.SaveChangesAsync();
@@ -157,6 +183,26 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            if (invoice.Status == "PAID")
+            {
+                await _notificationService.CreateForParentAsync(
+                    invoice.ParentId,
+                    NotificationTypes.Tuition,
+                    "Thanh toán thành công",
+                    $"Hóa đơn #{invoice.Id} đã được thanh toán thành công qua VNPay.",
+                    $"INVOICE:{invoice.Id}:PAID");
+            }
+            else if (invoice.Status == "FAILED")
+            {
+                await _notificationService.CreateForParentAsync(
+                    invoice.ParentId,
+                    NotificationTypes.Tuition,
+                    "Thanh toán không thành công",
+                    $"Hóa đơn #{invoice.Id} thanh toán không thành công hoặc bị hủy. Vui lòng thử lại.",
+                    $"INVOICE:{invoice.Id}:FAILED");
+            }
+
             return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}";
         }
     }
