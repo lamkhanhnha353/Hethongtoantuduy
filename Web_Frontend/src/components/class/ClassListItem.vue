@@ -17,7 +17,8 @@
       </p>
       <p class="text-xs text-gray-400 truncate mt-0.5">
         GV: {{ cls.teacherName ?? 'Chưa phân công' }}
-        <template v-if="cls.courseLevelName"> · {{ cls.courseLevelName }}</template>
+        <template v-if="cls.courseName"> · {{ cls.courseName }}</template>
+        <template v-else-if="cls.courseLevelName"> · {{ cls.courseLevelName }}</template>
         <template v-if="cls.startDate"> · {{ formatDate(cls.startDate) }}</template>
       </p>
     </div>
