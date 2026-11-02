@@ -14,7 +14,5 @@ namespace ToanTuDuy.Services
         Task<LessonResponse> CreateLessonAsync(LessonRequest request);
         Task<bool> UpdateLessonAsync(int id, LessonRequest request);
         Task<bool> DeleteLessonAsync(int id);
-        Task<IEnumerable<StudentLessonResponse>> GetLessonsByStudentIdAsync(int accountId, int studentId);
-        Task<IEnumerable<StudentRoadmapResponse>> GetRoadmapsByStudentIdAsync(int accountId, int studentId);
     }
 }
