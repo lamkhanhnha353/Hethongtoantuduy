@@ -17,11 +17,16 @@ namespace ToanTuDuy.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public PaymentService(IConfiguration configuration, ApplicationDbContext context)
+        public PaymentService(
+            IConfiguration configuration,
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _configuration = configuration;
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<string> CreatePaymentUrl(int invoiceId, int accountId, string clientIpAddress)

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import {
   ActivityIndicator,
   Pressable,
@@ -18,6 +19,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ROLE_LABELS } from '@/content/homeContent';
 import { toApiError } from '@/services/apiError';
 import { useSoundEnabled } from '@/hooks/useAudio';
+import { useNotificationUnreadCountQuery } from '@/hooks/useNotifications';
 import { useLogout, useSession } from '@/hooks/useSession';
 import {
   useProfileQuery,
@@ -100,6 +102,8 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
   const serverError = emailError?.message ?? saveError?.message ?? null;
 
   const isParent = profile.role === 'Parent';
+  const { data: unreadCountData } = useNotificationUnreadCountQuery(isParent);
+  const unreadCount = unreadCountData?.unreadCount ?? 0;
 
   function handleSave() {
     const trimmedName = fullName.trim();
@@ -262,6 +266,46 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
             <AccountRow label="Vai trò hệ thống" value={ROLE_LABELS[profile.role]} isLast />
           </View>
         </View>
+
+        {isParent ? (
+          <View className="mt-5 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-100">
+            <SectionHeader
+              title="Thông báo"
+              subtitle="Cập nhật về học phí, điểm danh và học tập"
+            />
+
+            <Pressable
+              accessibilityRole="button"
+              className="mt-1 flex-row items-center rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 active:bg-slate-100"
+              onPress={() => router.push('/notifications/index')}
+            >
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-sky-100">
+                <Feather color="#0284c7" name="bell" size={19} />
+              </View>
+
+              <View className="ml-3 flex-1">
+                <Text className="text-sm font-semibold text-slate-900">
+                  Trung tâm thông báo
+                </Text>
+                <Text className="mt-0.5 text-xs text-slate-500">
+                  {unreadCount > 0
+                    ? `${unreadCount} thông báo chưa đọc`
+                    : 'Không có thông báo chưa đọc'}
+                </Text>
+              </View>
+
+              {unreadCount > 0 ? (
+                <View className="mr-2 min-w-[22px] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5">
+                  <Text className="text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
+
+              <Text className="text-base font-light text-slate-400">›</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         {/* Bảo mật */}
         <View className="mt-5 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-100">
