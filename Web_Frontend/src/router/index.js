@@ -1,9 +1,13 @@
 import { createRouter, createWebHistory } from "vue-router";
 import authService from "@/services/auth.service";
 import Layout from "@/layouts/Layout.vue";
-import DashboardView from "@/views/admin/DashboardView.vue";
 import PlaceholderView from "@/views/PlaceholderView.vue";
+
+// Authentication
 import LoginView from "@/views/LoginView.vue";
+
+// Admin Views
+import DashboardView from "@/views/admin/DashboardView.vue";
 
 // Admin - User Management
 import ParentStudentView from "@/views/admin/manage/ParentStudentView.vue";
@@ -16,6 +20,9 @@ import CourseDetailView from "@/views/admin/training/CourseDetailView.vue";
 import ClassesView from "@/views/admin/training/ClassesView.vue";
 import ClassDetailView from "@/views/admin/training/ClassDetailView.vue";
 import ScheduleView from "@/views/admin/training/ScheduleView.vue";
+
+// Financial Management
+import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
 
 // Account Module
 import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
@@ -209,7 +216,7 @@ const router = createRouter({
         // Finance
         {
           path: "finance/invoices",
-          component: PlaceholderView,
+          component: InvoicesView,
           meta: { title: "Hóa đơn & Biên lai" },
         },
         {

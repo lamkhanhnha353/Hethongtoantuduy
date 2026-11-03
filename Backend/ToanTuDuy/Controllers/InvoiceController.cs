@@ -7,7 +7,6 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Parent")]
     public class InvoiceController : ControllerBase
     {
         private readonly IInvoiceService _invoiceService;
@@ -17,6 +16,7 @@ namespace ToanTuDuy.Controllers
             _invoiceService = invoiceService;
         }
 
+        [Authorize(Roles = "Parent")]
         [HttpGet("history")]
         public async Task<IActionResult> GetInvoiceHistory()
         {
@@ -24,11 +24,20 @@ namespace ToanTuDuy.Controllers
             return Ok(invoices);
         }
 
+        [Authorize(Roles = "Parent")]
         [HttpPost("cancel/{invoiceId:int}")]
         public async Task<IActionResult> CancelInvoice(int invoiceId)
         {
             await _invoiceService.CancelAsync(User.GetAccountId(), invoiceId);
             return Ok(new { message = "Hủy hóa đơn và giải phóng Slot thành công." });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("/api/admin/invoices")]
+        public async Task<IActionResult> GetAllForAdmin()
+        {
+            var invoices = await _invoiceService.GetAllForAdminAsync();
+            return Ok(invoices);
         }
     }
 }
