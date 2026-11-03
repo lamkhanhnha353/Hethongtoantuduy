@@ -7,7 +7,6 @@ using ToanTuDuy.Services;
 namespace ToanTuDuy.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
     [Route("api/assignments")]
     [Authorize]
     public class AssignmentsController : ControllerBase
