@@ -156,24 +156,24 @@
       <div
         v-for="item in filteredAssignments"
         :key="item.id"
-        class="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm hover:border-orange-300 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5"
+        class="bg-white rounded-2xl border border-orange-100 p-4 sm:p-5 shadow-sm hover:border-orange-300 transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-4"
       >
         <!-- Left info -->
-        <div class="flex items-start gap-4">
+        <div class="flex items-start gap-3.5 min-w-0 flex-1">
           <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-900 font-bold text-xs flex flex-col items-center justify-center flex-shrink-0 border border-orange-200">
             <ClipboardDocumentCheckIcon class="w-5 h-5 text-orange-600" />
             <span class="text-[10px] mt-0.5 font-extrabold">{{ item.totalQuestions }} câu</span>
           </div>
 
-          <div class="space-y-1">
+          <div class="min-w-0 flex-1 space-y-1">
             <div class="flex flex-wrap items-center gap-2">
-              <h3 class="text-sm sm:text-base font-bold text-gray-900 hover:text-orange-600 cursor-pointer">
+              <h3 class="text-sm sm:text-base font-bold text-gray-900 hover:text-orange-600 transition-colors cursor-pointer truncate" :title="item.title">
                 {{ item.title }}
               </h3>
 
               <span
                 :class="[
-                  'text-[10px] font-bold px-2 py-0.5 rounded-full',
+                  'text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0',
                   item.status === 'OPEN' ? 'bg-emerald-100 text-emerald-800' :
                   item.status === 'CLOSED' ? 'bg-gray-100 text-gray-700' :
                   item.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
@@ -187,7 +187,7 @@
                 }}
               </span>
 
-              <span class="text-[10px] font-semibold bg-orange-50 text-orange-800 border border-orange-200 px-2 py-0.5 rounded">
+              <span class="text-[10px] font-semibold bg-orange-50 text-orange-800 border border-orange-200 px-2 py-0.5 rounded shrink-0">
                 {{ item.totalPoints }} điểm gốc • Thang 100đ
               </span>
             </div>
@@ -220,16 +220,16 @@
         </div>
 
         <!-- Right actions & Progress -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4 self-end lg:self-center border-t lg:border-t-0 pt-3 lg:pt-0 border-orange-50 w-full lg:w-auto justify-between lg:justify-end">
+        <div class="flex items-center justify-between xl:justify-end gap-3 sm:gap-4 shrink-0 border-t xl:border-t-0 pt-3 xl:pt-0 border-orange-50 w-full xl:w-auto">
           <!-- Submission progress bar -->
-          <div class="min-w-[130px] text-left sm:text-right">
-            <div class="text-[11px] font-semibold text-gray-600 flex items-center justify-between sm:justify-end gap-2">
-              <span>Tỷ lệ hoàn thành:</span>
+          <div class="w-28 sm:w-32 shrink-0 text-left xl:text-right">
+            <div class="text-[11px] font-semibold text-gray-600 flex items-center justify-between xl:justify-end gap-1.5">
+              <span>Tỷ lệ:</span>
               <span class="text-orange-700 font-bold">
                 {{ item.assignedStudentsCount > 0 ? Math.round(((item.completedStudentsCount || 0) / item.assignedStudentsCount) * 100) : 0 }}%
               </span>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-2 mt-1.5 overflow-hidden border border-gray-200">
+            <div class="w-full bg-gray-100 rounded-full h-2 mt-1 overflow-hidden border border-gray-200">
               <div
                 class="bg-orange-500 h-2 rounded-full transition-all duration-500"
                 :style="{
@@ -239,13 +239,13 @@
             </div>
           </div>
 
-          <!-- Action buttons group -->
-          <div class="flex flex-wrap items-center gap-1.5">
+          <!-- Action buttons group (NEVER WRAP) -->
+          <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">
             <!-- Quản lý học sinh giao bài -->
             <button
               type="button"
               @click="openManageStudentsModal(item)"
-              class="px-3 py-1.5 rounded-xl border border-orange-200 text-orange-900 bg-orange-50/50 hover:bg-orange-100 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1"
+              class="px-2.5 sm:px-3 py-1.5 rounded-xl border border-orange-200 text-orange-900 bg-orange-50/60 hover:bg-orange-100 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
               title="Quản lý danh sách học sinh được giao bài & Giao lẻ"
             >
               <UserGroupIcon class="w-3.5 h-3.5 text-orange-600" />
@@ -256,7 +256,7 @@
             <button
               type="button"
               @click="openViewQuestionsModal(item)"
-              class="px-2.5 py-1.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1"
+              class="px-2.5 py-1.5 rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
               title="Xem danh sách câu hỏi trong đề"
             >
               <EyeIcon class="w-3.5 h-3.5 text-gray-500" />
@@ -267,32 +267,35 @@
             <button
               type="button"
               @click="openCloneModal(item)"
-              class="px-2.5 py-1.5 rounded-xl border border-blue-200 text-blue-800 bg-blue-50/50 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1"
+              class="px-2.5 py-1.5 rounded-xl border border-blue-200 text-blue-800 bg-blue-50/60 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
               title="Nhân bản bài kiểm tra sang buổi học khác"
             >
               <DocumentDuplicateIcon class="w-3.5 h-3.5 text-blue-600" />
               <span>Nhân bản</span>
             </button>
 
-            <!-- Edit -->
-            <button
-              type="button"
-              @click="openEditModal(item)"
-              class="p-1.5 rounded-xl hover:bg-orange-100 text-gray-600 hover:text-orange-900 transition-colors cursor-pointer"
-              title="Sửa thông tin bài kiểm tra"
-            >
-              <PencilSquareIcon class="w-4 h-4" />
-            </button>
+            <!-- Divider for edit/delete icon buttons -->
+            <div class="flex items-center gap-0.5 border-l border-gray-200 pl-1.5 shrink-0">
+              <!-- Edit -->
+              <button
+                type="button"
+                @click="openEditModal(item)"
+                class="p-1.5 rounded-xl hover:bg-orange-100 text-gray-500 hover:text-orange-900 transition-colors cursor-pointer"
+                title="Sửa thông tin bài kiểm tra"
+              >
+                <PencilSquareIcon class="w-4 h-4" />
+              </button>
 
-            <!-- Delete -->
-            <button
-              type="button"
-              @click="confirmDeleteAssignment(item)"
-              class="p-1.5 rounded-xl hover:bg-rose-100 text-gray-400 hover:text-rose-600 transition-colors cursor-pointer"
-              title="Xóa bài kiểm tra"
-            >
-              <TrashIcon class="w-4 h-4" />
-            </button>
+              <!-- Delete -->
+              <button
+                type="button"
+                @click="confirmDeleteAssignment(item)"
+                class="p-1.5 rounded-xl hover:bg-rose-100 text-gray-400 hover:text-rose-600 transition-colors cursor-pointer"
+                title="Xóa bài kiểm tra"
+              >
+                <TrashIcon class="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

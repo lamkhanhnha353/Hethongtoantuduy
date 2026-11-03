@@ -492,5 +492,130 @@ namespace ToanTuDuy.Services
                 })
                 .ToListAsync();
         }
+
+        public async Task<StudentAssignmentResponse?> GradeStudentAsync(int assignmentId, int studentId, GradeStudentRequest request)
+        {
+            var sa = await _context.StudentAssignments
+                .Include(s => s.Student)
+                .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId);
+
+            if (sa == null) return null;
+
+            sa.Score = request.Score;
+            sa.TeacherFeedback = request.TeacherFeedback;
+            sa.Status = string.IsNullOrWhiteSpace(request.Status) ? "GRADED" : request.Status.Trim().ToUpper();
+            if (sa.CompletedAt == null)
+            {
+                sa.CompletedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new StudentAssignmentResponse
+            {
+                Id = sa.Id,
+                AssignmentId = sa.AssignmentId,
+                StudentId = sa.StudentId,
+                StudentName = sa.Student?.FullName ?? string.Empty,
+                Avatar = sa.Student?.Avatar,
+                Score = sa.Score,
+                Status = sa.Status,
+                TeacherFeedback = sa.TeacherFeedback,
+                CompletedAt = sa.CompletedAt
+            };
+        }
+
+        public async Task<bool> BatchGradeAsync(int assignmentId, List<BatchGradeItemRequest> grades)
+        {
+            if (grades == null || !grades.Any()) return true;
+
+            var studentIds = grades.Select(g => g.StudentId).ToList();
+            var list = await _context.StudentAssignments
+                .Where(s => s.AssignmentId == assignmentId && studentIds.Contains(s.StudentId))
+                .ToListAsync();
+
+            foreach (var sa in list)
+            {
+                var gradeInfo = grades.FirstOrDefault(g => g.StudentId == sa.StudentId);
+                if (gradeInfo != null)
+                {
+                    if (gradeInfo.Score.HasValue)
+                    {
+                        sa.Score = gradeInfo.Score.Value;
+                    }
+                    if (gradeInfo.TeacherFeedback != null)
+                    {
+                        sa.TeacherFeedback = gradeInfo.TeacherFeedback;
+                    }
+                    if (!string.IsNullOrWhiteSpace(gradeInfo.Status))
+                    {
+                        sa.Status = gradeInfo.Status.Trim().ToUpper();
+                    }
+                    else if (gradeInfo.Score.HasValue)
+                    {
+                        sa.Status = "GRADED";
+                    }
+                    if (sa.CompletedAt == null && sa.Score.HasValue)
+                    {
+                        sa.CompletedAt = DateTime.UtcNow;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<StudentSubmissionDetailResponse?> GetStudentSubmissionAsync(int assignmentId, int studentId)
+        {
+            var assignment = await _context.Assignments
+                .Include(a => a.Lesson)
+                .ThenInclude(l => l.Class)
+                .Include(a => a.QuestionAssignments)
+                .ThenInclude(qa => qa.Question)
+                .Include(a => a.StudentAssignments)
+                .ThenInclude(sa => sa.Student)
+                .FirstOrDefaultAsync(a => a.Id == assignmentId);
+
+            if (assignment == null) return null;
+
+            var sa = assignment.StudentAssignments.FirstOrDefault(s => s.StudentId == studentId);
+            if (sa == null) return null;
+
+            return new StudentSubmissionDetailResponse
+            {
+                AssignmentId = assignment.Id,
+                AssignmentTitle = assignment.Title,
+                LessonId = assignment.LessonId,
+                LessonTitle = assignment.Lesson?.Title,
+                ClassId = assignment.Lesson?.ClassId ?? 0,
+                ClassName = assignment.Lesson?.Class?.Name ?? string.Empty,
+                TimeLimitMinutes = assignment.TimeLimitMinutes,
+                TotalPoints = assignment.QuestionAssignments.Sum(q => q.PointValue),
+                StartTime = assignment.StartTime,
+                Deadline = assignment.Deadline,
+                StudentId = sa.StudentId,
+                StudentName = sa.Student?.FullName ?? string.Empty,
+                StudentAvatar = sa.Student?.Avatar,
+                Score = sa.Score,
+                Status = sa.Status,
+                TeacherFeedback = sa.TeacherFeedback,
+                CompletedAt = sa.CompletedAt,
+                Questions = assignment.QuestionAssignments
+                    .OrderBy(q => q.OrderIndex)
+                    .Select(q => new AssignmentQuestionDetailDto
+                    {
+                        QuestionAssignmentId = q.Id,
+                        QuestionId = q.QuestionId,
+                        OrderIndex = q.OrderIndex,
+                        PointValue = q.PointValue,
+                        Type = q.Question?.Type ?? string.Empty,
+                        Content = q.Question?.Content ?? string.Empty,
+                        ImageUrl = q.Question?.ImageUrl,
+                        Difficulty = q.Question?.Difficulty ?? string.Empty,
+                        Answer = q.Question?.Answer ?? string.Empty
+                    }).ToList()
+            };
+        }
     }
 }

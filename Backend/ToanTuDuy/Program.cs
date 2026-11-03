@@ -128,6 +128,8 @@ builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IPayslipMailService, PayslipMailService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
@@ -139,6 +141,9 @@ builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
+builder.Services.AddSingleton<PayslipEmailQueue>();
+builder.Services.AddHostedService<PayslipEmailWorker>();
+builder.Services.AddHostedService<MonthlyPayslipEmailScheduler>();
 
 // Gửi email xác minh tài khoản qua Resend
 builder.Services.AddResend(options =>
