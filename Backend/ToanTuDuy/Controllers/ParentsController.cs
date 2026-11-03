@@ -8,6 +8,8 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [AllowAnonymous] // Bỏ qua kiểm tra Token
+
     public class ParentsController : ControllerBase
     {
         private readonly IParentStudentService _service;
@@ -21,6 +23,12 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? keyword)
         {
             return Ok(await _service.GetAllParentsAsync(keyword));
+        }
+
+        [HttpGet("students")]
+        public async Task<IActionResult> GetAllStudents([FromQuery] string? keyword)
+        {
+            return Ok(await _service.GetAllStudentsAsync(keyword));
         }
 
         [HttpGet("{id:int}")]

@@ -18,9 +18,12 @@
       </div>
 
       <!-- Name -->
-      <h3 class="font-bold text-gray-800 group-hover:text-orange-600 transition-colors line-clamp-2 mb-3">
+      <h3 class="font-bold text-gray-800 group-hover:text-orange-600 transition-colors line-clamp-2 mb-1">
         {{ cls.name }}
       </h3>
+      <p v-if="cls.courseName" class="text-[11px] text-orange-600 font-medium truncate mb-2.5">
+        {{ cls.courseName }}
+      </p>
 
       <!-- Info grid -->
       <div class="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-4">

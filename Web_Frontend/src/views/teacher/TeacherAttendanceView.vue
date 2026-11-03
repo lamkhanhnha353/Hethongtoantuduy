@@ -10,7 +10,7 @@
         </nav>
         <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Điểm danh & Quản lý chuyên cần</h1>
         <p class="text-xs md:text-sm text-gray-500 mt-0.5">
-          Theo dõi chuyên cần từng buổi học, xem đơn xin nghỉ phép và tra cứu lịch sử học sinh
+          Theo dõi chuyên cần từng buổi học, duyệt đơn xin nghỉ phép và tra cứu lịch sử học sinh
         </p>
       </div>
 
@@ -30,12 +30,19 @@
         <button
           type="button"
           @click="handleSaveBatchAttendance"
-          :disabled="isSavingBatch || !selectedLessonId || students.length === 0"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+          :disabled="isSavingBatch || !selectedLessonId || students.length === 0 || lockState.isLocked"
+          :class="[
+            'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer',
+            lockState.isLocked
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+              : 'bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50'
+          ]"
+          :title="lockState.isLocked ? 'Đã hết hạn điểm danh (Chỉ được điểm danh trong 1 ngày sau khi kết thúc buổi học)' : 'Lưu điểm danh cả lớp'"
         >
-          <ArrowPathIcon v-if="isSavingBatch" class="w-4 h-4 animate-spin" />
+          <LockClosedIcon v-if="lockState.isLocked" class="w-4 h-4" />
+          <ArrowPathIcon v-else-if="isSavingBatch" class="w-4 h-4 animate-spin" />
           <CheckCircleIcon v-else class="w-4 h-4" />
-          <span>Lưu tất cả điểm danh (Batch)</span>
+          <span>{{ lockState.isLocked ? 'Đã khóa điểm danh' : 'Lưu tất cả điểm danh' }}</span>
         </button>
       </div>
     </div>
@@ -48,11 +55,14 @@
           'flex items-center justify-between p-4 rounded-2xl shadow-xs border text-sm',
           feedback.type === 'success'
             ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : feedback.type === 'warning'
+            ? 'bg-amber-50 border-amber-200 text-amber-800'
             : 'bg-rose-50 border-rose-200 text-rose-800'
         ]"
       >
         <div class="flex items-center gap-3">
           <CheckCircleIcon v-if="feedback.type === 'success'" class="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <ExclamationTriangleIcon v-else-if="feedback.type === 'warning'" class="w-5 h-5 text-amber-600 flex-shrink-0" />
           <ExclamationCircleIcon v-else class="w-5 h-5 text-rose-600 flex-shrink-0" />
           <span class="font-medium">{{ feedback.message }}</span>
         </div>
@@ -66,13 +76,16 @@
       </div>
     </transition>
 
-    <!-- ─── Session & Class Selector Card ───────────────────────────────── -->
+    <!-- ─── Session & Class Selector Card (Only assigned classes & sorted lessons) ─── -->
     <div class="bg-white rounded-3xl border border-orange-100 p-5 shadow-sm space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Select Class -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- 1. Select Class (Only Assigned Classes) -->
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-            1. Chọn lớp học <span class="text-rose-500">*</span>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5 flex items-center justify-between">
+            <span>1. Chọn lớp phụ trách <span class="text-rose-500">*</span></span>
+            <span class="text-[11px] font-medium text-orange-600 lowercase">
+              ({{ classes.length }} lớp được phân công)
+            </span>
           </label>
           <div class="relative">
             <select
@@ -80,18 +93,24 @@
               @change="onClassChange"
               class="w-full text-xs font-semibold bg-orange-50/50 border border-orange-200 text-gray-900 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all"
             >
-              <option :value="null" disabled>-- Chọn lớp học --</option>
+              <option :value="null" disabled>-- Chọn lớp học đang phụ trách --</option>
               <option v-for="cls in classes" :key="cls.id" :value="cls.id">
                 {{ cls.name }} {{ cls.room ? `(${cls.room})` : '' }}
               </option>
             </select>
           </div>
+          <p v-if="classes.length === 0 && !isLoadingClasses" class="text-xs text-amber-600 mt-1">
+            Không tìm thấy lớp học nào được phân công cho giáo viên này.
+          </p>
         </div>
 
-        <!-- Select Lesson -->
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-            2. Chọn buổi học <span class="text-rose-500">*</span>
+        <!-- 2. Select Lesson (Sorted by Date & Sequenced: Buổi 1 -> Buổi 24) -->
+        <div class="lg:col-span-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5 flex items-center justify-between">
+            <span>2. Chọn buổi học <span class="text-rose-500">*</span></span>
+            <span class="text-[11px] font-medium text-gray-500">
+              (Sắp xếp theo ngày học: Buổi 1 &rarr; Buổi {{ lessons.length || 24 }})
+            </span>
           </label>
           <div class="relative">
             <select
@@ -101,102 +120,142 @@
               class="w-full text-xs font-semibold bg-orange-50/50 border border-orange-200 text-gray-900 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all disabled:opacity-50"
             >
               <option :value="null" disabled>
-                {{ isLoadingLessons ? 'Đang tải buổi học...' : (lessons.length === 0 ? '-- Lớp chưa có buổi học --' : '-- Chọn buổi học --') }}
+                {{ isLoadingLessons ? 'Đang tải danh sách buổi học...' : (lessons.length === 0 ? '-- Lớp chưa có buổi học nào --' : '-- Chọn buổi học --') }}
               </option>
-              <option v-for="les in lessons" :key="les.id" :value="les.id">
-                {{ formatDate(les.lessonDate) }} &bull; {{ les.title || `Buổi #${les.id}` }}
+              <option
+                v-for="les in filteredLessonsByTab"
+                :key="les.id"
+                :value="les.id"
+              >
+                {{ les.displayName }} [{{ les.timingStatus.label }}]
               </option>
             </select>
           </div>
         </div>
+      </div>
 
-        <!-- Quick Lesson ID Search / Direct Jump -->
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-            Tìm trực tiếp theo ID buổi
-          </label>
-          <div class="flex items-center gap-1.5">
-            <input
-              type="number"
-              v-model.number="directLessonIdInput"
-              placeholder="VD: 15"
-              @keyup.enter="jumpToDirectLesson"
-              class="w-full text-xs font-semibold bg-white border border-gray-200 text-gray-800 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
-            />
-            <button
-              type="button"
-              @click="jumpToDirectLesson"
-              class="px-3.5 py-2.5 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
-            >
-              Tìm
-            </button>
-          </div>
-        </div>
-
-        <!-- Batch API Mode Selection -->
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-            Phương thức lưu Batch
-          </label>
-          <select
-            v-model="batchApiMethod"
-            class="w-full text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
+      <!-- Quick Lesson Filter Bar by State: Tất cả, Đang diễn ra, Đã kết thúc, Đã điểm danh, Chưa điểm danh -->
+      <div v-if="lessons.length > 0" class="pt-2 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <span class="font-bold text-gray-600 text-[11px] uppercase tracking-wider">Lọc nhanh buổi học:</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            v-for="tab in lessonTabs"
+            :key="tab.id"
+            @click="currentLessonTab = tab.id"
+            :class="[
+              'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+              currentLessonTab === tab.id
+                ? 'bg-orange-500 text-white shadow-xs'
+                : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-900'
+            ]"
           >
-            <option value="lesson">POST /api/attendance/lesson/{id}</option>
-            <option value="batch">POST /api/attendance/batch</option>
-          </select>
+            {{ tab.label }}
+          </button>
         </div>
       </div>
 
-      <!-- Current Lesson Metadata Banner -->
+      <!-- ─── Current Lesson Metadata & Status Banner ───────────────────── -->
       <div
-        v-if="lessonDetail"
-        class="mt-3 p-4 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50/40 border border-orange-200 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
+        v-if="currentLesson"
+        class="mt-3 p-4 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50/40 border border-orange-200 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs"
       >
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0">
-            <AcademicCapIcon class="w-5 h-5" />
+          <div class="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0">
+            {{ currentLesson.lessonNumber || '1' }}
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-base text-gray-900">{{ lessonDetail.className || 'Lớp học' }}</span>
-              <span class="px-2 py-0.5 rounded-md font-semibold text-[11px] bg-orange-200/80 text-orange-900">
-                Buổi học #{{ lessonDetail.lessonId }}
-              </span>
+              <span class="font-bold text-base text-gray-900">{{ currentLesson.label }} - {{ lessonDetail?.className || 'Lớp học' }}</span>
+
+              <!-- Timing Status: Đang diễn ra / Đã kết thúc / Sắp diễn ra -->
               <span
                 :class="[
-                  'px-2 py-0.5 rounded-md font-semibold text-[11px]',
-                  lessonDetail.lessonStatus === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
-                  lessonDetail.lessonStatus === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-700'
+                  'px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1',
+                  currentLessonTiming.code === 'IN_PROGRESS' ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300' :
+                  currentLessonTiming.code === 'ENDED' ? 'bg-gray-200 text-gray-800' :
+                  'bg-blue-100 text-blue-800'
                 ]"
               >
-                {{ formatLessonStatus(lessonDetail.lessonStatus) }}
+                <span v-if="currentLessonTiming.code === 'IN_PROGRESS'" class="w-2 h-2 rounded-full bg-emerald-600 animate-ping"></span>
+                <span>{{ currentLessonTiming.label }}</span>
+              </span>
+
+              <!-- Attendance Status: Đã điểm danh / Chưa điểm danh -->
+              <span
+                :class="[
+                  'px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1',
+                  currentLessonAttendanceStatus.code === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                  currentLessonAttendanceStatus.code === 'PARTIAL' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                  'bg-rose-100 text-rose-800 border border-rose-300'
+                ]"
+              >
+                <CheckIcon v-if="currentLessonAttendanceStatus.code === 'COMPLETED'" class="w-3.5 h-3.5" />
+                <span>{{ currentLessonAttendanceStatus.label }}</span>
               </span>
             </div>
-            <p class="text-gray-600 mt-1 flex items-center gap-2 flex-wrap">
+
+            <!-- Date and Time -->
+            <p class="text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
               <span class="flex items-center gap-1 text-gray-700">
                 <CalendarDaysIcon class="w-3.5 h-3.5 text-orange-600" />
-                Ngày: {{ formatDate(lessonDetail.lessonDate) }}
+                Ngày học: <strong>{{ formatDate(currentLesson.lessonDate) }}</strong>
               </span>
-              <span v-if="lessonDetail.startTime" class="flex items-center gap-1 text-gray-700">
+              <span v-if="currentLesson.startTime" class="flex items-center gap-1 text-gray-700">
                 <ClockIcon class="w-3.5 h-3.5 text-orange-600" />
-                Giờ: {{ formatTime(lessonDetail.startTime) }} - {{ formatTime(lessonDetail.endTime) }}
+                Thời gian: {{ formatTime(currentLesson.startTime) }} - {{ formatTime(currentLesson.endTime) }}
               </span>
             </p>
           </div>
         </div>
 
-        <!-- Attendance Rate Badge -->
-        <div class="flex items-center gap-3 self-start md:self-auto bg-white/80 p-2.5 rounded-xl border border-orange-200">
-          <div class="text-right">
-            <p class="text-[11px] text-gray-500 font-medium">Tỷ lệ có mặt</p>
-            <p class="text-base font-bold text-emerald-700">{{ attendanceRate }}%</p>
+        <!-- Attendance Deadline / Lock Indicator -->
+        <div class="flex items-center gap-3 self-start md:self-auto">
+          <div
+            v-if="lockState.isLocked"
+            class="px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-right"
+          >
+            <p class="font-bold flex items-center gap-1 text-[11px] text-rose-700">
+              <LockClosedIcon class="w-3.5 h-3.5" /> ĐÃ HẾT HẠN ĐIỂM DANH
+            </p>
+            <p class="text-[10px] text-rose-600 mt-0.5">Quá 1 ngày sau khi kết thúc buổi</p>
           </div>
-          <div class="w-10 h-10 rounded-full border-2 border-emerald-400 flex items-center justify-center font-bold text-xs text-emerald-800 bg-emerald-50">
-            {{ lessonDetail.presentCount }}/{{ lessonDetail.totalStudents }}
+          <div
+            v-else
+            class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-right"
+          >
+            <p class="font-bold flex items-center gap-1 text-[11px] text-emerald-700">
+              <ClockIcon class="w-3.5 h-3.5" /> Có thể điểm danh
+            </p>
+            <p class="text-[10px] text-emerald-600 mt-0.5">Hạn chót: {{ lockState.deadlineFormatted }}</p>
+          </div>
+
+          <!-- Ratio ring -->
+          <div class="w-12 h-12 rounded-full border-2 border-orange-400 flex flex-col items-center justify-center font-bold text-xs text-orange-950 bg-white shadow-2xs">
+            <span>{{ attendanceRate }}%</span>
+            <span class="text-[8px] font-normal text-gray-500">có mặt</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ─── Warning Banner When Attendance is Locked (After 1 day) ──────── -->
+    <div
+      v-if="lockState.isLocked && currentLesson"
+      class="rounded-3xl border border-rose-200 bg-rose-50/90 p-4.5 flex items-start gap-3.5 text-xs text-rose-900 shadow-xs"
+    >
+      <div class="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
+        <LockClosedIcon class="w-4 h-4" />
+      </div>
+      <div class="flex-1">
+        <h4 class="font-bold text-sm text-rose-950">Ràng buộc bảo mật: Đã khóa quyền điểm danh cho buổi học này</h4>
+        <p class="text-rose-800 mt-1 leading-relaxed">
+          Theo quy chế của trung tâm, giáo viên chỉ được phép ghi nhận điểm danh trong thời gian buổi học diễn ra và <strong>tối đa 1 ngày (24 giờ) sau khi kết thúc buổi học</strong>.
+          Buổi học này đã kết thúc vào ngày <strong>{{ lockState.lessonEndTimeFormatted }}</strong> và đã hết hạn chỉnh sửa từ <strong>{{ lockState.deadlineFormatted }}</strong>.
+        </p>
+        <p class="text-rose-700 mt-1 font-medium">
+          Dữ liệu bên dưới đang ở <strong>Chế độ chỉ xem</strong>. Nếu cần điều chỉnh điểm danh học viên cho buổi học này, vui lòng liên hệ Ban Đào Tạo / Quản trị viên (Admin).
+        </p>
       </div>
     </div>
 
@@ -248,13 +307,19 @@
     <!-- ─── Controls Toolbar & Filters ──────────────────────────────────── -->
     <div class="bg-white rounded-3xl border border-orange-100 p-4 shadow-sm space-y-3">
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <!-- Quick Batch Actions -->
+        <!-- Quick Batch Actions (Disabled if locked) -->
         <div class="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             @click="markAllPresent"
-            :disabled="students.length === 0"
-            class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+            :disabled="students.length === 0 || lockState.isLocked"
+            :class="[
+              'px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5',
+              lockState.isLocked
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 disabled:opacity-50'
+            ]"
+            :title="lockState.isLocked ? 'Đã hết hạn điểm danh' : 'Đánh dấu tất cả có mặt'"
           >
             <CheckIcon class="w-3.5 h-3.5" />
             <span>Tất cả CÓ MẶT</span>
@@ -263,8 +328,13 @@
           <button
             type="button"
             @click="autoApplyExcusedForLeaveRequests"
-            :disabled="students.length === 0 || countWithLeaveRequest === 0"
-            class="px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-100/80 hover:bg-sky-200 text-sky-900 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+            :disabled="students.length === 0 || countWithLeaveRequest === 0 || lockState.isLocked"
+            :class="[
+              'px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5',
+              lockState.isLocked
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-sky-100/80 hover:bg-sky-200 text-sky-900 disabled:opacity-50'
+            ]"
             :title="`Có ${countWithLeaveRequest} học sinh gửi đơn xin nghỉ phép`"
           >
             <DocumentTextIcon class="w-3.5 h-3.5 text-sky-700" />
@@ -274,8 +344,8 @@
           <button
             type="button"
             @click="resetAllToUnmarked"
-            :disabled="students.length === 0"
-            class="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
+            :disabled="students.length === 0 || lockState.isLocked"
+            class="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Đặt lại
           </button>
@@ -402,7 +472,7 @@
                         Đơn xin nghỉ: {{ st.leaveReason || 'Phụ huynh xin phép' }}
                       </span>
                       <button
-                        v-if="st.status !== 'EXCUSED'"
+                        v-if="st.status !== 'EXCUSED' && !lockState.isLocked"
                         type="button"
                         @click="applyLeaveRequest(st)"
                         class="text-[10px] font-semibold text-sky-700 hover:text-sky-900 underline cursor-pointer"
@@ -421,8 +491,10 @@
                   <button
                     type="button"
                     @click="setStudentStatus(st, 'PRESENT')"
+                    :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1',
+                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'PRESENT'
                         ? 'bg-emerald-500 text-white shadow-xs ring-2 ring-emerald-300'
                         : 'bg-gray-100/80 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
@@ -436,8 +508,10 @@
                   <button
                     type="button"
                     @click="setStudentStatus(st, 'LATE')"
+                    :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1',
+                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'LATE'
                         ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300'
                         : 'bg-gray-100/80 text-gray-600 hover:bg-amber-50 hover:text-amber-700'
@@ -451,8 +525,10 @@
                   <button
                     type="button"
                     @click="setStudentStatus(st, 'EXCUSED')"
+                    :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1',
+                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'EXCUSED'
                         ? 'bg-sky-500 text-white shadow-xs ring-2 ring-sky-300'
                         : 'bg-gray-100/80 text-gray-600 hover:bg-sky-50 hover:text-sky-700'
@@ -465,8 +541,10 @@
                   <button
                     type="button"
                     @click="setStudentStatus(st, 'ABSENT')"
+                    :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1',
+                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'ABSENT'
                         ? 'bg-rose-500 text-white shadow-xs ring-2 ring-rose-300'
                         : 'bg-gray-100/80 text-gray-600 hover:bg-rose-50 hover:text-rose-700'
@@ -482,9 +560,11 @@
                 <input
                   type="text"
                   v-model="st.teacherNotes"
+                  :disabled="lockState.isLocked"
                   :placeholder="st.status === 'ABSENT' ? 'Lý do vắng mặt...' : 'Ghi chú thêm...'"
                   :class="[
                     'w-full text-xs rounded-xl px-3 py-2 border transition-all focus:outline-none focus:ring-2 focus:ring-orange-300',
+                    lockState.isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed border-gray-200' :
                     st.status === 'ABSENT' ? 'border-rose-300 bg-rose-50/20 text-rose-900 placeholder-rose-400' :
                     st.status === 'LATE' ? 'border-amber-300 bg-amber-50/20 text-amber-900' :
                     'border-gray-200 bg-white'
@@ -499,14 +579,15 @@
                   <button
                     type="button"
                     @click="handleSaveSingle(st)"
-                    :disabled="st.isSavingSingle || st.status === 'UNMARKED'"
+                    :disabled="st.isSavingSingle || st.status === 'UNMARKED' || lockState.isLocked"
                     :class="[
-                      'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1',
+                      'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1',
+                      lockState.isLocked ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
                       st.justSavedSingle
                         ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-orange-100/70 hover:bg-orange-200 text-orange-900'
+                        : 'bg-orange-100/70 hover:bg-orange-200 text-orange-900 cursor-pointer'
                     ]"
-                    :title="st.status === 'UNMARKED' ? 'Vui lòng chọn trạng thái trước khi lưu lẻ' : 'Lưu riêng học sinh này'"
+                    :title="lockState.isLocked ? 'Đã hết hạn điểm danh' : (st.status === 'UNMARKED' ? 'Vui lòng chọn trạng thái trước khi lưu lẻ' : 'Lưu riêng học sinh này')"
                   >
                     <ArrowPathIcon v-if="st.isSavingSingle" class="w-3.5 h-3.5 animate-spin text-orange-600" />
                     <CheckIcon v-else-if="st.justSavedSingle" class="w-3.5 h-3.5 text-emerald-600" />
@@ -539,12 +620,18 @@
         <button
           type="button"
           @click="handleSaveBatchAttendance"
-          :disabled="isSavingBatch || !selectedLessonId"
-          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+          :disabled="isSavingBatch || !selectedLessonId || lockState.isLocked"
+          :class="[
+            'inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all',
+            lockState.isLocked
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+              : 'bg-orange-500 hover:bg-orange-600 text-white cursor-pointer disabled:opacity-50'
+          ]"
         >
-          <ArrowPathIcon v-if="isSavingBatch" class="w-4 h-4 animate-spin" />
+          <LockClosedIcon v-if="lockState.isLocked" class="w-4 h-4" />
+          <ArrowPathIcon v-else-if="isSavingBatch" class="w-4 h-4 animate-spin" />
           <CheckCircleIcon v-else class="w-4 h-4" />
-          <span>Lưu tất cả điểm danh (Batch)</span>
+          <span>{{ lockState.isLocked ? 'Đã khóa điểm danh' : 'Lưu tất cả điểm danh' }}</span>
         </button>
       </div>
     </div>
@@ -718,6 +805,7 @@
               Đóng
             </button>
             <button
+              v-if="!lockState.isLocked"
               type="button"
               @click="applyLeaveRequestFromModal"
               class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white transition-colors cursor-pointer shadow-xs"
@@ -737,22 +825,27 @@ import { useRoute, useRouter } from 'vue-router'
 import attendanceService from '@/services/attendance.service'
 import classService from '@/services/class.service'
 import lessonService from '@/services/lesson.service'
+import teacherService from '@/services/teacher.service'
+import { useUserState } from '@/services/user-state'
+import { getProfileId } from '@/services/auth-storage'
 import {
   ChevronRightIcon,
   ArrowPathIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ExclamationTriangleIcon,
   XMarkIcon,
-  AcademicCapIcon,
   CalendarDaysIcon,
   ClockIcon,
   DocumentTextIcon,
   MagnifyingGlassIcon,
   CheckIcon,
+  LockClosedIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const router = useRouter()
+const { profile, fetchProfile } = useUserState()
 
 // ─── Component State ─────────────────────────────────────────────────────────
 const classes = ref([])
@@ -760,18 +853,26 @@ const lessons = ref([])
 
 const selectedClassId = ref(null)
 const selectedLessonId = ref(null)
-const directLessonIdInput = ref(null)
-const batchApiMethod = ref('lesson') // 'lesson' = POST /lesson/{id} | 'batch' = POST /batch
 
 const lessonDetail = ref(null)
 const students = ref([])
 
 const isLoading = ref(false)
+const isLoadingClasses = ref(false)
 const isLoadingLessons = ref(false)
 const isSavingBatch = ref(false)
 
 const searchQuery = ref('')
 const statusFilter = ref('ALL') // 'ALL', 'PRESENT', 'LATE', 'EXCUSED', 'ABSENT', 'UNMARKED', 'HAS_LEAVE'
+const currentLessonTab = ref('ALL') // 'ALL', 'IN_PROGRESS', 'ENDED', 'COMPLETED', 'UNMARKED'
+
+const lessonTabs = [
+  { id: 'ALL', label: 'Tất cả' },
+  { id: 'IN_PROGRESS', label: 'Đang diễn ra' },
+  { id: 'ENDED', label: 'Đã kết thúc' },
+  { id: 'COMPLETED', label: 'Đã điểm danh' },
+  { id: 'UNMARKED', label: 'Chưa điểm danh' },
+]
 
 // Modal states
 const showHistoryModal = ref(false)
@@ -784,7 +885,7 @@ const selectedLeaveStudent = ref(null)
 
 const feedback = reactive({
   message: '',
-  type: 'success', // 'success' | 'error'
+  type: 'success', // 'success' | 'warning' | 'error'
 })
 
 function showFeedback(message, type = 'success') {
@@ -794,10 +895,144 @@ function showFeedback(message, type = 'success') {
     if (feedback.message === message) {
       feedback.message = ''
     }
-  }, 4000)
+  }, 4500)
 }
 
-// ─── Computed Statistics ─────────────────────────────────────────────────────
+// ─── Current Selected Lesson ─────────────────────────────────────────────────
+const currentLesson = computed(() => {
+  return lessons.value.find(l => l.id === selectedLessonId.value) || null
+})
+
+// ─── Lesson Timing Status (Đang diễn ra / Đã kết thúc / Sắp diễn ra) ─────────
+function getLessonEndDateTime(les) {
+  if (!les) return null
+  const d = les.lessonDate ? new Date(les.lessonDate) : new Date()
+
+  if (les.endTime) {
+    if (typeof les.endTime === 'string') {
+      if (les.endTime.includes('T')) {
+        const parsed = new Date(les.endTime)
+        if (!isNaN(parsed.getTime())) return parsed
+      }
+      if (les.endTime.includes(':')) {
+        const [hh, mm] = les.endTime.split(':')
+        d.setHours(parseInt(hh, 10), parseInt(mm, 10), 0, 0)
+        return d
+      }
+    } else if (les.endTime instanceof Date) {
+      return les.endTime
+    }
+  }
+
+  // Fallback: end of the lesson day (23:59:59)
+  d.setHours(23, 59, 59, 999)
+  return d
+}
+
+function getLessonStartDateTime(les) {
+  if (!les) return null
+  const d = les.lessonDate ? new Date(les.lessonDate) : new Date()
+
+  if (les.startTime) {
+    if (typeof les.startTime === 'string') {
+      if (les.startTime.includes('T')) {
+        const parsed = new Date(les.startTime)
+        if (!isNaN(parsed.getTime())) return parsed
+      }
+      if (les.startTime.includes(':')) {
+        const [hh, mm] = les.startTime.split(':')
+        d.setHours(parseInt(hh, 10), parseInt(mm, 10), 0, 0)
+        return d
+      }
+    } else if (les.startTime instanceof Date) {
+      return les.startTime
+    }
+  }
+
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function calculateLessonTimingStatus(les) {
+  const now = new Date()
+  const start = getLessonStartDateTime(les)
+  const end = getLessonEndDateTime(les)
+
+  if (start && end) {
+    if (now >= start && now <= end) {
+      return { code: 'IN_PROGRESS', label: 'Đang diễn ra' }
+    }
+    if (now > end) {
+      return { code: 'ENDED', label: 'Đã kết thúc' }
+    }
+    return { code: 'UPCOMING', label: 'Sắp diễn ra' }
+  }
+
+  return { code: 'SCHEDULED', label: 'Theo lịch' }
+}
+
+const currentLessonTiming = computed(() => {
+  if (!currentLesson.value) return { code: 'NONE', label: 'Chưa chọn' }
+  return calculateLessonTimingStatus(currentLesson.value)
+})
+
+// ─── Attendance Status: Đã điểm danh / Chưa điểm danh ───────────────────────
+const currentLessonAttendanceStatus = computed(() => {
+  if (!lessonDetail.value || students.value.length === 0) {
+    return { code: 'UNMARKED', label: 'Chưa điểm danh' }
+  }
+  const unmarked = stats.value.unmarked
+  const total = stats.value.total
+  if (unmarked === 0 && total > 0) {
+    return { code: 'COMPLETED', label: `Đã điểm danh (${total}/${total})` }
+  }
+  if (unmarked < total && unmarked > 0) {
+    return { code: 'PARTIAL', label: `Đang điểm danh (${total - unmarked}/${total})` }
+  }
+  return { code: 'UNMARKED', label: `Chưa điểm danh (${total} HS)` }
+})
+
+// ─── RÀNG BUỘC: Giáo viên chỉ có thể điểm danh đến sau khi kết thúc buổi 1 ngày ──
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+const lockState = computed(() => {
+  if (!currentLesson.value) {
+    return { isLocked: false, deadlineFormatted: '', lessonEndTimeFormatted: '' }
+  }
+
+  const end = getLessonEndDateTime(currentLesson.value)
+  if (!end) {
+    return { isLocked: false, deadlineFormatted: '', lessonEndTimeFormatted: '' }
+  }
+
+  const deadline = new Date(end.getTime() + ONE_DAY_MS)
+  const now = new Date()
+  const isLocked = now > deadline
+
+  return {
+    isLocked,
+    deadline,
+    deadlineFormatted: formatDateTime(deadline),
+    lessonEndTimeFormatted: formatDateTime(end),
+  }
+})
+
+// ─── Lessons Filter by Tabs (Tất cả, Đang diễn ra, Đã kết thúc...) ───────────
+const filteredLessonsByTab = computed(() => {
+  const tab = currentLessonTab.value
+  if (tab === 'ALL') return lessons.value
+
+  return lessons.value.filter(les => {
+    const timing = les.timingStatus?.code
+    if (tab === 'IN_PROGRESS') return timing === 'IN_PROGRESS'
+    if (tab === 'ENDED') return timing === 'ENDED'
+    if (tab === 'COMPLETED') return les.isAttendanceCompleted
+    if (tab === 'UNMARKED') return !les.isAttendanceCompleted
+    return true
+  })
+})
+
+// ─── Statistics Counters ─────────────────────────────────────────────────────
 const stats = computed(() => {
   const list = students.value
   return {
@@ -823,14 +1058,12 @@ const countWithLeaveRequest = computed(() => {
 const filteredStudents = computed(() => {
   let list = students.value
 
-  // Filter by status
   if (statusFilter.value === 'HAS_LEAVE') {
     list = list.filter(s => s.hasLeaveRequest)
   } else if (statusFilter.value !== 'ALL') {
     list = list.filter(s => s.status === statusFilter.value)
   }
 
-  // Filter by query
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.trim().toLowerCase()
     list = list.filter(s =>
@@ -842,16 +1075,14 @@ const filteredStudents = computed(() => {
   return list
 })
 
-// ─── Lifecycle & Initial Load ────────────────────────────────────────────────
+// ─── Lifecycle & Load Data ───────────────────────────────────────────────────
 onMounted(async () => {
   await loadClasses()
 
-  // Handle URL query parameters if navigated from schedule or class view
   if (route.query.lessonId) {
     const lId = parseInt(route.query.lessonId, 10)
     if (!isNaN(lId)) {
       selectedLessonId.value = lId
-      directLessonIdInput.value = lId
       await fetchAttendance(lId)
     }
   } else if (route.query.classId) {
@@ -863,29 +1094,103 @@ onMounted(async () => {
   }
 })
 
-// ─── Load Classes & Lessons ──────────────────────────────────────────────────
+// ─── 1. Load Classes: CHỈ NHỮNG LỚP MÀ GIÁO VIÊN ĐƯỢC PHÂN CÔNG ─────────────
 async function loadClasses() {
+  isLoadingClasses.value = true
   try {
-    const data = await classService.getAll()
-    classes.value = Array.isArray(data) ? data : (data.items || [])
+    const [allClassesData, userProfile] = await Promise.all([
+      classService.getAll(),
+      fetchProfile()
+    ])
+
+    const rawClasses = Array.isArray(allClassesData) ? allClassesData : (allClassesData.items || [])
+    
+    // Determine current teacher identifier
+    const role = (userProfile?.role || '').toLowerCase()
+    let teacherProfileId = getProfileId()
+    const teacherFullName = (userProfile?.fullName || '').trim().toLowerCase()
+    const teacherPhone = (userProfile?.phone || '').trim()
+
+    // If teacherProfileId is not in storage, resolve from teacherService
+    if (!teacherProfileId && role === 'teacher') {
+      try {
+        const teachersList = await teacherService.getAll()
+        const rawTeachers = Array.isArray(teachersList) ? teachersList : (teachersList.items || [])
+        const matched = rawTeachers.find(t =>
+          (teacherPhone && t.phone === teacherPhone) ||
+          (teacherFullName && t.fullName && t.fullName.trim().toLowerCase() === teacherFullName) ||
+          (userProfile?.accountId && t.accountId === userProfile.accountId)
+        )
+        if (matched) {
+          teacherProfileId = matched.id
+        }
+      } catch (err) {
+        console.warn('Không thể tra cứu hồ sơ giáo viên:', err)
+      }
+    }
+
+    // Filter only assigned classes
+    const assigned = rawClasses.filter(c => {
+      // Admin has permission to view all classes
+      if (role === 'admin') return true
+
+      // Match by teacherId (TeacherProfile.Id)
+      if (teacherProfileId && c.teacherId === teacherProfileId) return true
+
+      // Match by teacherName
+      if (teacherFullName && c.teacherName && c.teacherName.trim().toLowerCase() === teacherFullName) return true
+
+      return false
+    })
+
+    classes.value = assigned.length > 0 ? assigned : (role === 'admin' ? rawClasses : [])
+
     if (classes.value.length > 0 && !selectedClassId.value) {
       selectedClassId.value = classes.value[0].id
       await loadLessonsByClass(selectedClassId.value)
     }
   } catch (err) {
     console.warn('Lỗi khi tải danh sách lớp học:', err)
+  } finally {
+    isLoadingClasses.value = false
   }
 }
 
+// ─── 2. Load Lessons: SORT THEO NGÀY & ĐÁNH SỐ BUỔI 1 -> BUỔI 24 ────────────
 async function loadLessonsByClass(classId) {
   if (!classId) return
   isLoadingLessons.value = true
   lessons.value = []
   try {
     const data = await lessonService.getByClass(classId)
-    lessons.value = Array.isArray(data) ? data : (data.items || [])
+    const rawLessons = Array.isArray(data) ? data : (data.items || [])
+
+    // 1. Sort ascending by date (ngày cũ nhất -> mới nhất)
+    const sorted = [...rawLessons].sort((a, b) => {
+      const timeA = new Date(a.lessonDate || a.date).getTime()
+      const timeB = new Date(b.lessonDate || b.date).getTime()
+      return timeA - timeB
+    })
+
+    // 2. Number sequentially: Buổi 1 -> Buổi 24
+    lessons.value = sorted.map((les, index) => {
+      const lessonNumber = index + 1
+      const label = `Buổi ${lessonNumber}`
+      const timingStatus = calculateLessonTimingStatus(les)
+      return {
+        ...les,
+        lessonNumber,
+        label,
+        timingStatus,
+        displayName: `${label} - ${formatDate(les.lessonDate)}`,
+        isAttendanceCompleted: les.status === 'COMPLETED'
+      }
+    })
+
     if (lessons.value.length > 0 && !selectedLessonId.value) {
-      selectedLessonId.value = lessons.value[0].id
+      // Find today or next upcoming lesson, otherwise default to first
+      const todayLesson = lessons.value.find(l => l.timingStatus.code === 'IN_PROGRESS') || lessons.value[0]
+      selectedLessonId.value = todayLesson.id
       await fetchAttendance(selectedLessonId.value)
     }
   } catch (err) {
@@ -908,30 +1213,24 @@ async function onLessonChange() {
   }
 }
 
-async function jumpToDirectLesson() {
-  if (!directLessonIdInput.value) return
-  selectedLessonId.value = directLessonIdInput.value
-  await fetchAttendance(directLessonIdInput.value)
-}
-
 function reloadCurrentLesson() {
   if (selectedLessonId.value) {
     fetchAttendance(selectedLessonId.value)
   }
 }
 
-// ─── 1. GET /api/attendance/lesson/{lessonId} ────────────────────────────────
+// ─── GET /api/attendance/lesson/{lessonId} ───────────────────────────────────
 async function fetchAttendance(lessonId) {
   if (!lessonId) return
   isLoading.value = true
   try {
     const res = await attendanceService.getByLesson(lessonId)
     lessonDetail.value = res
+
     if (res.classId && selectedClassId.value !== res.classId) {
       selectedClassId.value = res.classId
     }
 
-    // Map student items with extra UI state
     students.value = (res.students || []).map(st => ({
       ...st,
       status: st.status || 'UNMARKED',
@@ -939,6 +1238,11 @@ async function fetchAttendance(lessonId) {
       isSavingSingle: false,
       justSavedSingle: false,
     }))
+
+    // If attendance is locked, show a notice
+    if (lockState.value.isLocked) {
+      showFeedback('Buổi học này đã kết thúc hơn 1 ngày. Quyền điểm danh đã khóa (Chế độ chỉ xem).', 'warning')
+    }
   } catch (err) {
     const msg = err.response?.data?.message || `Không thể tải thông tin điểm danh buổi #${lessonId}.`
     showFeedback(msg, 'error')
@@ -949,19 +1253,31 @@ async function fetchAttendance(lessonId) {
 
 // ─── Status change helpers ───────────────────────────────────────────────────
 function setStudentStatus(student, status) {
+  if (lockState.value.isLocked) {
+    showFeedback('Đã hết hạn điểm danh cho buổi học này.', 'warning')
+    return
+  }
   student.status = status
   student.justSavedSingle = false
 }
 
 function markAllPresent() {
+  if (lockState.value.isLocked) {
+    showFeedback('Đã hết hạn điểm danh cho buổi học này.', 'warning')
+    return
+  }
   students.value.forEach(st => {
     st.status = 'PRESENT'
     st.justSavedSingle = false
   })
-  showFeedback('Đã đặt tất cả học sinh là CÓ MẶT.', 'success')
+  showFeedback('Đã đánh dấu tất cả học sinh là CÓ MẶT.', 'success')
 }
 
 function autoApplyExcusedForLeaveRequests() {
+  if (lockState.value.isLocked) {
+    showFeedback('Đã hết hạn điểm danh cho buổi học này.', 'warning')
+    return
+  }
   let count = 0
   students.value.forEach(st => {
     if (st.hasLeaveRequest) {
@@ -977,20 +1293,28 @@ function autoApplyExcusedForLeaveRequests() {
 }
 
 function resetAllToUnmarked() {
+  if (lockState.value.isLocked) {
+    showFeedback('Đã hết hạn điểm danh cho buổi học này.', 'warning')
+    return
+  }
   students.value.forEach(st => {
     st.status = 'UNMARKED'
     st.justSavedSingle = false
   })
 }
 
-// ─── 2. POST /api/attendance/lesson/{lessonId} & POST /api/attendance/batch ──
+// ─── POST /api/attendance/lesson/{lessonId} (Save All Batch) ─────────────────
 async function handleSaveBatchAttendance() {
   if (!selectedLessonId.value) return
 
-  // Validate that all students have a status
+  if (lockState.value.isLocked) {
+    showFeedback('Đã quá thời hạn điểm danh cho buổi học này (quá 1 ngày). Không thể lưu.', 'error')
+    return
+  }
+
   const unassigned = students.value.filter(s => !s.status || s.status === 'UNMARKED')
   if (unassigned.length > 0) {
-    if (!confirm(`Còn ${unassigned.length} học sinh chưa được đánh dấu điểm danh. Bạn có muốn tiếp tục lưu? (Các em này sẽ được giữ trạng thái hoặc đặt mặc định)`)) {
+    if (!confirm(`Còn ${unassigned.length} học sinh chưa được đánh dấu điểm danh. Các em này sẽ được ghi nhận là VẮNG MẶT. Bạn có muốn tiếp tục lưu?`)) {
       return
     }
   }
@@ -1003,18 +1327,7 @@ async function handleSaveBatchAttendance() {
   }))
 
   try {
-    let res
-    if (batchApiMethod.value === 'lesson') {
-      // POST /api/attendance/lesson/{lessonId}
-      res = await attendanceService.saveBatchByLesson(selectedLessonId.value, items)
-    } else {
-      // POST /api/attendance/batch
-      res = await attendanceService.saveBatch({
-        lessonId: selectedLessonId.value,
-        attendances: items,
-      })
-    }
-
+    const res = await attendanceService.saveBatchByLesson(selectedLessonId.value, items)
     const updatedDetail = res?.data || res
     if (updatedDetail && updatedDetail.lessonId) {
       lessonDetail.value = updatedDetail
@@ -1034,9 +1347,15 @@ async function handleSaveBatchAttendance() {
   }
 }
 
-// ─── 3. PUT /api/attendance/lesson/{lessonId}/student/{studentId} ───────────
+// ─── PUT /api/attendance/lesson/{lessonId}/student/{studentId} (Save Single) ─
 async function handleSaveSingle(student) {
   if (!selectedLessonId.value || !student.studentId) return
+
+  if (lockState.value.isLocked) {
+    showFeedback('Đã hết thời hạn điểm danh. Không thể cập nhật.', 'error')
+    return
+  }
+
   if (student.status === 'UNMARKED') {
     showFeedback('Vui lòng chọn trạng thái điểm danh trước khi lưu.', 'error')
     return
@@ -1064,7 +1383,7 @@ async function handleSaveSingle(student) {
   }
 }
 
-// ─── 4. GET /api/attendance/student/{studentId}?classId={classId} ───────────
+// ─── GET /api/attendance/student/{studentId}?classId={classId} (History) ────
 async function openStudentHistory(student) {
   selectedStudentHistory.value = student
   studentHistoryList.value = []
@@ -1091,6 +1410,10 @@ function openLeaveDetailModal(student) {
 }
 
 function applyLeaveRequest(student) {
+  if (lockState.value.isLocked) {
+    showFeedback('Đã hết hạn điểm danh cho buổi học này.', 'warning')
+    return
+  }
   student.status = 'EXCUSED'
   if (!student.teacherNotes) {
     student.teacherNotes = student.leaveReason ? `Đơn xin nghỉ: ${student.leaveReason}` : 'Có đơn xin nghỉ phép'
@@ -1127,6 +1450,11 @@ function formatTime(timeStr) {
   })
 }
 
+function formatDateTime(d) {
+  if (!d) return ''
+  return `${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })} ngày ${d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+}
+
 function formatStatusLabel(st) {
   switch (st) {
     case 'PRESENT': return 'Có mặt'
@@ -1135,16 +1463,6 @@ function formatStatusLabel(st) {
     case 'ABSENT': return 'Vắng mặt'
     case 'UNMARKED': return 'Chưa điểm danh'
     default: return st || '—'
-  }
-}
-
-function formatLessonStatus(s) {
-  switch (s) {
-    case 'COMPLETED': return 'Đã kết thúc'
-    case 'IN_PROGRESS': return 'Đang diễn ra'
-    case 'SCHEDULED': return 'Sắp diễn ra'
-    case 'CANCELLED': return 'Đã hủy'
-    default: return s || 'Đang diễn ra'
   }
 }
 

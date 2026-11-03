@@ -7,8 +7,8 @@ import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
 
 import { API_URL } from '@/config/env';
 import { EnrollmentBottomSheet } from '@/components/courses/EnrollmentBottomSheet';
+import { openPaymentUrl } from '@/lib/paymentNavigation';
 import { paymentService } from '@/services/paymentService';
-import { useSession } from '@/hooks/useSession';
 
 const { width } = Dimensions.get('window');
 const SLIDE_WIDTH = width - 40;
@@ -160,7 +160,6 @@ export default function CourseDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams(); 
-  const { session } = useSession();
 
   const [course, setCourse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -233,15 +232,22 @@ export default function CourseDetailScreen() {
     return () => clearInterval(interval);
   }, [course]);
 
-  const getAccessToken = () => {
-    if (typeof session === 'string') {
-      try { return JSON.parse(session).accessToken || session; } catch { return session; }
-    }
-    return session && typeof session === 'object' ? (session as any).accessToken : '';
-  };
-
   const handleConfirmEnrollment = (studentId: number, classId: number) =>
-    paymentService.createEnrollmentReservation(studentId, classId, course.price, getAccessToken());
+    paymentService.createEnrollmentReservation(studentId, classId);
+
+  const handlePayInvoice = async (invoiceId: number) => {
+    setIsProcessingPayment(true);
+    try {
+      const paymentUrl = await paymentService.getVNPayUrlForInvoice(invoiceId);
+      await openPaymentUrl(paymentUrl, responseCode => {
+        router.push(`/payment-result?code=${responseCode ?? ''}`);
+      });
+    } catch (error) {
+      Alert.alert('Lỗi thanh toán', error instanceof Error ? error.message : 'Lỗi hệ thống.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   const handleScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
@@ -500,7 +506,7 @@ export default function CourseDetailScreen() {
         onClose={() => setShowEnrollmentSheet(false)}
         course={course}
         onConfirm={handleConfirmEnrollment}
-        onPayInvoice={undefined}
+        onPayInvoice={handlePayInvoice}
       />
 
       {isProcessingPayment && (

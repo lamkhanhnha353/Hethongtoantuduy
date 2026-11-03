@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -73,6 +72,36 @@ namespace ToanTuDuy.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        // --- Danh sách học viên của lớp học ---
+        [HttpGet("{id}/students")]
+        public async Task<IActionResult> GetStudents(int id)
+        {
+            var students = await _classService.GetStudentsByClassIdAsync(id);
+            return Ok(students);
+        }
+
+        [HttpPost("{id}/students")]
+        public async Task<IActionResult> AddStudent(int id, [FromBody] AddClassStudentRequest request)
+        {
+            try
+            {
+                var result = await _classService.AddStudentToClassAsync(id, request.StudentId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}/students/{studentId}")]
+        public async Task<IActionResult> RemoveStudent(int id, int studentId)
+        {
+            var success = await _classService.RemoveStudentFromClassAsync(id, studentId);
+            if (!success) return NotFound(new { message = "Không tìm thấy học viên trong lớp." });
+            return Ok(new { message = "Xóa học viên khỏi lớp thành công." });
         }
     }
 }
