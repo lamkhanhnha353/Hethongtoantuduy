@@ -292,6 +292,7 @@ const teacherMenuItems = [
     icon: ChatBubbleLeftRightIcon,
     children: [
       { id: 't-attendance-rep', label: 'Thống kê chuyên cần', icon: ChartBarIcon, to: '/teacher/reports/attendance' },
+      { id: 't-payslip', label: 'Phiếu lương cá nhân', icon: BanknotesIcon, to: '/teacher/payslip' },
       { id: 't-notices', label: 'Gửi thông báo, nhắc nhở', icon: BellAlertIcon, to: '/teacher/communication/notices' },
     ],
   },
@@ -349,8 +350,7 @@ const adminMenuItems = [
     icon: BanknotesIcon,
     children: [
       { id: 'invoices', label: 'Hóa đơn & Biên lai', icon: CurrencyDollarIcon, to: '/finance/invoices' },
-      { id: 'transactions', label: 'Lịch sử giao dịch', icon: ArrowsRightLeftIcon, to: '/finance/transactions' },
-    ],
+      { id: 'payroll', label: 'Lương Giáo viên', icon: BanknotesIcon, to: '/finance/payroll' }    ],
   },
   {
     id: 'communication',

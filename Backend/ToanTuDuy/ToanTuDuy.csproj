@@ -21,4 +21,10 @@
     <PackageReference Include="Resend" Version="0.24.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Templates\Payslip.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

@@ -23,6 +23,7 @@ import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 
 // Financial Management
 import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
+import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
 
 // Account Module
 import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
@@ -41,6 +42,7 @@ import TeacherAttendanceReportView from "@/views/teacher/TeacherAttendanceReport
 import TeacherNoticesView from "@/views/teacher/TeacherNoticesView.vue";
 import TeacherProfileView from "@/views/teacher/TeacherProfileView.vue";
 import TeacherPasswordView from "@/views/teacher/TeacherPasswordView.vue";
+import TeacherPayslipView from "@/views/teacher/TeacherPayslipView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,6 +67,12 @@ const router = createRouter({
           name: "teacher-schedule",
           component: TeacherScheduleView,
           meta: { title: "Thời khóa biểu cá nhân" },
+        },
+        {
+          path: "payslip",
+          name: "teacher-payslip",
+          component: TeacherPayslipView,
+          meta: { title: "Phiếu lương cá nhân" },
         },
         {
           path: "classes",
@@ -220,9 +228,10 @@ const router = createRouter({
           meta: { title: "Hóa đơn & Biên lai" },
         },
         {
-          path: "finance/transactions",
-          component: PlaceholderView,
-          meta: { title: "Lịch sử giao dịch" },
+          path: "finance/payroll",
+          name: "admin-payroll",
+          component: AdminPayrollView,
+          meta: { title: "Quản lý Lương Giáo viên" },
         },
 
         // Communication
