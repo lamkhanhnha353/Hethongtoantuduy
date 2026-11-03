@@ -14,10 +14,14 @@ namespace ToanTuDuy.Services
     public class LeaveRequestService : ILeaveRequestService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public LeaveRequestService(ApplicationDbContext context)
+        public LeaveRequestService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<LeaveRequestResponse> CreateLeaveRequestAsync(int accountId, LeaveRequestCreateRequest request)
@@ -139,6 +143,7 @@ namespace ToanTuDuy.Services
             var leaveRequest = await _context.LeaveRequests
                 .Include(request => request.Lesson)
                     .ThenInclude(lesson => lesson.Class)
+                .Include(request => request.Student)
                 .FirstOrDefaultAsync(request =>
                     request.Id == requestId
                     && request.Lesson.Class.TeacherId.HasValue
@@ -175,6 +180,21 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            var title = isApproved
+                ? "Đơn xin nghỉ đã được duyệt"
+                : "Đơn xin nghỉ bị từ chối";
+            var body = isApproved
+                ? $"Đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của {leaveRequest.Student.FullName} đã được giáo viên chấp thuận."
+                : $"Đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của {leaveRequest.Student.FullName} đã bị giáo viên từ chối.";
+
+            await _notificationService.CreateForStudentAsync(
+                leaveRequest.StudentId,
+                NotificationTypes.Attendance,
+                title,
+                body,
+                $"LEAVE_REQUEST:{leaveRequest.Id}:{leaveRequest.Status}");
+
             return true;
         }
 

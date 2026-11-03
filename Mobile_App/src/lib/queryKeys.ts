@@ -1,4 +1,19 @@
+import type { NotificationType } from '@/types/notification';
+
 export const profileQueryKey = ['profile'] as const;
+
+export const notificationsRootQueryKey = ['notifications'] as const;
+
+export const notificationListRootQueryKey = ['notifications', 'list'] as const;
+
+export const notificationUnreadCountQueryKey = ['notifications', 'unreadCount'] as const;
+
+export function notificationListQueryKey(filters: {
+  unreadOnly: boolean;
+  type: NotificationType | null;
+}) {
+  return [...notificationListRootQueryKey, filters.unreadOnly, filters.type] as const;
+}
 
 export const studentsQueryKey = ['students'] as const;
 

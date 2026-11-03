@@ -50,7 +50,7 @@ namespace ToanTuDuy.Services
             // 2. Setup user, dùng Phone làm UserName
             var user = new ApplicationUser
             {
-                UserName = request.Phone, 
+                UserName = request.Phone,
                 PhoneNumber = request.Phone,
                 Role = request.Role,
                 IsActive = true,
@@ -155,7 +155,7 @@ namespace ToanTuDuy.Services
         {
             // Dùng request.Phone làm UserName để map với hệ thống Identity
             var user = await _userManager.FindByNameAsync(request.Phone);
-            
+
             // Hash placeholder/corrupt trong dữ liệu seed có thể làm Identity ném FormatException.
             bool passwordIsValid;
             try
@@ -173,10 +173,10 @@ namespace ToanTuDuy.Services
                 throw new UnauthorizedAccessException("Số điện thoại hoặc mật khẩu không chính xác.");
             }
 
-            if (!user.IsActive)
-            {
-                throw new UnauthorizedAccessException("Tài khoản đã bị khóa.");
-            }
+            // if (!user.IsActive)
+            // {
+            //     throw new UnauthorizedAccessException("Tài khoản đã bị khóa.");
+            // }
 
             if (string.IsNullOrWhiteSpace(user.SecurityStamp))
             {

@@ -12,10 +12,14 @@ namespace ToanTuDuy.Services
     public class AttendanceService : IAttendanceService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public AttendanceService(ApplicationDbContext context)
+        public AttendanceService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<LessonAttendanceDetailResponse?> GetAttendanceByLessonIdAsync(int lessonId)
@@ -153,6 +157,13 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
+            await NotifyAbsentOrLateAsync(
+                request.LessonId,
+                lesson.LessonDate,
+                request.Attendances.Select(item => (
+                    item.StudentId,
+                    Status: item.Status?.Trim().ToUpper() ?? "PRESENT")));
+
             // Trả về dữ liệu chi tiết sau khi đã cập nhật
             var result = await GetAttendanceByLessonIdAsync(request.LessonId);
             return result!;
@@ -207,6 +218,11 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
+            await NotifyAbsentOrLateAsync(
+                lessonId,
+                lesson.LessonDate,
+                new[] { (dto.StudentId, Status: normalizedStatus) });
+
             var leave = await _context.LeaveRequests
                 .FirstOrDefaultAsync(lr => lr.LessonId == lessonId && lr.StudentId == dto.StudentId);
 
@@ -252,6 +268,55 @@ namespace ToanTuDuy.Services
                     TeacherNotes = a.TeacherNotes
                 })
                 .ToListAsync();
+        }
+
+        private async Task NotifyAbsentOrLateAsync(
+            int lessonId,
+            DateTime lessonDate,
+            IEnumerable<(int StudentId, string Status)> items)
+        {
+            var alerts = items
+                .Where(item => item.Status == "ABSENT" || item.Status == "LATE")
+                .GroupBy(item => item.StudentId)
+                .Select(group => group.Last())
+                .ToList();
+
+            if (alerts.Count == 0)
+            {
+                return;
+            }
+
+            var studentIds = alerts
+                .Select(alert => alert.StudentId)
+                .Distinct()
+                .ToList();
+
+            var studentNames = await _context.StudentProfiles
+                .AsNoTracking()
+                .Where(student => studentIds.Contains(student.Id))
+                .Select(student => new { student.Id, student.FullName })
+                .ToDictionaryAsync(student => student.Id, student => student.FullName);
+
+            foreach (var alert in alerts)
+            {
+                var studentName = studentNames.TryGetValue(alert.StudentId, out var name)
+                    ? name
+                    : "Học sinh";
+                var isAbsent = alert.Status == "ABSENT";
+                var title = isAbsent
+                    ? "Điểm danh: học sinh vắng mặt"
+                    : "Điểm danh: học sinh đi trễ";
+                var body = isAbsent
+                    ? $"{studentName} vắng mặt trong buổi học ngày {lessonDate:dd/MM/yyyy}."
+                    : $"{studentName} đi trễ trong buổi học ngày {lessonDate:dd/MM/yyyy}.";
+
+                await _notificationService.CreateForStudentAsync(
+                    alert.StudentId,
+                    NotificationTypes.Attendance,
+                    title,
+                    body,
+                    $"LESSON:{lessonId}:STUDENT:{alert.StudentId}:{alert.Status}");
+            }
         }
     }
 }

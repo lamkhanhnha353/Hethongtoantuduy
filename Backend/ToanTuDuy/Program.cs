@@ -138,6 +138,7 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 builder.Services.AddSingleton<PayslipEmailQueue>();
