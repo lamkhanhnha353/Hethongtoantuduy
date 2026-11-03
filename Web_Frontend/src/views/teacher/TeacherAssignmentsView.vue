@@ -188,7 +188,7 @@
               </span>
 
               <span class="text-[10px] font-semibold bg-orange-50 text-orange-800 border border-orange-200 px-2 py-0.5 rounded">
-                Thang {{ item.totalPoints }} điểm
+                {{ item.totalPoints }} điểm gốc • Thang 100đ
               </span>
             </div>
 
@@ -447,8 +447,14 @@
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
-                      {{ q.difficulty }}
+                    <span
+                      :class="[
+                        'text-[10px] font-bold px-1.5 py-0.5 rounded',
+                        q.difficulty === 'EASY' ? 'bg-emerald-100 text-emerald-800' :
+                        q.difficulty === 'MEDIUM' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                      ]"
+                    >
+                      {{ q.difficulty === 'EASY' ? 'Dễ (1.0đ)' : q.difficulty === 'MEDIUM' ? 'Trung bình (1.5đ)' : 'Khó (2.0đ)' }}
                     </span>
                     <span class="text-[10px] font-semibold text-orange-800">
                       {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
@@ -457,19 +463,18 @@
                   <p class="text-xs text-gray-900 line-clamp-2">{{ q.content }}</p>
                 </div>
 
-                <!-- Point input if selected -->
+                <!-- Point selector if selected (Mốc chuẩn 1, 1.5, 2) -->
                 <div v-if="isQuestionSelected(q.id)" class="flex items-center gap-1">
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0.1"
-                    max="100"
+                  <select
                     :value="getQuestionPoint(q.id)"
-                    @input="updateQuestionPoint(q.id, $event.target.value)"
-                    class="w-14 text-center rounded border border-orange-300 p-1 text-xs font-bold text-orange-900"
-                    title="Điểm số câu này"
-                  />
-                  <span class="text-[10px] text-gray-500 font-medium">đ</span>
+                    @change="updateQuestionPoint(q.id, $event.target.value)"
+                    class="rounded-lg border border-orange-300 p-1 text-xs font-bold text-orange-950 bg-white cursor-pointer"
+                    title="Mốc điểm theo độ khó: 1, 1.5, 2"
+                  >
+                    <option :value="1.0">1.0 đ (Dễ)</option>
+                    <option :value="1.5">1.5 đ (TB)</option>
+                    <option :value="2.0">2.0 đ (Khó)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -612,7 +617,10 @@
                       </span>
                     </td>
                     <td class="py-2.5 px-3 text-center font-bold text-gray-800">
-                      {{ st.score !== null && st.score !== undefined ? `${st.score}đ` : '--' }}
+                      <span v-if="st.score !== null && st.score !== undefined" class="text-orange-950 font-extrabold">
+                        {{ st.score }} / 100đ
+                      </span>
+                      <span v-else class="text-gray-400">--</span>
                     </td>
                     <td class="py-2.5 px-3 text-right">
                       <button
@@ -718,15 +726,52 @@
               </span>
             </div>
 
-            <p class="font-semibold text-gray-900 whitespace-pre-line leading-relaxed">
+            <!-- Content & Multiple choice options -->
+            <div v-if="q.type === 'MULTIPLE_CHOICE'" class="space-y-2">
+              <p class="font-semibold text-gray-900 whitespace-pre-line leading-relaxed">
+                {{ parseMultipleChoice(q.content, q.answer).questionText || q.content }}
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div
+                  v-for="optKey in ['A', 'B', 'C', 'D']"
+                  :key="optKey"
+                  :class="[
+                    'p-2 rounded-xl border text-xs flex items-center gap-2',
+                    parseMultipleChoice(q.content, q.answer).correctOption === optKey
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold'
+                      : 'bg-white border-orange-100 text-gray-800'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'w-5 h-5 rounded-md flex items-center justify-center font-bold text-[10px]',
+                      parseMultipleChoice(q.content, q.answer).correctOption === optKey
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-orange-100 text-orange-900'
+                    ]"
+                  >
+                    {{ optKey }}
+                  </span>
+                  <span class="flex-1">{{ parseMultipleChoice(q.content, q.answer)['option' + optKey] || '' }}</span>
+                  <span v-if="parseMultipleChoice(q.content, q.answer).correctOption === optKey" class="text-emerald-600 text-[11px] font-bold">✓</span>
+                </div>
+              </div>
+            </div>
+            <p v-else class="font-semibold text-gray-900 whitespace-pre-line leading-relaxed">
               {{ q.content }}
             </p>
 
-            <div v-if="q.imageUrl" class="max-w-sm rounded-lg overflow-hidden border border-orange-100">
-              <img :src="q.imageUrl" alt="Hình minh họa" class="w-full max-h-40 object-contain bg-white" />
+            <!-- Media (YouTube or Image) -->
+            <div v-if="q.imageUrl" class="mt-2">
+              <div v-if="isYouTubeUrl(q.imageUrl)" class="max-w-md rounded-xl overflow-hidden border border-orange-200 bg-black aspect-video">
+                <iframe :src="getYouTubeEmbedUrl(q.imageUrl)" class="w-full h-full" allowfullscreen></iframe>
+              </div>
+              <div v-else class="max-w-sm rounded-lg overflow-hidden border border-orange-100 bg-white">
+                <img :src="q.imageUrl" alt="Hình minh họa" class="w-full max-h-40 object-contain" />
+              </div>
             </div>
 
-            <div class="p-2 rounded-lg bg-emerald-50/80 border border-emerald-100 text-emerald-950 text-[11px]">
+            <div class="p-2.5 rounded-lg bg-emerald-50/80 border border-emerald-100 text-emerald-950 text-[11px]">
               <strong>Đáp án:</strong> {{ q.answer }}
             </div>
           </div>
@@ -956,6 +1001,12 @@ import assignmentService from '@/services/assignment.service'
 import questionBankService from '@/services/questionBank.service'
 import { useUserState } from '@/services/user-state'
 import { getProfileId } from '@/services/auth-storage'
+import {
+  isYouTubeUrl,
+  getYouTubeEmbedUrl,
+  getDifficultyPoint,
+  parseMultipleChoice,
+} from '@/utils/media.helper'
 
 // ─── Current User & State ──────────────────────────────────────────────────
 const { profile, fetchProfile } = useUserState()
@@ -1217,7 +1268,7 @@ function toggleSelectQuestionForCreate(q) {
     createForm.selectedQuestions.push({
       questionId: q.id,
       orderIndex: createForm.selectedQuestions.length + 1,
-      pointValue: 1.0,
+      pointValue: getDifficultyPoint(q.difficulty),
     })
   }
 }
