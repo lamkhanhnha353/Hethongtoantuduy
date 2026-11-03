@@ -5,10 +5,12 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import { useNotificationUnreadCountQuery } from '@/hooks/useNotifications';
 import { useSession } from '@/hooks/useSession';
+// import { useProfileQuery } from '@/hooks/useProfile';
 
 export function NotificationBell() {
   const router = useRouter();
   const { session } = useSession();
+  // const { data: profile } = useProfileQuery(!!session);
   const isParent = session?.role === 'Parent';
   const { data, refetch } = useNotificationUnreadCountQuery(isParent);
 
