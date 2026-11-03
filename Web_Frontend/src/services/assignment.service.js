@@ -114,6 +114,40 @@ class AssignmentService {
     const res = await this.api.get(`/student/${studentId}`, { params });
     return res.data;
   }
+
+  /**
+   * Chấm điểm và lưu nhận xét đánh giá cho một học sinh lẻ
+   * PUT /api/assignments/{id}/grade/{studentId}
+   * @param {number} assignmentId
+   * @param {number} studentId
+   * @param {{ score?: number, teacherFeedback?: string, status?: string }} data
+   */
+  async gradeStudent(assignmentId, studentId, data) {
+    const res = await this.api.put(`/${assignmentId}/grade/${studentId}`, data);
+    return res.data;
+  }
+
+  /**
+   * Lưu điểm và nhận xét cho hàng loạt học sinh trong bài kiểm tra
+   * PUT /api/assignments/{id}/batch-grade
+   * @param {number} assignmentId
+   * @param {Array<{ studentId: number, score?: number, teacherFeedback?: string, status?: string }>} grades
+   */
+  async batchGrade(assignmentId, grades) {
+    const res = await this.api.put(`/${assignmentId}/batch-grade`, { grades });
+    return res.data;
+  }
+
+  /**
+   * Lấy chi tiết bài làm của một học sinh trong bài kiểm tra (bao gồm câu hỏi, đáp án, điểm số và nhận xét)
+   * GET /api/assignments/{id}/submission/{studentId}
+   * @param {number} assignmentId
+   * @param {number} studentId
+   */
+  async getStudentSubmission(assignmentId, studentId) {
+    const res = await this.api.get(`/${assignmentId}/submission/${studentId}`);
+    return res.data;
+  }
 }
 
 export default new AssignmentService();
