@@ -29,6 +29,7 @@ import TeacherAttendanceView from "@/views/teacher/TeacherAttendanceView.vue";
 import TeacherQuestionsView from "@/views/teacher/TeacherQuestionsView.vue";
 import TeacherAssignmentsView from "@/views/teacher/TeacherAssignmentsView.vue";
 import TeacherGradingView from "@/views/teacher/TeacherGradingView.vue";
+import TeacherSubmissionDetailView from "@/views/teacher/TeacherSubmissionDetailView.vue";
 import TeacherAttendanceReportView from "@/views/teacher/TeacherAttendanceReportView.vue";
 import TeacherNoticesView from "@/views/teacher/TeacherNoticesView.vue";
 import TeacherProfileView from "@/views/teacher/TeacherProfileView.vue";
@@ -95,6 +96,12 @@ const router = createRouter({
           name: "teacher-grading",
           component: TeacherGradingView,
           meta: { title: "Chấm điểm & Nhập nhận xét" },
+        },
+        {
+          path: "grading/submission/:assignmentId/:studentId",
+          name: "teacher-submission-detail",
+          component: TeacherSubmissionDetailView,
+          meta: { title: "Chi tiết bài làm học sinh" },
         },
 
         // Giao tiếp & Thống kê

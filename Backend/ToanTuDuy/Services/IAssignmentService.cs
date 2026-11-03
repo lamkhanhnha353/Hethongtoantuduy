@@ -50,5 +50,20 @@ namespace ToanTuDuy.Services
         /// Lấy danh sách bài kiểm tra được giao của một học sinh.
         /// </summary>
         Task<IEnumerable<AssignmentResponse>> GetAssignmentsByStudentAsync(int studentId, int? lessonId = null);
+
+        /// <summary>
+        /// Chấm điểm và lưu nhận xét cho một học sinh.
+        /// </summary>
+        Task<StudentAssignmentResponse?> GradeStudentAsync(int assignmentId, int studentId, GradeStudentRequest request);
+
+        /// <summary>
+        /// Chấm điểm và lưu nhận xét hàng loạt cho học sinh trong bài kiểm tra.
+        /// </summary>
+        Task<bool> BatchGradeAsync(int assignmentId, List<BatchGradeItemRequest> grades);
+
+        /// <summary>
+        /// Lấy chi tiết bài làm của một học sinh trong bài kiểm tra.
+        /// </summary>
+        Task<StudentSubmissionDetailResponse?> GetStudentSubmissionAsync(int assignmentId, int studentId);
     }
 }
