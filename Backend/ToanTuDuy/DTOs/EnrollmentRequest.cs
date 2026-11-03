@@ -1,14 +1,14 @@
 
+using System.ComponentModel.DataAnnotations;
+
 namespace ToanTuDuy.DTOs
 {
     public class EnrollmentRequest
     {
-        public int ParentId { get; set; }
+        [Range(1, int.MaxValue)]
         public int StudentId { get; set; }
-        public int ClassId { get; set; }
 
-        // Tạm thời truyền số tiền từ ngoài vào để test luồng. 
-        // Sau này có thể truy vấn trực tiếp thuộc tính Price của bảng Course/Class.
-        public int Amount { get; set; }
+        [Range(1, int.MaxValue)]
+        public int ClassId { get; set; }
     }
 }

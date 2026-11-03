@@ -37,11 +37,13 @@
                         <!-- Tên Phụ huynh & Trạng thái -->
                         <td class="px-6 py-4 align-top">
                             <div class="font-semibold text-gray-900 text-base">{{ parent.fullName }}</div>
-                            <span :class="[
-                                'inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full font-medium',
-                                parent.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                            ]">
-                                {{ parent.isActive ? 'Hoạt động' : 'Tạm khóa' }}
+                            <span
+                                class="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                :class="parent.isActive
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'"
+                                :aria-label="`Trạng thái tài khoản của ${parent.fullName}`">
+                                {{ parent.isActive ? 'Hoạt động' : 'Đã khóa' }}
                             </span>
                         </td>
 

@@ -8,7 +8,7 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    [AllowAnonymous] // 👈 Thêm dòng này: Bỏ qua kiểm tra Token cho toàn bộ API Giáo viên
+    [AllowAnonymous] // Bỏ qua kiểm tra Token
 
     public class ParentsController : ControllerBase
     {
@@ -23,6 +23,12 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? keyword)
         {
             return Ok(await _service.GetAllParentsAsync(keyword));
+        }
+
+        [HttpGet("students")]
+        public async Task<IActionResult> GetAllStudents([FromQuery] string? keyword)
+        {
+            return Ok(await _service.GetAllStudentsAsync(keyword));
         }
 
         [HttpGet("{id:int}")]
@@ -53,6 +59,15 @@ namespace ToanTuDuy.Controllers
             var success = await _service.UpdateParentAsync(id, dto);
             if (!success) return NotFound(new { message = "Cập nhật thất bại." });
             return Ok(new { message = "Cập nhật thông tin phụ huynh thành công." });
+        }
+
+        [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateParentStatusDto dto)
+        {
+            var success = await _service.UpdateParentStatusAsync(id, dto.IsActive!.Value);
+            if (!success) return NotFound(new { message = "Không tìm thấy phụ huynh." });
+            return Ok(new { message = "Cập nhật trạng thái phụ huynh thành công.", dto.IsActive });
         }
 
         [HttpPut("{id:int}/email")]

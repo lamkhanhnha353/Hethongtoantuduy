@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAccessToken } from "./auth-storage";
+import { clearAuthSession, getAccessToken } from "./auth-storage";
 
 const BACKEND_URL = "http://localhost:5114";
 
@@ -9,6 +9,8 @@ const commonConfig = {
     Accept: "application/json",
   },
 };
+
+let redirectingAfterSessionExpiry = false;
 
 export default (baseURL = "") => {
   let fullBaseURL = baseURL;
@@ -30,6 +32,30 @@ export default (baseURL = "") => {
     }
     return config;
   });
+
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const requestUrl = error.config?.url ?? "";
+      const responseBody = error.response?.data;
+      const isLoginRequest = requestUrl.includes("/login");
+
+      if (
+        error.response?.status === 401 &&
+        !responseBody &&
+        !isLoginRequest &&
+        getAccessToken()
+      ) {
+        clearAuthSession();
+        if (!redirectingAfterSessionExpiry && window.location.pathname !== "/login") {
+          redirectingAfterSessionExpiry = true;
+          window.location.replace("/login");
+        }
+      }
+
+      return Promise.reject(error);
+    },
+  );
 
   return api;
 };

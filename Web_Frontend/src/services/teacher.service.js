@@ -25,6 +25,10 @@ class TeacherService {
     return (await this.api.put(`/${id}`, data)).data;
   }
 
+  async updateStatus(id, isActive) {
+    return (await this.api.put(`/${id}/status`, { isActive })).data;
+  }
+
   // Xóa tài khoản giáo viên
   async delete(id) {
     return (await this.api.delete(`/${id}`)).data;

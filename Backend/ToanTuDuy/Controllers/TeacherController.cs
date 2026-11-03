@@ -54,6 +54,15 @@ namespace ToanTuDuy.Controllers
             return Ok(new { message = "Cập nhật thông tin giáo viên thành công." });
         }
 
+        [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTeacherStatusDto dto)
+        {
+            var success = await _teacherService.UpdateStatusAsync(id, dto.IsActive!.Value);
+            if (!success) return NotFound(new { message = "Không tìm thấy giáo viên." });
+            return Ok(new { message = "Cập nhật trạng thái giáo viên thành công.", dto.IsActive });
+        }
+
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
