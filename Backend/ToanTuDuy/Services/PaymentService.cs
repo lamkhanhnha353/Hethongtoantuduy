@@ -53,6 +53,21 @@ namespace ToanTuDuy.Services
                 throw ApiException.BadRequest("Hóa đơn không ở trạng thái chờ thanh toán.");
             }
 
+            var activeStudentsCount = await _context.ClassStudents
+                .CountAsync(enrollment =>
+                    enrollment.ClassId == invoice.ClassId
+                    && enrollment.Status == "ACTIVE");
+
+            var maxCapacity = await _context.Classes
+                .Where(classInfo => classInfo.Id == invoice.ClassId)
+                .Select(classInfo => classInfo.MaxCapacity)
+                .FirstAsync();
+
+            if (activeStudentsCount >= maxCapacity)
+            {
+                throw ApiException.Conflict("Lớp học đã đủ học viên, không thể tiếp tục thanh toán.");
+            }
+
             invoice.TxnRef = $"INV{invoice.Id}_{DateTime.UtcNow.Ticks}";
             await _context.SaveChangesAsync();
 
@@ -175,7 +190,10 @@ namespace ToanTuDuy.Services
                 return;
             }
 
-            if (payment.GetResponseData("vnp_ResponseCode") == "00")
+            var isSuccessful = payment.GetResponseData("vnp_ResponseCode") == "00"
+                && payment.GetResponseData("vnp_TransactionStatus") == "00";
+
+            if (isSuccessful)
             {
                 invoice.Status = "PAID";
                 invoice.PaymentMethod = "VNPAY";
