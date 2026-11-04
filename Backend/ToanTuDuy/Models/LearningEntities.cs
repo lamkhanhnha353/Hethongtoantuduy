@@ -618,4 +618,74 @@ namespace ToanTuDuy.Models
         [ForeignKey(nameof(BadgeId))]
         public Badge Badge { get; set; }
     }
+
+    [Table("CONVERSATION")]
+    public class Conversation
+    {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
+        [Column("parent_id")]
+        public int ParentId { get; set; }
+        public ParentProfile Parent { get; set; } = null!;
+
+        [Column("teacher_id")]
+        public int? TeacherId { get; set; }
+        public TeacherProfile? Teacher { get; set; }
+
+        [Required]
+        [MaxLength(20)]
+        [Column("chat_type")]
+        public string ChatType { get; set; } = "HUMAN"; // "HUMAN" hoặc "AI"
+
+        [MaxLength(500)]
+        [Column("last_message")]
+        public string? LastMessage { get; set; }
+
+        [Column("last_message_at")]
+        public DateTime LastMessageAt { get; set; } = DateTime.UtcNow;
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
+    }
+
+    [Table("MESSAGE")]
+    public class Message
+    {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
+        [Column("conversation_id")]
+        public int ConversationId { get; set; }
+        public Conversation Conversation { get; set; } = null!;
+
+        [Required]
+        [MaxLength(20)]
+        [Column("sender_type")]
+        public string SenderType { get; set; } = "PARENT"; // Tránh insert thiếu giá trị
+
+        [Column("sender_id")]
+        public int? SenderId { get; set; }
+
+        [Required]
+        [MaxLength(20)]
+        [Column("message_type")]
+        public string MessageType { get; set; } = "TEXT"; // "TEXT", "IMAGE", "FILE"
+
+        [Column("content")]
+        public string? Content { get; set; }
+
+        [Column("attachment_url")]
+        public string? AttachmentUrl { get; set; }
+
+        [Column("is_read")]
+        public bool IsRead { get; set; } = false;
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
 }

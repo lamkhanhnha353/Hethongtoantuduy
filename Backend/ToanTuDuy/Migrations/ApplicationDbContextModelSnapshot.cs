@@ -552,6 +552,59 @@ namespace ToanTuDuy.Migrations
                     b.ToTable("CLASSES");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.Conversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChatType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("chat_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("LastMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("last_message");
+
+                    b.Property<DateTime>("LastMessageAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("last_message_at");
+
+                    b.Property<int>("ParentId")
+                        .HasColumnType("int")
+                        .HasColumnName("parent_id");
+
+                    b.Property<int?>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId")
+                        .IsUnique()
+                        .HasFilter("[chat_type] = 'AI'");
+
+                    b.HasIndex("ParentId", "LastMessageAt");
+
+                    b.HasIndex("ParentId", "TeacherId")
+                        .IsUnique()
+                        .HasFilter("[chat_type] = 'HUMAN' AND [teacher_id] IS NOT NULL");
+
+                    b.HasIndex("TeacherId", "LastMessageAt");
+
+                    b.ToTable("CONVERSATION");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.Course", b =>
                 {
                     b.Property<int>("Id")
@@ -899,6 +952,58 @@ namespace ToanTuDuy.Migrations
                     b.HasIndex("ClassId");
 
                     b.ToTable("LESSON");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("attachment_url");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("content");
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("message_type");
+
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("int")
+                        .HasColumnName("sender_id");
+
+                    b.Property<string>("SenderType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("sender_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "CreatedAt");
+
+                    b.ToTable("MESSAGE");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Notification", b =>
@@ -1559,6 +1664,24 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Teacher");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.Conversation", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.ParentProfile", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.CourseLevel", b =>
                 {
                     b.HasOne("ToanTuDuy.Models.Course", "Course")
@@ -1636,6 +1759,17 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Class");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Message", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Notification", b =>
@@ -1837,6 +1971,11 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Invoices");
 
                     b.Navigation("Lessons");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Course", b =>

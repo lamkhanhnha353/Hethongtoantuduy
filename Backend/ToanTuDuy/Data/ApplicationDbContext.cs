@@ -37,7 +37,7 @@ namespace ToanTuDuy.Data
         public DbSet<TeacherSalaryConfig> TeacherSalaryConfigs { get; set; }
         public DbSet<SalaryAdjustment> SalaryAdjustments { get; set; }
         public DbSet<PayrollSummary> PayrollSummaries { get; set; }
-        // ✅ THÊM MỚI
+        // THÊM MỚI
         public DbSet<QuestionBank> QuestionBanks { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
@@ -49,6 +49,10 @@ namespace ToanTuDuy.Data
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<Badge> Badges { get; set; }
         public DbSet<StudentBadge> StudentBadges { get; set; }
+
+        // THÊM MỚI CHO MODULE CHAT (HUMAN & AI)
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -148,6 +152,51 @@ namespace ToanTuDuy.Data
             {
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }
+
+
+            // 5. MODULE CHAT (HUMAN & AI SIGNALR) - CẤU HÌNH CONVERSATION & MESSAGE
+            // LƯU Ý: Phải đặt dưới vòng lặp cascadeFKs để bảng Message giữ được quyền Cascade Delete
+
+            modelBuilder.Entity<Conversation>(entity =>
+            {
+                // Ràng buộc không cho xóa Parent/Teacher thì làm mất lịch sử chat
+                entity.HasOne(x => x.Parent)
+                    .WithMany()
+                    .HasForeignKey(x => x.ParentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Teacher)
+                    .WithMany()
+                    .HasForeignKey(x => x.TeacherId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Unique Index 1: Tránh trùng phòng chat HUMAN (1 Phụ huynh + 1 Giáo viên = 1 Phòng)
+                entity.HasIndex(x => new { x.ParentId, x.TeacherId })
+                    .IsUnique()
+                    .HasFilter("[chat_type] = 'HUMAN' AND [teacher_id] IS NOT NULL");
+
+                // Unique Index 2: Tránh trùng phòng chat AI (1 Phụ huynh = 1 Phòng AI)
+                entity.HasIndex(x => x.ParentId)
+                    .IsUnique()
+                    .HasFilter("[chat_type] = 'AI'");
+
+                // Index list hội thoại để load danh sách chat siêu tốc
+                entity.HasIndex(x => new { x.ParentId, x.LastMessageAt });
+                entity.HasIndex(x => new { x.TeacherId, x.LastMessageAt });
+            });
+
+            modelBuilder.Entity<Message>(entity =>
+            {
+                // Khi xóa phòng chat thì toàn bộ tin nhắn bên trong bị xóa theo
+                entity.HasOne(x => x.Conversation)
+                    .WithMany(c => c.Messages)
+                    .HasForeignKey(x => x.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Đánh index để tăng tốc độ load tin nhắn theo thời gian
+                entity.HasIndex(x => new { x.ConversationId, x.CreatedAt });
+            });
+
         }
     }
 }
