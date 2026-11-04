@@ -11,13 +11,14 @@ using ToanTuDuy.Models;
 using ToanTuDuy.Options;
 using ToanTuDuy.Services;
 using ToanTuDuy.Services.Storage;
+using ToanTuDuy.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddSignalR(); // Chat
 builder.Services.AddOpenApi();
-
 // Global exception handling: map mọi exception về envelope { code, message, details? }
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -64,6 +65,20 @@ builder.Services.AddAuthentication(options =>
         };
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            // Nếu request gửi đến /chathub và có chứa access_token trong URL
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+            {
+                // Gán token đọc được từ URL cho hệ thống xác thực
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        },
+
             OnTokenValidated = async validationContext =>
             {
                 var accountId = validationContext.Principal?
@@ -109,12 +124,22 @@ builder.Services.AddAuthorization(options =>
 });
 
 // Setup CORS for browser clients (Expo web, web frontend)
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("DevCors", policy =>
+//         policy.AllowAnyOrigin()
+//               .AllowAnyHeader()
+//               .AllowAnyMethod());
+// });
+
+// Setup CORS for browser clients (Expo web, web frontend)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(origin => true) // Thay AllowAnyOrigin bằng dòng này
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials()); // BẮT BUỘC PHẢI CÓ DÒNG NÀY CHO SIGNALR
 });
 
 // Register Custom Services (Dependency Injection)
@@ -139,7 +164,7 @@ builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-
+builder.Services.AddScoped<IChatService, ChatService>();    // chat
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 builder.Services.AddSingleton<PayslipEmailQueue>();
 builder.Services.AddHostedService<PayslipEmailWorker>();
@@ -165,6 +190,7 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 // Lưu ảnh trên Cloudinary (DB chỉ giữ URL trả về)
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
+builder.Services.AddSingleton<IChatAttachmentStorage, CloudinaryChatAttachmentStorage>();
 
 
 var app = builder.Build();
@@ -181,5 +207,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub"); // Chat
 
 app.Run();

@@ -33,6 +33,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        // [AllowAnonymous]
         public async Task<IActionResult> Create([FromBody] CreateTeacherDto dto)
         {
             try
