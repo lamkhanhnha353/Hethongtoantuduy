@@ -49,6 +49,10 @@ class ParentService {
     return (await this.api.put(`/${id}`, data)).data;
   }
 
+  async updateStatus(id, isActive) {
+    return (await this.api.put(`/${id}/status`, { isActive })).data;
+  }
+
   // Cập nhật email của phụ huynh
   async updateEmail(id, data) {
     return (await this.api.put(`/${id}/email`, data)).data;

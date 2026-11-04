@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace ToanTuDuy.DTOs
 {
@@ -30,6 +31,12 @@ namespace ToanTuDuy.DTOs
         public string FullName { get; set; } = string.Empty;
         public string? Pin { get; set; }
         public string? Avatar { get; set; }
+    }
+
+    public class UpdateParentStatusDto
+    {
+        [Required]
+        public bool? IsActive { get; set; }
     }
 
     public class UpdateParentEmailDto

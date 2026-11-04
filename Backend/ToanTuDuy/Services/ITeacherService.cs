@@ -10,6 +10,7 @@ namespace ToanTuDuy.Services
         Task<TeacherResponseDto?> GetByIdAsync(int id);
         Task<TeacherResponseDto> CreateAsync(CreateTeacherDto dto);
         Task<bool> UpdateAsync(int id, UpdateTeacherDto dto);
+        Task<bool> UpdateStatusAsync(int id, bool isActive);
         Task<bool> DeleteAsync(int id);
     }
 }

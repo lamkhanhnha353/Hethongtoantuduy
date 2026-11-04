@@ -1,13 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
 import authService from "@/services/auth.service";
 import Layout from "@/layouts/Layout.vue";
-import DashboardView from "@/views/admin/DashboardView.vue";
 import PlaceholderView from "@/views/PlaceholderView.vue";
+
+// Authentication
 import LoginView from "@/views/LoginView.vue";
+
+// Admin Views
+import DashboardView from "@/views/admin/DashboardView.vue";
 
 // Admin - User Management
 import ParentStudentView from "@/views/admin/manage/ParentStudentView.vue";
 import TeacherManagementView from "@/views/admin/manage/TeacherManagementView.vue";
+import AccountSecurityView from "@/views/admin/manage/AccountSecurityView.vue";
 
 // Admin - Training
 import CoursesView from "@/views/admin/training/CoursesView.vue";
@@ -15,6 +20,10 @@ import CourseDetailView from "@/views/admin/training/CourseDetailView.vue";
 import ClassesView from "@/views/admin/training/ClassesView.vue";
 import ClassDetailView from "@/views/admin/training/ClassDetailView.vue";
 import ScheduleView from "@/views/admin/training/ScheduleView.vue";
+
+// Financial Management
+import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
+import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
 
 // Account Module
 import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
@@ -34,6 +43,7 @@ import TeacherAttendanceReportView from "@/views/teacher/TeacherAttendanceReport
 import TeacherNoticesView from "@/views/teacher/TeacherNoticesView.vue";
 import TeacherProfileView from "@/views/teacher/TeacherProfileView.vue";
 import TeacherPasswordView from "@/views/teacher/TeacherPasswordView.vue";
+import TeacherPayslipView from "@/views/teacher/TeacherPayslipView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -58,6 +68,12 @@ const router = createRouter({
           name: "teacher-schedule",
           component: TeacherScheduleView,
           meta: { title: "Thời khóa biểu cá nhân" },
+        },
+        {
+          path: "payslip",
+          name: "teacher-payslip",
+          component: TeacherPayslipView,
+          meta: { title: "Phiếu lương cá nhân" },
         },
         {
           path: "classes",
@@ -160,8 +176,8 @@ const router = createRouter({
         },
         {
           path: "users/roles",
-          component: PlaceholderView,
-          meta: { title: "Phân quyền & Bảo mật" },
+          component: AccountSecurityView,
+          meta: { title: "Tài khoản & Bảo mật" },
         },
 
         // Training — Courses
@@ -215,13 +231,14 @@ const router = createRouter({
         // Finance
         {
           path: "finance/invoices",
-          component: PlaceholderView,
+          component: InvoicesView,
           meta: { title: "Hóa đơn & Biên lai" },
         },
         {
-          path: "finance/transactions",
-          component: PlaceholderView,
-          meta: { title: "Lịch sử giao dịch" },
+          path: "finance/payroll",
+          name: "admin-payroll",
+          component: AdminPayrollView,
+          meta: { title: "Quản lý Lương Giáo viên" },
         },
 
         // Communication

@@ -3,6 +3,7 @@
 -- Ngữ cảnh: Toán tư duy 4-14 tuổi (Soroban, Finger Math, Mathnasium, Kumon, I-MATH, CPA)
 -- Hệ quản trị CSDL: Microsoft SQL Server
 -- sqlcmd -S "(localdb)\mssqllocaldb" -d ToanTuDuyDb -i SeedData.sql -f 65001
+-- Cần chạy migration AddPayrollManagement trước khi chạy script này.
 -- =============================================================================
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -28,6 +29,9 @@ BEGIN TRY
     DELETE FROM [dbo].[NOTIFICATION_SETTING];
     DELETE FROM [dbo].[NOTIFICATION];
     DELETE FROM [dbo].[CLASSES];
+    DELETE FROM [dbo].[PAYROLL_SUMMARY];
+    DELETE FROM [dbo].[SALARY_ADJUSTMENT];
+    DELETE FROM [dbo].[TEACHER_SALARY_CONFIG];
     DELETE FROM [dbo].[STUDENT_PROFILE];
     DELETE FROM [dbo].[QUESTION_BANK];
     DELETE FROM [dbo].[COURSE_LEVEL];
@@ -164,6 +168,19 @@ INSERT INTO [dbo].[TEACHER_PROFILE] (id, account_id, full_name, email, specializ
 (8, 9, N'Vũ Minh Đức', 'gv.vuminhduc@toantuduy.edu.vn', N'Số học & Kỹ năng tính nhanh', '2026-08-01 08:00:00'),
 (9, 43, N'Giáo viên Demo', 'teacher123@toantuduy.edu.vn', N'Toán tư duy & Logic giải quyết vấn đề', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[TEACHER_PROFILE] OFF;
+
+-- =============================================================================
+-- 4.1. BẢNG TEACHER_SALARY_CONFIG (đơn giá theo buổi)
+-- =============================================================================
+INSERT INTO [dbo].[TEACHER_SALARY_CONFIG] (teacher_id, base_rate_per_session) VALUES
+(1, 350000.00),
+(2, 330000.00),
+(3, 380000.00),
+(4, 340000.00),
+(5, 400000.00),
+(6, 370000.00),
+(7, 320000.00),
+(8, 300000.00);
 
 -- =============================================================================
 -- 5. BẢNG PARENT_PROFILE (32 phụ huynh)
@@ -1094,6 +1111,67 @@ INSERT INTO [dbo].[ATTENDANCE] (id, lesson_id, student_id, status, teacher_notes
 SET IDENTITY_INSERT [dbo].[ATTENDANCE] OFF;
 
 -- =============================================================================
+-- 19.1. BẢNG SALARY_ADJUSTMENT (thưởng/phạt tháng 09/2026)
+-- =============================================================================
+INSERT INTO [dbo].[SALARY_ADJUSTMENT] (teacher_id, type, amount, reason, applied_date) VALUES
+(1, N'Bonus',   500000.00, N'Thưởng hoàn thành kế hoạch chuyên môn tháng', '2026-09-30'),
+(1, N'Penalty', 100000.00, N'Đi trễ một buổi học', '2026-09-14'),
+(2, N'Bonus',   300000.00, N'Hỗ trợ sinh hoạt chuyên đề Finger Math', '2026-09-28'),
+(3, N'Penalty', 150000.00, N'Nộp báo cáo chuyên môn trễ hạn', '2026-09-25'),
+(5, N'Bonus',   450000.00, N'Được phụ huynh đánh giá xuất sắc', '2026-09-29'),
+(7, N'Penalty', 100000.00, N'Đi trễ một buổi học', '2026-09-15');
+
+-- =============================================================================
+-- 19.2. BẢNG PAYROLL_SUMMARY (tổng hợp lương tháng 09/2026)
+-- Tính theo Lesson COMPLETED có ít nhất một bản ghi ATTENDANCE.
+-- =============================================================================
+;WITH EligibleSessions AS
+(
+    SELECT c.teacher_id, COUNT(*) AS total_valid_sessions
+    FROM [dbo].[LESSON] AS lesson
+    INNER JOIN [dbo].[CLASSES] AS c ON c.id = lesson.class_id
+    WHERE c.teacher_id IS NOT NULL
+      AND lesson.lesson_date >= '2026-09-01'
+      AND lesson.lesson_date < '2026-10-01'
+      AND lesson.status = 'COMPLETED'
+      AND EXISTS
+      (
+          SELECT 1
+          FROM [dbo].[ATTENDANCE] AS attendance
+          WHERE attendance.lesson_id = lesson.id
+      )
+    GROUP BY c.teacher_id
+),
+MonthlyAdjustments AS
+(
+    SELECT teacher_id,
+           SUM(CASE WHEN type = N'Penalty' THEN amount ELSE 0 END) AS total_penalty,
+           SUM(CASE WHEN type = N'Bonus' THEN amount ELSE 0 END) AS total_bonus
+    FROM [dbo].[SALARY_ADJUSTMENT]
+    WHERE applied_date >= '2026-09-01'
+      AND applied_date < '2026-10-01'
+    GROUP BY teacher_id
+)
+INSERT INTO [dbo].[PAYROLL_SUMMARY]
+    (teacher_id, [month], [year], total_valid_sessions, base_salary,
+     total_penalty, total_bonus, final_salary, email_status)
+SELECT teacher.id,
+       9,
+       2026,
+       COALESCE(sessions.total_valid_sessions, 0),
+       COALESCE(sessions.total_valid_sessions, 0) * config.base_rate_per_session,
+       COALESCE(adjustments.total_penalty, 0),
+       COALESCE(adjustments.total_bonus, 0),
+       COALESCE(sessions.total_valid_sessions, 0) * config.base_rate_per_session
+           + COALESCE(adjustments.total_bonus, 0)
+           - COALESCE(adjustments.total_penalty, 0),
+       N'NotSent'
+FROM [dbo].[TEACHER_PROFILE] AS teacher
+INNER JOIN [dbo].[TEACHER_SALARY_CONFIG] AS config ON config.teacher_id = teacher.id
+LEFT JOIN EligibleSessions AS sessions ON sessions.teacher_id = teacher.id
+LEFT JOIN MonthlyAdjustments AS adjustments ON adjustments.teacher_id = teacher.id;
+
+-- =============================================================================
 -- 20. BẢNG LEAVE_REQUEST (20 đơn xin nghỉ học)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[LEAVE_REQUEST] ON;
@@ -1201,7 +1279,7 @@ SET IDENTITY_INSERT [dbo].[QUESTION_ASSIGNMENT] OFF;
 
     COMMIT TRANSACTION;
     PRINT N'=============================================================================';
-    PRINT N'>>> SEED DATA HOÀN TẤT THÀNH CÔNG! Toàn bộ 22 bảng đã được nạp dữ liệu chuẩn.';
+    PRINT N'>>> SEED DATA HOÀN TẤT THÀNH CÔNG! Toàn bộ 25 bảng đã được nạp dữ liệu chuẩn.';
     PRINT N'=============================================================================';
 END TRY
 BEGIN CATCH

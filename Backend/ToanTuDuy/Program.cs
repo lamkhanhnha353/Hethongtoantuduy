@@ -62,6 +62,41 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimTypes.NameIdentifier,
             ClockSkew = TimeSpan.Zero,
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async validationContext =>
+            {
+                var accountId = validationContext.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+                var tokenSecurityStamp = validationContext.Principal?
+                    .FindFirstValue(AuthService.SecurityStampClaimType);
+
+                if (!int.TryParse(accountId, out var parsedAccountId) ||
+                    string.IsNullOrWhiteSpace(tokenSecurityStamp))
+                {
+                    validationContext.Fail("Phiên đăng nhập không hợp lệ.");
+                    return;
+                }
+
+                var dbContext = validationContext.HttpContext.RequestServices
+                    .GetRequiredService<ApplicationDbContext>();
+                var account = await dbContext.Users
+                    .AsNoTracking()
+                    .Where(user => user.Id == parsedAccountId)
+                    .Select(user => new { user.IsActive, user.SecurityStamp })
+                    .FirstOrDefaultAsync(validationContext.HttpContext.RequestAborted);
+
+                if (account == null ||
+                    !account.IsActive ||
+                    !string.Equals(
+                        account.SecurityStamp,
+                        tokenSecurityStamp,
+                        StringComparison.Ordinal))
+                {
+                    validationContext.Fail("Phiên đăng nhập đã bị thu hồi hoặc tài khoản đã bị khóa.");
+                }
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -91,7 +126,11 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICourseLevelService, CourseLevelService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();   // thanh toán
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IPayslipMailService, PayslipMailService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
 builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
@@ -101,6 +140,9 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
+builder.Services.AddSingleton<PayslipEmailQueue>();
+builder.Services.AddHostedService<PayslipEmailWorker>();
+builder.Services.AddHostedService<MonthlyPayslipEmailScheduler>();
 
 // Gửi email xác minh tài khoản qua Resend
 builder.Services.AddResend(options =>
