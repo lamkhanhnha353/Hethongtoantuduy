@@ -4,17 +4,20 @@ import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'reac
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, FontAwesome5 } from '@expo/vector-icons'; // Sử dụng bộ Icon có sẵn của Expo
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import Svg, { Path } from 'react-native-svg';
 
 import { AlertBanner } from '@/components/AlertBanner';
 import { SESSION_EXPIRED_MESSAGE } from '@/lib/sessionExpiry';
+import { useAuthStore } from '@/store/authStore';
 import { toApiError } from '@/services/apiError';
+import { googleLogin } from '@/services/authService';
 import { useLoginMutation } from '@/hooks/useAuthMutations';
 
 type FieldErrors = Partial<Record<'phone' | 'password', string>>;
 
-const SOCIAL_NOT_READY_MESSAGE =
-  'Đăng nhập bằng Google hoặc Facebook đang được phát triển. Bạn vui lòng dùng số điện thoại.';
+WebBrowser.maybeCompleteAuthSession();
 
 export default function ScreenLogin() {
   const { reason, resetNotice, resetTone } = useLocalSearchParams<{
@@ -27,9 +30,20 @@ export default function ScreenLogin() {
   const [showPassword, setShowPassword] = useState(false); 
   const [remember, setRemember] = useState(false); 
   const [notice, setNotice] = useState<string | null>(null);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
   const loginMutation = useLoginMutation();
+  const setSession = useAuthStore((state) => state.setSession);
+  const [googleRequest, , promptGoogleAsync] = Google.useIdTokenAuthRequest(
+    {
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      scopes: ['openid', 'profile', 'email'],
+    },
+    { scheme: 'toantuduy' },
+  );
 
   const apiError = loginMutation.isError ? toApiError(loginMutation.error) : null;
   const isSessionExpired = reason === 'expired';
@@ -47,6 +61,48 @@ export default function ScreenLogin() {
       { phone: phone.trim(), password },
       { onSuccess: () => router.replace('/select-profile') },
     );
+  }
+
+  async function handleGoogleLogin() {
+    setNotice(null);
+    if (!googleRequest) {
+      setNotice('Cấu hình đăng nhập Google chưa sẵn sàng. Vui lòng kiểm tra các Google Client ID.');
+      return;
+    }
+
+    setIsGoogleSubmitting(true);
+    try {
+      const result = await promptGoogleAsync();
+      if (result.type !== 'success') {
+        if (result.type === 'error') {
+          setNotice('Không thể xác thực với Google. Vui lòng thử lại.');
+        }
+        return;
+      }
+
+      const idToken = result.params.id_token;
+      if (!idToken) {
+        setNotice('Google không trả về ID token.');
+        return;
+      }
+
+      const response = await googleLogin(idToken);
+      if (response.role.toLowerCase() !== 'parent') {
+        setNotice('Ứng dụng này dành cho Phụ huynh. Vui lòng đăng nhập tài khoản này trên cổng web.');
+        return;
+      }
+
+      await setSession({
+        ...response,
+        phone: '',
+        fullName: response.fullName ?? '',
+      });
+      router.replace('/select-profile');
+    } catch (error) {
+      setNotice(toApiError(error).message);
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
   }
 
   
@@ -188,20 +244,25 @@ export default function ScreenLogin() {
           <View className="flex-row justify-center items-center gap-5 my-5">
             <TouchableOpacity
               className="w-[52px] h-[52px] rounded-full border border-slate-200 bg-white items-center justify-center shadow-sm"
-              onPress={() => setNotice(SOCIAL_NOT_READY_MESSAGE)}
+              onPress={handleGoogleLogin}
+              disabled={isGoogleSubmitting || loginMutation.isPending}
               activeOpacity={0.7}
             >
-              <Svg width="24" height="24" viewBox="0 0 24 24">
-                <Path fill="#EA4335" d="M5.27 14.27l-.88 3.28-3.21.07A11.96 11.96 0 010 12c0-1.99.48-3.86 1.34-5.52l2.86.52 1.25 2.84A7.16 7.16 0 004.8 12c0 .79.14 1.55.4 2.27z"/>
-                <Path fill="#34A853" d="M23.5 12.27c0-.82-.07-1.42-.23-2.04H12v3.86h6.55c-.13.9-.55 2.24-1.59 3.15l3.07 2.38c1.84-1.7 2.9-4.2 2.9-7.35z"/>
-                <Path fill="#4A90E2" d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.07-2.38c-.82.55-1.92.93-3.24.93a7.18 7.18 0 01-6.79-4.96l-3.24 2.5A12 12 0 0012 24z"/>
-                <Path fill="#FBBC05" d="M12 4.75c2.12 0 3.55.92 4.37 1.68l3.19-3.11C17.94 1.19 15.24 0 12 0A12 12 0 001.25 6.48l3.4 2.64A7.18 7.18 0 0112 4.75z"/>
-              </Svg>
+              {isGoogleSubmitting ? (
+                <ActivityIndicator color="#4285F4" size="small" />
+              ) : (
+                <Svg width="24" height="24" viewBox="0 0 24 24">
+                  <Path fill="#EA4335" d="M5.27 14.27l-.88 3.28-3.21.07A11.96 11.96 0 010 12c0-1.99.48-3.86 1.34-5.52l2.86.52 1.25 2.84A7.16 7.16 0 004.8 12c0 .79.14 1.55.4 2.27z"/>
+                  <Path fill="#34A853" d="M23.5 12.27c0-.82-.07-1.42-.23-2.04H12v3.86h6.55c-.13.9-.55 2.24-1.59 3.15l3.07 2.38c1.84-1.7 2.9-4.2 2.9-7.35z"/>
+                  <Path fill="#4A90E2" d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.07-2.38c-.82.55-1.92.93-3.24.93a7.18 7.18 0 01-6.79-4.96l-3.24 2.5A12 12 0 0012 24z"/>
+                  <Path fill="#FBBC05" d="M12 4.75c2.12 0 3.55.92 4.37 1.68l3.19-3.11C17.94 1.19 15.24 0 12 0A12 12 0 001.25 6.48l3.4 2.64A7.18 7.18 0 0112 4.75z"/>
+                </Svg>
+              )}
             </TouchableOpacity>
             
             <TouchableOpacity
               className="w-[52px] h-[52px] rounded-full border border-slate-200 bg-white items-center justify-center shadow-sm"
-              onPress={() => setNotice(SOCIAL_NOT_READY_MESSAGE)}
+              onPress={() => setNotice('Đăng nhập Facebook chưa được hỗ trợ.')}
               activeOpacity={0.7}
             >
               <FontAwesome5 name="facebook" size={24} color="#1877F2" />

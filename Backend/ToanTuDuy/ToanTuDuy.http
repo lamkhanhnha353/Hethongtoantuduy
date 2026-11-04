@@ -32,6 +32,14 @@ Content-Type: application/json
   "password": "Password123!"
 }
 
+### Đăng nhập bằng Google (thay bằng ID token lấy từ Google Identity Services)
+POST {{ToanTuDuy_HostAddress}}/api/auth/google-login
+Content-Type: application/json
+
+{
+  "idToken": "GOOGLE_ID_TOKEN"
+}
+
 ### Lương tháng (Admin)
 GET {{ToanTuDuy_HostAddress}}/api/payrolls/admin/summary?month=11&year=2026
 Authorization: Bearer {{adminToken}}
