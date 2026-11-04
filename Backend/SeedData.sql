@@ -43,57 +43,69 @@ BEGIN TRY
     DELETE FROM [dbo].[ACCOUNT];
 
 -- =============================================================================
--- 1. BẢNG ACCOUNT (41 dòng: 1 Admin, 8 Giáo viên, 32 Phụ huynh)
+-- 1. BẢNG ACCOUNT (43 dòng: 2 Admin, 9 Giáo viên, 32 Phụ huynh)
 -- =============================================================================
--- Tài khoản kiểm thử local: Admin 0901000000 / Admin@Test123!;
--- Teacher 0902000001 / Teacher@Test123!. Không dùng các mật khẩu này ở production.
+-- Tài khoản kiểm thử hệ thống:
+--   Admin chính:      User = Admin123   / Password = Demo123@   (Email: admin123@toantuduy.edu.vn)
+--   Admin dự phòng:   User = 0901000000 / Password = Admin@Test123!
+--   Teacher chính:    User = Teacher123 / Password = Demo123@   (Email: teacher123@toantuduy.edu.vn)
+--   Teacher dự phòng: User = 0902000001 / Password = Teacher@Test123!
+--   Parent:           User = 0903000001 .. 0903000032 / Password = Parent@Test123!
 SET IDENTITY_INSERT [dbo].[ACCOUNT] ON;
 INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_active, created_at, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount) VALUES
 (1, '0901000000', 'AQAAAAEAAYagAAAAEPHX7xuOKVB3dhLrVO1Yi+UtUT0LEYIAAvWHfGxn48HxdfEjYAWDlcc12ZIbsLTBAw==', 'Admin', NULL, 1, '2026-08-01 08:00:00', '0901000000', '0901000000', 'admin@toantuduy.edu.vn', 'ADMIN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
 (2, '0902000001', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000001', '0902000001', 'gv.huynhnhathao@toantuduy.edu.vn', 'GV.HUYNHNHATHAO@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(3, '0902000002', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000002', '0902000002', 'gv.nguyenthimai@toantuduy.edu.vn', 'GV.NGUYENTHIMAI@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(4, '0902000003', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000003', '0902000003', 'gv.tranminhtuan@toantuduy.edu.vn', 'GV.TRANMINHTUAN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(5, '0902000004', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000004', '0902000004', 'gv.levanphuoc@toantuduy.edu.vn', 'GV.LEVANPHUOC@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(6, '0902000005', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000005', '0902000005', 'gv.phamthithanh@toantuduy.edu.vn', 'GV.PHAMTHITHANH@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(7, '0902000006', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000006', '0902000006', 'gv.hoangquocbao@toantuduy.edu.vn', 'GV.HOANGQUOCBAO@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(8, '0902000007', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000007', '0902000007', 'gv.dothikieuoanh@toantuduy.edu.vn', 'GV.DOTHIKIEUOANH@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(9, '0902000008', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000008', '0902000008', 'gv.vuminhduc@toantuduy.edu.vn', 'GV.VUMINHDUC@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(10, '0903000001', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000001', '0903000001', 'parent01@gmail.com', 'PARENT01@GMAIL.COM', 1, 1, 0, 0, 0),
-(11, '0903000002', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000002', '0903000002', 'parent02@gmail.com', 'PARENT02@GMAIL.COM', 1, 1, 0, 0, 0),
-(12, '0903000003', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000003', '0903000003', 'parent03@gmail.com', 'PARENT03@GMAIL.COM', 1, 1, 0, 0, 0),
-(13, '0903000004', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000004', '0903000004', 'parent04@gmail.com', 'PARENT04@GMAIL.COM', 1, 1, 0, 0, 0),
-(14, '0903000005', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000005', '0903000005', 'parent05@gmail.com', 'PARENT05@GMAIL.COM', 1, 1, 0, 0, 0),
-(15, '0903000006', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000006', '0903000006', 'parent06@gmail.com', 'PARENT06@GMAIL.COM', 1, 1, 0, 0, 0),
-(16, '0903000007', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000007', '0903000007', 'parent07@gmail.com', 'PARENT07@GMAIL.COM', 1, 1, 0, 0, 0),
-(17, '0903000008', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000008', '0903000008', 'parent08@gmail.com', 'PARENT08@GMAIL.COM', 1, 1, 0, 0, 0),
-(18, '0903000009', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000009', '0903000009', 'parent09@gmail.com', 'PARENT09@GMAIL.COM', 1, 1, 0, 0, 0),
-(19, '0903000010', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000010', '0903000010', 'parent10@gmail.com', 'PARENT10@GMAIL.COM', 1, 1, 0, 0, 0),
-(20, '0903000011', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000011', '0903000011', 'parent11@gmail.com', 'PARENT11@GMAIL.COM', 1, 1, 0, 0, 0),
-(21, '0903000012', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000012', '0903000012', 'parent12@gmail.com', 'PARENT12@GMAIL.COM', 1, 1, 0, 0, 0),
-(22, '0903000013', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000013', '0903000013', 'parent13@gmail.com', 'PARENT13@GMAIL.COM', 1, 1, 0, 0, 0),
-(23, '0903000014', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000014', '0903000014', 'parent14@gmail.com', 'PARENT14@GMAIL.COM', 1, 1, 0, 0, 0),
-(24, '0903000015', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000015', '0903000015', 'parent15@gmail.com', 'PARENT15@GMAIL.COM', 1, 1, 0, 0, 0),
-(25, '0903000016', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000016', '0903000016', 'parent16@gmail.com', 'PARENT16@GMAIL.COM', 1, 1, 0, 0, 0),
-(26, '0903000017', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000017', '0903000017', 'parent17@gmail.com', 'PARENT17@GMAIL.COM', 1, 1, 0, 0, 0),
-(27, '0903000018', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000018', '0903000018', 'parent18@gmail.com', 'PARENT18@GMAIL.COM', 1, 1, 0, 0, 0),
-(28, '0903000019', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000019', '0903000019', 'parent19@gmail.com', 'PARENT19@GMAIL.COM', 1, 1, 0, 0, 0),
-(29, '0903000020', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000020', '0903000020', 'parent20@gmail.com', 'PARENT20@GMAIL.COM', 1, 1, 0, 0, 0),
-(30, '0903000021', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000021', '0903000021', 'parent21@gmail.com', 'PARENT21@GMAIL.COM', 1, 1, 0, 0, 0),
-(31, '0903000022', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000022', '0903000022', 'parent22@gmail.com', 'PARENT22@GMAIL.COM', 1, 1, 0, 0, 0),
-(32, '0903000023', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000023', '0903000023', 'parent23@gmail.com', 'PARENT23@GMAIL.COM', 1, 1, 0, 0, 0),
-(33, '0903000024', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000024', '0903000024', 'parent24@gmail.com', 'PARENT24@GMAIL.COM', 1, 1, 0, 0, 0),
-(34, '0903000025', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000025', '0903000025', 'parent25@gmail.com', 'PARENT25@GMAIL.COM', 1, 1, 0, 0, 0),
-(35, '0903000026', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000026', '0903000026', 'parent26@gmail.com', 'PARENT26@GMAIL.COM', 1, 1, 0, 0, 0),
-(36, '0903000027', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000027', '0903000027', 'parent27@gmail.com', 'PARENT27@GMAIL.COM', 1, 1, 0, 0, 0),
-(37, '0903000028', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000028', '0903000028', 'parent28@gmail.com', 'PARENT28@GMAIL.COM', 1, 1, 0, 0, 0),
-(38, '0903000029', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000029', '0903000029', 'parent29@gmail.com', 'PARENT29@GMAIL.COM', 1, 1, 0, 0, 0),
-(39, '0903000030', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000030', '0903000030', 'parent30@gmail.com', 'PARENT30@GMAIL.COM', 1, 1, 0, 0, 0),
-(40, '0903000031', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000031', '0903000031', 'parent31@gmail.com', 'PARENT31@GMAIL.COM', 1, 1, 0, 0, 0),
-(41, '0903000032', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000032', '0903000032', 'parent32@gmail.com', 'PARENT32@GMAIL.COM', 1, 1, 0, 0, 0);
+(3, '0902000002', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000002', '0902000002', 'gv.nguyenthimai@toantuduy.edu.vn', 'GV.NGUYENTHIMAI@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(4, '0902000003', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000003', '0902000003', 'gv.tranminhtuan@toantuduy.edu.vn', 'GV.TRANMINHTUAN@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(5, '0902000004', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000004', '0902000004', 'gv.levanphuoc@toantuduy.edu.vn', 'GV.LEVANPHUOC@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(6, '0902000005', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000005', '0902000005', 'gv.phamthithanh@toantuduy.edu.vn', 'GV.PHAMTHITHANH@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(7, '0902000006', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000006', '0902000006', 'gv.hoangquocbao@toantuduy.edu.vn', 'GV.HOANGQUOCBAO@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(8, '0902000007', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000007', '0902000007', 'gv.dothikieuoanh@toantuduy.edu.vn', 'GV.DOTHIKIEUOANH@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(9, '0902000008', 'AQAAAAEAAYagAAAAEBdl1Hiyk6Y2riACzj6kgiX3w2CiJEwgXhCPQopl/Ej0NQTw+EzKEP7S6b/UgUdgoA==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000008', '0902000008', 'gv.vuminhduc@toantuduy.edu.vn', 'GV.VUMINHDUC@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(10, '0903000001', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000001', '0903000001', 'parent01@gmail.com', 'PARENT01@GMAIL.COM', 1, 1, 0, 0, 0),
+(11, '0903000002', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000002', '0903000002', 'parent02@gmail.com', 'PARENT02@GMAIL.COM', 1, 1, 0, 0, 0),
+(12, '0903000003', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000003', '0903000003', 'parent03@gmail.com', 'PARENT03@GMAIL.COM', 1, 1, 0, 0, 0),
+(13, '0903000004', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000004', '0903000004', 'parent04@gmail.com', 'PARENT04@GMAIL.COM', 1, 1, 0, 0, 0),
+(14, '0903000005', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000005', '0903000005', 'parent05@gmail.com', 'PARENT05@GMAIL.COM', 1, 1, 0, 0, 0),
+(15, '0903000006', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000006', '0903000006', 'parent06@gmail.com', 'PARENT06@GMAIL.COM', 1, 1, 0, 0, 0),
+(16, '0903000007', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000007', '0903000007', 'parent07@gmail.com', 'PARENT07@GMAIL.COM', 1, 1, 0, 0, 0),
+(17, '0903000008', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000008', '0903000008', 'parent08@gmail.com', 'PARENT08@GMAIL.COM', 1, 1, 0, 0, 0),
+(18, '0903000009', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000009', '0903000009', 'parent09@gmail.com', 'PARENT09@GMAIL.COM', 1, 1, 0, 0, 0),
+(19, '0903000010', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000010', '0903000010', 'parent10@gmail.com', 'PARENT10@GMAIL.COM', 1, 1, 0, 0, 0),
+(20, '0903000011', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000011', '0903000011', 'parent11@gmail.com', 'PARENT11@GMAIL.COM', 1, 1, 0, 0, 0),
+(21, '0903000012', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000012', '0903000012', 'parent12@gmail.com', 'PARENT12@GMAIL.COM', 1, 1, 0, 0, 0),
+(22, '0903000013', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000013', '0903000013', 'parent13@gmail.com', 'PARENT13@GMAIL.COM', 1, 1, 0, 0, 0),
+(23, '0903000014', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000014', '0903000014', 'parent14@gmail.com', 'PARENT14@GMAIL.COM', 1, 1, 0, 0, 0),
+(24, '0903000015', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000015', '0903000015', 'parent15@gmail.com', 'PARENT15@GMAIL.COM', 1, 1, 0, 0, 0),
+(25, '0903000016', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000016', '0903000016', 'parent16@gmail.com', 'PARENT16@GMAIL.COM', 1, 1, 0, 0, 0),
+(26, '0903000017', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000017', '0903000017', 'parent17@gmail.com', 'PARENT17@GMAIL.COM', 1, 1, 0, 0, 0),
+(27, '0903000018', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000018', '0903000018', 'parent18@gmail.com', 'PARENT18@GMAIL.COM', 1, 1, 0, 0, 0),
+(28, '0903000019', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000019', '0903000019', 'parent19@gmail.com', 'PARENT19@GMAIL.COM', 1, 1, 0, 0, 0),
+(29, '0903000020', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000020', '0903000020', 'parent20@gmail.com', 'PARENT20@GMAIL.COM', 1, 1, 0, 0, 0),
+(30, '0903000021', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000021', '0903000021', 'parent21@gmail.com', 'PARENT21@GMAIL.COM', 1, 1, 0, 0, 0),
+(31, '0903000022', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000022', '0903000022', 'parent22@gmail.com', 'PARENT22@GMAIL.COM', 1, 1, 0, 0, 0),
+(32, '0903000023', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000023', '0903000023', 'parent23@gmail.com', 'PARENT23@GMAIL.COM', 1, 1, 0, 0, 0),
+(33, '0903000024', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000024', '0903000024', 'parent24@gmail.com', 'PARENT24@GMAIL.COM', 1, 1, 0, 0, 0),
+(34, '0903000025', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000025', '0903000025', 'parent25@gmail.com', 'PARENT25@GMAIL.COM', 1, 1, 0, 0, 0),
+(35, '0903000026', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000026', '0903000026', 'parent26@gmail.com', 'PARENT26@GMAIL.COM', 1, 1, 0, 0, 0),
+(36, '0903000027', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000027', '0903000027', 'parent27@gmail.com', 'PARENT27@GMAIL.COM', 1, 1, 0, 0, 0),
+(37, '0903000028', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000028', '0903000028', 'parent28@gmail.com', 'PARENT28@GMAIL.COM', 1, 1, 0, 0, 0),
+(38, '0903000029', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000029', '0903000029', 'parent29@gmail.com', 'PARENT29@GMAIL.COM', 1, 1, 0, 0, 0),
+(39, '0903000030', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000030', '0903000030', 'parent30@gmail.com', 'PARENT30@GMAIL.COM', 1, 1, 0, 0, 0),
+(40, '0903000031', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000031', '0903000031', 'parent31@gmail.com', 'PARENT31@GMAIL.COM', 1, 1, 0, 0, 0),
+(41, '0903000032', 'AQAAAAEAAYagAAAAEC6HKD2QDvhS8m5c9Duz4NOU58WkyUN9bmGfcOroUwKEPRzGTfq/iK0FpwtJKstQ7A==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000032', '0903000032', 'parent32@gmail.com', 'PARENT32@GMAIL.COM', 1, 1, 0, 0, 0),
+(42, 'Admin123', 'AQAAAAEAAYagAAAAEA+AWZjR0IhBuYCPRJRirThOiEuVVXHavJYTz6EKYObooCUQg1QFd6ljLShDFl9ciQ==', 'Admin', NULL, 1, '2026-08-01 08:00:00', 'Admin123', 'ADMIN123', 'admin123@toantuduy.edu.vn', 'ADMIN123@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
+(43, 'Teacher123', 'AQAAAAEAAYagAAAAEA+AWZjR0IhBuYCPRJRirThOiEuVVXHavJYTz6EKYObooCUQg1QFd6ljLShDFl9ciQ==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', 'Teacher123', 'TEACHER123', 'teacher123@toantuduy.edu.vn', 'TEACHER123@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0);
 SET IDENTITY_INSERT [dbo].[ACCOUNT] OFF;
 
 INSERT INTO [dbo].[ADMIN_PROFILE] (account_id, full_name, avatar, created_at)
-SELECT id, N'Quản trị viên', NULL, created_at
+SELECT id, 
+       CASE 
+           WHEN UserName = 'Admin123' THEN N'Quản trị viên Demo'
+           ELSE N'Quản trị viên Hệ thống'
+       END, 
+       NULL, 
+       created_at
 FROM [dbo].[ACCOUNT]
 WHERE role = 'Admin';
 
@@ -138,7 +150,7 @@ INSERT INTO [dbo].[COURSE] (id, code, name, description, min_age, max_age, image
 SET IDENTITY_INSERT [dbo].[COURSE] OFF;
 
 -- =============================================================================
--- 4. BẢNG TEACHER_PROFILE (8 giáo viên chuyên môn cao)
+-- 4. BẢNG TEACHER_PROFILE (9 giáo viên chuyên môn cao)
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[TEACHER_PROFILE] ON;
 INSERT INTO [dbo].[TEACHER_PROFILE] (id, account_id, full_name, email, specialize, created_at) VALUES
@@ -149,7 +161,8 @@ INSERT INTO [dbo].[TEACHER_PROFILE] (id, account_id, full_name, email, specializ
 (5, 6, N'Phạm Thị Thanh', 'gv.phamthithanh@toantuduy.edu.vn', N'I-MATH & Gợi mở Maieutic Socrates', '2026-08-01 08:00:00'),
 (6, 7, N'Hoàng Quốc Bảo', 'gv.hoangquocbao@toantuduy.edu.vn', N'Tiến trình CPA & Singapore Math', '2026-08-01 08:00:00'),
 (7, 8, N'Đỗ Thị Kiều Oanh', 'gv.dothikieuoanh@toantuduy.edu.vn', N'Tư duy Hình học & Không gian', '2026-08-01 08:00:00'),
-(8, 9, N'Vũ Minh Đức', 'gv.vuminhduc@toantuduy.edu.vn', N'Số học & Kỹ năng tính nhanh', '2026-08-01 08:00:00');
+(8, 9, N'Vũ Minh Đức', 'gv.vuminhduc@toantuduy.edu.vn', N'Số học & Kỹ năng tính nhanh', '2026-08-01 08:00:00'),
+(9, 43, N'Giáo viên Demo', 'teacher123@toantuduy.edu.vn', N'Toán tư duy & Logic giải quyết vấn đề', '2026-08-01 08:00:00');
 SET IDENTITY_INSERT [dbo].[TEACHER_PROFILE] OFF;
 
 -- =============================================================================
@@ -241,7 +254,11 @@ INSERT INTO [dbo].[QUESTION_BANK] (id, course_id, name, description) VALUES
 (17, 6, N'Ngân hàng CPA - Khám phá vật thể thực Concrete', N'Đếm khối lập phương, que tính và phân nhóm đồ vật'),
 (18, 6, N'Ngân hàng CPA - Mô hình hóa Pictorial Bar Model', N'Vẽ sơ đồ thanh và mô hình khối giải bài toán đố'),
 (19, 6, N'Ngân hàng CPA - Đại số trừu tượng Abstract', N'Chuyển đổi hình vẽ thành phương trình và ký hiệu toán học'),
-(20, 3, N'Ngân hàng Đánh giá Năng lực Toàn diện', N'Bộ đề kiểm tra đánh giá chỉ số thông minh toán học (MQ)');
+(20, 3, N'Ngân hàng Đánh giá Năng lực Toàn diện', N'Bộ đề kiểm tra đánh giá chỉ số thông minh toán học (MQ)'),
+(21, 1, N'Ngân hàng Đề thi Học sinh giỏi Soroban & Bàn tính Thần tốc', N'Bộ đề thi chuẩn hóa phân hạng Soroban cấp độ 1-3, rèn luyện tốc độ gảy hạt và ảo tính siêu tốc'),
+(22, 2, N'Ngân hàng Thử thách Finger Math Siêu phản xạ & Tư duy Hình ảnh', N'Bộ câu hỏi phản xạ ngón tay 2 bàn tay trong phạm vi 99, kết hợp tư duy màu sắc và quy luật số học'),
+(23, 3, N'Ngân hàng Bài toán thực tế Mathnasium & Suy luận Bar Model', N'Tập hợp các bài toán ứng dụng thực tế theo giáo trình Mathnasium: chuyển động, tính tuổi, chia tỉ lệ'),
+(24, 5, N'Ngân hàng Tư duy Socrates - Phản biện & Nghịch lý Toán học', N'Các bài toán mở, câu đố logic đa chiều kích thích trẻ tự lập luận, bảo vệ quan điểm và tranh luận');
 SET IDENTITY_INSERT [dbo].[QUESTION_BANK] OFF;
 
 -- =============================================================================
@@ -288,7 +305,17 @@ INSERT INTO [dbo].[STUDENT_PROFILE] (id, parent_id, full_name, avatar, total_poi
 (37, 5, N'Vũ Hoàng Yến', 'https://api.dicebear.com/7.x/bottts/svg?seed=student37', 740, N'Nữ', 39, 10, 1, '2026-08-15 08:00:00'),
 (38, 7, N'Đỗ Minh Châu', 'https://api.dicebear.com/7.x/bottts/svg?seed=student38', 910, N'Nữ', 49, 16, 1, '2026-08-15 08:00:00'),
 (39, 11, N'Dương Gia Hân', 'https://api.dicebear.com/7.x/bottts/svg?seed=student39', 570, N'Nữ', 28, 7, 1, '2026-08-15 08:00:00'),
-(40, 15, N'Mai Quỳnh Chi', 'https://api.dicebear.com/7.x/bottts/svg?seed=student40', 680, N'Nữ', 36, 9, 1, '2026-08-15 08:00:00');
+(40, 15, N'Mai Quỳnh Chi', 'https://api.dicebear.com/7.x/bottts/svg?seed=student40', 680, N'Nữ', 36, 9, 1, '2026-08-15 08:00:00'),
+(41, 1, N'Bùi Anh Thư', 'https://api.dicebear.com/7.x/bottts/svg?seed=student41', 620, N'Nữ', 30, 8, 1, '2026-08-15 08:00:00'),
+(42, 2, N'Nguyễn Minh Khôi', 'https://api.dicebear.com/7.x/bottts/svg?seed=student42', 780, N'Nam', 38, 10, 1, '2026-08-15 08:00:00'),
+(43, 3, N'Trần Bảo Vy', 'https://api.dicebear.com/7.x/bottts/svg?seed=student43', 890, N'Nữ', 44, 14, 1, '2026-08-15 08:00:00'),
+(44, 4, N'Lê Quốc Huy', 'https://api.dicebear.com/7.x/bottts/svg?seed=student44', 510, N'Nam', 25, 6, 1, '2026-08-15 08:00:00'),
+(45, 5, N'Phạm Đăng Khoa', 'https://api.dicebear.com/7.x/bottts/svg?seed=student45', 940, N'Nam', 48, 16, 1, '2026-08-15 08:00:00'),
+(46, 6, N'Vũ Thảo Linh', 'https://api.dicebear.com/7.x/bottts/svg?seed=student46', 670, N'Nữ', 33, 9, 1, '2026-08-15 08:00:00'),
+(47, 7, N'Hoàng Gia Huy', 'https://api.dicebear.com/7.x/bottts/svg?seed=student47', 430, N'Nam', 21, 5, 1, '2026-08-15 08:00:00'),
+(48, 8, N'Đỗ Ngọc Mai', 'https://api.dicebear.com/7.x/bottts/svg?seed=student48', 1050, N'Nữ', 55, 20, 1, '2026-08-15 08:00:00'),
+(49, 9, N'Đinh Tuấn Kiệt', 'https://api.dicebear.com/7.x/bottts/svg?seed=student49', 720, N'Nam', 36, 11, 1, '2026-08-15 08:00:00'),
+(50, 10, N'Lâm Phương Nghi', 'https://api.dicebear.com/7.x/bottts/svg?seed=student50', 860, N'Nữ', 42, 13, 1, '2026-08-15 08:00:00');
 SET IDENTITY_INSERT [dbo].[STUDENT_PROFILE] OFF;
 
 -- =============================================================================
@@ -296,11 +323,11 @@ SET IDENTITY_INSERT [dbo].[STUDENT_PROFILE] OFF;
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[CLASSES] ON;
 INSERT INTO [dbo].[CLASSES] (id, course_level_id, teacher_id, name, max_capacity, start_date, end_date, status, created_at, updated_at) VALUES
-(1, 1, 1, N'Lớp Soroban Cơ bản SRB-01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
+(1, 1, 9, N'Lớp Soroban Cơ bản SRB-01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (2, 1, 1, N'Lớp Soroban Cơ bản SRB-02', 15, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (3, 2, 1, N'Lớp Soroban Trung cấp SRB-03', 12, '2026-09-10 08:00:00', '2026-12-10 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (4, 3, 1, N'Lớp Soroban Nâng cao SRB-04', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
-(5, 4, 2, N'Lớp Finger Math Mầm non FGM-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
+(5, 4, 9, N'Lớp Finger Math Mầm non FGM-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (6, 5, 2, N'Lớp Finger Math Cơ bản FGM-02', 15, '2026-09-02 08:00:00', '2026-11-20 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (7, 6, 2, N'Lớp Finger Math Nâng cao FGM-03', 12, '2026-09-03 08:00:00', '2026-11-25 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (8, 7, 3, N'Lớp Mathnasium Level 1 MTN-01', 10, '2026-09-01 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
@@ -314,8 +341,10 @@ INSERT INTO [dbo].[CLASSES] (id, course_level_id, teacher_id, name, max_capacity
 (16, 15, 5, N'Lớp I-MATH Master IMT-03', 10, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (17, 16, 6, N'Lớp CPA Concrete CPA-01', 12, '2026-09-01 08:00:00', '2026-11-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
 (18, 17, 6, N'Lớp CPA Pictorial CPA-02', 12, '2026-09-05 08:00:00', '2026-11-20 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
-(19, 18, 6, N'Lớp CPA Abstract CPA-03', 12, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
-(20, 8, 7, N'Lớp Tư duy Không gian MTN-SP01', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL);
+(19, 18, 7, N'Lớp CPA Abstract CPA-03', 12, '2026-09-10 08:00:00', '2026-12-01 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
+(20, 8, 8, N'Lớp Tư duy Không gian MTN-SP01', 10, '2026-09-15 08:00:00', '2026-12-15 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
+(21, 3, 9, N'Lớp Soroban Siêu Tốc & Ảo Tính SRB-VIP01', 15, '2026-09-01 08:00:00', '2026-11-30 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL),
+(22, 13, 9, N'Lớp Toán Tư Duy Phản Biện & Logic IMT-PRO01', 12, '2026-09-05 08:00:00', '2026-12-05 17:00:00', 'ACTIVE', '2026-08-01 08:00:00', NULL);
 SET IDENTITY_INSERT [dbo].[CLASSES] OFF;
 
 -- =============================================================================
@@ -417,46 +446,312 @@ SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] OFF;
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[QUESTION] ON;
 INSERT INTO [dbo].[QUESTION] (id, bank_id, type, content, image_url, difficulty, answer) VALUES
-(1, 1, 'MULTIPLE_CHOICE', N'Khi gảy bàn tính Soroban, hạt ở hàng trên có giá trị bằng bao nhiêu? A. 1; B. 5; C. 10; D. 50', NULL, 'EASY', N'B'),
-(2, 1, 'FILL_IN', N'Tính nhẩm nhanh trên bàn tính: 3 + 1 + 5 - 2 = ?', NULL, 'EASY', N'7'),
-(3, 2, 'MULTIPLE_CHOICE', N'Trong công thức Anh bạn nhỏ của Soroban, bạn nhỏ của 4 là số nào? A. 1; B. 2; C. 3; D. 5', NULL, 'EASY', N'A'),
-(4, 2, 'TRUE_FALSE', N'Để thực hiện phép tính +4 khi cột không đủ 4 hạt dưới, ta gảy thêm hạt 5 và bớt 1 hạt dưới.', NULL, 'MEDIUM', N'TRUE'),
-(5, 3, 'FILL_IN', N'Trong công thức Anh bạn lớn của Soroban, bạn lớn của 7 là mấy để tạo thành 10?', NULL, 'MEDIUM', N'3'),
-(6, 3, 'MULTIPLE_CHOICE', N'Thực hiện phép tính qua cầu 10: 8 + 5 = ? (Cộng 10 bớt bạn lớn của 5) A. 12; B. 13; C. 14; D. 15', NULL, 'MEDIUM', N'B'),
-(7, 4, 'FILL_IN', N'Ảo tính Anzan: 12 + 15 - 7 + 20 = ?', NULL, 'HARD', N'40'),
-(8, 4, 'MULTIPLE_CHOICE', N'Tốc độ ảo tính Anzan giúp kích thích bán cầu não nào phát triển mạnh nhất? A. Bán cầu não trái; B. Bán cầu não phải; C. Cả hai bán cầu não; D. Không xác định', NULL, 'MEDIUM', N'C'),
-(9, 5, 'MULTIPLE_CHOICE', N'Trong quy ước Finger Math bàn tay phải, ngón cái xòe ra biểu thị số mấy? A. 1; B. 5; C. 9; D. 10', NULL, 'EASY', N'B'),
-(10, 5, 'FILL_IN', N'Xòe ngón cái và 3 ngón tay trỏ, giữa, áp út của bàn tay phải biểu thị số mấy?', NULL, 'EASY', N'8'),
-(11, 6, 'FILL_IN', N'Tính bằng Finger Math hai bàn tay: 23 + 15 = ?', NULL, 'MEDIUM', N'38'),
-(12, 6, 'TRUE_FALSE', N'Trên phương pháp Finger Math, số 99 được biểu thị bằng cách nắm cả 2 bàn tay lại.', NULL, 'EASY', N'FALSE'),
-(13, 7, 'MULTIPLE_CHOICE', N'Tính nhẩm phản xạ ngón tay: 47 + 22 - 18 = ? A. 51; B. 52; C. 50; D. 49', NULL, 'HARD', N'A'),
-(14, 7, 'FILL_IN', N'Một người gập 1 ngón tay cái bên trái và xòe 4 ngón tay phải. Số đó là số bao nhiêu?', NULL, 'MEDIUM', N'44'),
-(15, 8, 'MULTIPLE_CHOICE', N'Số liền trước của số tròn chục nhỏ nhất có 3 chữ số là số nào? A. 90; B. 99; C. 101; D. 109', NULL, 'EASY', N'B'),
-(16, 8, 'FILL_IN', N'Có bao nhiêu số chẵn có 2 chữ số lớn hơn 20 và nhỏ hơn 30?', NULL, 'EASY', N'4'),
-(17, 9, 'MULTIPLE_CHOICE', N'Một hình lập phương có bao nhiêu mặt, bao nhiêu đỉnh và bao nhiêu cạnh? A. 6 mặt, 8 đỉnh, 12 cạnh; B. 6 mặt, 12 đỉnh, 8 cạnh; C. 8 mặt, 6 đỉnh, 12 cạnh; D. 4 mặt, 4 đỉnh, 6 cạnh', NULL, 'MEDIUM', N'A'),
-(18, 9, 'TRUE_FALSE', N'Hình thoi có 4 góc vuông được gọi là hình vuông.', NULL, 'EASY', N'TRUE'),
-(19, 10, 'FILL_IN', N'Một trang trại có gà và thỏ. Đếm được 10 cái đầu và 28 cái chân. Hỏi có bao nhiêu con thỏ?', NULL, 'HARD', N'4'),
-(20, 10, 'MULTIPLE_CHOICE', N'Mẹ mua 3 hộp sữa và 2 cái bánh hết 55 nghìn. Giá 1 hộp sữa hơn 1 cái bánh 5 nghìn. Giá 1 cái bánh là? A. 8 nghìn; B. 10 nghìn; C. 12 nghìn; D. 15 nghìn', NULL, 'HARD', N'A'),
-(21, 11, 'FILL_IN', N'Tìm số tiếp theo trong dãy số: 2, 4, 8, 16, 32, ... ?', NULL, 'EASY', N'64'),
-(22, 11, 'MULTIPLE_CHOICE', N'Tìm số còn thiếu: 1, 4, 9, 16, [ ? ], 36, 49 A. 20; B. 24; C. 25; D. 30', NULL, 'MEDIUM', N'C'),
-(23, 12, 'FILL_IN', N'Tính nhanh giá trị biểu thức: 125 x 8 x 25 x 4 = ?', NULL, 'MEDIUM', N'100000'),
-(24, 12, 'TRUE_FALSE', N'Tích của một số lẻ với một số chẵn bất kỳ luôn luôn là một số chẵn.', NULL, 'EASY', N'TRUE'),
-(25, 13, 'MULTIPLE_CHOICE', N'Rút gọn phân số 48/64 về dạng phân số tối giản ta được: A. 6/8; B. 3/4; C. 12/16; D. 24/32', NULL, 'MEDIUM', N'B'),
-(26, 13, 'FILL_IN', N'Tính giá trị của phép tính: (3/4 + 1/2) : 5/8 = ?', NULL, 'HARD', N'2'),
-(27, 14, 'MULTIPLE_CHOICE', N'Nam nói: ''Số chia hết cho 2 thì chắc chắn chia hết cho 4''. Lập luận này đúng hay sai? A. Luôn đúng; B. Sai, ví dụ số 6; C. Chỉ đúng với số có 2 chữ số; D. Không thể kết luận', NULL, 'EASY', N'B'),
-(28, 14, 'TRUE_FALSE', N'Nếu A lớn hơn B và B lớn hơn C thì chắc chắn A lớn hơn C (tính chất bắc cầu).', NULL, 'EASY', N'TRUE'),
-(29, 15, 'MULTIPLE_CHOICE', N'Làm thế nào chia đều 7 quả táo cho 8 bạn nhỏ mà không bổ bất kỳ quả nào quá 4 phần? A. Cắt 4 quả làm đôi, 3 quả làm 4; B. Cắt mỗi quả làm 8 phần; C. Ép thành nước táo; D. Cả A và C đều hợp lý', NULL, 'HARD', N'D'),
-(30, 15, 'FILL_IN', N'Nếu ngày hôm qua là ngày mai của thứ Hai, thì ngày mai là ngày hôm qua của thứ mấy?', NULL, 'HARD', N'Thứ Năm'),
-(31, 16, 'MULTIPLE_CHOICE', N'Bác tài xế xe buýt chở 10 người, trạm 1 xuống 3 lên 2, trạm 2 xuống 4 lên 5. Hỏi bác tài xế mắt màu gì? A. Mắt đen; B. Màu mắt của người đang giải đố; C. Mắt nâu; D. Không biết', NULL, 'EASY', N'B'),
-(32, 17, 'FILL_IN', N'Có 3 đĩa cam, mỗi đĩa có 4 quả. Viết phép tính nhân tương ứng: 3 x 4 = ?', NULL, 'EASY', N'12'),
-(33, 17, 'TRUE_FALSE', N'Mô hình cụ thể (Concrete) trong CPA là để trẻ trực tiếp cầm nắm que tính, đồ vật.', NULL, 'EASY', N'TRUE'),
-(34, 18, 'MULTIPLE_CHOICE', N'Mô hình thanh Bar Model: Thanh A dài hơn thanh B 12 đơn vị. Tổng 2 thanh là 40. Thanh B dài: A. 14; B. 26; C. 16; D. 28', NULL, 'MEDIUM', N'A'),
-(35, 18, 'FILL_IN', N'Mô hình đoạn thẳng: Tuổi bố gấp 4 lần tuổi con, bố hơn con 30 tuổi. Hỏi con bao nhiêu tuổi?', NULL, 'MEDIUM', N'10'),
-(36, 19, 'MULTIPLE_CHOICE', N'Chuyển mô hình ''Tìm hai số biết tổng là S và tỉ số là a/b'' sang công thức đại số tìm số bé: A. S : (a + b) x a; B. S : (a - b) x a; C. S x a + b; D. S : a x b', NULL, 'HARD', N'A'),
-(37, 19, 'FILL_IN', N'Cho biểu thức 2x + 15 = 45. Giá trị của x là bao nhiêu?', NULL, 'EASY', N'15'),
-(38, 20, 'MULTIPLE_CHOICE', N'Trong một phòng họp có 8 người. Mỗi người bắt tay với tất cả những người còn lại đúng 1 lần. Có tất cả bao nhiêu cái bắt tay? A. 28; B. 32; C. 56; D. 64', NULL, 'HARD', N'A'),
-(39, 20, 'FILL_IN', N'Tìm số tự nhiên nhỏ nhất có 2 chữ số mà khi chia cho 2, 3, 5 đều dư 1:', NULL, 'MEDIUM', N'31'),
-(40, 20, 'TRUE_FALSE', N'Tổng của 5 số tự nhiên liên tiếp bất kỳ luôn luôn chia hết cho 5.', NULL, 'MEDIUM', N'TRUE');
+(1, 1, 'MULTIPLE_CHOICE', N'Khi gảy bàn tính Soroban, hạt ở hàng trên có giá trị quy ước bằng bao nhiêu?
+A. 1
+B. 5
+C. 10
+D. 50', 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=600', 'EASY', N'B. 5
+- Lời giải: Cấu tạo bàn tính Soroban có 1 thanh ngang phân tách: hạt ở phía trên có giá trị 5, các hạt ở phía dưới có giá trị 1.'),
+(2, 1, 'FILL_IN', N'Tính nhẩm nhanh thao tác hạt trên bàn tính Soroban: 3 + 1 + 5 - 2 = ?', NULL, 'EASY', N'7
+- Hướng dẫn giải: Thực hiện lần lượt: gảy 3 hạt dưới lên (+3), thêm 1 hạt dưới (+1 = 4), gảy hạt 5 trên xuống (+5 = 9), gảy 2 hạt dưới xuống (-2 = 7).'),
+(3, 2, 'MULTIPLE_CHOICE', N'Trong công thức Anh bạn nhỏ của Soroban, bạn nhỏ của 4 để tạo thành 5 là số nào?
+A. 1
+B. 2
+C. 3
+D. 5', NULL, 'EASY', N'A. 1
+- Lời giải: Hai số có tổng bằng 5 được gọi là Anh bạn nhỏ của nhau. Do 4 + 1 = 5 nên bạn nhỏ của 4 là 1.'),
+(4, 2, 'MULTIPLE_CHOICE', N'Để thực hiện phép tính +4 khi cột không đủ 4 hạt dưới trên bàn tính Soroban, ta thực hiện thao tác nào?
+A. Thêm 5 và bớt 1 hạt dưới
+B. Thêm 10 và bớt 6
+C. Thêm 5 và bớt 4 hạt dưới
+D. Gảy 4 hạt dưới lên', NULL, 'MEDIUM', N'A. Thêm 5 và bớt 1 hạt dưới
+- Lời giải: Áp dụng công thức Anh bạn nhỏ cộng (+4 = +5 - 1): gảy hạt 5 xuống và gạt 1 hạt dưới xuống.'),
+(5, 3, 'FILL_IN', N'Trong công thức Anh bạn lớn của Soroban, bạn lớn của 7 là mấy để tạo thành 10?', NULL, 'MEDIUM', N'3
+- Hướng dẫn giải: Hai số có tổng bằng 10 được gọi là Anh bạn lớn của nhau. Vì 7 + 3 = 10 nên bạn lớn của 7 là 3.'),
+(6, 3, 'MULTIPLE_CHOICE', N'Thực hiện phép tính qua cầu 10: 8 + 5 = ? (Quy tắc: Cộng 10 bớt bạn lớn của 5)
+A. 12
+B. 13
+C. 14
+D. 15', NULL, 'MEDIUM', N'B. 13
+- Lời giải: Ta có 8 + 5 = 8 + 10 - 5 = 18 - 5 = 13. Thao tác: thêm 1 ở cột hàng chục và bớt 5 ở cột đơn vị.'),
+(7, 4, 'FILL_IN', N'Thực hiện ảo tính Anzan (tưởng tượng bàn tính trong tâm trí): 12 + 15 - 7 + 20 = ?', NULL, 'HARD', N'40
+- Hướng dẫn giải: 12 + 15 = 27; 27 - 7 = 20; 20 + 20 = 40. Học sinh hình dung chuyển động của hạt tính trên thanh định vị.'),
+(8, 4, 'MULTIPLE_CHOICE', N'Phương pháp ảo tính Anzan Soroban kích thích sự phối hợp của vùng não nào mạnh mẽ nhất?
+A. Bán cầu não trái (Logic, phân tích)
+B. Bán cầu não phải (Hình ảnh, không gian)
+C. Đồng thời cả hai bán cầu não (Toàn não)
+D. Vùng tiểu não điều khiển vận động', 'https://www.youtube.com/watch?v=0k2Gbp475m8', 'MEDIUM', N'C. Đồng thời cả hai bán cầu não (Toàn não)
+- Lời giải: Não phải hình dung bàn tính ảo dưới dạng hình ảnh di động, não trái đồng thời xử lý các quy tắc số học logic, giúp tối ưu hóa kết nối hai bán cầu não.'),
+(9, 5, 'MULTIPLE_CHOICE', N'Trong quy ước Finger Math bàn tay phải, ngón cái xòe ra biểu thị giá trị số mấy?
+A. 1
+B. 5
+C. 9
+D. 10', 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600', 'EASY', N'B. 5
+- Lời giải: Trên bàn tay phải (hàng đơn vị), 4 ngón dài (trỏ, giữa, áp út, út) mỗi ngón có giá trị là 1, riêng ngón cái có giá trị đặc biệt là 5.'),
+(10, 5, 'FILL_IN', N'Xòe ngón cái và 3 ngón dài (trỏ, giữa, áp út) của bàn tay phải biểu thị số mấy?', NULL, 'EASY', N'8
+- Hướng dẫn giải: Ngón cái mang giá trị 5, cộng thêm 3 ngón dài mỗi ngón 1: 5 + 1 + 1 + 1 = 8.'),
+(11, 6, 'FILL_IN', N'Tính nhẩm bằng Finger Math phối hợp hai bàn tay: 23 + 15 = ?', NULL, 'MEDIUM', N'38
+- Hướng dẫn giải: Tay trái (hàng chục): 2 + 1 = 3 (xòe 3 ngón). Tay phải (hàng đơn vị): 3 + 5 = 8 (xòe ngón cái và 3 ngón). Kết quả: 38.'),
+(12, 6, 'MULTIPLE_CHOICE', N'Trên phương pháp Finger Math hai bàn tay, số lớn nhất có thể biểu diễn được là số nào?
+A. 89
+B. 90
+C. 99
+D. 100', NULL, 'EASY', N'C. 99
+- Lời giải: Tay trái biểu diễn tối đa số 90 (ngón cái 50 + 4 ngón 40), tay phải biểu diễn tối đa số 9 (ngón cái 5 + 4 ngón 4). Tổng cộng là 99.'),
+(13, 7, 'MULTIPLE_CHOICE', N'Tính nhẩm phản xạ ngón tay tốc độ cao: 47 + 22 - 18 = ?
+A. 51
+B. 52
+C. 50
+D. 49', NULL, 'HARD', N'A. 51
+- Lời giải: 47 + 22 = 69; 69 - 18 = 51. Thao tác: tay trái 4+2=6, 6-1=5; tay phải 7+2=9, 9-8=1. Kết quả là 51.'),
+(14, 7, 'FILL_IN', N'Một bạn nhỏ giơ tay trái xòe 4 ngón dài (gập ngón cái) và tay phải xòe 4 ngón dài (gập ngón cái). Số đó là số bao nhiêu?', NULL, 'MEDIUM', N'44
+- Hướng dẫn giải: Tay trái có 4 ngón dài = 40. Tay phải có 4 ngón dài = 4. Số biểu thị là 44.'),
+(15, 8, 'MULTIPLE_CHOICE', N'Số liền trước của số tròn chục nhỏ nhất có 3 chữ số là số nào?
+A. 90
+B. 99
+C. 101
+D. 109', NULL, 'EASY', N'B. 99
+- Lời giải: Số tròn chục nhỏ nhất có 3 chữ số là 100. Số liền trước của 100 là 100 - 1 = 99.'),
+(16, 8, 'FILL_IN', N'Có bao nhiêu số chẵn có 2 chữ số lớn hơn 20 và nhỏ hơn 30?', NULL, 'EASY', N'4
+- Hướng dẫn giải: Các số chẵn trong khoảng từ 21 đến 29 là: 22, 24, 26, 28. Tổng cộng có 4 số.'),
+(17, 9, 'MULTIPLE_CHOICE', N'Một hình lập phương chuẩn có bao nhiêu mặt, bao nhiêu đỉnh và bao nhiêu cạnh?
+A. 6 mặt, 8 đỉnh, 12 cạnh
+B. 6 mặt, 12 đỉnh, 8 cạnh
+C. 8 mặt, 6 đỉnh, 12 cạnh
+D. 4 mặt, 4 đỉnh, 6 cạnh', 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600', 'MEDIUM', N'A. 6 mặt, 8 đỉnh, 12 cạnh
+- Lời giải: Hình lập phương gồm 6 mặt vuông bằng nhau, 8 đỉnh và 12 cạnh có độ dài bằng nhau.'),
+(18, 9, 'MULTIPLE_CHOICE', N'Hình học nào dưới đây vừa có 4 cạnh bằng nhau, vừa có 4 góc vuông?
+A. Hình chữ nhật
+B. Hình thoi
+C. Hình vuông
+D. Hình bình hành', NULL, 'EASY', N'C. Hình vuông
+- Lời giải: Hình vuông là tứ giác đặc biệt có 4 cạnh bằng nhau (tính chất hình thoi) và 4 góc vuông (tính chất hình chữ nhật).'),
+(19, 10, 'FILL_IN', N'Một trang trại nuôi gà và thỏ. Người ta đếm được tất cả 10 cái đầu và 28 cái chân. Hỏi có bao nhiêu con thỏ?', NULL, 'HARD', N'4
+- Hướng dẫn giải: Giả sử tất cả 10 con đều là gà thì có: 10 x 2 = 20 cái chân. Số chân hụt đi là: 28 - 20 = 8 chân. Mỗi con thỏ hơn gà: 4 - 2 = 2 chân. Vậy số thỏ là: 8 : 2 = 4 con thỏ.'),
+(20, 10, 'MULTIPLE_CHOICE', N'Mẹ mua 3 hộp sữa và 2 cái bánh hết 55 nghìn đồng. Biết giá 1 hộp sữa đắt hơn 1 cái bánh 5 nghìn đồng. Giá tiền 1 cái bánh là bao nhiêu?
+A. 8 nghìn đồng
+B. 10 nghìn đồng
+C. 12 nghìn đồng
+D. 15 nghìn đồng', NULL, 'HARD', N'A. 8 nghìn đồng
+- Lời giải: Gọi giá 1 cái bánh là x nghìn. Giá 1 hộp sữa là x + 5. Ta có: 3*(x + 5) + 2*x = 55 => 5x + 15 = 55 => 5x = 40 => x = 8 nghìn đồng.'),
+(21, 11, 'FILL_IN', N'Tìm số tiếp theo trong dãy số quy luật nhân đôi: 2, 4, 8, 16, 32, ... ?', NULL, 'EASY', N'64
+- Hướng dẫn giải: Mỗi số đứng sau gấp 2 lần số đứng trước: 32 x 2 = 64.'),
+(22, 11, 'MULTIPLE_CHOICE', N'Tìm số còn thiếu trong dãy số bình phương: 1, 4, 9, 16, [ ? ], 36, 49
+A. 20
+B. 24
+C. 25
+D. 30', NULL, 'MEDIUM', N'C. 25
+- Lời giải: Dãy số là bình phương của các số tự nhiên liên tiếp: 1^2=1, 2^2=4, 3^2=9, 4^2=16, 5^2=25, 6^2=36, 7^2=49. Số cần tìm là 25.'),
+(23, 12, 'FILL_IN', N'Tính nhanh bằng cách nhóm số hợp lý: 125 x 8 x 25 x 4 = ?', NULL, 'MEDIUM', N'100000
+- Hướng dẫn giải: Ghép đôi số tròn chục, tròn trăm: (125 x 8) x (25 x 4) = 1.000 x 100 = 100.000.'),
+(24, 12, 'MULTIPLE_CHOICE', N'Khẳng định nào sau đây về tính chẵn lẻ của phép nhân là luôn luôn ĐÚNG?
+A. Tích của hai số lẻ là một số chẵn
+B. Tích của một số lẻ với một số chẵn luôn là số chẵn
+C. Tổng của hai số lẻ luôn là một số lẻ
+D. Tích của hai số chẵn có thể là số lẻ', NULL, 'EASY', N'B. Tích của một số lẻ với một số chẵn luôn là số chẵn
+- Lời giải: Số chẵn có dạng 2k, do đó khi nhân với bất kỳ số nguyên nào thì kết quả luôn chứa thừa số 2, tức là một số chẵn.'),
+(25, 13, 'MULTIPLE_CHOICE', N'Rút gọn phân số 48/64 về dạng phân số tối giản ta được kết quả là:
+A. 6/8
+B. 3/4
+C. 12/16
+D. 24/32', NULL, 'MEDIUM', N'B. 3/4
+- Lời giải: ƯCLN của 48 và 64 là 16. Chia cả tử và mẫu cho 16: 48:16 = 3, 64:16 = 4. Phân số tối giản là 3/4.'),
+(26, 13, 'FILL_IN', N'Tính giá trị biểu thức phân số: (3/4 + 1/2) : 5/8 = ?', NULL, 'HARD', N'2
+- Hướng dẫn giải: 3/4 + 1/2 = 3/4 + 2/4 = 5/4. Tiếp tục: 5/4 : 5/8 = 5/4 x 8/5 = 8/4 = 2.'),
+(27, 14, 'MULTIPLE_CHOICE', N'Bạn Nam nói: ''Số chia hết cho 2 thì chắc chắn chia hết cho 4''. Lập luận của Nam đúng hay sai?
+A. Luôn đúng
+B. Sai, ví dụ số 6 chia hết cho 2 nhưng không chia hết cho 4
+C. Chỉ đúng với số có 2 chữ số
+D. Không thể kết luận', NULL, 'EASY', N'B. Sai, ví dụ số 6 chia hết cho 2 nhưng không chia hết cho 4
+- Lời giải: Mệnh đề đảo mới đúng: Số chia hết cho 4 thì chia hết cho 2. Ví dụ phản chứng số 6, 10, 14 chia hết cho 2 nhưng không chia hết cho 4.'),
+(28, 14, 'ESSAY', N'Giải thích tính chất bắc cầu trong bất đẳng thức: Nếu A > B và B > C thì hãy chứng minh A > C bằng ví dụ thực tế.', NULL, 'MEDIUM', N'- Hướng dẫn chấm & Lời giải:
+Bước 1: Nêu định nghĩa tính chất bắc cầu: thứ bậc so sánh được bảo toàn qua phần tử trung gian B.
+Bước 2: Lấy ví dụ thực tế (chiều cao, cân nặng, hoặc độ dài thước kẻ). Ví dụ: Lan cao hơn Mai (140cm > 135cm), Mai cao hơn Hoa (135cm > 130cm) => Lan chắc chắn cao hơn Hoa (140cm > 130cm).
+Bước 3: Kết luận đúng tính logic.'),
+(29, 15, 'MULTIPLE_CHOICE', N'Làm thế nào chia đều 7 quả táo cho 8 bạn nhỏ mà không bổ bất kỳ quả nào quá 4 phần?
+A. Bổ 4 quả làm đôi và 3 quả làm 4 phần
+B. Bổ mỗi quả làm 8 phần nhỏ
+C. Cân cả 7 quả táo rồi chia theo khối lượng
+D. Bổ mỗi quả làm 3 phần', NULL, 'HARD', N'A. Bổ 4 quả làm đôi và 3 quả làm 4 phần
+- Lời giải: Bổ 4 quả làm đôi được 8 nửa quả (mỗi bạn 1/2 quả). Bổ 3 quả làm 4 được 12 phần tư (mỗi bạn lấy thêm 1/4 quả và còn dư chia đều). Tổng mỗi bạn nhận 1/2 + 1/4 + 1/8 quả mà không quả nào bị chia quá 4 nhát.'),
+(30, 15, 'FILL_IN', N'Nếu ngày hôm qua là ngày mai của thứ Hai, thì ngày mai là ngày hôm qua của thứ mấy?', NULL, 'HARD', N'Thứ Năm
+- Hướng dẫn giải: ''Ngày mai của thứ Hai'' là thứ Ba => Hôm qua là thứ Ba => Hôm nay là thứ Tư => Ngày mai là thứ Năm => Thứ Năm chính là hôm qua của thứ Sáu (hoặc ngày mai là Thứ Năm).'),
+(31, 16, 'MULTIPLE_CHOICE', N'Bạn đang lái xe buýt có 10 hành khách. Trạm 1 xuống 3 người, lên 2 người. Trạm 2 xuống 4 người, lên 5 người. Hỏi mắt người lái xe màu gì?
+A. Mắt màu nâu
+B. Bằng màu mắt của chính bạn (vì bạn là người lái xe)
+C. Mắt màu đen
+D. Không xác định được', NULL, 'EASY', N'B. Bằng màu mắt của chính bạn (vì bạn là người lái xe)
+- Lời giải: Đề bài mở đầu bằng câu: ''BẠN đang lái xe buýt'', do đó người lái xe chính là bạn, màu mắt của người lái là màu mắt của chính người giải.'),
+(32, 17, 'FILL_IN', N'Bé có 3 đĩa cam, mỗi đĩa xếp đúng 4 quả cam tươi. Viết phép tính nhân tương ứng và cho biết tổng số cam là bao nhiêu quả?', NULL, 'EASY', N'12
+- Hướng dẫn giải: Phép tính nhân: 4 x 3 = 12 quả cam (hoặc 3 x 4 = 12).'),
+(33, 17, 'MULTIPLE_CHOICE', N'Giai đoạn ''Cụ thể'' (Concrete) trong tiến trình CPA đóng vai trò gì quan trọng nhất đối với trẻ mầm non?
+A. Ghi nhớ các công thức đại số phức tạp
+B. Tương tác trực tiếp bằng xúc giác với que tính, khối hình thực tế để hình thành biểu tượng toán học
+C. Tăng tốc độ bấm máy tính cầm tay
+D. Làm quen ngay với các phương trình ẩn x', NULL, 'EASY', N'B. Tương tác trực tiếp bằng xúc giác với que tính, khối hình thực tế để hình thành biểu tượng toán học
+- Lời giải: Phương pháp CPA xuất phát từ cụ thể (Concrete): trẻ cần cầm, nắm, sờ các đồ vật thật trước khi chuyển sang hình ảnh tượng trưng.'),
+(34, 18, 'MULTIPLE_CHOICE', N'Mô hình thanh Bar Model: Thanh A dài hơn thanh B là 12 đơn vị. Tổng độ dài 2 thanh là 40 đơn vị. Độ dài của thanh B (số bé) là:
+A. 14 đơn vị
+B. 26 đơn vị
+C. 16 đơn vị
+D. 28 đơn vị', NULL, 'MEDIUM', N'A. 14 đơn vị
+- Lời giải: Bài toán Tổng - Hiệu: Số bé = (Tổng - Hiệu) : 2 = (40 - 12) : 2 = 28 : 2 = 14 đơn vị.'),
+(35, 18, 'FILL_IN', N'Vẽ sơ đồ đoạn thẳng: Tuổi bố gấp 4 lần tuổi con, bố hơn con 30 tuổi. Hỏi năm nay con bao nhiêu tuổi?', NULL, 'MEDIUM', N'10
+- Hướng dẫn giải: Hiệu số phần bằng nhau: 4 - 1 = 3 phần. Giá trị 1 phần (tuổi con): 30 : 3 = 10 tuổi.'),
+(36, 19, 'MULTIPLE_CHOICE', N'Chuyển mô hình thanh ''Tìm hai số biết tổng là S và tỉ số là a/b'' sang công thức đại số tìm số bé là:
+A. S : (a + b) x a
+B. S : (a - b) x a
+C. S x a + b
+D. S : a x b', NULL, 'HARD', N'A. S : (a + b) x a
+- Lời giải: Tổng số phần bằng nhau là (a + b). Giá trị 1 phần là S : (a + b). Số bé chiếm a phần nên bằng [S : (a + b)] x a.'),
+(37, 19, 'FILL_IN', N'Tìm nghiệm x trong phương trình bậc nhất cơ bản: 2x + 15 = 45. Giá trị của x là bao nhiêu?', NULL, 'EASY', N'15
+- Hướng dẫn giải: 2x = 45 - 15 = 30 => x = 30 : 2 = 15.'),
+(38, 20, 'MULTIPLE_CHOICE', N'Trong một buổi giao lưu toán học có 8 bạn tham gia. Mỗi bạn bắt tay với tất cả các bạn còn lại đúng 1 lần. Có tất cả bao nhiêu cái bắt tay?
+A. 28
+B. 32
+C. 56
+D. 64', NULL, 'HARD', N'A. 28
+- Lời giải: Số cái bắt tay là tổ hợp chập 2 của 8: C(8,2) = (8 x 7) : 2 = 28 cái bắt tay.'),
+(39, 20, 'FILL_IN', N'Tìm số tự nhiên nhỏ nhất có 2 chữ số mà khi chia cho cả 2, 3 và 5 đều dư 1:', NULL, 'MEDIUM', N'31
+- Hướng dẫn giải: BCNN của 2, 3, 5 là 30. Số chia cho 2, 3, 5 dư 1 có dạng 30k + 1. Với k = 1 ta được số nhỏ nhất có 2 chữ số là 31.'),
+(40, 20, 'MULTIPLE_CHOICE', N'Tổng của 5 số tự nhiên liên tiếp bất kỳ luôn luôn có tính chất chia hết nào sau đây?
+A. Luôn chia hết cho 5
+B. Luôn chia hết cho 10
+C. Luôn là số nguyên tố
+D. Luôn là số lẻ', NULL, 'MEDIUM', N'A. Luôn chia hết cho 5
+- Lời giải: Gọi 5 số liên tiếp là n, n+1, n+2, n+3, n+4. Tổng của chúng là: 5n + 10 = 5(n + 2), luôn luôn chia hết cho 5.'),
+(41, 21, 'MULTIPLE_CHOICE', N'Trong kỳ thi Soroban quốc tế, thao tác ''Gảy kép'' (Pinch in / Pinch out) được áp dụng khi nào?
+A. Khi gảy đồng thời hạt 5 và các hạt 1 cùng tiến về hoặc rời xa thanh ngang
+B. Khi cộng hai số có 3 chữ số
+C. Khi xóa toàn bộ bàn tính về số 0
+D. Khi đổi cột hàng chục sang hàng trăm', 'https://www.youtube.com/watch?v=0k2Gbp475m8', 'MEDIUM', N'A. Khi gảy đồng thời hạt 5 và các hạt 1 cùng tiến về hoặc rời xa thanh ngang
+- Lời giải: Gảy kép là kỹ thuật dùng đồng thời ngón cái và ngón trỏ gộp hạt 5 và các hạt dưới (ví dụ gộp số 6, 7, 8, 9) chỉ trong 1 thao tác duy nhất.'),
+(42, 21, 'FILL_IN', N'Thực hiện phép tính liên hoàn Soroban cấp độ Flash Anzan (tốc độ 3 giây): 45 + 54 - 23 + 12 - 38 = ?', NULL, 'HARD', N'50
+- Hướng dẫn giải: 45 + 54 = 99; 99 - 23 = 76; 76 + 12 = 88; 88 - 38 = 50.'),
+(43, 21, 'MULTIPLE_CHOICE', N'Khi thực hiện phép nhân 3 chữ số với 1 chữ số trên Soroban (VD: 342 x 6), ta bắt đầu đặt kết quả từ cột nào?
+A. Cột hàng đơn vị
+B. Cột hàng trăm (tổng số chữ số của 2 thừa số: 3 + 1 = 4)
+C. Cột bất kỳ
+D. Cột ngoài cùng bên phải', NULL, 'HARD', N'B. Cột hàng trăm (tổng số chữ số của 2 thừa số: 3 + 1 = 4)
+- Lời giải: Quy tắc nhân Soroban: Cột bắt đầu ghi nhận tích = Tổng số chữ số của các thừa số (m + n). Với 3 chữ số nhân 1 chữ số, m + n = 4 (cột thứ 4 tính từ đơn vị sang trái).'),
+(44, 22, 'MULTIPLE_CHOICE', N'Trên đôi bàn tay Finger Math, thao tác ''Bung anh béo, thu 4 anh gầy'' tương ứng với phép tính nào?
+A. Phép tính +1
+B. Phép tính +5 (hoặc công thức +4 khi cột đầy)
+C. Phép tính -5
+D. Phép tính +9', 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600', 'EASY', N'B. Phép tính +5 (hoặc công thức +4 khi cột đầy)
+- Lời giải: Trong ngôn ngữ Finger Math cho trẻ nhỏ: ngón cái gọi là ''anh béo'' (giá trị 5), 4 ngón dài gọi là ''anh gầy'' (mỗi ngón 1). Bung anh béo thu 4 anh gầy là thao tác đổi 4 hạt 1 lấy 1 hạt 5 khi cộng thêm 1 từ 4 lên 5.'),
+(45, 22, 'FILL_IN', N'Tính nhẩm siêu tốc hai bàn tay Finger Math: 36 + 42 - 17 = ?', NULL, 'MEDIUM', N'61
+- Hướng dẫn giải: Bước 1: 36 + 42 = 78 (tay trái 30+40=70, tay phải 6+2=8). Bước 2: 78 - 17 = 61 (tay trái 70-10=60, tay phải 8-7=1). Kết quả là 61.'),
+(46, 22, 'ESSAY', N'Hãy trình bày quy tắc tính nhẩm qua cầu 10 trên hai bàn tay Finger Math cho phép tính: 28 + 5 = ?', NULL, 'MEDIUM', N'- Hướng dẫn chấm & Lời giải:
+Bước 1: Biểu diễn số 28 (tay trái giơ 2 ngón = 20, tay phải giơ ngón cái + 3 ngón = 8).
+Bước 2: Cộng thêm 5: Vì tay phải chỉ còn 1 ngón chưa xòe nên không đủ 5. Áp dụng quy tắc qua 10: Thêm 1 ở tay trái (+10 thành 30), bớt bạn lớn của 5 là 5 ở tay phải (-5 bằng cách gập ngón cái).
+Bước 3: Đọc kết quả: Tay trái có 3 ngón (30), tay phải có 3 ngón (3) => Kết quả là 33.'),
+(47, 23, 'MULTIPLE_CHOICE', N'Hai ô tô xuất phát cùng một lúc từ hai tỉnh A và B cách nhau 180 km, đi ngược chiều nhau. Vận tốc xe thứ nhất là 50 km/h, xe thứ hai là 40 km/h. Sau bao lâu hai xe gặp nhau?
+A. 1.5 giờ
+B. 2 giờ
+C. 2.5 giờ
+D. 3 giờ', NULL, 'MEDIUM', N'B. 2 giờ
+- Lời giải: Tổng vận tốc hai xe: 50 + 40 = 90 (km/h). Thời gian để hai xe gặp nhau: 180 : 90 = 2 giờ.'),
+(48, 23, 'FILL_IN', N'Một bể nước hình hộp chữ nhật có chiều dài 2m, chiều rộng 1.5m và chiều cao 1.2m. Hỏi bể đó chứa được tối đa bao nhiêu lít nước? (Biết 1 dm3 = 1 lít)', NULL, 'MEDIUM', N'3600
+- Hướng dẫn giải: Thể tích bể: 2 x 1.5 x 1.2 = 3.6 m3. Đổi ra dm3: 3.6 m3 = 3600 dm3 = 3600 lít nước.'),
+(49, 23, 'MULTIPLE_CHOICE', N'Phương pháp Bar Model (Singapore / Mathnasium) giải quyết bài toán: ''Số bi của An bằng 2/3 số bi của Bình, Bình có nhiều hơn An 15 viên bi''. Số bi của Bình là:
+A. 30 viên
+B. 45 viên
+C. 60 viên
+D. 75 viên', 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=600', 'HARD', N'B. 45 viên
+- Lời giải: Vẽ sơ đồ thanh: An 2 phần, Bình 3 phần. Hiệu số phần: 3 - 2 = 1 phần tương ứng 15 viên. Số bi của Bình là: 15 x 3 = 45 viên bi.'),
+(50, 24, 'MULTIPLE_CHOICE', N'Nghịch lý Achilles và Rùa của Zeno lập luận rằng kẻ chạy nhanh hơn không bao giờ bắt kịp kẻ chạy chậm nếu kẻ chậm xuất phát trước. Sai lầm cốt lõi của lập luận Zeno nằm ở đâu?
+A. Giả định rằng tổng của vô hạn khoảng thời gian nhỏ luôn là vô hạn
+B. Vận tốc của Achilles quá chậm
+C. Rùa không bao giờ dừng lại nghỉ
+D. Khoảng cách giữa hai bên bị co lại', NULL, 'HARD', N'A. Giả định rằng tổng của vô hạn khoảng thời gian nhỏ luôn là vô hạn
+- Lời giải: Zeno sai lầm khi coi chuỗi vô hạn các khoảng thời gian luôn tiến tới vô cực. Trong giải tích hiện đại, chuỗi hình học vô hạn có thể hội tụ về một giới hạn hữu hạn, do đó Achilles sẽ vượt qua rùa tại thời điểm xác định.'),
+(51, 24, 'FILL_IN', N'Có 9 đồng tiền vàng giống hệt nhau, trong đó có 1 đồng tiền giả nhẹ hơn các đồng còn lại. Bằng cân đĩa thăng bằng (không có quả cân), số lần cân ít nhất để chắc chắn tìm ra đồng tiền giả là bao nhiêu lần?', NULL, 'HARD', N'2
+- Hướng dẫn giải: Chia 9 đồng tiền thành 3 nhóm (mỗi nhóm 3 đồng: A, B, C). Lần 1: Cân nhóm A và nhóm B. Nếu cân thăng bằng thì đồng giả ở nhóm C; nếu lệch thì đồng giả ở nhóm nhẹ hơn. Lần 2: Lấy nhóm 3 đồng chứa tiền giả, đặt 2 đồng lên 2 đĩa cân. Nếu lệch ta tìm ra ngay, nếu thăng bằng thì đồng còn lại là giả. Chỉ cần đúng 2 lần cân!'),
+(52, 24, 'ESSAY', N'Hãy chỉ ra bước ngụy biện (lỗi toán học) trong phép ''chứng minh'' 1 = 2 sau đây:
+1. Cho a = b
+2. a^2 = ab
+3. a^2 - b^2 = ab - b^2
+4. (a - b)(a + b) = b(a - b)
+5. Chia cả hai vế cho (a - b) ta được: a + b = b
+6. Vì a = b nên b + b = b => 2b = b => 2 = 1.', NULL, 'HARD', N'- Hướng dẫn chấm & Lời giải:
+Bước 1: Xác định bước sai là Bước 5: Chia cả hai vế cho (a - b).
+Bước 2: Giải thích lý do: Vì giả thiết ban đầu là a = b nên a - b = 0. Phép chia cho 0 là không hợp lệ và vô nghĩa trong toán học.
+Bước 3: Kết luận: Mọi suy luận từ bước 5 trở đi đều không có giá trị.'),
+(53, 1, 'MULTIPLE_CHOICE', N'Thao tác xóa số và chuẩn bị bàn tính Soroban về trạng thái số 0 được gọi là gì?
+A. Clear / Trả về vạch 0
+B. Reset
+C. Format
+D. Refresh', NULL, 'EASY', N'A. Clear / Trả về vạch 0
+- Lời giải: Thao tác dùng ngón trỏ hoặc ngón cái lướt nhẹ dọc thanh ngang để tách toàn bộ hạt trên lên trên và hạt dưới xuống dưới, đưa bàn tính về giá trị 0.'),
+(54, 1, 'FILL_IN', N'Gảy bàn tính Soroban: 15 + 23 - 16 = ?', NULL, 'EASY', N'22
+- Hướng dẫn giải: 15 + 23 = 38; 38 - 16 = 22.'),
+(55, 5, 'MULTIPLE_CHOICE', N'Phép tính: 4 + 4 trên Finger Math bàn tay phải sử dụng công thức nào?
+A. +4 = +5 - 1
+B. +4 = +10 - 6
+C. +4 = +4
+D. +4 = +5 - 2', NULL, 'EASY', N'A. +4 = +5 - 1
+- Lời giải: Vì tay phải đang có 4 ngón dài xòe, muốn cộng thêm 4 ta bung ngón cái (+5) và gập bớt 1 ngón dài (-1), được kết quả là 8.'),
+(56, 5, 'FILL_IN', N'Xòe ngón cái và ngón trỏ của bàn tay phải biểu thị số mấy?', NULL, 'EASY', N'6
+- Hướng dẫn giải: Ngón cái (5) + ngón trỏ (1) = 6.'),
+(57, 8, 'MULTIPLE_CHOICE', N'Số nào dưới đây chia hết cho cả 2 và 5?
+A. 125
+B. 240
+C. 332
+D. 455', NULL, 'EASY', N'B. 240
+- Lời giải: Dấu hiệu chia hết: Một số chia hết cho cả 2 và 5 khi và chỉ khi chữ số tận cùng của nó là 0. Số 240 thỏa mãn điều kiện này.'),
+(58, 8, 'FILL_IN', N'Tìm số tròn trăm lớn nhất có 3 chữ số khác nhau:', NULL, 'EASY', N'900
+- Hướng dẫn giải: Các số tròn trăm có 3 chữ số là 100, 200, ..., 900. Số lớn nhất là 900.'),
+(59, 14, 'MULTIPLE_CHOICE', N'Trong một hộp kín có 5 viên bi đỏ và 5 viên bi xanh. Không nhìn vào hộp, phải lấy ra ít nhất bao nhiêu viên bi để chắc chắn có ít nhất 2 viên bi cùng màu?
+A. 2 viên
+B. 3 viên
+C. 5 viên
+D. 6 viên', NULL, 'MEDIUM', N'B. 3 viên
+- Lời giải: Nguyên lý Dirichlet: Có 2 màu bi (đỏ, xanh). Trường hợp xấu nhất lấy 2 viên là 1 đỏ và 1 xanh. Viên thứ 3 chắc chắn sẽ trùng màu với 1 trong 2 viên trước. Do đó cần lấy ít nhất 3 viên bi.'),
+(60, 14, 'FILL_IN', N'Một đoàn tàu dài 120m chạy qua một cây cầu dài 480m với vận tốc 36 km/h. Hỏi đoàn tàu mất bao nhiêu giây để vượt qua hoàn toàn cây cầu?', NULL, 'HARD', N'60
+- Hướng dẫn giải: Đổi vận tốc: 36 km/h = 10 m/s. Quãng đường tàu đi để qua hết cầu: Chiều dài cầu + Chiều dài tàu = 480 + 120 = 600m. Thời gian vượt qua: 600 : 10 = 60 giây.'),
+(61, 2, 'MULTIPLE_CHOICE', N'Trong công thức Anh bạn nhỏ trừ của Soroban, phép tính -3 khi cột không đủ hạt dưới được thực hiện bằng cách:
+A. Bớt 5 thêm 2
+B. Bớt 5 thêm 3
+C. Bớt 10 thêm 7
+D. Bớt 5 bớt 2', NULL, 'MEDIUM', N'A. Bớt 5 thêm 2
+- Lời giải: Công thức Anh bạn nhỏ trừ: -3 = -5 + 2. Gạt hạt 5 lên và gạt thêm 2 hạt dưới lên.'),
+(62, 3, 'FILL_IN', N'Thực hiện phép tính qua cầu 10: 9 + 6 = 9 + 10 - [ ? ]', NULL, 'MEDIUM', N'4
+- Hướng dẫn giải: Bạn lớn của 6 là 4 (vì 6 + 4 = 10). Phép tính là: 9 + 10 - 4 = 15.'),
+(63, 6, 'MULTIPLE_CHOICE', N'Số 75 trên hai bàn tay Finger Math được tạo thành từ:
+A. Tay trái: ngón cái + 2 ngón dài; Tay phải: ngón cái
+B. Tay trái: 2 ngón dài; Tay phải: ngón cái
+C. Tay trái: ngón cái; Tay phải: ngón cái + 2 ngón dài
+D. Tay trái: 4 ngón dài; Tay phải: 3 ngón dài', NULL, 'EASY', N'A. Tay trái: ngón cái + 2 ngón dài; Tay phải: ngón cái
+- Lời giải: 75 gồm 70 ở hàng chục (ngón cái 50 + 2 ngón 20 = 70) và 5 ở hàng đơn vị (ngón cái 5).'),
+(64, 7, 'FILL_IN', N'Tính nhẩm nhanh Finger Math: 99 - 44 - 33 + 12 = ?', NULL, 'MEDIUM', N'34
+- Hướng dẫn giải: 99 - 44 = 55; 55 - 33 = 22; 22 + 12 = 34.'),
+(65, 9, 'MULTIPLE_CHOICE', N'Hình bình hành có diện tích 48 cm2, độ dài đáy là 8 cm. Chiều cao tương ứng với đáy đó là:
+A. 4 cm
+B. 6 cm
+C. 8 cm
+D. 12 cm', NULL, 'EASY', N'B. 6 cm
+- Lời giải: Diện tích hình bình hành = Đáy x Chiều cao => Chiều cao = Diện tích : Đáy = 48 : 8 = 6 cm.'),
+(66, 10, 'FILL_IN', N'Hiện nay mẹ 36 tuổi, con 10 tuổi. Hỏi cách đây bao nhiêu năm tuổi mẹ gấp 3 lần tuổi con?', NULL, 'HARD', N'3
+- Hướng dẫn giải: Hiệu số tuổi của mẹ và con không thay đổi theo thời gian: 36 - 10 = 26 tuổi. Khi mẹ gấp 3 lần tuổi con, hiệu số phần là: 3 - 1 = 2 phần. Tuổi con khi đó là: 26 : 2 = 13... Khoan: Khi tuổi mẹ gấp 3 tuổi con thì mẹ hơn con 2 lần tuổi con => 26 : 2 = 13 tuổi (tương lai sau 3 năm). Nhưng câu hỏi là ''mấy năm nữa'' hoặc nếu cách đây 3 năm: 33 và 7 (không gấp 3). Đặt: (36 + x) = 3*(10 + x) => 36 + x = 30 + 3x => 2x = 6 => x = 3 năm nữa. Vậy đáp số là 3.'),
+(67, 15, 'MULTIPLE_CHOICE', N'Một người nông dân mang một con sói, một con dê và một bắp cải qua sông bằng một chiếc thuyền nhỏ chỉ chở được người nông dân và MỘT thứ khác. Nếu vắng mặt người, sói sẽ ăn thịt dê, dê sẽ ăn bắp cải. Vật nào phải được chở qua sông ĐẦU TIÊN?
+A. Con sói
+B. Con dê
+C. Bắp cải
+D. Con nào trước cũng được', NULL, 'MEDIUM', N'B. Con dê
+- Lời giải: Nếu chở sói hoặc bắp cải trước thì dê và bắp cải (hoặc sói và dê) ở lại cùng nhau và sẽ bị ăn thịt. Bắt buộc phải chở con DÊ qua sông trước.'),
+(68, 16, 'FILL_IN', N'Có một cái hồ sen, mỗi ngày số lượng hoa sen nở tăng gấp đôi. Sau 30 ngày thì hoa sen phủ kín mặt hồ. Hỏi sau bao nhiêu ngày thì hoa sen nở phủ kín MỘT NỬA mặt hồ?', NULL, 'MEDIUM', N'29
+- Hướng dẫn giải: Vì mỗi ngày số hoa sen tăng gấp đôi, nên ngày trước đó mặt hồ sẽ có số lượng bằng một nửa ngày hôm sau. Do đó, vào ngày thứ 29 mặt hồ đã phủ kín 1/2, và sang ngày 30 nở gấp đôi để phủ kín hoàn toàn.'),
+(69, 18, 'MULTIPLE_CHOICE', N'Mô hình Bar Model phân số: Một cửa hàng có 120 kg gạo, đã bán đi 2/5 số gạo đó. Số gạo CÒN LẠI trong cửa hàng là:
+A. 48 kg
+B. 72 kg
+C. 60 kg
+D. 80 kg', NULL, 'MEDIUM', N'B. 72 kg
+- Lời giải: Phân số chỉ số gạo còn lại: 1 - 2/5 = 3/5. Số gạo còn lại là: 120 x 3/5 = 72 kg.'),
+(70, 20, 'ESSAY', N'Chứng minh rằng trong 13 người bất kỳ, luôn luôn tìm được ít nhất 2 người có cùng tháng sinh.', NULL, 'EASY', N'- Hướng dẫn chấm & Lời giải:
+Bước 1: Nêu số lượng tháng sinh có thể có trong một năm là 12 tháng (từ tháng 1 đến tháng 12).
+Bước 2: Áp dụng nguyên lý chuồng bồ câu (Dirichlet): Coi 12 tháng sinh là 12 cái chuồng, 13 người là 13 chú chim bồ câu.
+Bước 3: Vì 13 > 12 nên theo nguyên lý Dirichlet, chắc chắn có ít nhất một chuồng chứa từ 2 chú chim trở lên, tức là có ít nhất 2 người sinh cùng một tháng.');
 SET IDENTITY_INSERT [dbo].[QUESTION] OFF;
 
 -- =============================================================================
@@ -550,7 +845,11 @@ INSERT INTO [dbo].[CLASS_SCHEDULE] (id, class_id, day_of_week, start_time, end_t
 (37, 19, 3, '2026-09-01 17:30:00', '2026-09-01 19:00:00', '2026-08-01 08:00:00', NULL),
 (38, 19, 5, '2026-09-01 17:30:00', '2026-09-01 19:00:00', '2026-08-01 08:00:00', NULL),
 (39, 20, 6, '2026-09-01 18:00:00', '2026-09-01 19:30:00', '2026-08-01 08:00:00', NULL),
-(40, 20, 0, '2026-09-01 18:00:00', '2026-09-01 19:30:00', '2026-08-01 08:00:00', NULL);
+(40, 20, 0, '2026-09-01 18:00:00', '2026-09-01 19:30:00', '2026-08-01 08:00:00', NULL),
+(41, 21, 2, '2026-09-01 18:00:00', '2026-09-01 19:30:00', '2026-08-01 08:00:00', NULL),
+(42, 21, 4, '2026-09-01 18:00:00', '2026-09-01 19:30:00', '2026-08-01 08:00:00', NULL),
+(43, 22, 6, '2026-09-01 09:00:00', '2026-09-01 10:30:00', '2026-08-01 08:00:00', NULL),
+(44, 22, 0, '2026-09-01 09:00:00', '2026-09-01 10:30:00', '2026-08-01 08:00:00', NULL);
 SET IDENTITY_INSERT [dbo].[CLASS_SCHEDULE] OFF;
 
 -- =============================================================================
@@ -560,44 +859,63 @@ SET IDENTITY_INSERT [dbo].[CLASS_STUDENT] ON;
 INSERT INTO [dbo].[CLASS_STUDENT] (id, class_id, student_id, joined_at, status) VALUES
 (1, 1, 1, '2026-08-28 09:00:00', 'ACTIVE'),
 (2, 1, 2, '2026-08-28 09:00:00', 'ACTIVE'),
-(3, 2, 3, '2026-08-28 09:00:00', 'ACTIVE'),
-(4, 2, 4, '2026-08-28 09:00:00', 'ACTIVE'),
-(5, 3, 5, '2026-08-28 09:00:00', 'ACTIVE'),
-(6, 3, 6, '2026-08-28 09:00:00', 'ACTIVE'),
-(7, 4, 7, '2026-08-28 09:00:00', 'ACTIVE'),
-(8, 4, 8, '2026-08-28 09:00:00', 'ACTIVE'),
-(9, 5, 9, '2026-08-28 09:00:00', 'ACTIVE'),
-(10, 5, 10, '2026-08-28 09:00:00', 'ACTIVE'),
-(11, 6, 11, '2026-08-28 09:00:00', 'ACTIVE'),
-(12, 6, 12, '2026-08-28 09:00:00', 'ACTIVE'),
-(13, 7, 13, '2026-08-28 09:00:00', 'ACTIVE'),
-(14, 7, 14, '2026-08-28 09:00:00', 'ACTIVE'),
-(15, 8, 15, '2026-08-28 09:00:00', 'ACTIVE'),
-(16, 8, 16, '2026-08-28 09:00:00', 'ACTIVE'),
-(17, 9, 17, '2026-08-28 09:00:00', 'ACTIVE'),
-(18, 9, 18, '2026-08-28 09:00:00', 'ACTIVE'),
-(19, 10, 19, '2026-08-28 09:00:00', 'ACTIVE'),
-(20, 10, 20, '2026-08-28 09:00:00', 'ACTIVE'),
-(21, 11, 21, '2026-08-28 09:00:00', 'ACTIVE'),
-(22, 11, 22, '2026-08-28 09:00:00', 'ACTIVE'),
-(23, 12, 23, '2026-08-28 09:00:00', 'ACTIVE'),
-(24, 12, 24, '2026-08-28 09:00:00', 'ACTIVE'),
-(25, 13, 25, '2026-08-28 09:00:00', 'ACTIVE'),
-(26, 13, 26, '2026-08-28 09:00:00', 'ACTIVE'),
-(27, 14, 27, '2026-08-28 09:00:00', 'ACTIVE'),
-(28, 14, 28, '2026-08-28 09:00:00', 'ACTIVE'),
-(29, 15, 29, '2026-08-28 09:00:00', 'ACTIVE'),
-(30, 15, 30, '2026-08-28 09:00:00', 'ACTIVE'),
-(31, 16, 31, '2026-08-28 09:00:00', 'ACTIVE'),
-(32, 16, 32, '2026-08-28 09:00:00', 'ACTIVE'),
-(33, 17, 33, '2026-08-28 09:00:00', 'ACTIVE'),
-(34, 17, 34, '2026-08-28 09:00:00', 'ACTIVE'),
-(35, 18, 35, '2026-08-28 09:00:00', 'ACTIVE'),
-(36, 18, 36, '2026-08-28 09:00:00', 'ACTIVE'),
-(37, 19, 37, '2026-08-28 09:00:00', 'ACTIVE'),
-(38, 19, 38, '2026-08-28 09:00:00', 'ACTIVE'),
-(39, 20, 39, '2026-08-28 09:00:00', 'ACTIVE'),
-(40, 20, 40, '2026-08-28 09:00:00', 'ACTIVE');
+(3, 1, 41, '2026-08-28 09:00:00', 'ACTIVE'),
+(4, 1, 42, '2026-08-28 09:00:00', 'ACTIVE'),
+(5, 1, 43, '2026-08-28 09:00:00', 'ACTIVE'),
+(6, 1, 44, '2026-08-28 09:00:00', 'ACTIVE'),
+(7, 2, 3, '2026-08-28 09:00:00', 'ACTIVE'),
+(8, 2, 4, '2026-08-28 09:00:00', 'ACTIVE'),
+(9, 3, 5, '2026-08-28 09:00:00', 'ACTIVE'),
+(10, 3, 6, '2026-08-28 09:00:00', 'ACTIVE'),
+(11, 4, 7, '2026-08-28 09:00:00', 'ACTIVE'),
+(12, 4, 8, '2026-08-28 09:00:00', 'ACTIVE'),
+(13, 5, 9, '2026-08-28 09:00:00', 'ACTIVE'),
+(14, 5, 10, '2026-08-28 09:00:00', 'ACTIVE'),
+(15, 5, 45, '2026-08-28 09:00:00', 'ACTIVE'),
+(16, 5, 46, '2026-08-28 09:00:00', 'ACTIVE'),
+(17, 5, 47, '2026-08-28 09:00:00', 'ACTIVE'),
+(18, 6, 11, '2026-08-28 09:00:00', 'ACTIVE'),
+(19, 6, 12, '2026-08-28 09:00:00', 'ACTIVE'),
+(20, 7, 13, '2026-08-28 09:00:00', 'ACTIVE'),
+(21, 7, 14, '2026-08-28 09:00:00', 'ACTIVE'),
+(22, 8, 15, '2026-08-28 09:00:00', 'ACTIVE'),
+(23, 8, 16, '2026-08-28 09:00:00', 'ACTIVE'),
+(24, 9, 17, '2026-08-28 09:00:00', 'ACTIVE'),
+(25, 9, 18, '2026-08-28 09:00:00', 'ACTIVE'),
+(26, 10, 19, '2026-08-28 09:00:00', 'ACTIVE'),
+(27, 10, 20, '2026-08-28 09:00:00', 'ACTIVE'),
+(28, 11, 21, '2026-08-28 09:00:00', 'ACTIVE'),
+(29, 11, 22, '2026-08-28 09:00:00', 'ACTIVE'),
+(30, 12, 23, '2026-08-28 09:00:00', 'ACTIVE'),
+(31, 12, 24, '2026-08-28 09:00:00', 'ACTIVE'),
+(32, 13, 25, '2026-08-28 09:00:00', 'ACTIVE'),
+(33, 13, 26, '2026-08-28 09:00:00', 'ACTIVE'),
+(34, 14, 27, '2026-08-28 09:00:00', 'ACTIVE'),
+(35, 14, 28, '2026-08-28 09:00:00', 'ACTIVE'),
+(36, 15, 29, '2026-08-28 09:00:00', 'ACTIVE'),
+(37, 15, 30, '2026-08-28 09:00:00', 'ACTIVE'),
+(38, 16, 31, '2026-08-28 09:00:00', 'ACTIVE'),
+(39, 16, 32, '2026-08-28 09:00:00', 'ACTIVE'),
+(40, 17, 33, '2026-08-28 09:00:00', 'ACTIVE'),
+(41, 17, 34, '2026-08-28 09:00:00', 'ACTIVE'),
+(42, 18, 35, '2026-08-28 09:00:00', 'ACTIVE'),
+(43, 18, 36, '2026-08-28 09:00:00', 'ACTIVE'),
+(44, 19, 37, '2026-08-28 09:00:00', 'ACTIVE'),
+(45, 19, 38, '2026-08-28 09:00:00', 'ACTIVE'),
+(46, 20, 39, '2026-08-28 09:00:00', 'ACTIVE'),
+(47, 20, 40, '2026-08-28 09:00:00', 'ACTIVE'),
+(48, 21, 3, '2026-08-28 09:00:00', 'ACTIVE'),
+(49, 21, 5, '2026-08-28 09:00:00', 'ACTIVE'),
+(50, 21, 8, '2026-08-28 09:00:00', 'ACTIVE'),
+(51, 21, 48, '2026-08-28 09:00:00', 'ACTIVE'),
+(52, 21, 49, '2026-08-28 09:00:00', 'ACTIVE'),
+(53, 21, 50, '2026-08-28 09:00:00', 'ACTIVE'),
+(54, 22, 11, '2026-08-28 09:00:00', 'ACTIVE'),
+(55, 22, 14, '2026-08-28 09:00:00', 'ACTIVE'),
+(56, 22, 18, '2026-08-28 09:00:00', 'ACTIVE'),
+(57, 22, 22, '2026-08-28 09:00:00', 'ACTIVE'),
+(58, 22, 29, '2026-08-28 09:00:00', 'ACTIVE'),
+(59, 22, 33, '2026-08-28 09:00:00', 'ACTIVE');
 SET IDENTITY_INSERT [dbo].[CLASS_STUDENT] OFF;
 
 -- =============================================================================
@@ -644,7 +962,11 @@ INSERT INTO [dbo].[LESSON] (id, class_id, lesson_date, start_time, end_time, sta
 (37, 19, '2026-09-07 00:00:00', '2026-09-07 17:30:00', '2026-09-07 19:00:00', 'COMPLETED', 1),
 (38, 19, '2026-09-14 00:00:00', '2026-09-14 17:30:00', '2026-09-14 19:00:00', 'COMPLETED', 0),
 (39, 20, '2026-09-07 00:00:00', '2026-09-07 17:30:00', '2026-09-07 19:00:00', 'COMPLETED', 1),
-(40, 20, '2026-09-14 00:00:00', '2026-09-14 17:30:00', '2026-09-14 19:00:00', 'COMPLETED', 0);
+(40, 20, '2026-09-14 00:00:00', '2026-09-14 17:30:00', '2026-09-14 19:00:00', 'COMPLETED', 0),
+(41, 21, '2026-09-08 00:00:00', '2026-09-08 18:00:00', '2026-09-08 19:30:00', 'COMPLETED', 1),
+(42, 21, '2026-09-15 00:00:00', '2026-09-15 18:00:00', '2026-09-15 19:30:00', 'COMPLETED', 0),
+(43, 22, '2026-09-12 00:00:00', '2026-09-12 09:00:00', '2026-09-12 10:30:00', 'COMPLETED', 1),
+(44, 22, '2026-09-19 00:00:00', '2026-09-19 09:00:00', '2026-09-19 10:30:00', 'COMPLETED', 0);
 SET IDENTITY_INSERT [dbo].[LESSON] OFF;
 
 -- =============================================================================
@@ -676,7 +998,9 @@ INSERT INTO [dbo].[ASSIGNMENT] (id, lesson_id, stage_id, title, start_time, dead
 (22, 2, 'STAGE-SRB-05', N'Ôn tập giữa kỳ: Tổng hợp các công thức Anh bạn nhỏ', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 45, 1, 'OPEN'),
 (23, 12, 'STAGE-FGM-04', N'Kiểm tra định kỳ: Tính nhẩm 50 phép tính liên tục', '2026-09-25 08:00:00', '2026-09-30 23:59:00', 30, 1, 'OPEN'),
 (24, 16, 'STAGE-MTN-05', N'Đố vui toán học: Logic bắt tay và số học vui', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 25, 2, 'OPEN'),
-(25, 36, 'STAGE-CPA-04', N'Bar Model nâng cao: Bài toán Hiệu - Tỉ kết hợp chuyển đổi', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 40, 1, 'OPEN');
+(25, 36, 'STAGE-CPA-04', N'Bar Model nâng cao: Bài toán Hiệu - Tỉ kết hợp chuyển đổi', '2026-09-26 08:00:00', '2026-10-02 23:59:00', 40, 1, 'OPEN'),
+(26, 41, 'STAGE-SRB-VIP', N'Đề thi HSG Soroban: Tốc độ gảy hạt và ảo tính Flash Anzan', '2026-09-10 08:00:00', '2026-09-20 23:59:00', 30, 2, 'OPEN'),
+(27, 43, 'STAGE-IMT-PRO', N'Tư duy phản biện Socrates: Phân tích nghịch lý và bài toán thực tế', '2026-09-15 08:00:00', '2026-09-25 23:59:00', 45, 1, 'OPEN');
 SET IDENTITY_INSERT [dbo].[ASSIGNMENT] OFF;
 
 -- =============================================================================
@@ -733,44 +1057,40 @@ SET IDENTITY_INSERT [dbo].[ATTENDANCE] ON;
 INSERT INTO [dbo].[ATTENDANCE] (id, lesson_id, student_id, status, teacher_notes) VALUES
 (1, 1, 1, 'PRESENT', N'Bé tập trung tốt, tính nhẩm nhanh và chủ động phát biểu'),
 (2, 1, 2, 'PRESENT', N'Thao tác gảy hạt Soroban chính xác, phản xạ tốt'),
-(3, 3, 3, 'PRESENT', N'Bé đến muộn 10 phút do trời mưa, sau đó hòa nhập tốt với lớp'),
-(4, 3, 4, 'PRESENT', N'Bé nắm vững quy tắc Finger Math ngón tay cái'),
-(5, 5, 5, 'ABSENT', N'Vắng mặt có phép (gia đình có đơn xin nghỉ)'),
-(6, 5, 6, 'PRESENT', N'Bé giải được câu đố tư duy khó đầu tiên trong lớp'),
-(7, 7, 7, 'PRESENT', N'Tiếp thu bài nhanh, giúp đỡ bạn cùng bàn'),
-(8, 7, 8, 'LATE', N'Đến muộn 15 phút do kẹt xe giờ cao điểm'),
-(9, 9, 9, 'PRESENT', N'Tích cực giơ tay xây dựng bài học'),
-(10, 9, 10, 'PRESENT', N'Làm đúng toàn bộ bài tập luyện nhanh tại lớp'),
-(11, 11, 11, 'PRESENT', N'Bé tập trung tốt, tính nhẩm nhanh và chủ động phát biểu'),
-(12, 11, 12, 'PRESENT', N'Thao tác gảy hạt Soroban chính xác, phản xạ tốt'),
-(13, 13, 13, 'PRESENT', N'Bé đến muộn 10 phút do trời mưa, sau đó hòa nhập tốt với lớp'),
-(14, 13, 14, 'PRESENT', N'Bé nắm vững quy tắc Finger Math ngón tay cái'),
-(15, 15, 15, 'PRESENT', N'Cần rèn luyện thêm thao tác gảy hạt 5'),
-(16, 15, 16, 'PRESENT', N'Bé giải được câu đố tư duy khó đầu tiên trong lớp'),
-(17, 17, 17, 'PRESENT', N'Tiếp thu bài nhanh, giúp đỡ bạn cùng bàn'),
-(18, 17, 18, 'PRESENT', N'Vắng mặt có phép do bị ốm'),
-(19, 19, 19, 'PRESENT', N'Tích cực giơ tay xây dựng bài học'),
-(20, 19, 20, 'ABSENT', N'Vắng mặt có phép (gia đình có đơn xin nghỉ)'),
-(21, 21, 21, 'PRESENT', N'Bé tập trung tốt, tính nhẩm nhanh và chủ động phát biểu'),
-(22, 21, 22, 'PRESENT', N'Thao tác gảy hạt Soroban chính xác, phản xạ tốt'),
-(23, 23, 23, 'PRESENT', N'Bé đến muộn 10 phút do trời mưa, sau đó hòa nhập tốt với lớp'),
-(24, 23, 24, 'PRESENT', N'Bé nắm vững quy tắc Finger Math ngón tay cái'),
-(25, 25, 25, 'PRESENT', N'Cần rèn luyện thêm thao tác gảy hạt 5'),
-(26, 25, 26, 'PRESENT', N'Bé giải được câu đố tư duy khó đầu tiên trong lớp'),
-(27, 27, 27, 'PRESENT', N'Tiếp thu bài nhanh, giúp đỡ bạn cùng bàn'),
-(28, 27, 28, 'LATE', N'Đến muộn 15 phút do kẹt xe giờ cao điểm'),
-(29, 29, 29, 'PRESENT', N'Tích cực giơ tay xây dựng bài học'),
-(30, 29, 30, 'PRESENT', N'Làm đúng toàn bộ bài tập luyện nhanh tại lớp'),
-(31, 31, 31, 'PRESENT', N'Bé tập trung tốt, tính nhẩm nhanh và chủ động phát biểu'),
-(32, 31, 32, 'PRESENT', N'Thao tác gảy hạt Soroban chính xác, phản xạ tốt'),
-(33, 33, 33, 'PRESENT', N'Bé đến muộn 10 phút do trời mưa, sau đó hòa nhập tốt với lớp'),
-(34, 33, 34, 'PRESENT', N'Bé nắm vững quy tắc Finger Math ngón tay cái'),
-(35, 35, 35, 'PRESENT', N'Cần rèn luyện thêm thao tác gảy hạt 5'),
-(36, 35, 36, 'PRESENT', N'Bé giải được câu đố tư duy khó đầu tiên trong lớp'),
-(37, 37, 37, 'PRESENT', N'Tiếp thu bài nhanh, giúp đỡ bạn cùng bàn'),
-(38, 37, 38, 'PRESENT', N'Vắng mặt có phép do bị ốm'),
-(39, 39, 39, 'PRESENT', N'Tích cực giơ tay xây dựng bài học'),
-(40, 39, 40, 'PRESENT', N'Làm đúng toàn bộ bài tập luyện nhanh tại lớp');
+(3, 1, 41, 'PRESENT', N'Bé làm quen bàn tính rất nhanh, tự tin phát biểu'),
+(4, 1, 42, 'LATE', N'Đến muộn 10 phút do trời mưa, sau đó bắt nhịp tốt'),
+(5, 3, 3, 'PRESENT', N'Bé đến đúng giờ, thực hiện tốt bài tập khởi động'),
+(6, 3, 4, 'PRESENT', N'Bé nắm vững quy tắc Finger Math ngón tay cái'),
+(7, 5, 5, 'ABSENT', N'Vắng mặt có phép (gia đình có đơn xin nghỉ)'),
+(8, 5, 6, 'PRESENT', N'Bé giải được câu đố tư duy khó đầu tiên trong lớp'),
+(9, 7, 7, 'PRESENT', N'Tiếp thu bài nhanh, giúp đỡ bạn cùng bàn'),
+(10, 7, 8, 'LATE', N'Đến muộn 15 phút do kẹt xe giờ cao điểm'),
+(11, 9, 9, 'PRESENT', N'Tích cực giơ tay xây dựng bài học Finger Math'),
+(12, 9, 10, 'PRESENT', N'Làm đúng toàn bộ bài tập luyện nhanh tại lớp'),
+(13, 9, 45, 'PRESENT', N'Bé phản xạ ngón tay rất linh hoạt'),
+(14, 11, 11, 'PRESENT', N'Bé tập trung tốt, tính nhẩm nhanh và chủ động phát biểu'),
+(15, 11, 12, 'PRESENT', N'Thao tác gảy hạt Soroban chính xác, phản xạ tốt'),
+(16, 13, 13, 'PRESENT', N'Học sinh tự giác làm phiếu bài tập Kumon'),
+(17, 13, 14, 'PRESENT', N'Tốc độ tính toán tiến bộ rõ rệt'),
+(18, 15, 15, 'PRESENT', N'Cần rèn luyện thêm thao tác gảy hạt 5'),
+(19, 15, 16, 'PRESENT', N'Bé giải được bài toán thực tế rất sáng tạo'),
+(20, 17, 17, 'PRESENT', N'Tiếp thu bài nhanh, giúp đỡ bạn cùng bàn'),
+(21, 19, 19, 'PRESENT', N'Tích cực giơ tay xây dựng bài học'),
+(22, 19, 20, 'ABSENT', N'Vắng mặt có phép (gia đình có đơn xin nghỉ)'),
+(23, 21, 21, 'PRESENT', N'Hoàn thành xuất sắc phiếu bài tập tại lớp'),
+(24, 23, 23, 'PRESENT', N'Nắm vững lý thuyết phân số và tỉ số'),
+(25, 41, 3, 'PRESENT', N'Ảo tính Flash Anzan cực kỳ xuất sắc, đạt điểm tuyệt đối'),
+(26, 41, 5, 'PRESENT', N'Thao tác tay thuần thục, tự tin trước các dãy số dài'),
+(27, 41, 8, 'PRESENT', N'Tập trung cao độ trong phần luyện tốc độ 3 giây'),
+(28, 41, 48, 'PRESENT', N'Học sinh mới hòa nhập nhanh, tính nhẩm không cần nhìn bàn tính'),
+(29, 41, 49, 'LATE', N'Đến muộn 5 phút do tan học muộn ở trường tiểu học'),
+(30, 41, 50, 'PRESENT', N'Rất chăm chỉ và có tư duy không gian nhạy bén'),
+(31, 43, 11, 'PRESENT', N'Tranh luận sôi nổi trong bài toán nghịch lý Zeno'),
+(32, 43, 14, 'PRESENT', N'Chỉ ra được lỗi ngụy biện toán học rất logic'),
+(33, 43, 18, 'PRESENT', N'Đặt ra nhiều câu hỏi hay mở rộng vấn đề'),
+(34, 43, 22, 'PRESENT', N'Tự tin trình bày giải pháp trước cả lớp'),
+(35, 43, 29, 'PRESENT', N'Vẽ sơ đồ thanh Bar Model rõ ràng, khoa học'),
+(36, 43, 33, 'ABSENT', N'Vắng mặt có phép do tham gia kỳ thi cờ vua cấp quận');
 SET IDENTITY_INSERT [dbo].[ATTENDANCE] OFF;
 
 -- =============================================================================
@@ -778,7 +1098,7 @@ SET IDENTITY_INSERT [dbo].[ATTENDANCE] OFF;
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[LEAVE_REQUEST] ON;
 INSERT INTO [dbo].[LEAVE_REQUEST] (id, lesson_id, student_id, reason, status, created_at) VALUES
-(1, 2, 2, N'Bé bị sốt virus, bác sĩ chỉ định nghỉ ngơi tĩnh dưỡng', 'APPROVED', '2026-09-12 14:00:00'),
+(1, 2, 2, N'Bé bị sốt virus, bác sĩ chỉ định nghỉ ngơi tĩnh dưỡng', 'PENDING', '2026-09-12 14:00:00'),
 (2, 4, 4, N'Gia đình có việc hiếu hỷ ở quê cần về gấp', 'APPROVED', '2026-09-12 14:00:00'),
 (3, 6, 6, N'Bé bị cảm cúm thời tiết, ho nhiều nên xin nghỉ để tránh lây các bạn', 'PENDING', '2026-09-12 14:00:00'),
 (4, 8, 8, N'Trùng lịch kiểm tra học kỳ tại trường tiểu học công lập', 'APPROVED', '2026-09-12 14:00:00'),
@@ -805,46 +1125,26 @@ SET IDENTITY_INSERT [dbo].[LEAVE_REQUEST] OFF;
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[STUDENT_ASSIGNMENT] ON;
 INSERT INTO [dbo].[STUDENT_ASSIGNMENT] (id, assignment_id, student_id, score, status, teacher_feedback, completed_at) VALUES
-(1, 1, 1, 8.2, 'GRADED', N'Bài làm xuất sắc, phản xạ tính nhẩm nhanh và chính xác tuyệt đối!', '2026-09-12 20:15:00'),
-(2, 1, 2, 8.9, 'GRADED', N'Làm bài cẩn thận, chữ số rõ ràng, nắm vững quy tắc bàn tính.', '2026-09-12 20:15:00'),
-(3, 2, 3, 9.6, 'GRADED', N'Cần chú ý kỹ câu hỏi đố tư duy logic, không vội vàng.', '2026-09-12 20:15:00'),
-(4, 2, 4, 7.7, 'GRADED', N'Bé vẽ sơ đồ Bar Model rất đẹp và logic.', '2026-09-12 20:15:00'),
-(5, 3, 5, 8.4, 'GRADED', N'Tốt, phát huy phản xạ ngón tay Finger Math nhanh hơn nữa nhé.', '2026-09-12 20:15:00'),
-(6, 3, 6, 9.1, 'GRADED', N'Đúng hầu hết các câu, nhầm lẫn một chút ở câu tính có nhớ.', '2026-09-12 20:15:00'),
-(7, 4, 7, 9.8, 'GRADED', N'Tư duy nhạy bén, tìm ra cách giải ngắn gọn rất thông minh.', '2026-09-12 20:15:00'),
-(8, 4, 8, 7.9, 'GRADED', N'Bé hoàn thành bài tập trước thời hạn với độ chính xác cao.', '2026-09-12 20:15:00'),
-(9, 5, 9, 8.6, 'GRADED', N'Bài làm xuất sắc, phản xạ tính nhẩm nhanh và chính xác tuyệt đối!', '2026-09-12 20:15:00'),
-(10, 5, 10, 9.3, 'GRADED', N'Làm bài cẩn thận, chữ số rõ ràng, nắm vững quy tắc bàn tính.', '2026-09-12 20:15:00'),
-(11, 6, 11, 10.0, 'GRADED', N'Cần chú ý kỹ câu hỏi đố tư duy logic, không vội vàng.', '2026-09-12 20:15:00'),
-(12, 6, 12, 8.1, 'GRADED', N'Bé vẽ sơ đồ Bar Model rất đẹp và logic.', '2026-09-12 20:15:00'),
-(13, 7, 13, 8.8, 'GRADED', N'Tốt, phát huy phản xạ ngón tay Finger Math nhanh hơn nữa nhé.', '2026-09-12 20:15:00'),
-(14, 7, 14, 9.5, 'GRADED', N'Đúng hầu hết các câu, nhầm lẫn một chút ở câu tính có nhớ.', '2026-09-12 20:15:00'),
-(15, 8, 15, 7.6, 'GRADED', N'Tư duy nhạy bén, tìm ra cách giải ngắn gọn rất thông minh.', '2026-09-12 20:15:00'),
-(16, 8, 16, 8.3, 'GRADED', N'Bé hoàn thành bài tập trước thời hạn với độ chính xác cao.', '2026-09-12 20:15:00'),
-(17, 9, 17, 9.0, 'GRADED', N'Bài làm xuất sắc, phản xạ tính nhẩm nhanh và chính xác tuyệt đối!', '2026-09-12 20:15:00'),
-(18, 9, 18, 9.7, 'GRADED', N'Làm bài cẩn thận, chữ số rõ ràng, nắm vững quy tắc bàn tính.', '2026-09-12 20:15:00'),
-(19, 10, 19, 7.8, 'GRADED', N'Cần chú ý kỹ câu hỏi đố tư duy logic, không vội vàng.', '2026-09-12 20:15:00'),
-(20, 10, 20, 8.5, 'GRADED', N'Bé vẽ sơ đồ Bar Model rất đẹp và logic.', '2026-09-12 20:15:00'),
-(21, 11, 21, 9.2, 'GRADED', N'Tốt, phát huy phản xạ ngón tay Finger Math nhanh hơn nữa nhé.', '2026-09-12 20:15:00'),
-(22, 11, 22, 9.9, 'GRADED', N'Đúng hầu hết các câu, nhầm lẫn một chút ở câu tính có nhớ.', '2026-09-12 20:15:00'),
-(23, 12, 23, 8.0, 'GRADED', N'Tư duy nhạy bén, tìm ra cách giải ngắn gọn rất thông minh.', '2026-09-12 20:15:00'),
-(24, 12, 24, 8.7, 'GRADED', N'Bé hoàn thành bài tập trước thời hạn với độ chính xác cao.', '2026-09-12 20:15:00'),
-(25, 13, 25, 9.4, 'GRADED', N'Bài làm xuất sắc, phản xạ tính nhẩm nhanh và chính xác tuyệt đối!', '2026-09-12 20:15:00'),
-(26, 13, 26, 7.5, 'GRADED', N'Làm bài cẩn thận, chữ số rõ ràng, nắm vững quy tắc bàn tính.', '2026-09-12 20:15:00'),
-(27, 14, 27, 8.2, 'GRADED', N'Cần chú ý kỹ câu hỏi đố tư duy logic, không vội vàng.', '2026-09-12 20:15:00'),
-(28, 14, 28, 8.9, 'GRADED', N'Bé vẽ sơ đồ Bar Model rất đẹp và logic.', '2026-09-12 20:15:00'),
-(29, 15, 29, 9.6, 'GRADED', N'Tốt, phát huy phản xạ ngón tay Finger Math nhanh hơn nữa nhé.', '2026-09-12 20:15:00'),
-(30, 15, 30, 7.7, 'GRADED', N'Đúng hầu hết các câu, nhầm lẫn một chút ở câu tính có nhớ.', '2026-09-12 20:15:00'),
-(31, 16, 31, 8.4, 'GRADED', N'Tư duy nhạy bén, tìm ra cách giải ngắn gọn rất thông minh.', '2026-09-12 20:15:00'),
-(32, 16, 32, 9.1, 'GRADED', N'Bé hoàn thành bài tập trước thời hạn với độ chính xác cao.', '2026-09-12 20:15:00'),
-(33, 17, 33, 9.8, 'GRADED', N'Bài làm xuất sắc, phản xạ tính nhẩm nhanh và chính xác tuyệt đối!', '2026-09-12 20:15:00'),
-(34, 17, 34, 7.9, 'GRADED', N'Làm bài cẩn thận, chữ số rõ ràng, nắm vững quy tắc bàn tính.', '2026-09-12 20:15:00'),
-(35, 18, 35, 8.6, 'GRADED', N'Cần chú ý kỹ câu hỏi đố tư duy logic, không vội vàng.', '2026-09-12 20:15:00'),
-(36, 18, 36, 9.3, 'GRADED', N'Bé vẽ sơ đồ Bar Model rất đẹp và logic.', '2026-09-12 20:15:00'),
-(37, 19, 37, 10.0, 'SUBMITTED', N'Tốt, phát huy phản xạ ngón tay Finger Math nhanh hơn nữa nhé.', '2026-09-12 20:15:00'),
-(38, 19, 38, 8.1, 'SUBMITTED', N'Đúng hầu hết các câu, nhầm lẫn một chút ở câu tính có nhớ.', '2026-09-12 20:15:00'),
-(39, 20, 39, 8.8, 'SUBMITTED', N'Tư duy nhạy bén, tìm ra cách giải ngắn gọn rất thông minh.', '2026-09-12 20:15:00'),
-(40, 20, 40, 9.5, 'SUBMITTED', N'Bé hoàn thành bài tập trước thời hạn với độ chính xác cao.', '2026-09-12 20:15:00');
+(1, 1, 1, 9.5, 'GRADED', N'Bài làm xuất sắc, phản xạ tính nhẩm nhanh và chính xác tuyệt đối!', '2026-09-12 20:15:00'),
+(2, 1, 2, NULL, 'SUBMITTED', NULL, '2026-09-12 21:00:00'),
+(3, 1, 41, 8.5, 'GRADED', N'Làm bài cẩn thận, trình bày sạch đẹp và đúng các bước.', '2026-09-12 20:30:00'),
+(4, 1, 42, NULL, 'SUBMITTED', NULL, '2026-09-12 22:15:00'),
+(5, 6, 9, 10.0, 'GRADED', N'Phản xạ Finger Math rất nhanh, nắm vững quy ước anh béo anh gầy.', '2026-09-12 19:45:00'),
+(6, 6, 10, NULL, 'SUBMITTED', NULL, '2026-09-12 20:10:00'),
+(7, 6, 45, 9.0, 'GRADED', N'Bé làm đúng toàn bộ các câu hỏi phản xạ ngón tay.', '2026-09-12 20:50:00'),
+(8, 26, 3, 10.0, 'GRADED', N'Kỷ lục tính nhẩm mới của lớp: 10 câu Flash Anzan không sai câu nào!', '2026-09-16 19:30:00'),
+(9, 26, 5, NULL, 'SUBMITTED', NULL, '2026-09-16 20:00:00'),
+(10, 26, 48, NULL, 'SUBMITTED', NULL, '2026-09-16 21:15:00'),
+(11, 26, 49, 8.5, 'GRADED', N'Tốc độ tốt, cần chú ý thêm ở phép tính có nhớ qua cầu 10.', '2026-09-16 20:45:00'),
+(12, 27, 11, 9.5, 'GRADED', N'Lập luận sắc bén, tìm ra đúng bước ngụy biện chia cho 0.', '2026-09-18 19:00:00'),
+(13, 27, 14, NULL, 'SUBMITTED', NULL, '2026-09-18 20:30:00'),
+(14, 27, 18, 9.0, 'GRADED', N'Lời giải chi tiết, rõ ràng và có tính phản biện cao.', '2026-09-18 21:00:00'),
+(15, 27, 22, NULL, 'SUBMITTED', NULL, '2026-09-18 22:00:00'),
+(16, 2, 3, 8.5, 'GRADED', N'Cần chú ý kỹ câu hỏi đố tư duy logic, không vội vàng.', '2026-09-18 20:15:00'),
+(17, 3, 5, 8.0, 'GRADED', N'Phát huy phản xạ tính nhẩm tốt hơn nữa nhé.', '2026-09-18 20:15:00'),
+(18, 4, 7, 9.5, 'GRADED', N'Tư duy nhạy bén, tìm ra cách giải ngắn gọn.', '2026-09-18 20:15:00'),
+(19, 9, 15, 9.0, 'GRADED', N'Nắm vững cấu trúc số và tính chất số chẵn lẻ.', '2026-09-18 20:15:00'),
+(20, 15, 27, 8.5, 'GRADED', N'Phát hiện tốt lỗi sai trong lập luận toán học.', '2026-09-18 20:15:00');
 SET IDENTITY_INSERT [dbo].[STUDENT_ASSIGNMENT] OFF;
 
 -- =============================================================================
@@ -862,36 +1162,41 @@ INSERT INTO [dbo].[QUESTION_ASSIGNMENT] (id, assignment_id, question_id, order_i
 (8, 4, 8, 2, 5.0),
 (9, 5, 9, 1, 5.0),
 (10, 5, 10, 2, 5.0),
-(11, 6, 11, 1, 5.0),
-(12, 6, 12, 2, 5.0),
-(13, 7, 13, 1, 5.0),
-(14, 7, 14, 2, 5.0),
-(15, 8, 15, 1, 5.0),
-(16, 8, 16, 2, 5.0),
-(17, 9, 17, 1, 5.0),
-(18, 9, 18, 2, 5.0),
-(19, 10, 19, 1, 5.0),
-(20, 10, 20, 2, 5.0),
-(21, 11, 21, 1, 5.0),
-(22, 11, 22, 2, 5.0),
-(23, 12, 23, 1, 5.0),
-(24, 12, 24, 2, 5.0),
-(25, 13, 25, 1, 5.0),
-(26, 13, 26, 2, 5.0),
-(27, 14, 27, 1, 5.0),
-(28, 14, 28, 2, 5.0),
-(29, 15, 29, 1, 5.0),
-(30, 15, 30, 2, 5.0),
-(31, 16, 31, 1, 5.0),
-(32, 16, 32, 2, 5.0),
-(33, 17, 33, 1, 5.0),
-(34, 17, 34, 2, 5.0),
-(35, 18, 35, 1, 5.0),
-(36, 18, 36, 2, 5.0),
-(37, 19, 37, 1, 5.0),
-(38, 19, 38, 2, 5.0),
-(39, 20, 39, 1, 5.0),
-(40, 20, 40, 2, 5.0);
+(11, 6, 9, 1, 5.0),
+(12, 6, 10, 2, 5.0),
+(13, 7, 11, 1, 5.0),
+(14, 7, 12, 2, 5.0),
+(15, 8, 13, 1, 5.0),
+(16, 8, 14, 2, 5.0),
+(17, 9, 15, 1, 5.0),
+(18, 9, 16, 2, 5.0),
+(19, 10, 17, 1, 5.0),
+(20, 10, 18, 2, 5.0),
+(21, 11, 19, 1, 5.0),
+(22, 11, 20, 2, 5.0),
+(23, 12, 21, 1, 5.0),
+(24, 12, 22, 2, 5.0),
+(25, 13, 23, 1, 5.0),
+(26, 13, 24, 2, 5.0),
+(27, 14, 25, 1, 5.0),
+(28, 14, 26, 2, 5.0),
+(29, 15, 27, 1, 5.0),
+(30, 15, 28, 2, 5.0),
+(31, 16, 29, 1, 5.0),
+(32, 16, 30, 2, 5.0),
+(33, 17, 31, 1, 5.0),
+(34, 18, 34, 1, 5.0),
+(35, 18, 35, 2, 5.0),
+(36, 19, 36, 1, 5.0),
+(37, 19, 37, 2, 5.0),
+(38, 20, 38, 1, 5.0),
+(39, 20, 39, 2, 5.0),
+(40, 26, 41, 1, 3.5),
+(41, 26, 42, 2, 3.5),
+(42, 26, 43, 3, 3.0),
+(43, 27, 50, 1, 3.5),
+(44, 27, 51, 2, 3.5),
+(45, 27, 52, 3, 3.0);
 SET IDENTITY_INSERT [dbo].[QUESTION_ASSIGNMENT] OFF;
 
     COMMIT TRANSACTION;
