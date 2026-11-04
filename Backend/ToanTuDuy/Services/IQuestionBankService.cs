@@ -17,6 +17,7 @@ namespace ToanTuDuy.Services
         Task<IEnumerable<QuestionResponse>> GetQuestionsByBankAsync(int bankId, string? difficulty = null, string? type = null);
         Task<QuestionResponse?> GetQuestionByIdAsync(int id);
         Task<QuestionResponse> CreateQuestionAsync(QuestionRequest request);
+        Task<IEnumerable<QuestionResponse>> BulkCreateQuestionsAsync(BulkQuestionCreateRequest request);
         Task<bool> UpdateQuestionAsync(int id, QuestionRequest request);
         Task<bool> DeleteQuestionAsync(int id);
     }
