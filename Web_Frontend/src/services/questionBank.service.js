@@ -90,6 +90,20 @@ class QuestionBankService {
   }
 
   /**
+   * Thêm hàng loạt câu hỏi vào ngân hàng (hỗ trợ Import Worker)
+   * POST /api/question-banks/questions/bulk
+   * @param {number} bankId
+   * @param {Array<{ type: string, content: string, imageUrl?: string, difficulty: string, answer: string }>} questions
+   */
+  async bulkCreateQuestions(bankId, questions) {
+    const res = await this.api.post("/questions/bulk", {
+      bankId,
+      questions,
+    });
+    return res.data;
+  }
+
+  /**
    * Cập nhật câu hỏi
    * PUT /api/question-banks/questions/{id}
    */
