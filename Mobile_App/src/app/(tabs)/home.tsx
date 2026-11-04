@@ -210,12 +210,17 @@ export default function ScreenHome() {
               <Text className="text-[11px] font-semibold text-slate-700">Hồ sơ con</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity activeOpacity={0.7} className="items-center gap-2" onPress={showComingSoonAlert}>
+          <TouchableOpacity
+              activeOpacity={0.7}
+              className="items-center gap-2"
+              onPress={() => router.push('/chat')}
+            >
               <View className="w-14 h-14 rounded-2xl bg-fuchsia-500 items-center justify-center shadow-sm">
-                <Feather name="headphones" size={24} color="white" />
+                <Feather name="message-circle" size={24} color="white" />
               </View>
-              <Text className="text-[11px] font-semibold text-slate-700">Hỗ trợ</Text>
-            </TouchableOpacity>
+              <Text className="text-[11px] font-semibold text-slate-700">Nhắn tin</Text>
+          </TouchableOpacity>
+
           </View>
         </View>
 
