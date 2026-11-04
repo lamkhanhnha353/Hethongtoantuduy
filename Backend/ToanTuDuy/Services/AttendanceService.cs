@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
@@ -310,13 +311,16 @@ namespace ToanTuDuy.Services
                     ? $"{studentName} vắng mặt trong buổi học ngày {lessonDate:dd/MM/yyyy}."
                     : $"{studentName} đi trễ trong buổi học ngày {lessonDate:dd/MM/yyyy}.";
 
-                await _notificationService.CreateForStudentAsync(
-                    alert.StudentId,
-                    NotificationTypes.Attendance,
-                    title,
-                    body,
-                    $"LESSON:{lessonId}:STUDENT:{alert.StudentId}:{alert.Status}");
+                await _notificationService.EnqueueAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Attendance,
+                        title,
+                        body,
+                        $"LESSON:{lessonId}:STUDENT:{alert.StudentId}:{alert.Status}"),
+                    AudienceSpec.StudentParent(alert.StudentId));
             }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

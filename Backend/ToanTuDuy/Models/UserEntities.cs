@@ -92,9 +92,6 @@ namespace ToanTuDuy.Models
         // ✅ THÊM MỚI: StudentProfiles (StudentProfile nay FK vào PARENT_PROFILE.id)
         public ICollection<StudentProfile> StudentProfiles { get; set; } = new List<StudentProfile>();
         public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
-        // ✅ THÊM MỚI: Navigations đến Notification và NotificationSetting
-        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-        public ICollection<NotificationSetting> NotificationSettings { get; set; } = new List<NotificationSetting>();
     }
 
     [Table("STUDENT_PROFILE")]
@@ -178,61 +175,5 @@ namespace ToanTuDuy.Models
 
         public ICollection<Classes> Classes { get; set; } = new List<Classes>();
         // ✅ ĐÃ XÓA: Assignments (ASSIGNMENT không còn cột teacher_id trong script SQL mới)
-    }
-
-    // ✅ ENTITY MỚI HOÀN TOÀN: Ánh xạ bảng NOTIFICATION
-    [Table("NOTIFICATION")]
-    public class Notification
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-
-        [Column("parent_id")]
-        public int ParentId { get; set; }
-
-        [Column("title")]
-        public string Title { get; set; }
-
-        [Column("body")]
-        public string? Body { get; set; }
-
-        [Column("type")]
-        public string? Type { get; set; }
-
-        [Column("ref_id")]
-        public string? RefId { get; set; }
-
-        [Column("is_read")]
-        public bool IsRead { get; set; }
-
-        [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
-
-        // Navigation Properties
-        [ForeignKey(nameof(ParentId))]
-        public ParentProfile Parent { get; set; }
-    }
-
-    // ✅ ENTITY MỚI HOÀN TOÀN: Ánh xạ bảng NOTIFICATION_SETTING
-    [Table("NOTIFICATION_SETTING")]
-    public class NotificationSetting
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-
-        [Column("parent_id")]
-        public int ParentId { get; set; }
-
-        [Column("type")]
-        public string? Type { get; set; }
-
-        [Column("enabled")]
-        public bool Enabled { get; set; }
-
-        // Navigation Properties
-        [ForeignKey(nameof(ParentId))]
-        public ParentProfile Parent { get; set; }
     }
 }

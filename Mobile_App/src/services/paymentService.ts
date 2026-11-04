@@ -9,10 +9,7 @@ type PaymentUrlResponse = {
 };
 
 export const paymentService = {
-  async createEnrollmentReservation(
-    studentId: number,
-    classId: number,
-  ): Promise<number> {
+  async createEnrollmentReservation(studentId: number, classId: number,): Promise<number> {
     const { data } = await apiClient.post<EnrollmentResponse>('/api/enrollment/register', {
       studentId,
       classId,

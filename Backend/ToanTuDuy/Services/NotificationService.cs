@@ -21,11 +21,16 @@ namespace ToanTuDuy.Services
 
         private readonly ApplicationDbContext _context;
         private readonly ILogger<NotificationService> _logger;
+        private readonly IUnreadCountStore _unreadCountStore;
 
-        public NotificationService(ApplicationDbContext context, ILogger<NotificationService> logger)
+        public NotificationService(
+            ApplicationDbContext context,
+            ILogger<NotificationService> logger,
+            IUnreadCountStore unreadCountStore)
         {
             _context = context;
             _logger = logger;
+            _unreadCountStore = unreadCountStore;
         }
 
         public Task<bool> EnqueueAsync(
@@ -121,9 +126,7 @@ namespace ToanTuDuy.Services
             }
 
             var total = await query.CountAsync(cancellationToken);
-            var unreadCount = await _context.UserInboxes
-                .AsNoTracking()
-                .CountAsync(inbox => inbox.AccountId == accountId && !inbox.IsRead, cancellationToken);
+            var unreadCount = await _unreadCountStore.GetAsync(accountId, cancellationToken);
 
             var items = await query
                 .OrderByDescending(inbox => inbox.CreatedAt)
@@ -154,9 +157,7 @@ namespace ToanTuDuy.Services
 
         public Task<int> GetUnreadCountAsync(int accountId, CancellationToken cancellationToken = default)
         {
-            return _context.UserInboxes
-                .AsNoTracking()
-                .CountAsync(inbox => inbox.AccountId == accountId && !inbox.IsRead, cancellationToken);
+            return _unreadCountStore.GetAsync(accountId, cancellationToken);
         }
 
         public async Task<bool> MarkReadAsync(
@@ -166,26 +167,40 @@ namespace ToanTuDuy.Services
         {
             var now = DateTime.UtcNow;
             var updated = await _context.UserInboxes
-                .Where(inbox => inbox.AccountId == accountId && inbox.Id == inboxId)
+                .Where(inbox => inbox.AccountId == accountId
+                    && inbox.Id == inboxId
+                    && !inbox.IsRead)
                 .ExecuteUpdateAsync(
                     setters => setters
                         .SetProperty(inbox => inbox.IsRead, true)
                         .SetProperty(inbox => inbox.ReadAt, now),
                     cancellationToken);
 
-            return updated > 0;
+            if (updated > 0)
+            {
+                await _unreadCountStore.DecrementAsync(accountId, cancellationToken);
+                return true;
+            }
+
+            // Đã đọc trước đó vẫn trả true để endpoint idempotent.
+            return await _context.UserInboxes
+                .AsNoTracking()
+                .AnyAsync(inbox => inbox.AccountId == accountId && inbox.Id == inboxId, cancellationToken);
         }
 
-        public Task<int> MarkAllReadAsync(int accountId, CancellationToken cancellationToken = default)
+        public async Task<int> MarkAllReadAsync(int accountId, CancellationToken cancellationToken = default)
         {
             var now = DateTime.UtcNow;
-            return _context.UserInboxes
+            var updated = await _context.UserInboxes
                 .Where(inbox => inbox.AccountId == accountId && !inbox.IsRead)
                 .ExecuteUpdateAsync(
                     setters => setters
                         .SetProperty(inbox => inbox.IsRead, true)
                         .SetProperty(inbox => inbox.ReadAt, now),
                     cancellationToken);
+
+            await _unreadCountStore.ResetAsync(accountId, cancellationToken);
+            return updated;
         }
 
         public async Task<IReadOnlyList<NotificationSettingResponse>> GetSettingsAsync(

@@ -1392,6 +1392,8 @@ namespace ToanTuDuy.Migrations
 
                     b.HasIndex("AccountId", "IsRead", "CreatedAt");
 
+                    b.HasIndex("AccountId", "Type", "CreatedAt");
+
                     b.HasIndex("AccountId", "Type", "RefId")
                         .IsUnique()
                         .HasFilter("[ref_id] IS NOT NULL");

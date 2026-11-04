@@ -1,13 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ToanTuDuy.Data;
+using ToanTuDuy.Hubs;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services.Notifications
@@ -19,13 +22,16 @@ namespace ToanTuDuy.Services.Notifications
         private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IHubContext<NotificationHub> _hubContext;
         private readonly ILogger<NotificationFanoutWorker> _logger;
 
         public NotificationFanoutWorker(
             IServiceScopeFactory scopeFactory,
+            IHubContext<NotificationHub> hubContext,
             ILogger<NotificationFanoutWorker> logger)
         {
             _scopeFactory = scopeFactory;
+            _hubContext = hubContext;
             _logger = logger;
         }
 
@@ -62,6 +68,7 @@ namespace ToanTuDuy.Services.Notifications
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var resolver = scope.ServiceProvider.GetRequiredService<INotificationAudienceResolver>();
+            var unreadCountStore = scope.ServiceProvider.GetRequiredService<IUnreadCountStore>();
 
             var now = DateTime.UtcNow;
             var messages = await context.OutboxMessages
@@ -87,7 +94,14 @@ namespace ToanTuDuy.Services.Notifications
             {
                 try
                 {
-                    await FanoutAsync(context, resolver, message, cancellationToken);
+                    var result = await FanoutAsync(context, resolver, message, cancellationToken);
+
+                    if (result != null)
+                    {
+                        await UpdateUnreadCountsAsync(unreadCountStore, result, cancellationToken);
+                        await PublishAsync(result, cancellationToken);
+                    }
+
                     message.Status = (int)OutboxStatus.Done;
                     message.ProcessedAt = DateTime.UtcNow;
                     message.LastError = null;
@@ -128,7 +142,7 @@ namespace ToanTuDuy.Services.Notifications
             }
         }
 
-        private static async Task FanoutAsync(
+        private static async Task<FanoutResult?> FanoutAsync(
             ApplicationDbContext context,
             INotificationAudienceResolver resolver,
             OutboxMessage message,
@@ -141,7 +155,7 @@ namespace ToanTuDuy.Services.Notifications
             var accountIds = await resolver.ResolveAccountIdsAsync(audience, cancellationToken);
             if (accountIds.Count == 0)
             {
-                return;
+                return null;
             }
 
             var disabledAccountIds = await context.NotificationSettings
@@ -164,7 +178,7 @@ namespace ToanTuDuy.Services.Notifications
 
             if (accountIds.Count == 0)
             {
-                return;
+                return null;
             }
 
             if (notification.RefId != null)
@@ -185,11 +199,11 @@ namespace ToanTuDuy.Services.Notifications
 
             if (accountIds.Count == 0)
             {
-                return;
+                return null;
             }
 
             var createdAt = DateTime.UtcNow;
-            context.UserInboxes.AddRange(accountIds.Select(accountId => new UserInbox
+            var inboxes = accountIds.Select(accountId => new UserInbox
             {
                 NotificationId = notification.Id,
                 AccountId = accountId,
@@ -197,12 +211,64 @@ namespace ToanTuDuy.Services.Notifications
                 RefId = notification.RefId,
                 IsRead = false,
                 CreatedAt = createdAt,
-            }));
+            }).ToList();
 
+            context.UserInboxes.AddRange(inboxes);
             await context.SaveChangesAsync(cancellationToken);
+
+            return new FanoutResult(notification, inboxes);
+        }
+
+        private static async Task UpdateUnreadCountsAsync(
+            IUnreadCountStore unreadCountStore,
+            FanoutResult result,
+            CancellationToken cancellationToken)
+        {
+            foreach (var group in result.Inboxes.GroupBy(inbox => inbox.AccountId))
+            {
+                await unreadCountStore.IncrementAsync(group.Key, group.Count(), cancellationToken);
+            }
+        }
+
+        private async Task PublishAsync(FanoutResult result, CancellationToken cancellationToken)
+        {
+            foreach (var inbox in result.Inboxes)
+            {
+                try
+                {
+                    await _hubContext.Clients
+                        .User(inbox.AccountId.ToString())
+                        .SendAsync(
+                            "ReceiveNotification",
+                            new
+                            {
+                                id = inbox.Id,
+                                type = result.Notification.Type,
+                                title = result.Notification.Title,
+                                body = result.Notification.Body,
+                                createdAt = inbox.CreatedAt,
+                            },
+                            cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    // Realtime là best-effort; client sẽ resync bằng API nếu lỡ mất event.
+                    _logger.LogWarning(
+                        exception,
+                        "Không đẩy được thông báo {InboxId} tới account {AccountId}.",
+                        inbox.Id,
+                        inbox.AccountId);
+                }
+            }
         }
 
         private static string Truncate(string value, int maxLength) =>
             value.Length <= maxLength ? value : value[..maxLength];
+
+        private sealed record FanoutResult(Notification Notification, IReadOnlyList<UserInbox> Inboxes);
     }
 }
