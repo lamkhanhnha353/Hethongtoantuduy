@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chat Real-time (Giáo Viên)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #f0f2f5;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #0084ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #0073e6;
+        }
+
+        #chatBox {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background: #fafafa;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .msg {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .msg.sent {
+            background: #0084ff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .msg.received {
+            background: #e4e6eb;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .time {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Test Chat (Đóng vai Giáo Viên)</h2>
+
+    <!-- BƯỚC 1: KẾT NỐI -->
+    <div class="box">
+        <h3>1. Cấu hình Kết Nối</h3>
+        <label>Token của Giáo Viên:</label>
+        <input type="text" id="token" placeholder="Dán Bearer Token vào đây...">
+        <button id="btnConnect">Kết Nối SignalR</button>
+        <p id="status" style="color: red; font-size: 14px;">Trạng thái: Chưa kết nối</p>
+    </div>
+
+    <!-- BƯỚC 2: NHẮN TIN -->
+    <div class="box" id="chatArea" style="opacity: 0.5; pointer-events: none;">
+        <h3>2. Chat với Phụ Huynh</h3>
+        <label>ID của Phụ Huynh (Người nhận):</label>
+        <input type="number" id="receiverId" placeholder="Ví dụ: 1">
+
+        <div id="chatBox"></div>
+
+        <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
+        <button id="btnSend">Gửi Tin Nhắn</button>
+    </div>
+
+    <!-- Nhúng thư viện SignalR từ CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        let connection;
+        const apiUrl = "http://localhost:5114"; // CẬP NHẬT CỔNG BE CỦA BẠN NẾU KHÁC
+
+        document.getElementById("btnConnect").addEventListener("click", async () => {
+            const token = document.getElementById("token").value.trim();
+            if (!token) return alert("Vui lòng nhập Token!");
+
+            document.getElementById("status").innerText = "Đang kết nối...";
+            document.getElementById("status").style.color = "orange";
+
+            // Khởi tạo SignalR
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(`${apiUrl}/chathub`, { accessTokenFactory: () => token })
+                .withAutomaticReconnect()
+                .build();
+
+            // Lắng nghe sự kiện nhận tin nhắn từ Phụ huynh
+            connection.on("ReceiveNewMessage", (message) => {
+                appendMessage(message.content, false, message.createdAt);
+            });
+
+            try {
+                await connection.start();
+                document.getElementById("status").innerText = "Đã kết nối thành công!";
+                document.getElementById("status").style.color = "green";
+                document.getElementById("chatArea").style.opacity = "1";
+                document.getElementById("chatArea").style.pointerEvents = "auto";
+            } catch (err) {
+                console.error(err);
+                document.getElementById("status").innerText = "Lỗi kết nối! Xem F12.";
+                document.getElementById("status").style.color = "red";
+            }
+        });
+
+        document.getElementById("btnSend").addEventListener("click", async () => {
+            const receiverId = document.getElementById("receiverId").value;
+            const content = document.getElementById("messageInput").value.trim();
+            const token = document.getElementById("token").value.trim();
+
+            if (!receiverId || !content) return alert("Vui lòng nhập ID người nhận và tin nhắn!");
+
+            // Gọi API lưu tin nhắn (Backend sẽ tự bắn SignalR cho người kia)
+            try {
+                const response = await fetch(`${apiUrl}/api/chat/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        receiverId: parseInt(receiverId),
+                        receiverType: "PARENT",
+                        messageType: "TEXT",
+                        content: content
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    appendMessage(content, true, new Date().toISOString());
+                    document.getElementById("messageInput").value = "";
+                } else {
+                    alert("Lỗi gửi: " + result.message);
+                }
+            } catch (err) {
+                alert("Lỗi gọi API SendMessage!");
+            }
+        });
+
+        function appendMessage(content, isSent, timeString) {
+            const chatBox = document.getElementById("chatBox");
+            const div = document.createElement("div");
+            div.className = `msg ${isSent ? 'sent' : 'received'}`;
+
+            const time = new Date(timeString).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML = `${content} <span class="time">${time}</span>`;
+
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
