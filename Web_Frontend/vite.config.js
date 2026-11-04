@@ -20,6 +20,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      '/api/parser': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:5114',
         changeOrigin: true,
