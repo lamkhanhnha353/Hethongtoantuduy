@@ -202,7 +202,7 @@ export default function ScreenHome() {
             <TouchableOpacity 
               activeOpacity={0.7} 
               className="items-center gap-2"
-              onPress={() => router.push('/students')}
+              onPress={() => router.push('/(account)/students')}
             >
               <View className="w-14 h-14 rounded-2xl bg-emerald-500 items-center justify-center shadow-sm">
                 <Feather name="users" size={24} color="white" />

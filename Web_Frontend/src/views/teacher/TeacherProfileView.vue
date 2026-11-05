@@ -65,15 +65,56 @@
               </div>
             </div>
 
-            <!-- Quick Meta Badges on Banner -->
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="rounded-lg border border-white/40 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xs">
-                📚 {{ assignedClasses.length }} lớp phụ trách
-              </span>
-              <span class="rounded-lg border border-white/40 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xs">
-                🎯 {{ teacherSpecialize || 'Toán Tư Duy' }}
-              </span>
+            <div class="flex flex-col items-start gap-3 sm:items-end">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-lg border border-white/40 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xs">
+                  📚 {{ assignedClasses.length }} lớp phụ trách
+                </span>
+                <span class="rounded-lg border border-white/40 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xs">
+                  🎯 {{ teacherSpecialize || 'Toán Tư Duy' }}
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-if="!isEditingAvatar"
+                  type="button"
+                  class="rounded-lg border border-white/50 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                  @click="startEditingAvatar"
+                >
+                  Thay đổi ảnh đại diện
+                </button>
+                <template v-else>
+                  <label class="cursor-pointer rounded-lg border border-white/50 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+                    Chọn ảnh mới
+                    <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" :disabled="isUploadingAvatar" @change="selectAvatar" />
+                  </label>
+                  <button
+                    type="button"
+                    :disabled="isUploadingAvatar || (!avatarFile && !isAvatarRemovalPending)"
+                    class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="saveAvatar"
+                  >
+                    {{ isUploadingAvatar ? 'Đang tải ảnh...' : 'Lưu ảnh đại diện' }}
+                  </button>
+                  <button
+                    type="button"
+                    :disabled="isUploadingAvatar"
+                    class="rounded-lg border border-white/50 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+                    @click="cancelEditingAvatar"
+                  >
+                    Hủy
+                  </button>
+                </template>
+              </div>
             </div>
+          </div>
+          <div v-if="isEditingAvatar" class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-orange-50">
+            <span>Chọn ảnh JPG, PNG hoặc WEBP (tối đa 5MB). Ảnh sẽ được cập nhật khi lưu.</span>
+            <span v-if="avatarFile" class="font-semibold text-white">Đang xem trước: {{ avatarFile.name }}</span>
+            <button v-if="profile.avatar && !isAvatarRemovalPending" type="button" class="underline underline-offset-2 hover:text-white" @click="stageAvatarRemoval">
+              Xóa ảnh hiện tại
+            </button>
+            <span v-if="isAvatarRemovalPending">Ảnh sẽ bị xóa khi lưu.</span>
           </div>
         </div>
 
@@ -431,7 +472,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import authService from '@/services/auth.service'
 import profileService from '@/services/profile.service'
 import teacherService from '@/services/teacher.service'
@@ -451,6 +492,10 @@ const isEditingProfile = ref(false)
 const isEditingEmail = ref(false)
 const isEditingSpecialize = ref(false)
 const isEditingPassword = ref(false)
+const isEditingAvatar = ref(false)
+const avatarFile = ref(null)
+const avatarPreviewUrl = ref('')
+const isAvatarRemovalPending = ref(false)
 
 const form = reactive({ fullName: '', phone: '' })
 const email = ref('')
@@ -466,6 +511,7 @@ const isSavingProfile = ref(false)
 const isSavingEmail = ref(false)
 const isSavingSpecialize = ref(false)
 const isChangingPassword = ref(false)
+const isUploadingAvatar = ref(false)
 
 const profileMessage = ref('')
 const profileError = ref('')
@@ -478,6 +524,8 @@ const passwordError = ref('')
 
 // ─── Computed ──────────────────────────────────────────────────────────────
 const displayedAvatarUrl = computed(() => {
+  if (isAvatarRemovalPending.value) return ''
+  if (avatarPreviewUrl.value) return avatarPreviewUrl.value
   return profile.value?.avatar || ''
 })
 
@@ -504,6 +552,64 @@ function applyProfile(value) {
 
 function notifyProfileUpdated() {
   window.dispatchEvent(new Event('admin-profile-updated'))
+}
+
+function startEditingAvatar() {
+  profileMessage.value = ''
+  profileError.value = ''
+  avatarFile.value = null
+  clearAvatarPreview()
+  isAvatarRemovalPending.value = false
+  isEditingAvatar.value = true
+}
+
+function clearAvatarPreview() {
+  if (avatarPreviewUrl.value) {
+    URL.revokeObjectURL(avatarPreviewUrl.value)
+    avatarPreviewUrl.value = ''
+  }
+}
+
+function selectAvatar(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    avatarFile.value = null
+    clearAvatarPreview()
+    isAvatarRemovalPending.value = false
+    profileError.value = 'Vui lòng chọn ảnh JPG, PNG hoặc WEBP.'
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    avatarFile.value = null
+    clearAvatarPreview()
+    isAvatarRemovalPending.value = false
+    profileError.value = 'Ảnh vượt quá giới hạn 5MB.'
+    return
+  }
+
+  clearAvatarPreview()
+  avatarFile.value = file
+  avatarPreviewUrl.value = URL.createObjectURL(file)
+  isAvatarRemovalPending.value = false
+  profileError.value = ''
+}
+
+function stageAvatarRemoval() {
+  avatarFile.value = null
+  clearAvatarPreview()
+  isAvatarRemovalPending.value = true
+  profileError.value = ''
+}
+
+function cancelEditingAvatar() {
+  avatarFile.value = null
+  clearAvatarPreview()
+  isAvatarRemovalPending.value = false
+  profileMessage.value = ''
+  profileError.value = ''
+  isEditingAvatar.value = false
 }
 
 // ─── Load Data ─────────────────────────────────────────────────────────────
@@ -593,6 +699,35 @@ async function saveProfile() {
     profileError.value = getErrorMessage(error)
   } finally {
     isSavingProfile.value = false
+  }
+}
+
+async function saveAvatar() {
+  isUploadingAvatar.value = true
+  profileError.value = ''
+  profileMessage.value = ''
+  try {
+    const removingAvatar = isAvatarRemovalPending.value
+    if (avatarFile.value) {
+      const data = new FormData()
+      data.append('file', avatarFile.value)
+      applyProfile(await profileService.uploadAvatar(data))
+    } else if (removingAvatar) {
+      applyProfile(await profileService.deleteAvatar())
+    } else {
+      return
+    }
+
+    notifyProfileUpdated()
+    profileMessage.value = removingAvatar ? 'Đã xóa ảnh đại diện.' : 'Đã cập nhật ảnh đại diện.'
+    avatarFile.value = null
+    clearAvatarPreview()
+    isAvatarRemovalPending.value = false
+    isEditingAvatar.value = false
+  } catch (error) {
+    profileError.value = getErrorMessage(error)
+  } finally {
+    isUploadingAvatar.value = false
   }
 }
 
@@ -711,4 +846,5 @@ async function changePassword() {
 }
 
 onMounted(loadProfile)
+onUnmounted(clearAvatarPreview)
 </script>

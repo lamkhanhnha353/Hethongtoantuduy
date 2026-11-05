@@ -10,7 +10,7 @@ import { Avatar } from '@/components/Avatar';
 import { FormField } from '@/components/FormField';
 import { PinModal } from '@/components/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { ProfileSubpageHeader } from '@/components/profile/ProfileSubpageHeader';
 import { prepareAvatarUpload } from '@/lib/imageUpload';
 import { toApiError } from '@/services/apiError';
 import {
@@ -55,9 +55,8 @@ export default function ScreenStudentDetail() {
   if (invalidId || loadError || (isPending && !student)) {
     return (
       <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
+        <ProfileSubpageHeader title="Chi tiết học sinh" onBack={() => router.back()} />
         <ScrollView contentContainerClassName="px-6 py-6">
-          <ScreenHeader title="Học sinh" />
-
           {isPending && !invalidId ? (
             <View className="items-center py-10">
               <ActivityIndicator size="large" color="#0284c7" />
@@ -174,9 +173,8 @@ export default function ScreenStudentDetail() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
+      <ProfileSubpageHeader title="Chi tiết học sinh" onBack={() => router.back()} />
       <ScrollView contentContainerClassName="px-6 py-6" keyboardShouldPersistTaps="handled">
-        <ScreenHeader title="Chi tiết học sinh" />
-
         <View className="rounded-2xl border border-slate-200 bg-white p-5">
           <View className="flex-row items-center gap-4">
             <Pressable
@@ -236,7 +234,6 @@ export default function ScreenStudentDetail() {
             onSave={handleSave}
           />
         </View>
-1
         <View className="mt-5">
           <PrimaryButton label="Xóa học sinh" onPress={() => setPinVisible(true)} variant="ghost" />
           <Text className="mt-2 text-center text-xs leading-4 text-slate-500">

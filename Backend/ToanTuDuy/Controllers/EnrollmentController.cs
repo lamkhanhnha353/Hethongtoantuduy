@@ -31,11 +31,15 @@ namespace ToanTuDuy.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterClass([FromBody] EnrollmentRequest request)
         {
-            var response = await _enrollmentService.RegisterClassAsync(
+            var invoiceId = await _enrollmentService.RegisterClassAsync(
                 User.GetAccountId(),
                 request);
 
-            return Ok(response);
+            return Ok(new
+            {
+                message = "Đăng ký giữ chỗ thành công. Hóa đơn đang chờ thanh toán.",
+                invoiceId
+            });
         }
     }
 }

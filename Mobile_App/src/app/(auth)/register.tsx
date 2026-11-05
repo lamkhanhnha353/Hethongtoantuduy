@@ -1,21 +1,16 @@
 import { useRef, useState } from 'react';
 import { Link, router } from 'expo-router';
-import { Text, TextInput, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, ActivityIndicator, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 
 import { AlertBanner } from '@/components/AlertBanner';
-import { ConsentCheckbox } from '@/components/ConsentCheckbox';
-import { FormField } from '@/components/FormField';
-import { PasswordField } from '@/components/PasswordField';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { RoleSelector } from '@/components/RoleSelector';
-import { Divider, SocialAuthButtons } from '@/components/SocialAuthButtons';
 import { toApiError } from '@/services/apiError';
 import { useRegisterMutation } from '@/hooks/useAuthMutations';
-import type { UserRole } from '@/types/auth';
 
-type FieldName = 'phone' | 'password' | 'fullName' | 'email' | 'role';
+type FieldName = 'phone' | 'password' | 'fullName';
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 const SOCIAL_NOT_READY_MESSAGE =
@@ -28,30 +23,23 @@ export default function ScreenRegister() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('Parent');
+  const [showPassword, setShowPassword] = useState(false);
   const [hasConsent, setHasConsent] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const fullNameRef = useRef<TextInput>(null);
   const phoneRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
-  const emailRef = useRef<TextInput>(null);
 
   const registerMutation = useRegisterMutation();
-
-  const needsEmail = role === 'Teacher';
 
   const apiError = registerMutation.isError ? toApiError(registerMutation.error) : null;
 
   const fieldErrors: FieldErrors = apiError
     ? {
-      phone: apiError.fieldErrors.phone?.[0],
-      password: apiError.fieldErrors.password?.[0],
-      fullName: apiError.fieldErrors.fullName?.[0],
-      email: apiError.fieldErrors.email?.[0],
-      role: apiError.fieldErrors.role?.[0],
-    }
+        phone: apiError.fieldErrors.phone?.[0],
+        password: apiError.fieldErrors.password?.[0],
+        fullName: apiError.fieldErrors.fullName?.[0],
+      }
     : {};
 
   function handleSubmit() {
@@ -65,123 +53,197 @@ export default function ScreenRegister() {
       {
         phone: phone.trim(),
         password,
-        role,
+        role: 'Parent',
         fullName: fullName.trim(),
-        email: needsEmail ? email.trim() : undefined,
       },
       { onSuccess: () => router.replace('/select-profile') },
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-[#f8fafc]" edges={['top', 'bottom']}>
       <KeyboardAwareScrollView
         className="flex-1"
-        contentContainerClassName="flex-grow px-6 py-8"
+        contentContainerClassName="flex-grow pb-8"
         enableOnAndroid
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View className="mb-6">
-          <Text className="text-3xl font-bold text-slate-900">Đăng ký</Text>
-          {/* <Text className="mt-2 text-sm leading-5 text-slate-600">
-            Chỉ mất một phút để bắt đầu học tập cùng Toán Tư Duy.
-          </Text> */}
+        {/* Phần Logo và Tiêu đề */}
+        <View className="px-6 pt-10 pb-6 items-center relative">
+          <View className="mb-4 relative">
+            <View className="w-16 h-16 rounded-2xl bg-indigo-500 items-center justify-center shadow-lg shadow-indigo-300">
+              <Text className="text-white text-2xl font-black tracking-tight">TT</Text>
+            </View>
+            <View className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-400 items-center justify-center shadow-sm">
+              <Text className="text-white text-xs font-bold">★</Text>
+            </View>
+          </View>
+          <Text className="text-xl font-bold text-indigo-700 tracking-tight">Toán Tư Duy</Text>
+          <Text className="text-sm text-slate-500 mt-1 text-center">Tạo tài khoản để theo dõi tiến độ học của con</Text>
         </View>
 
-        {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
-        {notice ? <AlertBanner tone="info" message={notice} /> : null}
+        {/* Khung Form */}
+        <View className="px-5">
+          <View className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 mb-6">
+            <Text className="text-lg font-bold text-slate-800 mb-4">Đăng ký</Text>
 
-        <RoleSelector error={fieldErrors.role} onChange={setRole} value={role} />
+            {/* Hiển thị lỗi/thông báo */}
+            {apiError ? <AlertBanner tone="error" message={apiError.message} /> : null}
+            {notice ? <AlertBanner tone="info" message={notice} /> : null}
 
-        <FormField
-          autoComplete="name"
-          containerClassName="mb-4"
-          error={fieldErrors.fullName}
-          label="Họ và tên"
-          onChangeText={setFullName}
-          onSubmitEditing={() => phoneRef.current?.focus()}
-          placeholder="Nguyễn Văn A"
-          returnKeyType="next"
-          textContentType="name"
-          value={fullName}
-          ref={fullNameRef}
-        />
+            {/* Input: Họ và tên */}
+            <View className="mb-4 mt-2">
+              <Text className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Họ và tên</Text>
+              <View className="relative justify-center">
+                <View className="absolute left-3.5 z-10">
+                  <Feather name="user" size={18} color="#94a3b8" />
+                </View>
+                <TextInput
+                  className={`w-full rounded-xl py-3.5 pl-11 pr-4 text-slate-800 text-sm bg-white border ${fieldErrors.fullName ? 'border-red-500' : 'border-slate-200'} focus:border-indigo-500`}
+                  placeholder="Nguyễn Văn A"
+                  placeholderTextColor="#94a3b8"
+                  autoComplete="name"
+                  textContentType="name"
+                  returnKeyType="next"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  onSubmitEditing={() => phoneRef.current?.focus()}
+                />
+              </View>
+              {fieldErrors.fullName && <Text className="text-red-500 text-xs mt-1">{fieldErrors.fullName}</Text>}
+            </View>
 
-        <FormField
-          autoCapitalize="none"
-          autoComplete="tel"
-          containerClassName="mb-4"
-          error={fieldErrors.phone}
-          keyboardType="phone-pad"
-          label="Số điện thoại"
-          onChangeText={setPhone}
-          onSubmitEditing={() => passwordRef.current?.focus()}
-          placeholder="0987654321"
-          returnKeyType="next"
-          textContentType="telephoneNumber"
-          value={phone}
-          ref={phoneRef}
-        />
+            {/* Input: Số điện thoại */}
+            <View className="mb-4">
+              <Text className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Số điện thoại</Text>
+              <View className="relative justify-center">
+                <View className="absolute left-3.5 z-10">
+                  <Feather name="phone" size={18} color="#94a3b8" />
+                </View>
+                <TextInput
+                  ref={phoneRef}
+                  className={`w-full rounded-xl py-3.5 pl-11 pr-4 text-slate-800 text-sm bg-white border ${fieldErrors.phone ? 'border-red-500' : 'border-slate-200'} focus:border-indigo-500`}
+                  placeholder="0987654321"
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                  autoComplete="tel"
+                  textContentType="telephoneNumber"
+                  returnKeyType="next"
+                  value={phone}
+                  onChangeText={setPhone}
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+              </View>
+              {fieldErrors.phone && <Text className="text-red-500 text-xs mt-1">{fieldErrors.phone}</Text>}
+            </View>
 
-        <PasswordField
-          autoComplete="password-new"
-          error={fieldErrors.password}
-          hint="Tối thiểu 6 ký tự."
-          label="Mật khẩu"
-          onChangeText={setPassword}
-          onSubmitEditing={() => {
-            if (needsEmail) {
-              emailRef.current?.focus();
-            }
-          }}
-          placeholder="Nhập mật khẩu"
-          returnKeyType="next"
-          textContentType="newPassword"
-          value={password}
-          ref={passwordRef}
-        />
+            {/* Input: Mật khẩu */}
+            <View className="mb-4">
+              <Text className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Mật khẩu</Text>
+              <View className="relative justify-center">
+                <View className="absolute left-3.5 z-10">
+                  <Feather name="lock" size={18} color="#94a3b8" />
+                </View>
+                <TextInput
+                  ref={passwordRef}
+                  className={`w-full rounded-xl py-3.5 pl-11 pr-12 text-slate-800 text-sm bg-white border ${fieldErrors.password ? 'border-red-500' : 'border-slate-200'} focus:border-indigo-500`}
+                  placeholder="Nhập mật khẩu"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showPassword}
+                  autoComplete="password-new"
+                  textContentType="newPassword"
+                  returnKeyType="go"
+                  value={password}
+                  onChangeText={setPassword}
+                  onSubmitEditing={handleSubmit}
+                />
+                <TouchableOpacity
+                  className="absolute right-3.5 z-10 p-1"
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+              {fieldErrors.password ? (
+                <Text className="text-red-500 text-xs mt-1">{fieldErrors.password}</Text>
+              ) : (
+                <Text className="text-slate-400 text-xs mt-1">Tối thiểu 6 ký tự.</Text>
+              )}
+            </View>
 
-        {needsEmail ? (
-          <FormField
-            autoCapitalize="none"
-            autoComplete="email"
-            containerClassName="mb-4"
-            error={fieldErrors.email}
-            // hint="Bắt buộc với tài khoản giáo viên."
-            keyboardType="email-address"
-            label="Email"
-            onChangeText={setEmail}
-            onSubmitEditing={handleSubmit}
-            placeholder="giangvien@example.com"
-            returnKeyType="go"
-            textContentType="emailAddress"
-            value={email}
-            ref={emailRef}
-          />
-        ) : null}
+            {/* Checkbox Đồng ý điều khoản */}
+            <TouchableOpacity
+              className="flex-row items-start gap-2 mb-5"
+              onPress={() => setHasConsent(!hasConsent)}
+              activeOpacity={0.7}
+            >
+              <View
+                className={`w-4 h-4 mt-0.5 rounded border items-center justify-center ${hasConsent ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300'}`}
+              >
+                {hasConsent && <Feather name="check" size={12} color="white" />}
+              </View>
+              <Text className="flex-1 text-xs text-slate-500 leading-4">{TERMS_LABEL}</Text>
+            </TouchableOpacity>
 
-        <ConsentCheckbox checked={hasConsent} label={TERMS_LABEL} onChange={setHasConsent} />
+            {/* Nút Đăng ký Chính */}
+            <TouchableOpacity
+              className="w-full py-3.5 rounded-xl bg-indigo-500 flex-row justify-center items-center"
+              onPress={handleSubmit}
+              disabled={registerMutation.isPending}
+              activeOpacity={0.8}
+            >
+              {registerMutation.isPending ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="text-white text-sm font-bold">Đăng ký</Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
-        <PrimaryButton
-          label="Đăng ký"
-          loading={registerMutation.isPending}
-          onPress={handleSubmit}
-        />
+          {/* Dải phân cách */}
+          <View className="flex-row items-center justify-center gap-3 my-2 px-2">
+            <View className="flex-1 h-px bg-slate-200" />
+            <Text className="text-[11px] text-slate-400 font-medium">hoặc tiếp tục với</Text>
+            <View className="flex-1 h-px bg-slate-200" />
+          </View>
 
-        <Divider label="hoặc" />
+          {/* Nút Đăng ký Mạng xã hội (đang phát triển) */}
+          <View className="flex-row justify-center items-center gap-5 my-5">
+            <TouchableOpacity
+              className="w-[52px] h-[52px] rounded-full border border-slate-200 bg-white items-center justify-center shadow-sm"
+              onPress={() => setNotice(SOCIAL_NOT_READY_MESSAGE)}
+              disabled={registerMutation.isPending}
+              activeOpacity={0.7}
+            >
+              <Svg width="24" height="24" viewBox="0 0 24 24">
+                <Path fill="#EA4335" d="M5.27 14.27l-.88 3.28-3.21.07A11.96 11.96 0 010 12c0-1.99.48-3.86 1.34-5.52l2.86.52 1.25 2.84A7.16 7.16 0 004.8 12c0 .79.14 1.55.4 2.27z"/>
+                <Path fill="#34A853" d="M23.5 12.27c0-.82-.07-1.42-.23-2.04H12v3.86h6.55c-.13.9-.55 2.24-1.59 3.15l3.07 2.38c1.84-1.7 2.9-4.2 2.9-7.35z"/>
+                <Path fill="#4A90E2" d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.07-2.38c-.82.55-1.92.93-3.24.93a7.18 7.18 0 01-6.79-4.96l-3.24 2.5A12 12 0 0012 24z"/>
+                <Path fill="#FBBC05" d="M12 4.75c2.12 0 3.55.92 4.37 1.68l3.19-3.11C17.94 1.19 15.24 0 12 0A12 12 0 001.25 6.48l3.4 2.64A7.18 7.18 0 0112 4.75z"/>
+              </Svg>
+            </TouchableOpacity>
 
-        <SocialAuthButtons
-          disabled={registerMutation.isPending}
-          onPressProvider={() => setNotice(SOCIAL_NOT_READY_MESSAGE)}
-        />
+            <TouchableOpacity
+              className="w-[52px] h-[52px] rounded-full border border-slate-200 bg-white items-center justify-center shadow-sm"
+              onPress={() => setNotice(SOCIAL_NOT_READY_MESSAGE)}
+              disabled={registerMutation.isPending}
+              activeOpacity={0.7}
+            >
+              <FontAwesome5 name="facebook" size={24} color="#1877F2" />
+            </TouchableOpacity>
+          </View>
 
-        <Text className="mt-8 text-center text-sm text-slate-600">
-          Đã có tài khoản?{' '}
-          <Link className="font-semibold text-sky-700" href="/login">
-            Đăng nhập
-          </Link>
-        </Text>
+          {/* Link Đăng nhập */}
+          <Text className="text-center text-sm text-slate-500 mt-2">
+            Đã có tài khoản?{' '}
+            <Link href="/login" asChild>
+              <Text className="text-indigo-600 font-bold">Đăng nhập</Text>
+            </Link>
+          </Text>
+        </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );
