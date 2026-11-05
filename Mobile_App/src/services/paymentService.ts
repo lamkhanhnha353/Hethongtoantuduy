@@ -9,13 +9,13 @@ type PaymentUrlResponse = {
 };
 
 export const paymentService = {
-  async createEnrollmentReservation(studentId: number, classId: number,): Promise<number> {
-    const { data } = await apiClient.post<EnrollmentResponse>('/api/enrollment/register', {
-      studentId,
-      classId,
-    });
+  async createEnrollmentReservation(studentId: number, classId: number): Promise<number> {
+    const { data } = await apiClient.post<EnrollmentResponse | number>(
+      '/api/enrollment/register',
+      { studentId, classId },
+    );
 
-    const invoiceId = data?.invoiceId;
+    const invoiceId = typeof data === 'number' ? data : data?.invoiceId;
     if (typeof invoiceId !== 'number' || !Number.isInteger(invoiceId) || invoiceId <= 0) {
       throw new Error('Đăng ký thành công nhưng không nhận được mã hóa đơn từ Server.');
     }
