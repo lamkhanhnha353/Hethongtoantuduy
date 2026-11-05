@@ -69,4 +69,30 @@ namespace ToanTuDuy.DTOs
         public string Difficulty { get; set; } = string.Empty;
         public string Answer { get; set; } = string.Empty;
     }
+
+    public class QuestionItemDto
+    {
+        [Required(ErrorMessage = "Loại câu hỏi (Type) không được để trống")]
+        public string Type { get; set; } = "MULTIPLE_CHOICE";
+
+        [Required(ErrorMessage = "Nội dung câu hỏi không được để trống")]
+        public string Content { get; set; } = string.Empty;
+
+        public string? ImageUrl { get; set; }
+
+        [Required(ErrorMessage = "Độ khó không được để trống")]
+        public string Difficulty { get; set; } = "EASY";
+
+        [Required(ErrorMessage = "Đáp án không được để trống")]
+        public string Answer { get; set; } = string.Empty;
+    }
+
+    public class BulkQuestionCreateRequest
+    {
+        [Required(ErrorMessage = "Ngân hàng câu hỏi (BankId) không được để trống")]
+        public int BankId { get; set; }
+
+        [Required(ErrorMessage = "Danh sách câu hỏi không được để trống")]
+        public List<QuestionItemDto> Questions { get; set; } = new List<QuestionItemDto>();
+    }
 }

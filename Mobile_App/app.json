@@ -8,7 +8,9 @@
     "scheme": "toantuduy",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.beckham205.Mobile_App",
+      "supportsTablet": true
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",

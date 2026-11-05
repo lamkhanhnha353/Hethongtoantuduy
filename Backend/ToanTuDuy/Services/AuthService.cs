@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Google.Apis.Auth;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -217,6 +218,47 @@ namespace ToanTuDuy.Services
             };
         }
 
+        public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginDto request)
+        {
+            var googleSettings = _configuration.GetSection("Google");
+            var clientIds = new[] { googleSettings["ClientId"] }
+                .Concat(googleSettings.GetSection("AdditionalClientIds").Get<string[]>() ?? Array.Empty<string>())
+                .Where(clientId => !string.IsNullOrWhiteSpace(clientId))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+            if (clientIds.Length == 0)
+                throw new ApiException(
+                    StatusCodes.Status503ServiceUnavailable,
+                    "Đăng nhập Google hiện chưa được cấu hình.");
+
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(
+                    request.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings { Audience = clientIds });
+            }
+            catch (Exception exception) when (
+                exception is InvalidJwtException or ArgumentException)
+            {
+                throw new UnauthorizedAccessException("Google ID token không hợp lệ.");
+            }
+
+            if (!payload.EmailVerified || string.IsNullOrWhiteSpace(payload.Email))
+                throw new UnauthorizedAccessException("Tài khoản Google chưa xác minh địa chỉ email.");
+
+            var user = await _userManager.FindByEmailAsync(payload.Email);
+            if (user is null)
+                throw new UnauthorizedAccessException(
+                    "Tài khoản chưa tồn tại trong hệ thống. Vui lòng liên hệ quản trị viên.");
+
+            if (!user.IsActive)
+                throw new UnauthorizedAccessException("Tài khoản đã bị khóa.");
+
+            return await CreateGoogleAuthResponseAsync(user, payload.Email, payload.Name);
+        }
+
         public async Task<ChangePasswordResponse> ChangePasswordAsync(int accountId, ChangePasswordRequest request)
         {
             var user = await _userManager.FindByIdAsync(accountId.ToString());
@@ -244,6 +286,60 @@ namespace ToanTuDuy.Services
             {
                 Message = "Đổi mật khẩu thành công."
             };
+        }
+
+        private async Task<AuthResponse> CreateGoogleAuthResponseAsync(
+            ApplicationUser user,
+            string email,
+            string? googleName)
+        {
+            if (string.IsNullOrWhiteSpace(user.SecurityStamp))
+            {
+                EnsureIdentitySucceeded(
+                    await _userManager.UpdateSecurityStampAsync(user),
+                    "Không thể khởi tạo phiên đăng nhập Google.");
+            }
+
+            user.RefreshToken = GenerateRefreshToken();
+            EnsureIdentitySucceeded(
+                await _userManager.UpdateAsync(user),
+                "Không thể tạo phiên đăng nhập Google.");
+
+            var profileId = user.Role switch
+            {
+                "Parent" => await _context.ParentProfiles
+                    .Where(profile => profile.AccountId == user.Id)
+                    .Select(profile => profile.Id)
+                    .FirstOrDefaultAsync(),
+                "Teacher" => await _context.TeacherProfiles
+                    .Where(profile => profile.AccountId == user.Id)
+                    .Select(profile => profile.Id)
+                    .FirstOrDefaultAsync(),
+                "Admin" => await _context.AdminProfiles
+                    .Where(profile => profile.AccountId == user.Id)
+                    .Select(profile => profile.Id)
+                    .FirstOrDefaultAsync(),
+                _ => 0
+            };
+
+            return new AuthResponse
+            {
+                AccessToken = GenerateJwtToken(user),
+                RefreshToken = user.RefreshToken,
+                Role = user.Role,
+                ProfileId = profileId,
+                Email = email,
+                FullName = string.IsNullOrWhiteSpace(googleName) ? email.Split('@')[0] : googleName
+            };
+        }
+
+        private static void EnsureIdentitySucceeded(IdentityResult result, string message)
+        {
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(error => error.Description));
+                throw new InvalidOperationException($"{message} {errors}");
+            }
         }
 
         private string GenerateJwtToken(ApplicationUser user)

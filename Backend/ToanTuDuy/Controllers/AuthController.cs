@@ -33,6 +33,14 @@ namespace ToanTuDuy.Controllers
             return Ok(response);
         }
 
+        [HttpPost("google-login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto request)
+        {
+            var response = await _authService.GoogleLoginAsync(request);
+            return Ok(response);
+        }
+
         [HttpPost("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)

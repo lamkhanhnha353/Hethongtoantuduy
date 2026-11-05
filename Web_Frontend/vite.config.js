@@ -21,14 +21,18 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
-    server: {
-      port: 5173,
-      proxy: {
-        '/api': {
-          target: apiBaseUrl,
-          changeOrigin: true,
-          secure: false,
-        },
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api/parser': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/api': {
+        target: 'http://localhost:5114',
+        changeOrigin: true,
+        secure: false,
       },
     },
   }

@@ -125,6 +125,17 @@ namespace ToanTuDuy.Controllers
         }
 
         /// <summary>
+        /// Thêm hàng loạt câu hỏi vào ngân hàng câu hỏi (hỗ trợ Import Worker).
+        /// </summary>
+        [HttpPost("questions/bulk")]
+        [Authorize(Roles = "Teacher,Admin")]
+        public async Task<IActionResult> BulkCreateQuestions([FromBody] BulkQuestionCreateRequest request)
+        {
+            var result = await _bankService.BulkCreateQuestionsAsync(request);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Cập nhật câu hỏi trong ngân hàng câu hỏi.
         /// </summary>
         [HttpPut("questions/{id:int}")]
