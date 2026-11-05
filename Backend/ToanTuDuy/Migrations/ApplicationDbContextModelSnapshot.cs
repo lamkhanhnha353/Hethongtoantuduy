@@ -1529,6 +1529,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("account_id");
 
+                    b.Property<string>("Avatar")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("avatar");
+
                     b.Property<string>("CreatedAt")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("created_at");
