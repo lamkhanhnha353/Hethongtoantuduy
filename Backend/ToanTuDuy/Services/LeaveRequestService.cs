@@ -8,16 +8,21 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class LeaveRequestService : ILeaveRequestService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public LeaveRequestService(ApplicationDbContext context)
+        public LeaveRequestService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<LeaveRequestResponse> CreateLeaveRequestAsync(int accountId, LeaveRequestCreateRequest request)
@@ -26,7 +31,9 @@ namespace ToanTuDuy.Services
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId && s.Parent!.AccountId == accountId);
             if (student == null) throw ApiException.NotFound("Không tìm thấy học sinh.");
 
-            var lesson = await _context.Lessons.FindAsync(request.LessonId);
+            var lesson = await _context.Lessons
+                .Include(item => item.Class)
+                .FirstOrDefaultAsync(item => item.Id == request.LessonId);
             if (lesson == null) throw ApiException.NotFound("Không tìm thấy buổi học.");
 
             // CHỐT CHẶN 0: BÉ CÓ HỌC LỚP NÀY KHÔNG? 
@@ -84,6 +91,14 @@ namespace ToanTuDuy.Services
             _context.LeaveRequests.Add(leaveRequest);
             await _context.SaveChangesAsync();
 
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.LeaveRequest,
+                    "Đơn xin nghỉ mới",
+                    $"{student.FullName} xin nghỉ buổi học \"{lesson.Title ?? "Buổi học"}\" ngày {lesson.LessonDate:dd/MM/yyyy}. Lý do: {leaveRequest.Reason}",
+                    $"LEAVE_REQUEST:{leaveRequest.Id}:CREATED"),
+                AudienceSpec.ClassTeacher(lesson.ClassId));
+
             return await GetRequestByIdAsync(leaveRequest.Id);
         }
 
@@ -92,6 +107,7 @@ namespace ToanTuDuy.Services
             var leaveRequest = await _context.LeaveRequests
                 .Include(request => request.Student)
                     .ThenInclude(student => student.Parent)
+                .Include(request => request.Lesson)
                 .FirstOrDefaultAsync(request =>
                     request.Id == requestId &&
                     request.Student.Parent.AccountId == accountId);
@@ -108,6 +124,15 @@ namespace ToanTuDuy.Services
 
             leaveRequest.Status = "CANCELLED";
             await _context.SaveChangesAsync();
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.LeaveRequest,
+                    "Đơn xin nghỉ đã bị hủy",
+                    $"Phụ huynh đã hủy đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của {leaveRequest.Student.FullName}.",
+                    $"LEAVE_REQUEST:{leaveRequest.Id}:CANCELLED"),
+                AudienceSpec.ClassTeacher(leaveRequest.Lesson.ClassId));
+
             return true;
         }
 
@@ -139,6 +164,7 @@ namespace ToanTuDuy.Services
             var leaveRequest = await _context.LeaveRequests
                 .Include(request => request.Lesson)
                     .ThenInclude(lesson => lesson.Class)
+                .Include(request => request.Student)
                 .FirstOrDefaultAsync(request =>
                     request.Id == requestId
                     && request.Lesson.Class.TeacherId.HasValue
@@ -175,6 +201,22 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            var title = isApproved
+                ? "Đơn xin nghỉ đã được duyệt"
+                : "Đơn xin nghỉ bị từ chối";
+            var body = isApproved
+                ? $"Đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của {leaveRequest.Student.FullName} đã được giáo viên chấp thuận."
+                : $"Đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của {leaveRequest.Student.FullName} đã bị giáo viên từ chối.";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.Attendance,
+                    title,
+                    body,
+                    $"LEAVE_REQUEST:{leaveRequest.Id}:{leaveRequest.Status}"),
+                AudienceSpec.StudentParent(leaveRequest.StudentId));
+
             return true;
         }
 

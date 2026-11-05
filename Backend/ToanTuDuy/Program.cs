@@ -3,13 +3,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
+using StackExchange.Redis;
 using System.Security.Claims;
 using System.Text;
 using ToanTuDuy.Data;
+using ToanTuDuy.Hubs;
 using ToanTuDuy.Middleware;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Services.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,6 +67,18 @@ builder.Services.AddAuthentication(options =>
         };
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = messageContext =>
+            {
+                // SignalR (mobile/web) gửi JWT qua query string vì WebSocket không set được header.
+                var accessToken = messageContext.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    messageContext.HttpContext.Request.Path.StartsWithSegments("/hubs/notifications"))
+                {
+                    messageContext.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
             OnTokenValidated = async validationContext =>
             {
                 var accountId = validationContext.Principal?
@@ -117,6 +132,19 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+// Redis: cache unread count + SignalR backplane khi cần scale-out
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+{
+    var connectionString = builder.Configuration["Redis:ConnectionString"]
+        ?? "localhost:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000";
+    var options = ConfigurationOptions.Parse(connectionString);
+    options.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.Connect(options);
+});
+
+// SignalR: đẩy thông báo realtime tới mobile
+builder.Services.AddSignalR();
+
 // Register Custom Services (Dependency Injection)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
@@ -138,6 +166,10 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationAudienceResolver, NotificationAudienceResolver>();
+builder.Services.AddScoped<IUnreadCountStore, RedisUnreadCountStore>();
+builder.Services.AddHostedService<NotificationFanoutWorker>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 builder.Services.AddSingleton<PayslipEmailQueue>();
@@ -180,5 +212,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

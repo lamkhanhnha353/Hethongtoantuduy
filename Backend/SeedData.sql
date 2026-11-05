@@ -409,6 +409,17 @@ INSERT INTO [dbo].[NOTIFICATION] (id, parent_id, title, body, type, ref_id, is_r
 (40, 8, N'Thông báo học tập số 40', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 40 cho phụ huynh.', 'ACADEMIC', 'REF-NOTIF-40', 0, '2026-09-20 10:00:00');
 SET IDENTITY_INSERT [dbo].[NOTIFICATION] OFF;
 
+-- Thông báo mẫu cho giáo viên và quản trị viên
+SET IDENTITY_INSERT [dbo].[NOTIFICATION] ON;
+INSERT INTO [dbo].[NOTIFICATION] (id, parent_id, teacher_id, admin_id, title, body, type, ref_id, is_read, created_at) VALUES
+(41, NULL, 1, NULL, N'Đơn xin nghỉ mới', N'Phụ huynh Trần Quang Huy gửi đơn xin nghỉ cho bé Khang.', 'LEAVE_REQUEST', 'SAMPLE-LRQ-T1', 0, '2026-09-26 08:00:00'),
+(42, NULL, 1, NULL, N'Lịch dạy tuần tới', N'Lịch dạy tuần tới đã được cập nhật. Vui lòng kiểm tra trước Thứ 2.', 'SYSTEM', 'SAMPLE-SYS-T1', 0, '2026-09-25 09:00:00'),
+(43, NULL, 2, NULL, N'Học sinh mới đăng ký lớp', N'Bé Nguyễn Hoàng Nam vừa đăng ký lớp Finger Math FGM-01.', 'ENROLLMENT', 'SAMPLE-ENR-T2', 1, '2026-09-24 10:00:00'),
+(44, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), N'Phụ huynh mới đăng ký', N'Phụ huynh Đặng Thanh Mai vừa tạo tài khoản.', 'ACCOUNT', 'SAMPLE-ACC-A1', 0, '2026-09-26 07:30:00'),
+(45, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), N'Đăng ký lớp học mới', N'Bé Lê Gia Hưng vừa đăng ký lớp Soroban SRB-01 (hóa đơn #9001).', 'ENROLLMENT', 'SAMPLE-ENR-A1', 0, '2026-09-26 08:15:00'),
+(46, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), N'Thanh toán học phí thành công', N'Hóa đơn #9001 của bé Lê Gia Hưng đã được thanh toán thành công.', 'PAYMENT', 'SAMPLE-PAY-A1', 1, '2026-09-26 09:00:00');
+SET IDENTITY_INSERT [dbo].[NOTIFICATION] OFF;
+
 -- =============================================================================
 -- 11. BẢNG NOTIFICATION_SETTING (40 cài đặt thông báo)
 -- =============================================================================
@@ -454,6 +465,15 @@ INSERT INTO [dbo].[NOTIFICATION_SETTING] (id, parent_id, type, enabled) VALUES
 (38, 6, 'PUSH_NOTIFICATION', 1),
 (39, 7, 'SMS_ALERT', 1),
 (40, 8, 'REPORT_WEEKLY', 0);
+SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] OFF;
+
+-- Cài đặt thông báo mẫu cho giáo viên và quản trị viên
+SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] ON;
+INSERT INTO [dbo].[NOTIFICATION_SETTING] (id, parent_id, teacher_id, admin_id, type, enabled) VALUES
+(41, NULL, 1, NULL, 'IN_APP_NOTIFICATION', 1),
+(42, NULL, 1, NULL, 'EMAIL_NOTIFICATION', 1),
+(43, NULL, 2, NULL, 'IN_APP_NOTIFICATION', 1),
+(44, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), 'IN_APP_NOTIFICATION', 1);
 SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] OFF;
 
 -- =============================================================================

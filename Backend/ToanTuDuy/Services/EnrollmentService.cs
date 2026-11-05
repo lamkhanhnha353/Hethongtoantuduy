@@ -7,16 +7,21 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class EnrollmentService : IEnrollmentService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public EnrollmentService(ApplicationDbContext context)
+        public EnrollmentService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<EnrollmentRegistrationResponse>> GetCourseLevelRegistrationsAsync(
@@ -169,7 +174,25 @@ namespace ToanTuDuy.Services
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
+            await NotifyRegistrationAsync(student, classInfo, invoice);
+
             return invoice.Id;
+        }
+
+        private async Task NotifyRegistrationAsync(
+            StudentProfile student,
+            Classes classInfo,
+            Invoice invoice)    
+        {
+            var refId = $"ENROLLMENT:{invoice.Id}:CREATED";
+            const string title = "Đăng ký lớp học mới";
+            var body = $"{student.FullName} vừa đăng ký lớp {classInfo.Name} (hóa đơn #{invoice.Id}).";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(NotificationTypes.Enrollment, title, body, refId),
+                AudienceSpec.Union(
+                    AudienceSpec.AllAdmins(),
+                    AudienceSpec.ClassTeacher(classInfo.Id)));
         }
     }
 }
