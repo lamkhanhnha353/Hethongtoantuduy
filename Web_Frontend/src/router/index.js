@@ -21,6 +21,8 @@ import ClassesView from "@/views/admin/training/ClassesView.vue";
 import ClassDetailView from "@/views/admin/training/ClassDetailView.vue";
 import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 
+// Admin - Reports
+// import AdminAttendanceReportView from "@/views/admin/reports/AttendanceReportView.vue";
 // Financial Management
 import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
 import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
