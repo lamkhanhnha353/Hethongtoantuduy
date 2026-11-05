@@ -5,19 +5,13 @@ export async function openPaymentUrl(
   paymentUrl: string,
   onReturn: (responseCode: string | null) => void,
 ) {
-  let isLinkHandled = false;
-  const subscription = Linking.addEventListener('url', ({ url }) => {
-    if (isLinkHandled || !url.includes('payment-result')) return;
+  const returnUrl = Linking.createURL('payment-result');
+  const result = await WebBrowser.openAuthSessionAsync(paymentUrl, returnUrl);
 
-    isLinkHandled = true;
-    const responseCode = new URL(url).searchParams.get('code');
-    WebBrowser.dismissBrowser();
+  if (result.type === 'success') {
+    const responseCode = new URL(result.url).searchParams.get('code');
     onReturn(responseCode);
-  });
-
-  try {
-    return await WebBrowser.openBrowserAsync(paymentUrl);
-  } finally {
-    subscription.remove();
   }
+
+  return result;
 }
