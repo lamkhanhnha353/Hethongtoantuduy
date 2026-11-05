@@ -38,6 +38,26 @@ namespace ToanTuDuy.Services
             AudienceSpec audience,
             CancellationToken cancellationToken = default)
         {
+            // 1. Xác định múi giờ Việt Nam
+            TimeZoneInfo vietnamTimeZone;
+            try
+            {
+                vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); // Cho Linux / Docker / macOS
+            }
+            catch
+            {
+                vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Cho Windows
+            }
+
+            // 2. Lấy giờ hiện tại theo múi giờ Việt Nam
+            DateTimeOffset vietnamNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, vietnamTimeZone);
+
+            // 3. Tạo thông báo với thời gian này
+            // var notification = new Notification
+            // {
+            //     Title = "Thông báo test",
+            //     CreatedAt = vietnamNow // Lúc này createdAt sẽ mang giá trị 14:54:31 +07:00
+            // };
             if (string.IsNullOrWhiteSpace(message.Title))
             {
                 return Task.FromResult(false);
@@ -45,7 +65,7 @@ namespace ToanTuDuy.Services
 
             var normalizedType = Normalize(message.Type);
             if (string.IsNullOrEmpty(normalizedType))
-            {
+            { 
                 return Task.FromResult(false);
             }
 
@@ -55,7 +75,7 @@ namespace ToanTuDuy.Services
                 return Task.FromResult(false);
             }
 
-            var now = DateTime.UtcNow;
+            var now = vietnamNow;
             var notification = new Notification
             {
                 Type = normalizedType,

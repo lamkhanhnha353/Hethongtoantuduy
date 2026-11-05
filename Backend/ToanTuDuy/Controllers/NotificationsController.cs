@@ -70,7 +70,7 @@ namespace ToanTuDuy.Controllers
                 : request.Title.Trim();
 
             var body = string.IsNullOrWhiteSpace(request.Body)
-                ? $"Thông báo test được tạo lúc {DateTime.UtcNow:HH:mm:ss dd/MM/yyyy} (UTC)."
+                ? $"Thông báo test được tạo lúc {DateTimeOffset.UtcNow:HH:mm:ss dd/MM/yyyy} (UTC)."
                 : request.Body.Trim();
 
             var refId = string.IsNullOrWhiteSpace(request.RefId)

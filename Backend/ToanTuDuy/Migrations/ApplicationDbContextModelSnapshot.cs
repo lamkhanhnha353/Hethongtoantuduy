@@ -915,8 +915,8 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(2000)")
                         .HasColumnName("body");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
                         .HasColumnName("created_at");
 
                     b.Property<int?>("CreatedByAccountId")
@@ -1000,12 +1000,12 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("audience_spec");
 
-                    b.Property<DateTime>("AvailableAt")
-                        .HasColumnType("datetime2")
+                    b.Property<DateTimeOffset>("AvailableAt")
+                        .HasColumnType("datetimeoffset")
                         .HasColumnName("available_at");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
                         .HasColumnName("created_at");
 
                     b.Property<string>("LastError")
@@ -1358,8 +1358,8 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("account_id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
                         .HasColumnName("created_at");
 
                     b.Property<bool>("IsRead")
@@ -1370,8 +1370,8 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("notification_id");
 
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("datetime2")
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("datetimeoffset")
                         .HasColumnName("read_at");
 
                     b.Property<string>("RefId")

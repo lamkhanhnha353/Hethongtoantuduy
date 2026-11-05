@@ -32,7 +32,7 @@ namespace ToanTuDuy.Models
         public int? CreatedByAccountId { get; set; }
 
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         public ICollection<UserInbox> Inboxes { get; set; } = new List<UserInbox>();
     }
@@ -57,10 +57,10 @@ namespace ToanTuDuy.Models
         public int Attempts { get; set; }
 
         [Column("available_at")]
-        public DateTime AvailableAt { get; set; }
+        public DateTimeOffset AvailableAt { get; set; }
 
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         [Column("processed_at")]
         public DateTime? ProcessedAt { get; set; }
@@ -98,10 +98,10 @@ namespace ToanTuDuy.Models
         public bool IsRead { get; set; }
 
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         [Column("read_at")]
-        public DateTime? ReadAt { get; set; }
+        public DateTimeOffset? ReadAt { get; set; }
 
         [ForeignKey(nameof(NotificationId))]
         public Notification Notification { get; set; } = null!;
