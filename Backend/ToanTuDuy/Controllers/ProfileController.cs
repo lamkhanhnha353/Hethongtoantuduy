@@ -47,7 +47,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost("avatar")]
-        [Authorize(Roles = "Parent,Admin")]
+        [Authorize(Roles = "Parent,Admin,Teacher")]
         [RequestSizeLimit(6 * 1024 * 1024)]
         public async Task<IActionResult> UploadAvatar([FromForm(Name = "file")] IFormFile? file, CancellationToken cancellationToken)
         {
@@ -56,7 +56,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("avatar")]
-        [Authorize(Roles = "Parent,Admin")]
+        [Authorize(Roles = "Parent,Admin,Teacher")]
         public async Task<IActionResult> DeleteAvatar(CancellationToken cancellationToken)
         {
             var response = await _profileService.RemoveAvatarAsync(User.GetAccountId(), cancellationToken);

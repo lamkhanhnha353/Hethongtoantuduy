@@ -161,6 +161,9 @@ namespace ToanTuDuy.Models
         [Column("email")]
         public string? Email { get; set; }
 
+        [Column("avatar")]
+        public string? Avatar { get; set; }
+
         // ✅ THÊM MỚI: specialize (từ script SQL)
         [Column("specialize")]
         public string? Specialize { get; set; }

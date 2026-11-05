@@ -20,6 +20,7 @@ namespace ToanTuDuy.Services
         private const string AdminRole = "Admin";
         private const string AvatarFolder = "avatars/parents";
         private const string AdminAvatarFolder = "avatars/admins";
+        private const string TeacherAvatarFolder = "avatars/teachers";
 
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -250,6 +251,31 @@ namespace ToanTuDuy.Services
                 return MapAdmin(user, adminProfile);
             }
 
+            if (NormalizeRole(user.Role) == TeacherRole)
+            {
+                var teacherProfile = await _context.TeacherProfiles
+                    .FirstOrDefaultAsync(profile => profile.AccountId == accountId, cancellationToken)
+                    ?? throw ApiException.NotFound("Không tìm thấy hồ sơ giáo viên.");
+                await using var teacherStream = file!.OpenReadStream();
+                var teacherUrl = await _imageStorage.UploadAsync(
+                    teacherStream, file.FileName, file.ContentType, TeacherAvatarFolder, cancellationToken);
+                var previousAvatar = teacherProfile.Avatar;
+                teacherProfile.Avatar = teacherUrl;
+                try
+                {
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                catch
+                {
+                    await SafeDeleteAsync(teacherUrl, CancellationToken.None);
+                    throw;
+                }
+
+                await SafeDeleteAsync(previousAvatar, cancellationToken);
+                var (teacherPhone, _, _) = await GetContactAsync(accountId);
+                return MapTeacher(teacherPhone, teacherProfile);
+            }
+
             var parent = await _context.ParentProfiles
                 .FirstOrDefaultAsync(p => p.AccountId == accountId, cancellationToken)
                 ?? throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
@@ -293,6 +319,24 @@ namespace ToanTuDuy.Services
                 }
 
                 return MapAdmin(user, adminProfile);
+            }
+
+            if (NormalizeRole(user.Role) == TeacherRole)
+            {
+                var teacherProfile = await _context.TeacherProfiles
+                    .FirstOrDefaultAsync(profile => profile.AccountId == accountId, cancellationToken)
+                    ?? throw ApiException.NotFound("Không tìm thấy hồ sơ giáo viên.");
+
+                var previousAvatar = teacherProfile.Avatar;
+                if (!string.IsNullOrWhiteSpace(previousAvatar))
+                {
+                    teacherProfile.Avatar = null;
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await SafeDeleteAsync(previousAvatar, cancellationToken);
+                }
+
+                var (teacherPhone, _, _) = await GetContactAsync(accountId);
+                return MapTeacher(teacherPhone, teacherProfile);
             }
 
             var parent = await _context.ParentProfiles
@@ -424,7 +468,7 @@ namespace ToanTuDuy.Services
             Role = TeacherRole,
             FullName = profile.FullName,
             Email = profile.Email,
-            Avatar = null,
+            Avatar = profile.Avatar,
             HasPin = false,
         };
     }
