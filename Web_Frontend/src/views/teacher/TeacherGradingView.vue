@@ -239,7 +239,8 @@
                   min="0"
                   max="100"
                   step="0.1"
-                  v-model.number="st.score"
+                  :value="checkValue(st.score)"
+                  @input="st.score = normalizeScore($event.target.value)"
                   placeholder="--/100"
                   class="w-full text-xs font-extrabold text-orange-950 bg-amber-50/70 border border-amber-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
                 />
@@ -311,6 +312,7 @@ import lessonService from '@/services/lesson.service'
 import assignmentService from '@/services/assignment.service'
 import { useUserState } from '@/services/user-state'
 import { getProfileId } from '@/services/auth-storage'
+import { normalizeScore } from '@/utils/media.helper'
 
 const router = useRouter()
 const { profile, fetchProfile } = useUserState()
@@ -499,15 +501,17 @@ function goToSubmissionDetail(studentId) {
 }
 
 async function saveSingleStudentGrade(st) {
-  if (st.score === null || st.score === undefined || st.score < 0) {
+  const score = normalizeScore(st.score)
+  if (score === null) {
     notify(`Vui lòng nhập điểm số hợp lệ cho học sinh ${st.studentName}!`, 'error')
     return
   }
+  st.score = score
 
   st.isSaving = true
   try {
     await assignmentService.gradeStudent(selectedAssignmentId.value, st.studentId, {
-      score: st.score,
+      score,
       teacherFeedback: st.teacherFeedback ? st.teacherFeedback.trim() : null,
       status: 'GRADED',
     })
@@ -524,12 +528,22 @@ async function saveSingleStudentGrade(st) {
 
 async function saveAllGrades() {
   if (!selectedAssignmentId.value) return
+  const invalidGrade = studentsList.value.find((s) => {
+    if (s.score === null || s.score === undefined || s.score === '') return false
+    return normalizeScore(s.score) === null
+  })
+  if (invalidGrade) {
+    notify(`Vui lòng nhập điểm số hợp lệ cho học sinh ${invalidGrade.studentName}!`, 'error')
+    return
+  }
+
   const validGrades = studentsList.value
-    .filter((s) => s.score !== null && s.score !== undefined)
-    .map((s) => ({
-      studentId: s.studentId,
-      score: s.score,
-      teacherFeedback: s.teacherFeedback ? s.teacherFeedback.trim() : null,
+    .map((s) => ({ student: s, score: normalizeScore(s.score) }))
+    .filter(({ score }) => score !== null)
+    .map(({ student, score }) => ({
+      studentId: student.studentId,
+      score,
+      teacherFeedback: student.teacherFeedback ? student.teacherFeedback.trim() : null,
       status: 'GRADED',
     }))
 
@@ -550,7 +564,9 @@ async function saveAllGrades() {
     isSavingBatch.value = false
   }
 }
-
+function checkValue(value) {
+  return normalizeScore(value)
+}
 onMounted(async () => {
   await loadClasses()
 })

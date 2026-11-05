@@ -43,6 +43,7 @@ import TeacherGradingView from "@/views/teacher/TeacherGradingView.vue";
 import TeacherSubmissionDetailView from "@/views/teacher/TeacherSubmissionDetailView.vue";
 import TeacherAttendanceReportView from "@/views/teacher/TeacherAttendanceReportView.vue";
 import TeacherNoticesView from "@/views/teacher/TeacherNoticesView.vue";
+import TeacherChatView from "@/views/teacher/TeacherChatView.vue";
 import TeacherProfileView from "@/views/teacher/TeacherProfileView.vue";
 import TeacherPasswordView from "@/views/teacher/TeacherPasswordView.vue";
 import TeacherPayslipView from "@/views/teacher/TeacherPayslipView.vue";
@@ -134,6 +135,12 @@ const router = createRouter({
           name: "teacher-notices",
           component: TeacherNoticesView,
           meta: { title: "Gửi thông báo & Nhắc nhở" },
+        },
+        {
+          path: "communication/chat",
+          name: "teacher-chat",
+          component: TeacherChatView,
+          meta: { title: "Chat với phụ huynh" },
         },
 
         // Tài khoản của tôi
