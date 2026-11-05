@@ -18,9 +18,9 @@ namespace ToanTuDuy.Data
         public DbSet<ParentProfile> ParentProfiles { get; set; }
         public DbSet<StudentProfile> StudentProfiles { get; set; }
         public DbSet<TeacherProfile> TeacherProfiles { get; set; }
-        // ✅ THÊM MỚI
         public DbSet<Notification> Notifications { get; set; }
-        // ✅ THÊM MỚI
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<UserInbox> UserInboxes { get; set; }
         public DbSet<NotificationSetting> NotificationSettings { get; set; }
 
         // Token xác minh email qua liên kết (magic link)
@@ -141,6 +141,49 @@ namespace ToanTuDuy.Data
                 .WithOne(cs => cs.Invoice)
                 .HasForeignKey<ClassStudent>(cs => cs.InvoiceId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Thông báo: nội dung dùng chung, mỗi tài khoản có một bản ghi hộp thư riêng.
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasIndex(notification => new { notification.Type, notification.CreatedAt });
+            });
+
+            modelBuilder.Entity<OutboxMessage>(entity =>
+            {
+                entity.HasIndex(message => new { message.Status, message.AvailableAt });
+                entity.HasIndex(message => message.NotificationId).IsUnique();
+                entity.HasOne(message => message.Notification)
+                    .WithMany()
+                    .HasForeignKey(message => message.NotificationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<UserInbox>(entity =>
+            {
+                entity.HasIndex(inbox => new { inbox.AccountId, inbox.IsRead, inbox.CreatedAt });
+                entity.HasIndex(inbox => new { inbox.AccountId, inbox.Type, inbox.CreatedAt });
+                entity.HasIndex(inbox => new { inbox.NotificationId, inbox.AccountId }).IsUnique();
+                entity.HasIndex(inbox => new { inbox.AccountId, inbox.Type, inbox.RefId })
+                    .IsUnique()
+                    .HasFilter("[ref_id] IS NOT NULL");
+                entity.HasOne(inbox => inbox.Notification)
+                    .WithMany(notification => notification.Inboxes)
+                    .HasForeignKey(inbox => inbox.NotificationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(inbox => inbox.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NotificationSetting>(entity =>
+            {
+                entity.HasIndex(setting => new { setting.AccountId, setting.Type }).IsUnique();
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(setting => setting.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
 
             // 4. Giải quyết triệt để lỗi vòng lặp xóa chuỗi (Multiple Cascade Paths)

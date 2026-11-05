@@ -277,7 +277,7 @@ function ProfileForm({ profile }: { profile: ProfileResponseDto }) {
             <Pressable
               accessibilityRole="button"
               className="mt-1 flex-row items-center rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 active:bg-slate-100"
-              onPress={() => router.push('/notifications/index')}
+              onPress={() => router.push('/notifications')}
             >
               <View className="h-10 w-10 items-center justify-center rounded-xl bg-sky-100">
                 <Feather color="#0284c7" name="bell" size={19} />

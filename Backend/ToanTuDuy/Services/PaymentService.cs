@@ -9,6 +9,7 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Utils;
 
 namespace ToanTuDuy.Services
@@ -155,6 +156,7 @@ namespace ToanTuDuy.Services
 
             return _context.Invoices
                 .Include(invoice => invoice.ClassStudent)
+                .Include(invoice => invoice.Student)
                 .FirstOrDefaultAsync(invoice => invoice.TxnRef == transactionReference);
         }
 
@@ -193,6 +195,25 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            if (invoice.Status == "PAID")
+            {
+                await NotifyPaymentSuccessAsync(invoice);
+            }
+        }
+
+        private async Task NotifyPaymentSuccessAsync(Invoice invoice)
+        {
+            var refId = $"INVOICE:{invoice.Id}:PAID";
+            var studentName = invoice.Student?.FullName ?? "Học sinh";
+            const string title = "Thanh toán học phí thành công";
+            var body = $"Hóa đơn #{invoice.Id} của {studentName} đã được thanh toán thành công.";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(NotificationTypes.Payment, title, body, refId),
+                AudienceSpec.Union(
+                    AudienceSpec.AllAdmins(),
+                    AudienceSpec.ClassTeacher(invoice.ClassId)));
         }
     }
 }

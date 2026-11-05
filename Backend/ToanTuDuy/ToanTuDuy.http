@@ -83,3 +83,14 @@ Authorization: Bearer {{adminToken}}
 ### Gửi email phiếu lương hàng loạt (Admin)
 POST {{ToanTuDuy_HostAddress}}/api/payrolls/send-batch-emails?month=11&year=2026
 Authorization: Bearer {{adminToken}}
+
+### Tạo notification test (cần token Parent, chỉ chạy ở Development)
+POST {{ToanTuDuy_HostAddress}}/api/notifications/test
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{
+  "title": "Thông báo test",
+  "body": "Nội dung test",
+  "type": "SYSTEM"
+}

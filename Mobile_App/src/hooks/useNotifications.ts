@@ -1,10 +1,5 @@
 import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type InfiniteData,
-  type QueryKey,
+  useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryKey,
 } from '@tanstack/react-query';
 
 import {
@@ -59,7 +54,7 @@ export function useNotificationsQuery(filters: NotificationFilters, enabled = tr
     staleTime: 30_000,
   });
 }
-
+// Phiên bản cũ chưa có tính realtime
 export function useNotificationUnreadCountQuery(enabled = true) {
   return useQuery<NotificationUnreadCountResponseDto>({
     queryKey: notificationUnreadCountQueryKey,

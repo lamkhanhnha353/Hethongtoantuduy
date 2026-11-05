@@ -15,6 +15,7 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
@@ -26,17 +27,20 @@ namespace ToanTuDuy.Services
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IEmailVerificationService _verificationService;
+        private readonly INotificationService _notificationService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
             IConfiguration configuration,
-            IEmailVerificationService verificationService)
+            IEmailVerificationService verificationService,
+            INotificationService notificationService)
         {
             _userManager = userManager;
             _context = context;
             _configuration = configuration;
             _verificationService = verificationService;
+            _notificationService = notificationService;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -126,10 +130,23 @@ namespace ToanTuDuy.Services
                 user.RefreshToken = refreshToken;
                 await _userManager.UpdateAsync(user);
 
-                // 6. Hoàn tất chuỗi hành động và Commit Db
+                // 6. Xếp thông báo vào outbox trong cùng transaction với tài khoản.
+                await _notificationService.EnqueueAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Account,
+                        request.Role == "Parent" ? "Phụ huynh mới đăng ký" : "Giáo viên mới đăng ký",
+                        $"{request.FullName} vừa tạo tài khoản {(request.Role == "Parent" ? "phụ huynh" : "giáo viên")}.",
+                        $"ACCOUNT:{user.Id}:REGISTERED",
+                        user.Id),
+                    AudienceSpec.AllAdmins());
+
+                // 7. Lưu thay đổi còn đang tracked (notification + outbox) rồi mới Commit.
+                await _context.SaveChangesAsync();
+
+                // 8. Hoàn tất chuỗi hành động và Commit Db
                 await transaction.CommitAsync();
 
-                // 7. Gửi email xác minh sau khi commit — service tự nuốt lỗi gửi,
+                // 9. Gửi email xác minh sau khi commit — service tự nuốt lỗi gửi,
                 //    không bao giờ rollback được việc đăng ký vì lỗi gửi mail.
                 if (verificationRawToken != null && verificationEmail != null)
                 {

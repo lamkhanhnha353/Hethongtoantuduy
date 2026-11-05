@@ -7,12 +7,13 @@ using Microsoft.Extensions.Hosting;
 using ToanTuDuy.DTOs.Notification;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Parent")]
+    [Authorize(Roles = "Parent,Teacher,Admin")]
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
@@ -27,14 +28,9 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
-            [FromQuery] bool unreadOnly = false,
-            [FromQuery] string? type = null,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Get([FromQuery] int page = 1,[FromQuery] int pageSize = 20,[FromQuery] bool unreadOnly = false,[FromQuery] string? type = null,CancellationToken cancellationToken = default)
         {
-            var response = await _notificationService.GetForParentAsync(
+            var response = await _notificationService.GetInboxAsync(
                 User.GetAccountId(),
                 page,
                 pageSize,
@@ -74,7 +70,7 @@ namespace ToanTuDuy.Controllers
                 : request.Title.Trim();
 
             var body = string.IsNullOrWhiteSpace(request.Body)
-                ? $"Thông báo test được tạo lúc {DateTime.UtcNow:HH:mm:ss dd/MM/yyyy} (UTC)."
+                ? $"Thông báo test được tạo lúc {DateTimeOffset.UtcNow:HH:mm:ss dd/MM/yyyy} (UTC)."
                 : request.Body.Trim();
 
             var refId = string.IsNullOrWhiteSpace(request.RefId)
@@ -83,19 +79,16 @@ namespace ToanTuDuy.Controllers
 
             var accountId = User.GetAccountId();
 
-            var created = await _notificationService.CreateForParentAccountAsync(
-                accountId,
-                type,
-                title,
-                body,
-                refId,
+            var created = await _notificationService.PublishAsync(
+                new NotificationMessage(type, title, body, refId, accountId),
+                AudienceSpec.Account(accountId),
                 cancellationToken);
 
             if (!created)
             {
                 return BadRequest(new
                 {
-                    message = "Không tạo được thông báo. Kiểm tra cài đặt IN_APP_NOTIFICATION hoặc RefId đã tồn tại.",
+                    message = "Không tạo được thông báo. Kiểm tra loại thông báo và người nhận.",
                     type,
                     refId,
                 });
@@ -116,8 +109,8 @@ namespace ToanTuDuy.Controllers
             });
         }
 
-        [HttpPut("{id:int}/read")]
-        public async Task<IActionResult> MarkRead(int id, CancellationToken cancellationToken)
+        [HttpPut("{id:long}/read")]
+        public async Task<IActionResult> MarkRead(long id, CancellationToken cancellationToken)
         {
             var updated = await _notificationService.MarkReadAsync(
                 User.GetAccountId(),

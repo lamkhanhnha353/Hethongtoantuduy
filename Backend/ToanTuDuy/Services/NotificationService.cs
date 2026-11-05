@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs.Notification;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
@@ -19,167 +21,103 @@ namespace ToanTuDuy.Services
 
         private readonly ApplicationDbContext _context;
         private readonly ILogger<NotificationService> _logger;
+        private readonly IUnreadCountStore _unreadCountStore;
 
-        public NotificationService(ApplicationDbContext context, ILogger<NotificationService> logger)
+        public NotificationService(
+            ApplicationDbContext context,
+            ILogger<NotificationService> logger,
+            IUnreadCountStore unreadCountStore)
         {
             _context = context;
             _logger = logger;
+            _unreadCountStore = unreadCountStore;
         }
 
-        public async Task<bool> CreateForParentAsync(
-            int parentId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
+        public Task<bool> EnqueueAsync(
+            NotificationMessage message,
+            AudienceSpec audience,
             CancellationToken cancellationToken = default)
         {
+            // 1. Xác định múi giờ Việt Nam
+            TimeZoneInfo vietnamTimeZone;
             try
             {
-                if (parentId <= 0 || string.IsNullOrWhiteSpace(title))
-                {
-                    return false;
-                }
-
-                var normalizedType = Normalize(type);
-                if (string.IsNullOrEmpty(normalizedType))
-                {
-                    return false;
-                }
-
-                if (!await IsInAppEnabledAsync(parentId, cancellationToken))
-                {
-                    return false;
-                }
-
-                var normalizedRefId = string.IsNullOrWhiteSpace(refId) ? null : refId.Trim();
-                if (normalizedRefId != null)
-                {
-                    var duplicated = await _context.Notifications
-                        .AsNoTracking()
-                        .AnyAsync(
-                            notification => notification.ParentId == parentId
-                                && notification.Type == normalizedType
-                                && notification.RefId == normalizedRefId,
-                            cancellationToken);
-
-                    if (duplicated)
-                    {
-                        return false;
-                    }
-                }
-
-                _context.Notifications.Add(new Notification
-                {
-                    ParentId = parentId,
-                    Title = title.Trim(),
-                    Body = string.IsNullOrWhiteSpace(body) ? null : body.Trim(),
-                    Type = normalizedType,
-                    RefId = normalizedRefId,
-                    IsRead = false,
-                    CreatedAt = DateTime.UtcNow,
-                });
-
-                await _context.SaveChangesAsync(cancellationToken);
-                return true;
+                vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); // Cho Linux / Docker / macOS
             }
-            catch (OperationCanceledException)
+            catch
             {
-                throw;
+                vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Cho Windows
             }
-            catch (Exception exception)
+
+            // 2. Lấy giờ hiện tại theo múi giờ Việt Nam
+            DateTimeOffset vietnamNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, vietnamTimeZone);
+
+            // 3. Tạo thông báo với thời gian này
+            // var notification = new Notification
+            // {
+            //     Title = "Thông báo test",
+            //     CreatedAt = vietnamNow // Lúc này createdAt sẽ mang giá trị 14:54:31 +07:00
+            // };
+            if (string.IsNullOrWhiteSpace(message.Title))
             {
-                _logger.LogWarning(
-                    exception,
-                    "Không tạo được thông báo {Type} cho phụ huynh {ParentId}.",
-                    type,
-                    parentId);
-                return false;
+                return Task.FromResult(false);
             }
+
+            var normalizedType = Normalize(message.Type);
+            if (string.IsNullOrEmpty(normalizedType))
+            { 
+                return Task.FromResult(false);
+            }
+
+            if (audience == null || audience.IsEmpty)
+            {
+                _logger.LogWarning("Bỏ qua thông báo {Type} vì không có người nhận.", normalizedType);
+                return Task.FromResult(false);
+            }
+
+            var now = vietnamNow;
+            var notification = new Notification
+            {
+                Type = normalizedType,
+                Title = message.Title.Trim(),
+                Body = string.IsNullOrWhiteSpace(message.Body) ? null : message.Body.Trim(),
+                RefId = string.IsNullOrWhiteSpace(message.RefId) ? null : message.RefId.Trim(),
+                CreatedByAccountId = message.CreatedByAccountId,
+                CreatedAt = now,
+            };
+
+            var outbox = new OutboxMessage
+            {
+                Notification = notification,
+                AudienceSpec = JsonSerializer.Serialize(audience, AudienceSpecJson.Options),
+                Status = (int)OutboxStatus.Pending,
+                Attempts = 0,
+                AvailableAt = now,
+                CreatedAt = now,
+            };
+
+            _context.Notifications.Add(notification);
+            _context.OutboxMessages.Add(outbox);
+
+            return Task.FromResult(true);
         }
 
-        public async Task<bool> CreateForParentAccountAsync(
-            int accountId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
+        public async Task<bool> PublishAsync(
+            NotificationMessage message,
+            AudienceSpec audience,
             CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
-            return await CreateForParentAsync(
-                parentId,
-                type,
-                title,
-                body,
-                refId,
-                cancellationToken);
-        }
-
-        public async Task<bool> CreateForStudentAsync(
-            int studentId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
-            CancellationToken cancellationToken = default)
-        {
-            var parentId = await _context.StudentProfiles
-                .AsNoTracking()
-                .Where(student => student.Id == studentId)
-                .Select(student => (int?)student.ParentId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (!parentId.HasValue)
+            var queued = await EnqueueAsync(message, audience, cancellationToken);
+            if (!queued)
             {
                 return false;
             }
 
-            return await CreateForParentAsync(
-                parentId.Value,
-                type,
-                title,
-                body,
-                refId,
-                cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
         }
 
-        public async Task<int> CreateForClassParentsAsync(
-            int classId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
-            CancellationToken cancellationToken = default)
-        {
-            var parentIds = await _context.ClassStudents
-                .AsNoTracking()
-                .Where(classStudent => classStudent.ClassId == classId
-                    && classStudent.Status == "ACTIVE")
-                .Select(classStudent => classStudent.Student.ParentId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            var created = 0;
-            foreach (var parentId in parentIds)
-            {
-                if (await CreateForParentAsync(
-                    parentId,
-                    type,
-                    title,
-                    body,
-                    refId,
-                    cancellationToken))
-                {
-                    created++;
-                }
-            }
-
-            return created;
-        }
-
-        public async Task<NotificationListResponse> GetForParentAsync(
+        public async Task<NotificationListResponse> GetInboxAsync(
             int accountId,
             int page,
             int pageSize,
@@ -187,49 +125,43 @@ namespace ToanTuDuy.Services
             string? type,
             CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
             page = Math.Max(1, page);
             pageSize = pageSize <= 0
                 ? DefaultPageSize
                 : Math.Min(pageSize, MaxPageSize);
 
-            var query = _context.Notifications
+            var query = _context.UserInboxes
                 .AsNoTracking()
-                .Where(notification => notification.ParentId == parentId);
+                .Where(inbox => inbox.AccountId == accountId);
 
             if (unreadOnly)
             {
-                query = query.Where(notification => !notification.IsRead);
+                query = query.Where(inbox => !inbox.IsRead);
             }
 
             var normalizedType = Normalize(type);
             if (!string.IsNullOrEmpty(normalizedType))
             {
-                query = query.Where(notification => notification.Type == normalizedType);
+                query = query.Where(inbox => inbox.Type == normalizedType);
             }
 
             var total = await query.CountAsync(cancellationToken);
-            var unreadCount = await _context.Notifications
-                .AsNoTracking()
-                .CountAsync(
-                    notification => notification.ParentId == parentId && !notification.IsRead,
-                    cancellationToken);
+            var unreadCount = await _unreadCountStore.GetAsync(accountId, cancellationToken);
 
             var items = await query
-                .OrderByDescending(notification => notification.CreatedAt)
-                .ThenByDescending(notification => notification.Id)
+                .OrderByDescending(inbox => inbox.CreatedAt)
+                .ThenByDescending(inbox => inbox.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(notification => new NotificationResponse
+                .Select(inbox => new NotificationResponse
                 {
-                    Id = notification.Id,
-                    Title = notification.Title,
-                    Body = notification.Body,
-                    Type = notification.Type,
-                    RefId = notification.RefId,
-                    IsRead = notification.IsRead,
-                    CreatedAt = notification.CreatedAt,
+                    Id = inbox.Id,
+                    Title = inbox.Notification.Title,
+                    Body = inbox.Notification.Body,
+                    Type = inbox.Type,
+                    RefId = inbox.RefId,
+                    IsRead = inbox.IsRead,
+                    CreatedAt = inbox.CreatedAt,
                 })
                 .ToListAsync(cancellationToken);
 
@@ -243,58 +175,61 @@ namespace ToanTuDuy.Services
             };
         }
 
-        public async Task<int> GetUnreadCountAsync(
-            int accountId,
-            CancellationToken cancellationToken = default)
+        public Task<int> GetUnreadCountAsync(int accountId, CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
-            return await _context.Notifications
-                .AsNoTracking()
-                .CountAsync(
-                    notification => notification.ParentId == parentId && !notification.IsRead,
-                    cancellationToken);
+            return _unreadCountStore.GetAsync(accountId, cancellationToken);
         }
 
         public async Task<bool> MarkReadAsync(
             int accountId,
-            int notificationId,
+            long inboxId,
             CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
-            var updated = await _context.Notifications
-                .Where(notification => notification.Id == notificationId
-                    && notification.ParentId == parentId)
+            var now = DateTime.UtcNow;
+            var updated = await _context.UserInboxes
+                .Where(inbox => inbox.AccountId == accountId
+                    && inbox.Id == inboxId
+                    && !inbox.IsRead)
                 .ExecuteUpdateAsync(
-                    setters => setters.SetProperty(notification => notification.IsRead, true),
+                    setters => setters
+                        .SetProperty(inbox => inbox.IsRead, true)
+                        .SetProperty(inbox => inbox.ReadAt, now),
                     cancellationToken);
 
-            return updated > 0;
+            if (updated > 0)
+            {
+                await _unreadCountStore.DecrementAsync(accountId, cancellationToken);
+                return true;
+            }
+
+            // Đã đọc trước đó vẫn trả true để endpoint idempotent.
+            return await _context.UserInboxes
+                .AsNoTracking()
+                .AnyAsync(inbox => inbox.AccountId == accountId && inbox.Id == inboxId, cancellationToken);
         }
 
-        public async Task<int> MarkAllReadAsync(
-            int accountId,
-            CancellationToken cancellationToken = default)
+        public async Task<int> MarkAllReadAsync(int accountId, CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
-            return await _context.Notifications
-                .Where(notification => notification.ParentId == parentId && !notification.IsRead)
+            var now = DateTime.UtcNow;
+            var updated = await _context.UserInboxes
+                .Where(inbox => inbox.AccountId == accountId && !inbox.IsRead)
                 .ExecuteUpdateAsync(
-                    setters => setters.SetProperty(notification => notification.IsRead, true),
+                    setters => setters
+                        .SetProperty(inbox => inbox.IsRead, true)
+                        .SetProperty(inbox => inbox.ReadAt, now),
                     cancellationToken);
+
+            await _unreadCountStore.ResetAsync(accountId, cancellationToken);
+            return updated;
         }
 
         public async Task<IReadOnlyList<NotificationSettingResponse>> GetSettingsAsync(
             int accountId,
             CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
             var rows = await _context.NotificationSettings
                 .AsNoTracking()
-                .Where(setting => setting.ParentId == parentId)
+                .Where(setting => setting.AccountId == accountId)
                 .Select(setting => new { setting.Type, setting.Enabled })
                 .ToListAsync(cancellationToken);
 
@@ -330,8 +265,6 @@ namespace ToanTuDuy.Services
             UpdateNotificationSettingsRequest request,
             CancellationToken cancellationToken = default)
         {
-            var parentId = await GetParentIdAsync(accountId, cancellationToken);
-
             var requested = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in request.Settings)
             {
@@ -345,69 +278,34 @@ namespace ToanTuDuy.Services
             }
 
             var existing = await _context.NotificationSettings
-                .Where(setting => setting.ParentId == parentId)
+                .Where(setting => setting.AccountId == accountId)
                 .ToListAsync(cancellationToken);
 
+            var now = DateTime.UtcNow;
             foreach (var (type, enabled) in requested)
             {
-                var matches = existing
-                    .Where(setting => string.Equals(
-                        Normalize(setting.Type),
-                        type,
-                        StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                var setting = existing.FirstOrDefault(row =>
+                    string.Equals(Normalize(row.Type), type, StringComparison.OrdinalIgnoreCase));
 
-                if (matches.Count == 0)
+                if (setting == null)
                 {
                     _context.NotificationSettings.Add(new NotificationSetting
                     {
-                        ParentId = parentId,
+                        AccountId = accountId,
                         Type = type,
                         Enabled = enabled,
+                        UpdatedAt = now,
                     });
                     continue;
                 }
 
-                foreach (var setting in matches)
-                {
-                    setting.Enabled = enabled;
-                }
+                setting.Type = type;
+                setting.Enabled = enabled;
+                setting.UpdatedAt = now;
             }
 
             await _context.SaveChangesAsync(cancellationToken);
             return await GetSettingsAsync(accountId, cancellationToken);
-        }
-
-        private async Task<int> GetParentIdAsync(
-            int accountId,
-            CancellationToken cancellationToken)
-        {
-            var parentId = await _context.ParentProfiles
-                .AsNoTracking()
-                .Where(parent => parent.AccountId == accountId)
-                .Select(parent => (int?)parent.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (!parentId.HasValue)
-            {
-                throw ApiException.NotFound("Không tìm thấy hồ sơ phụ huynh.");
-            }
-
-            return parentId.Value;
-        }
-
-        private async Task<bool> IsInAppEnabledAsync(
-            int parentId,
-            CancellationToken cancellationToken)
-        {
-            var settings = await _context.NotificationSettings
-                .AsNoTracking()
-                .Where(setting => setting.ParentId == parentId
-                    && setting.Type == NotificationSettingTypes.InApp)
-                .Select(setting => setting.Enabled)
-                .ToListAsync(cancellationToken);
-
-            return settings.Count == 0 || settings.Any(enabled => enabled);
         }
 
         private static string Normalize(string? value) =>

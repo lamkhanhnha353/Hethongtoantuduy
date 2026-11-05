@@ -2,36 +2,23 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs.Notification;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public interface INotificationService
     {
-        Task<bool> CreateForParentAsync(
-            int parentId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
+        Task<bool> EnqueueAsync(
+            NotificationMessage message,
+            AudienceSpec audience,
             CancellationToken cancellationToken = default);
 
-        Task<bool> CreateForStudentAsync(
-            int studentId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
+        Task<bool> PublishAsync(
+            NotificationMessage message,
+            AudienceSpec audience,
             CancellationToken cancellationToken = default);
 
-        Task<int> CreateForClassParentsAsync(
-            int classId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
-            CancellationToken cancellationToken = default);
-
-        Task<NotificationListResponse> GetForParentAsync(
+        Task<NotificationListResponse> GetInboxAsync(
             int accountId,
             int page,
             int pageSize,
@@ -41,7 +28,7 @@ namespace ToanTuDuy.Services
 
         Task<int> GetUnreadCountAsync(int accountId, CancellationToken cancellationToken = default);
 
-        Task<bool> MarkReadAsync(int accountId, int notificationId, CancellationToken cancellationToken = default);
+        Task<bool> MarkReadAsync(int accountId, long inboxId, CancellationToken cancellationToken = default);
 
         Task<int> MarkAllReadAsync(int accountId, CancellationToken cancellationToken = default);
 
@@ -52,14 +39,6 @@ namespace ToanTuDuy.Services
         Task<IReadOnlyList<NotificationSettingResponse>> UpdateSettingsAsync(
             int accountId,
             UpdateNotificationSettingsRequest request,
-            CancellationToken cancellationToken = default);
-
-        Task<bool> CreateForParentAccountAsync(
-            int accountId,
-            string type,
-            string title,
-            string? body,
-            string? refId,
             CancellationToken cancellationToken = default);
     }
 }
