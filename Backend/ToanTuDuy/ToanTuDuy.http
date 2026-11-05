@@ -31,3 +31,36 @@ Content-Type: application/json
   "phone": "0987654321",
   "password": "Password123!"
 }
+
+### Lương tháng (Admin)
+GET {{ToanTuDuy_HostAddress}}/api/payrolls/admin/summary?month=11&year=2026
+Authorization: Bearer {{adminToken}}
+
+### Chi tiết lương giáo viên
+GET {{ToanTuDuy_HostAddress}}/api/payrolls/detail?teacherId=1&month=11&year=2026
+Authorization: Bearer {{teacherToken}}
+
+### Thêm khoản thưởng
+POST {{ToanTuDuy_HostAddress}}/api/payrolls/adjustments
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "teacherId": 1,
+  "type": "Bonus",
+  "amount": 500000,
+  "reason": "Thưởng hoàn thành kế hoạch tháng",
+  "appliedDate": "2026-11-30"
+}
+
+### Xem trước email phiếu lương (Admin)
+GET {{ToanTuDuy_HostAddress}}/api/payrolls/1/preview-email
+Authorization: Bearer {{adminToken}}
+
+### Gửi email phiếu lương nền (Admin)
+POST {{ToanTuDuy_HostAddress}}/api/payrolls/1/send-email
+Authorization: Bearer {{adminToken}}
+
+### Gửi email phiếu lương hàng loạt (Admin)
+POST {{ToanTuDuy_HostAddress}}/api/payrolls/send-batch-emails?month=11&year=2026
+Authorization: Bearer {{adminToken}}

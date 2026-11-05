@@ -19,6 +19,8 @@ namespace ToanTuDuy.Services
 {
     public class AuthService : IAuthService
     {
+        public const string SecurityStampClaimType = "security_stamp";
+
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
@@ -50,7 +52,9 @@ namespace ToanTuDuy.Services
             {
                 UserName = request.Phone, 
                 PhoneNumber = request.Phone,
-                Role = request.Role 
+                Role = request.Role,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             };
 
             // 3. Khởi tạo Transaction
@@ -169,9 +173,19 @@ namespace ToanTuDuy.Services
                 throw new UnauthorizedAccessException("Số điện thoại hoặc mật khẩu không chính xác.");
             }
 
-            if (user.Role != "Admin" && user.Role != "Teacher")
+            if (!user.IsActive)
             {
-                throw new UnauthorizedAccessException("Chỉ tài khoản Admin hoặc Teacher được phép đăng nhập.");
+                throw new UnauthorizedAccessException("Tài khoản đã bị khóa.");
+            }
+
+            if (string.IsNullOrWhiteSpace(user.SecurityStamp))
+            {
+                var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+                if (!stampResult.Succeeded)
+                {
+                    var errors = string.Join("; ", stampResult.Errors.Select(error => error.Description));
+                    throw new InvalidOperationException($"Không thể khởi tạo phiên đăng nhập: {errors}");
+                }
             }
 
             var accessToken = GenerateJwtToken(user);
@@ -243,7 +257,8 @@ namespace ToanTuDuy.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? ""),
-                new Claim(ClaimTypes.Role, user.Role ?? "")
+                new Claim(ClaimTypes.Role, user.Role ?? ""),
+                new Claim(SecurityStampClaimType, user.SecurityStamp ?? "")
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

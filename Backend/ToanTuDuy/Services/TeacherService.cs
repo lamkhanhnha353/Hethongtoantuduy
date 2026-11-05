@@ -43,7 +43,8 @@ namespace ToanTuDuy.Services
                 Email = t.Email,
                 Phone = t.Account != null ? (t.Account.PhoneNumber ?? "") : "",
                 Specialize = t.Specialize,
-                IsActive = t.Account != null && (t.Account.LockoutEnd == null || t.Account.LockoutEnd <= DateTimeOffset.UtcNow)
+                IsActive = t.Account != null && t.Account.IsActive &&
+                    (t.Account.LockoutEnd == null || t.Account.LockoutEnd <= DateTimeOffset.UtcNow)
             }).ToListAsync();
         }
 
@@ -63,7 +64,8 @@ namespace ToanTuDuy.Services
                 Email = teacher.Email,
                 Phone = teacher.Account.PhoneNumber ?? "",
                 Specialize = teacher.Specialize,
-                IsActive = teacher.Account.LockoutEnd == null || teacher.Account.LockoutEnd <= DateTimeOffset.UtcNow
+                IsActive = teacher.Account.IsActive &&
+                    (teacher.Account.LockoutEnd == null || teacher.Account.LockoutEnd <= DateTimeOffset.UtcNow)
             };
         }
 
@@ -76,7 +78,8 @@ namespace ToanTuDuy.Services
                 {
                     UserName = dto.Phone,
                     PhoneNumber = dto.Phone,
-                    Role = "Teacher"
+                    Role = "Teacher",
+                    IsActive = true
                 };
 
                 var createResult = await _userManager.CreateAsync(user, dto.Password);
@@ -131,6 +134,32 @@ namespace ToanTuDuy.Services
             teacher.Specialize = string.IsNullOrWhiteSpace(dto.Specialize) ? null : dto.Specialize.Trim();
 
             await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, bool isActive)
+        {
+            var teacher = await _context.TeacherProfiles
+                .Include(profile => profile.Account)
+                .FirstOrDefaultAsync(profile => profile.Id == id);
+
+            if (teacher == null) return false;
+            if (teacher.Account == null)
+            {
+                throw new InvalidOperationException("Tài khoản giáo viên không tồn tại.");
+            }
+
+            teacher.Account.IsActive = isActive;
+            teacher.Account.LockoutEnd = isActive ? null : DateTimeOffset.MaxValue;
+            teacher.Account.RefreshToken = null;
+
+            var result = await _userManager.UpdateSecurityStampAsync(teacher.Account);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(error => error.Description));
+                throw new InvalidOperationException($"Không thể thu hồi phiên đăng nhập: {errors}");
+            }
+
             return true;
         }
 

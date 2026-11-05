@@ -3,13 +3,12 @@ import { ActivityIndicator, Alert, RefreshControl, ScrollView, Text, TouchableOp
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 
-import { API_URL } from '@/config/env';
 import { useSession } from '@/hooks/useSession';
 import { InvoiceCard } from '@/components/invoices/InvoiceCard';
 import { invoiceService } from '@/services/invoiceService';
+import { openPaymentUrl } from '@/lib/paymentNavigation';
+import { paymentService } from '@/services/paymentService';
 import type { Invoice, InvoiceFilter } from '@/types/invoice';
 
 const filters: { value: InvoiceFilter; label: string }[] = [
@@ -30,26 +29,16 @@ export default function InvoicesScreen() {
   const [processingInvoiceId, setProcessingInvoiceId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const getAccessToken = useCallback(() => {
-    if (typeof session === 'string') {
-      try {
-        return JSON.parse(session).accessToken || session;
-      } catch {
-        return session;
-      }
-    }
-    return session && typeof session === 'object' ? (session as any).accessToken : '';
-  }, [session]);
+  const accessToken = session?.accessToken ?? '';
 
   const fetchInvoices = useCallback(async (refresh = false) => {
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
     try {
-      const token = getAccessToken();
-      if (!token) throw new Error('Vui lòng đăng nhập lại để xem hóa đơn.');
+      if (!accessToken) throw new Error('Vui lòng đăng nhập lại để xem hóa đơn.');
 
-      const data = await invoiceService.getHistory(token);
+      const data = await invoiceService.getHistory();
       setInvoices(data);
       setErrorMessage(null);
     } catch (error) {
@@ -58,7 +47,7 @@ export default function InvoicesScreen() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [getAccessToken]);
+  }, [accessToken]);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,7 +82,7 @@ export default function InvoicesScreen() {
           onPress: async () => {
             setProcessingInvoiceId(invoiceId);
             try {
-              await invoiceService.cancel(invoiceId, getAccessToken());
+              await invoiceService.cancel(invoiceId);
               await fetchInvoices(true);
               Alert.alert('Đã hủy hóa đơn', 'Hóa đơn đã được hủy và slot được giải phóng.');
             } catch (error) {
@@ -110,44 +99,13 @@ export default function InvoicesScreen() {
   const handlePayNow = async (invoiceId: number) => {
     setProcessingInvoiceId(invoiceId);
     try {
-      const response = await fetch(`${API_URL}/api/payment/create-url/${invoiceId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getAccessToken()}` },
+      const paymentUrl = await paymentService.getVNPayUrlForInvoice(invoiceId);
+      const result = await openPaymentUrl(paymentUrl, responseCode => {
+        router.push(`/payment-result?code=${responseCode ?? ''}`);
       });
 
-      if (!response.ok) {
-        const responseText = await response.text();
-        let message = responseText || 'Không thể tạo link thanh toán.';
-        try {
-          const errorData = JSON.parse(responseText);
-          message = errorData.message || errorData.title || message;
-        } catch {
-          // Keep the server response text for non-JSON errors.
-        }
-        throw new Error(message);
-      }
-
-      const data = await response.json();
-      const paymentUrl = data.paymentUrl;
-      if (!paymentUrl) throw new Error('Không nhận được đường dẫn từ VNPay.');
-
-      let isLinkHandled = false;
-      const subscription = Linking.addEventListener('url', (event) => {
-        if (!isLinkHandled && event.url.includes('payment-result')) {
-          isLinkHandled = true;
-          const responseCode = new URL(event.url).searchParams.get('code');
-          WebBrowser.dismissBrowser();
-          router.push(`/payment-result?code=${responseCode}`);
-        }
-      });
-
-      try {
-        const result = await WebBrowser.openBrowserAsync(paymentUrl);
-        if (result.type === 'cancel' || result.type === 'dismiss') {
-          await fetchInvoices(true);
-        }
-      } finally {
-        subscription.remove();
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        await fetchInvoices(true);
       }
     } catch (error) {
       Alert.alert('Lỗi thanh toán', error instanceof Error ? error.message : 'Lỗi hệ thống.');

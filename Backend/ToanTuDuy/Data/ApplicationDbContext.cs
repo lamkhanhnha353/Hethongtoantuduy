@@ -34,6 +34,9 @@ namespace ToanTuDuy.Data
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<ClassStudent> ClassStudents { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<TeacherSalaryConfig> TeacherSalaryConfigs { get; set; }
+        public DbSet<SalaryAdjustment> SalaryAdjustments { get; set; }
+        public DbSet<PayrollSummary> PayrollSummaries { get; set; }
         // ✅ THÊM MỚI
         public DbSet<QuestionBank> QuestionBanks { get; set; }
         public DbSet<Question> Questions { get; set; }
@@ -90,6 +93,17 @@ namespace ToanTuDuy.Data
             modelBuilder.Entity<EmailVerificationToken>()
                 .HasIndex(t => t.TokenHash)
                 .IsUnique();
+
+            modelBuilder.Entity<TeacherSalaryConfig>()
+                .HasIndex(config => config.TeacherId)
+                .IsUnique();
+
+            modelBuilder.Entity<PayrollSummary>()
+                .HasIndex(payroll => new { payroll.TeacherId, payroll.Month, payroll.Year })
+                .IsUnique();
+
+            modelBuilder.Entity<SalaryAdjustment>()
+                .HasIndex(adjustment => new { adjustment.TeacherId, adjustment.AppliedDate });
 
 
             // MODULE THANH TOÁN (PAYOS) - CẤU HÌNH INVOICE & CLASS_STUDENT
