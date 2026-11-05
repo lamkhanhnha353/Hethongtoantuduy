@@ -1,5 +1,13 @@
 export type NotificationType = 'SYSTEM' | 'TUITION' | 'ACADEMIC' | 'ATTENDANCE' | 'ANNOUNCEMENT';
 
+export type RealtimeNotificationDto = {
+  id: number;
+  type: string;
+  title: string;
+  body?: string | null;
+  createdAt: string;
+};
+
 export type NotificationResponseDto = {
   id: number;
   title: string;
