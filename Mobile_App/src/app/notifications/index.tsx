@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertBanner } from '@/components/AlertBanner';
 import { EmptyState } from '@/components/EmptyState';
 import { NotificationCard } from '@/components/notifications/NotificationCard';
+import { useNotificationRealtime } from '@/hooks/useNotificationRealtime';
 import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
@@ -89,6 +90,13 @@ function ParentNotifications() {
   const refetchUnreadCount = unreadCountQuery.refetch;
 
   useFocusEffect(
+    useCallback(() => {
+      void refetchNotifications();
+      void refetchUnreadCount();
+    }, [refetchNotifications, refetchUnreadCount]),
+  );
+
+  useNotificationRealtime(
     useCallback(() => {
       void refetchNotifications();
       void refetchUnreadCount();
