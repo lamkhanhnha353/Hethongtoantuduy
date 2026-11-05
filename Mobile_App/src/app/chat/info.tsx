@@ -17,8 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { chatService, type ChatMessage } from '@/services/chat.service';
 import { toApiError } from '@/services/apiError';
 
-import { formatChatDate } from './chatDateTime';
-import { ChatImageViewer } from './components/ChatImageViewer';
+import { ChatImageViewer } from '@/components/chat/ChatImageViewer';
+import { formatChatDate } from '@/components/chat/chatDateTime';
 
 const PAGE_SIZE = 30;
 const MAX_HISTORY_PAGES = 100;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { ActivityIndicator, ScrollView, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { audio } from '@/audio';
@@ -35,6 +35,10 @@ export default function ScreenMathQuiz() {
   const isLandscape = width > height;
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(
       () => undefined,
     );

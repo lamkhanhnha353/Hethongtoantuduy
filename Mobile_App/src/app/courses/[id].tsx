@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, Alert, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -285,11 +285,12 @@ export default function CourseDetailScreen() {
             onClose={() => setIsVideoPlaying(false)}
           />
         ) : (
-          <ImageBackground 
-            source={{ uri: course.videoThumbnail }}
-            className="w-full h-72 justify-between" 
-            imageStyle={{ borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-          >
+          <View className="relative h-72 w-full justify-between overflow-hidden rounded-b-[32px]">
+            <Image
+              source={{ uri: course.videoThumbnail }}
+              className="absolute inset-0 h-full w-full"
+              resizeMode="cover"
+            />
             <View className="absolute inset-0 bg-slate-900/40 rounded-b-[32px]"/>
 
             <View className="px-5 flex-row items-center justify-between z-10" style={{ paddingTop: insets.top + 10 }}>
@@ -322,7 +323,7 @@ export default function CourseDetailScreen() {
               </View>
               <Text className="text-white text-3xl font-black leading-tight drop-shadow-md">{course.name}</Text>
             </View>
-          </ImageBackground>
+          </View>
         )}
 
         <View className="px-5 pt-6 pb-32">

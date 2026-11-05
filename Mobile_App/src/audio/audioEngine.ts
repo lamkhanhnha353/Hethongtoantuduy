@@ -1,4 +1,5 @@
 import { createAudioPlayer, preload, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { Platform } from 'react-native';
 
 import { useAudioStore } from '@/store/audioStore';
 
@@ -142,6 +143,10 @@ function getEngine(): AudioEngine {
   return globalScope.__toanTuDuyAudioEngine;
 }
 
+if (Platform.OS !== 'web' || typeof window !== 'undefined') {
+  getEngine();
+}
+
 export function playSound(key: SoundKey) {
   if (!useAudioStore.getState().enabled) {
     return;
@@ -191,9 +196,6 @@ export function playSound(key: SoundKey) {
       });
   });
 }
-
-// Khởi tạo sớm để preload nguồn và cấu hình audio session trước lần phát đầu tiên.
-getEngine();
 
 export function releaseAudioEngine() {
   const engine = globalScope.__toanTuDuyAudioEngine;

@@ -5,7 +5,7 @@ import { Alert, Linking, Pressable, Text, View } from 'react-native';
 
 import type { ChatMessage } from '@/services/chat.service';
 
-import { formatChatTime } from '../chatDateTime';
+import { formatChatTime } from './chatDateTime';
 
 export function ChatMessageItem({
   item,

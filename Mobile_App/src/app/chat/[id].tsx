@@ -27,10 +27,10 @@ import { useSession } from '@/hooks/useSession';
 import { chatService, type ChatAttachment, type ChatMessage } from '@/services/chat.service';
 import { toApiError } from '@/services/apiError';
 
-import { getChatTimestamp } from './chatDateTime';
-import { ChatAttachmentPicker } from './components/ChatAttachmentPicker';
-import { ChatImageViewer } from './components/ChatImageViewer';
-import { ChatMessageItem } from './components/ChatMessageItem';
+import { ChatAttachmentPicker } from '@/components/chat/ChatAttachmentPicker';
+import { ChatImageViewer } from '@/components/chat/ChatImageViewer';
+import { ChatMessageItem } from '@/components/chat/ChatMessageItem';
+import { getChatTimestamp } from '@/components/chat/chatDateTime';
 
 const CHAT_PAGE_SIZE = 30;
 

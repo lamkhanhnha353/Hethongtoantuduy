@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, FontAwesome5 } from '@expo/vector-icons'; // Sử dụng bộ Icon có sẵn của Expo
@@ -35,11 +35,21 @@ export default function ScreenLogin() {
 
   const loginMutation = useLoginMutation();
   const setSession = useAuthStore((state) => state.setSession);
+  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+  const googleClientId = Platform.select({
+    android: googleAndroidClientId,
+    ios: googleIosClientId,
+    default: googleWebClientId,
+  });
+  const missingGoogleClientId = !googleClientId;
   const [googleRequest, , promptGoogleAsync] = Google.useIdTokenAuthRequest(
     {
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      // AuthSession throws during render when the platform-specific client ID is missing.
+      webClientId: googleWebClientId ?? 'web-client-id-not-configured',
+      iosClientId: googleIosClientId ?? 'ios-client-id-not-configured',
+      androidClientId: googleAndroidClientId ?? 'android-client-id-not-configured',
       scopes: ['openid', 'profile', 'email'],
     },
     { scheme: 'toantuduy' },
@@ -65,6 +75,12 @@ export default function ScreenLogin() {
 
   async function handleGoogleLogin() {
     setNotice(null);
+    if (missingGoogleClientId) {
+      const platformName = Platform.OS === 'android' ? 'Android' : Platform.OS === 'ios' ? 'iOS' : 'web';
+      setNotice(`Đăng nhập Google trên ${platformName} chưa được cấu hình Client ID.`);
+      return;
+    }
+
     if (!googleRequest) {
       setNotice('Cấu hình đăng nhập Google chưa sẵn sàng. Vui lòng kiểm tra các Google Client ID.');
       return;

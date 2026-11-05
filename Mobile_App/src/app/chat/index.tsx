@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { chatService, type ChatConversation } from '@/services/chat.service';
 import { toApiError } from '@/services/apiError';
 
-import { formatChatDate } from './chatDateTime';
+import { formatChatDate } from '@/components/chat/chatDateTime';
 
 export default function ChatListScreen() {
   const router = useRouter();

@@ -14,7 +14,6 @@ using ToanTuDuy.Options;
 using ToanTuDuy.Services;
 using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Services.Storage;
-using ToanTuDuy.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,26 +67,14 @@ builder.Services.AddAuthentication(options =>
         };
         options.Events = new JwtBearerEvents
         {
-            OnMessageReceived = context =>
-        {
-            var accessToken = context.Request.Query["access_token"];
-            var path = context.HttpContext.Request.Path;
-
-            // Nếu request gửi đến /chathub và có chứa access_token trong URL
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
-            {
-                // Gán token đọc được từ URL cho hệ thống xác thực
-                context.Token = accessToken;
-            }
-            return Task.CompletedTask;
-        },
-
             OnMessageReceived = messageContext =>
             {
-                // SignalR (mobile/web) gửi JWT qua query string vì WebSocket không set được header.
+                // SignalR sends JWT in the query string when WebSocket headers are unavailable.
                 var accessToken = messageContext.Request.Query["access_token"];
+                var path = messageContext.HttpContext.Request.Path;
                 if (!string.IsNullOrEmpty(accessToken) &&
-                    messageContext.HttpContext.Request.Path.StartsWithSegments("/hubs/notifications"))
+                    (path.StartsWithSegments("/chathub") ||
+                     path.StartsWithSegments("/hubs/notifications")))
                 {
                     messageContext.Token = accessToken;
                 }
@@ -139,15 +126,6 @@ builder.Services.AddAuthorization(options =>
 });
 
 // Setup CORS for browser clients (Expo web, web frontend)
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("DevCors", policy =>
-//         policy.AllowAnyOrigin()
-//               .AllowAnyHeader()
-//               .AllowAnyMethod());
-// });
-
-// Setup CORS for browser clients (Expo web, web frontend)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -166,9 +144,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     options.AbortOnConnectFail = false;
     return ConnectionMultiplexer.Connect(options);
 });
-
-// SignalR: đẩy thông báo realtime tới mobile
-builder.Services.AddSignalR();
 
 // Register Custom Services (Dependency Injection)
 builder.Services.AddScoped<IAuthService, AuthService>();
