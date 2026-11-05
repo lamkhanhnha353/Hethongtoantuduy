@@ -22,7 +22,7 @@ import ClassDetailView from "@/views/admin/training/ClassDetailView.vue";
 import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 
 // Admin - Reports
-import AdminAttendanceReportView from "@/views/admin/reports/AttendanceReportView.vue";
+// import AdminAttendanceReportView from "@/views/admin/reports/AttendanceReportView.vue";
 // Financial Management
 import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
 import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
@@ -263,8 +263,7 @@ const router = createRouter({
         },
         {
           path: "reports/attendance",
-          name: "admin-attendance-report",
-          component: AdminAttendanceReportView,
+          component: PlaceholderView,
           meta: { title: "Thống kê chuyên cần" },
         },
 
