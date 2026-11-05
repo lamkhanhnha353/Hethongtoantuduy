@@ -166,4 +166,48 @@ namespace ToanTuDuy.DTOs
         public string? TeacherFeedback { get; set; }
         public DateTime? CompletedAt { get; set; }
     }
+
+    public class GradeStudentRequest
+    {
+        public float? Score { get; set; }
+        public string? TeacherFeedback { get; set; }
+        public string? Status { get; set; } = "GRADED";
+    }
+
+    public class BatchGradeItemRequest
+    {
+        public int StudentId { get; set; }
+        public float? Score { get; set; }
+        public string? TeacherFeedback { get; set; }
+        public string? Status { get; set; } = "GRADED";
+    }
+
+    public class BatchGradeRequest
+    {
+        public List<BatchGradeItemRequest> Grades { get; set; } = new List<BatchGradeItemRequest>();
+    }
+
+    public class StudentSubmissionDetailResponse
+    {
+        public int AssignmentId { get; set; }
+        public string AssignmentTitle { get; set; } = string.Empty;
+        public int LessonId { get; set; }
+        public string? LessonTitle { get; set; }
+        public int ClassId { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public int TimeLimitMinutes { get; set; }
+        public float TotalPoints { get; set; }
+        public DateTime StartTime { get; set; }
+        public DateTime Deadline { get; set; }
+
+        public int StudentId { get; set; }
+        public string StudentName { get; set; } = string.Empty;
+        public string? StudentAvatar { get; set; }
+        public float? Score { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string? TeacherFeedback { get; set; }
+        public DateTime? CompletedAt { get; set; }
+
+        public List<AssignmentQuestionDetailDto> Questions { get; set; } = new List<AssignmentQuestionDetailDto>();
+    }
 }

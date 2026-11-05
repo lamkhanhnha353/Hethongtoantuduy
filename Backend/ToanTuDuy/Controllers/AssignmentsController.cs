@@ -136,5 +136,50 @@ namespace ToanTuDuy.Controllers
             var result = await _assignmentService.GetAssignmentsByStudentAsync(studentId, lessonId);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Chấm điểm và lưu nhận xét đánh giá cho một học sinh lẻ.
+        /// </summary>
+        [HttpPut("{id:int}/grade/{studentId:int}")]
+        [Authorize(Roles = "Teacher,Admin")]
+        public async Task<IActionResult> GradeStudent(int id, int studentId, [FromBody] GradeStudentRequest request)
+        {
+            var result = await _assignmentService.GradeStudentAsync(id, studentId, request);
+            if (result == null)
+            {
+                return NotFound(new { message = "Không tìm thấy thông tin bài kiểm tra của học sinh này." });
+            }
+            return Ok(new { message = "Chấm điểm và lưu nhận xét thành công.", data = result });
+        }
+
+        /// <summary>
+        /// Lưu điểm và nhận xét cho hàng loạt học sinh trong bài kiểm tra.
+        /// </summary>
+        [HttpPut("{id:int}/batch-grade")]
+        [Authorize(Roles = "Teacher,Admin")]
+        public async Task<IActionResult> BatchGrade(int id, [FromBody] BatchGradeRequest request)
+        {
+            var success = await _assignmentService.BatchGradeAsync(id, request.Grades);
+            if (!success)
+            {
+                return BadRequest(new { message = "Không thể lưu điểm cho các học sinh." });
+            }
+            return Ok(new { message = "Đã lưu kết quả đánh giá cho các học sinh thành công." });
+        }
+
+        /// <summary>
+        /// Lấy chi tiết bài làm của một học sinh trong bài kiểm tra (câu hỏi, đáp án, điểm số và nhận xét).
+        /// </summary>
+        [HttpGet("{id:int}/submission/{studentId:int}")]
+        [Authorize(Roles = "Teacher,Admin,Parent")]
+        public async Task<IActionResult> GetStudentSubmission(int id, int studentId)
+        {
+            var result = await _assignmentService.GetStudentSubmissionAsync(id, studentId);
+            if (result == null)
+            {
+                return NotFound(new { message = "Không tìm thấy bài làm của học sinh." });
+            }
+            return Ok(result);
+        }
     }
 }

@@ -96,6 +96,24 @@
         >
           {{ isSubmitting ? "Đang đăng nhập..." : "Đăng nhập" }}
         </button>
+
+        <div class="flex justify-center">
+          <GoogleSignInButton
+            v-if="googleClientConfigured"
+            type="standard"
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            locale="vi"
+            :width="280"
+            @success="handleGoogleSuccess"
+            @error="handleGoogleError"
+          />
+          <p v-else class="text-sm text-gray-500">
+            Đăng nhập Google chưa được cấu hình.
+          </p>
+        </div>
       </form>
     </section>
   </main>
@@ -104,6 +122,8 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { GoogleSignInButton } from "vue3-google-signin";
 import authService from "@/services/auth.service";
 
 const router = useRouter();
@@ -112,6 +132,7 @@ const password = ref("");
 const showPassword = ref(false);
 const errorMessage = ref("");
 const isSubmitting = ref(false);
+const googleClientConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
 async function handleSubmit() {
   errorMessage.value = "";
@@ -139,5 +160,46 @@ async function handleSubmit() {
   } finally {
     isSubmitting.value = false;
   }
+}
+
+async function handleGoogleSuccess(response) {
+  if (isSubmitting.value) return;
+  if (!response.credential) {
+    errorMessage.value = "Google không trả về thông tin xác thực.";
+    return;
+  }
+
+  errorMessage.value = "";
+  isSubmitting.value = true;
+  try {
+    const session = await authService.googleLogin(response.credential);
+    ElMessage.success("Đăng nhập Google thành công.");
+
+    const role = session.role.toLowerCase();
+    const destination = {
+      teacher: "teacher-dashboard",
+      admin: "admin-payroll",
+    }[role];
+
+    if (!destination) {
+      throw new Error("Vai trò tài khoản chưa được hỗ trợ.");
+    }
+
+    await router.replace({ name: destination });
+  } catch (error) {
+    const response = error.response?.data;
+    errorMessage.value =
+      response?.message ||
+      response?.detail ||
+      response?.title ||
+      error.message ||
+      "Đăng nhập Google không thành công. Vui lòng thử lại.";
+  } finally {
+    isSubmitting.value = false;
+  }
+}
+
+function handleGoogleError() {
+  errorMessage.value = "Không thể đăng nhập bằng Google. Vui lòng thử lại.";
 }
 </script>

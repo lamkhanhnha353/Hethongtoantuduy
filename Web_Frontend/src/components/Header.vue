@@ -17,7 +17,7 @@
 
     <!-- ─── Page title ────────────────────────────────────────────────── -->
     <div class="flex-1 min-w-0">
-      <h1 class="text-base md:text-lg font-semibold text-orange-900 truncate">
+      <h1 class="text-base md:text-lg font-semibold text-orange-950 truncate">
         {{ pageTitle }}
       </h1>
     </div>
@@ -106,7 +106,7 @@
               <div class="flex items-center gap-1 mt-0.5">
                 <span
                   class="text-[10px] font-semibold uppercase tracking-wider text-orange-700 bg-orange-100/90 px-1.5 py-0.2 rounded">
-                  Admin
+                  {{ userRoleLabel }}
                 </span>
               </div>
             </div>
@@ -149,7 +149,8 @@
 
             <!-- Menu links -->
             <div class="py-1">
-              <router-link to="/account/profile"
+              <router-link
+                :to="userRole === 'teacher' ? '/teacher/account/profile' : '/account/profile'"
                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-900 transition-colors group"
                 @click="showUserMenu = false">
                 <div
@@ -192,9 +193,9 @@ import authService from '@/services/auth.service'
 import profileService from '@/services/profile.service'
 import {
   Bars3Icon,
-  ClockIcon,
   BellIcon,
   ChevronDownIcon,
+  ClockIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   UserPlusIcon,
@@ -211,10 +212,15 @@ defineEmits(['toggleSidebar', 'toggleMobileSidebar'])
 const route = useRoute()
 const router = useRouter()
 
-// ─── User Profile State (Logic từ nhánh feat/admin-profile) ──────────────────
+// ─── User Profile State ──────────────────────────────────────────────────────
 const userName = ref('Admin')
 const userEmail = ref('')
 const userAvatar = ref('')
+const userRole = ref(authService.getRole()?.toLowerCase() || 'admin')
+
+const userRoleLabel = computed(() => {
+  return userRole.value === 'teacher' ? 'Giáo viên' : 'Admin'
+})
 
 const userInitials = computed(() => {
   return userName.value
@@ -227,21 +233,27 @@ const userInitials = computed(() => {
 
 async function loadUserProfile() {
   try {
+    userRole.value = authService.getRole()?.toLowerCase() || 'admin'
     const profile = await profileService.get()
-    userName.value = profile.fullName || 'Admin'
+    userName.value = profile.fullName || (userRole.value === 'teacher' ? 'Giáo viên' : 'Admin')
     userEmail.value = profile.email || ''
     userAvatar.value = profile.avatar || ''
   } catch (error) {
-    console.error('Không thể tải thông tin Admin trên thanh tiêu đề.', error)
+    console.error('Không thể tải thông tin trên thanh tiêu đề.', error)
   }
 }
 
 watch(() => route.fullPath, loadUserProfile)
 
-// ─── Navigation to Profile (Logic từ nhánh main) ─────────────────────────────
+// ─── Navigation to Profile ───────────────────────────────────────────────────
 function goToProfile() {
   showUserMenu.value = false
-  router.push('/account/profile')
+  const role = authService.getRole()?.toLowerCase()
+  if (role === 'teacher') {
+    router.push('/teacher/account/profile')
+  } else {
+    router.push('/account/profile')
+  }
 }
 
 // ─── Clock ───────────────────────────────────────────────────────────────────
@@ -291,9 +303,21 @@ const routeTitleMap = {
   '/reports/growth': 'Tăng trưởng học viên',
   '/reports/attendance': 'Thống kê chuyên cần',
   '/account/profile': 'Thông tin cá nhân',
+  '/teacher': 'Tổng quan Giáo viên',
+  '/teacher/schedule': 'Thời khóa biểu cá nhân',
+  '/teacher/classes': 'Lớp học đang phụ trách',
+  '/teacher/students': 'Danh sách học sinh',
+  '/teacher/attendance': 'Điểm danh học viên',
+  '/teacher/questions': 'Ngân hàng câu hỏi & Bài tập',
+  '/teacher/assignments': 'Giao bài tập về nhà',
+  '/teacher/grading': 'Chấm điểm & Nhận xét',
+  '/teacher/reports/attendance': 'Thống kê chuyên cần lớp',
+  '/teacher/communication/notices': 'Gửi thông báo & Nhắc nhở',
+  '/teacher/account/profile': 'Thông tin cá nhân',
+  '/teacher/account/password': 'Bảo mật tài khoản',
 }
 const pageTitle = computed(() =>
-  route.meta?.title ?? routeTitleMap[route.path] ?? 'EduAdmin'
+  route.meta?.title ?? routeTitleMap[route.path] ?? 'Toán Tư Duy'
 )
 
 // ─── Notifications ───────────────────────────────────────────────────────────

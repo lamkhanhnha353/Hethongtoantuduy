@@ -252,6 +252,45 @@ namespace ToanTuDuy.Services
             };
         }
 
+        public async Task<IEnumerable<QuestionResponse>> BulkCreateQuestionsAsync(BulkQuestionCreateRequest request)
+        {
+            var bank = await _context.QuestionBanks.FindAsync(request.BankId);
+            if (bank == null)
+            {
+                throw ApiException.NotFound($"Không tìm thấy ngân hàng câu hỏi với ID {request.BankId}.");
+            }
+
+            if (request.Questions == null || !request.Questions.Any())
+            {
+                return Enumerable.Empty<QuestionResponse>();
+            }
+
+            var questionEntities = request.Questions.Select(q => new Question
+            {
+                BankId = request.BankId,
+                Type = string.IsNullOrWhiteSpace(q.Type) ? "MULTIPLE_CHOICE" : q.Type.Trim().ToUpper(),
+                Content = q.Content.Trim(),
+                ImageUrl = string.IsNullOrWhiteSpace(q.ImageUrl) ? null : q.ImageUrl.Trim(),
+                Difficulty = string.IsNullOrWhiteSpace(q.Difficulty) ? "EASY" : q.Difficulty.Trim().ToUpper(),
+                Answer = q.Answer.Trim()
+            }).ToList();
+
+            await _context.Questions.AddRangeAsync(questionEntities);
+            await _context.SaveChangesAsync();
+
+            return questionEntities.Select(question => new QuestionResponse
+            {
+                Id = question.Id,
+                BankId = question.BankId,
+                BankName = bank.Name,
+                Type = question.Type,
+                Content = question.Content,
+                ImageUrl = question.ImageUrl,
+                Difficulty = question.Difficulty,
+                Answer = question.Answer
+            }).ToList();
+        }
+
         public async Task<bool> UpdateQuestionAsync(int id, QuestionRequest request)
         {
             var question = await _context.Questions.FindAsync(id);

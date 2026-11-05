@@ -11,6 +11,14 @@
       <div class="flex items-center gap-2">
         <button
           type="button"
+          @click="openImportModal()"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+        >
+          <SparklesIcon class="w-4 h-4" />
+          Import từ File (AI Worker)
+        </button>
+        <button
+          type="button"
           @click="openBankModal()"
           class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-orange-200 text-orange-900 hover:bg-orange-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         >
@@ -192,6 +200,14 @@
             </div>
 
             <div v-if="selectedBank" class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="openImportModal(selectedBank.id)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+              >
+                <SparklesIcon class="w-3.5 h-3.5 text-orange-600" />
+                Import từ file
+              </button>
               <button
                 type="button"
                 @click="openQuestionModal()"
@@ -892,6 +908,16 @@
         </form>
       </div>
     </div>
+
+    <!-- ─── Modal 3: Import đề thi bằng Import Worker AI ─────────────────────── -->
+    <ImportQuestionsModal
+      v-model="showImportModal"
+      :banks="questionBanks"
+      :selected-bank-id="importTargetBankId || selectedBank?.id || null"
+      :courses="courses"
+      @import-success="handleImportSuccess"
+      @notify="(msg, isErr) => notify(msg, isErr)"
+    />
   </div>
 </template>
 
@@ -909,9 +935,11 @@ import {
   EyeIcon,
   EyeSlashIcon,
   PhotoIcon,
+  SparklesIcon,
 } from '@heroicons/vue/24/outline'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import ImportQuestionsModal from '@/components/question/ImportQuestionsModal.vue'
 import questionBankService from '@/services/questionBank.service'
 import courseService from '@/services/course.service'
 import {
@@ -958,6 +986,25 @@ function notify(text, isError = false) {
       actionMessage.text = ''
     }
   }, 4000)
+}
+
+// ─── Modal State: Import Worker ───────────────────────────────────────────
+const showImportModal = ref(false)
+const importTargetBankId = ref(null)
+
+function openImportModal(bankId = null) {
+  importTargetBankId.value = bankId || selectedBank.value?.id || null
+  showImportModal.value = true
+}
+
+async function handleImportSuccess(bankId, count) {
+  await fetchBanks()
+  if (bankId) {
+    const target = questionBanks.value.find((b) => b.id === bankId)
+    if (target) {
+      await selectBank(target)
+    }
+  }
 }
 
 // ─── Modal State: Bank ─────────────────────────────────────────────────────

@@ -41,6 +41,31 @@ namespace ToanTuDuy.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<AdminInvoiceResponse>> GetAllForAdminAsync()
+        {
+            return await _context.Invoices
+                .AsNoTracking()
+                .OrderByDescending(invoice => invoice.CreatedAt)
+                .Select(invoice => new AdminInvoiceResponse
+                {
+                    InvoiceId = invoice.Id,
+                    TxnRef = invoice.TxnRef,
+                    Amount = invoice.Amount,
+                    Status = invoice.Status,
+                    CreatedAt = invoice.CreatedAt,
+                    PaidAt = invoice.PaidAt,
+                    PaymentMethod = invoice.PaymentMethod,
+                    TransactionId = invoice.TransactionId,
+                    ParentName = invoice.Parent.FullName,
+                    ParentEmail = invoice.Parent.Account.Email,
+                    ParentPhone = invoice.Parent.Account.PhoneNumber,
+                    StudentName = invoice.Student.FullName,
+                    ClassName = invoice.Class.Name,
+                    CourseLevelName = invoice.Class.CourseLevel.Name
+                })
+                .ToListAsync();
+        }
+
         public async Task CancelAsync(int accountId, int invoiceId)
         {
             var invoice = await _context.Invoices

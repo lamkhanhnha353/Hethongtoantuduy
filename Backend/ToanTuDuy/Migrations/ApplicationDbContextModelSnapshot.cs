@@ -1074,6 +1074,70 @@ namespace ToanTuDuy.Migrations
                     b.ToTable("PARENT_PROFILE");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.PayrollSummary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BaseSalary")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("base_salary");
+
+                    b.Property<string>("EmailErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("email_error_message");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("email_sent_at");
+
+                    b.Property<string>("EmailStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("email_status");
+
+                    b.Property<decimal>("FinalSalary")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("final_salary");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("month");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.Property<decimal>("TotalBonus")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_bonus");
+
+                    b.Property<decimal>("TotalPenalty")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_penalty");
+
+                    b.Property<int>("TotalValidSessions")
+                        .HasColumnType("int")
+                        .HasColumnName("total_valid_sessions");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("year");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId", "Month", "Year")
+                        .IsUnique();
+
+                    b.ToTable("PAYROLL_SUMMARY");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.Question", b =>
                 {
                     b.Property<int>("Id")
@@ -1179,6 +1243,46 @@ namespace ToanTuDuy.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("QUESTION_BANK");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.SalaryAdjustment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateOnly>("AppliedDate")
+                        .HasColumnType("date")
+                        .HasColumnName("applied_date");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId", "AppliedDate");
+
+                    b.ToTable("SALARY_ADJUSTMENT");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.StudentAssignment", b =>
@@ -1343,6 +1447,31 @@ namespace ToanTuDuy.Migrations
                         .IsUnique();
 
                     b.ToTable("TEACHER_PROFILE");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.TeacherSalaryConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BaseRatePerSession")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("base_rate_per_session");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId")
+                        .IsUnique();
+
+                    b.ToTable("TEACHER_SALARY_CONFIG");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.UserInbox", b =>
@@ -1657,6 +1786,17 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.PayrollSummary", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.Question", b =>
                 {
                     b.HasOne("ToanTuDuy.Models.QuestionBank", "Bank")
@@ -1696,6 +1836,17 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.SalaryAdjustment", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.StudentAssignment", b =>
@@ -1756,6 +1907,17 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.TeacherSalaryConfig", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.UserInbox", b =>
