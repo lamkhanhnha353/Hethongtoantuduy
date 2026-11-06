@@ -25,6 +25,9 @@ import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
 import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
 import AdminNotificationsView from "@/views/admin/communication/AdminNotificationsView.vue";
+import RevenueReportView from "@/views/admin/reports/RevenueReportView.vue";
+import StudentGrowthReportView from "@/views/admin/reports/StudentGrowthReportView.vue";
+import AttendanceReportView from "@/views/admin/reports/AttendanceReportView.vue";
 
 // Account Module
 import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
@@ -252,17 +255,17 @@ const router = createRouter({
         // Reports
         {
           path: "reports/revenue",
-          component: PlaceholderView,
+          component: RevenueReportView,
           meta: { title: "Báo cáo Doanh thu" },
         },
         {
           path: "reports/growth",
-          component: PlaceholderView,
+          component: StudentGrowthReportView,
           meta: { title: "Tăng trưởng học viên" },
         },
         {
           path: "reports/attendance",
-          component: PlaceholderView,
+          component: AttendanceReportView,
           meta: { title: "Thống kê chuyên cần" },
         },
 
