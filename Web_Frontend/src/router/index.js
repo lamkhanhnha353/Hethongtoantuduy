@@ -26,6 +26,7 @@ import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 // Financial Management
 import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
 import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
+import AdminNotificationsView from "@/views/admin/communication/AdminNotificationsView.vue";
 
 // Account Module
 import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
@@ -253,7 +254,7 @@ const router = createRouter({
         // Communication
         {
           path: "communication/notifications",
-          component: PlaceholderView,
+          component: AdminNotificationsView,
           meta: { title: "Quản lý Thông báo" },
         },
 

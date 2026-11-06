@@ -3,7 +3,7 @@
 -- Ngữ cảnh: Toán tư duy 4-14 tuổi (Soroban, Finger Math, Mathnasium, Kumon, I-MATH, CPA)
 -- Hệ quản trị CSDL: Microsoft SQL Server
 -- sqlcmd -S "(localdb)\mssqllocaldb" -d ToanTuDuyDb -i SeedData.sql -f 65001
--- Cần chạy migration AddPayrollManagement trước khi chạy script này.
+-- Cần chạy đầy đủ các migration hiện có trước khi chạy script này.
 -- =============================================================================
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -26,6 +26,9 @@ BEGIN TRY
     DELETE FROM [dbo].[CLASS_SCHEDULE];
     DELETE FROM [dbo].[StudentBadge];
     DELETE FROM [dbo].[QUESTION];
+
+    DELETE FROM [dbo].[USER_INBOX];
+    DELETE FROM [dbo].[OUTBOX];
     DELETE FROM [dbo].[NOTIFICATION_SETTING];
     DELETE FROM [dbo].[NOTIFICATION];
     DELETE FROM [dbo].[CLASSES];
@@ -363,118 +366,54 @@ INSERT INTO [dbo].[CLASSES] (id, course_level_id, teacher_id, name, max_capacity
 SET IDENTITY_INSERT [dbo].[CLASSES] OFF;
 
 -- =============================================================================
--- 10. BẢNG NOTIFICATION (40 thông báo cho phụ huynh)
+-- 10. BẢNG NOTIFICATION, OUTBOX, USER_INBOX VÀ NOTIFICATION_SETTING
+-- Dữ liệu mẫu theo mô hình hộp thư cá nhân và hàng đợi phát thông báo.
 -- =============================================================================
 SET IDENTITY_INSERT [dbo].[NOTIFICATION] ON;
-INSERT INTO [dbo].[NOTIFICATION] (id, parent_id, title, body, type, ref_id, is_read, created_at) VALUES
-(1, 1, N'Chào mừng đến với Trung tâm Toán Tư Duy', N'Kính chào phụ huynh Trần Quang Huy, bé Khang đã được ghi danh lớp Soroban SRB-01.', 'SYSTEM', 'REF-SYS-01', 1, '2026-08-20 09:00:00'),
-(2, 1, N'Nhắc nhở học phí khóa học', N'Hóa đơn học phí tháng 9 của bé Khang đã được khởi tạo. Xin vui lòng kiểm tra.', 'TUITION', 'REF-INV-01', 1, '2026-08-25 10:00:00'),
-(3, 2, N'Báo cáo tiến độ tuần 1', N'Bé Nguyễn Hoàng Nam đã hoàn thành xuất sắc 100% bài tập tuần đầu tiên.', 'ACADEMIC', 'REF-REP-01', 0, '2026-09-08 17:30:00'),
-(4, 3, N'Điểm danh bé Gia Hưng', N'Bé Lê Gia Hưng đã có mặt tại lớp đúng giờ hôm nay.', 'ATTENDANCE', 'REF-ATT-01', 1, '2026-09-02 17:35:00'),
-(5, 4, N'Chúc mừng bé nhận huy hiệu', N'Bé Phạm Hải Đăng vừa nhận được huy hiệu Thần đồng Suy luận!', 'ACADEMIC', 'REF-BDG-01', 0, '2026-09-10 19:00:00'),
-(6, 5, N'Thông báo lịch nghỉ bù ngày lễ', N'Trung tâm xin thông báo lịch nghỉ Quốc khánh và lịch học bù của bé Quỳnh Anh.', 'SYSTEM', 'REF-SYS-02', 1, '2026-08-30 08:00:00'),
-(7, 6, N'Kết quả kiểm tra giữa kỳ', N'Bé Hoàng Tuấn Kiệt đạt 9.5 điểm trong bài kiểm tra Finger Math nâng cao.', 'ACADEMIC', 'REF-ASM-01', 0, '2026-09-20 18:00:00'),
-(8, 7, N'Nhắc nhở chuẩn bị học cụ Soroban', N'Kính nhờ phụ huynh chuẩn bị bàn tính Soroban tiêu chuẩn 17 cột cho buổi học tới.', 'ACADEMIC', 'REF-ACA-01', 1, '2026-09-01 14:00:00'),
-(9, 8, N'Biên lai thanh toán thành công', N'Học phí lớp Mathnasium của bé Phương Linh đã thanh toán thành công qua VNPay.', 'TUITION', 'REF-INV-02', 1, '2026-08-28 11:15:00'),
-(10, 9, N'Bé đạt chuỗi học tập 14 ngày', N'Bé Ngô Thảo Nguyên duy trì kỷ lục làm bài tập Kumon 14 ngày liên tiếp!', 'ACADEMIC', 'REF-STK-01', 0, '2026-09-18 20:00:00'),
-(11, 10, N'Đơn xin nghỉ học đã được duyệt', N'Đơn xin nghỉ buổi học ngày 15/09 của bé Bảo Trâm đã được giáo viên phê duyệt.', 'ATTENDANCE', 'REF-LRQ-01', 1, '2026-09-14 16:00:00'),
-(12, 11, N'Thông báo họp phụ huynh định kỳ', N'Trân trọng kính mời phụ huynh tham dự buổi đánh giá năng lực tư duy cuối khóa.', 'SYSTEM', 'REF-SYS-03', 0, '2026-09-25 09:00:00'),
-(13, 12, N'Bài tập về nhà mới được giao', N'Giáo viên vừa giao bài tập: Thử thách Bar Model bài toán Tổng - Hiệu.', 'ACADEMIC', 'REF-ASM-02', 1, '2026-09-12 19:30:00'),
-(14, 13, N'Điểm thưởng tư duy tháng 9', N'Bé Trịnh Phúc Lâm được cộng thêm 50 điểm tư duy nhờ tích cực phát biểu.', 'ACADEMIC', 'REF-PTS-01', 0, '2026-09-22 17:45:00'),
-(15, 14, N'Xác nhận đổi ca học thành công', N'Ca học của bé Phan Ngọc Diệp đã được chuyển sang Thứ 7 lúc 08:30.', 'SYSTEM', 'REF-SCH-01', 1, '2026-09-03 10:30:00'),
-(16, 15, N'Nhắc nhở nộp bài tập đúng hạn', N'Bài tập tuần 3 của bé Hữu Phước sẽ hết hạn nộp vào 23:59 tối nay.', 'ACADEMIC', 'REF-ASM-03', 0, '2026-09-19 16:00:00'),
-(17, 16, N'Bé đạt danh hiệu Học sinh Tiêu biểu', N'Chúc mừng bé Võ Khánh An đạt giải Nhất bảng đấu Mathnasium tuần 2!', 'ACADEMIC', 'REF-BDG-02', 0, '2026-09-15 18:30:00'),
-(18, 17, N'Nhắc nhở bảo lưu ca học', N'Thủ tục bảo lưu học tập của bé Lâm Thiên Kim đã hoàn tất ghi nhận.', 'SYSTEM', 'REF-SYS-04', 1, '2026-09-11 14:00:00'),
-(19, 18, N'Phản hồi bài tập từ giáo viên', N'Cô Mai đã chấm và để lại lời nhận xét chi tiết cho bài làm của bé Anh Quân.', 'ACADEMIC', 'REF-FDB-01', 0, '2026-09-16 20:30:00'),
-(20, 19, N'Thông báo kiểm tra định kỳ lần 1', N'Lớp CPA-01 sẽ có bài kiểm tra năng lực mô hình vào Thứ 4 tuần sau.', 'ACADEMIC', 'REF-TST-01', 1, '2026-09-09 08:30:00'),
-(21, 21, N'Thông báo học tập số 21', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 21 cho phụ huynh.', 'TUITION', 'REF-NOTIF-21', 1, '2026-09-16 10:00:00'),
-(22, 22, N'Thông báo học tập số 22', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 22 cho phụ huynh.', 'ATTENDANCE', 'REF-NOTIF-22', 0, '2026-09-17 10:00:00'),
-(23, 23, N'Thông báo học tập số 23', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 23 cho phụ huynh.', 'SYSTEM', 'REF-NOTIF-23', 1, '2026-09-18 10:00:00'),
-(24, 24, N'Thông báo học tập số 24', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 24 cho phụ huynh.', 'ACADEMIC', 'REF-NOTIF-24', 0, '2026-09-19 10:00:00'),
-(25, 25, N'Thông báo học tập số 25', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 25 cho phụ huynh.', 'TUITION', 'REF-NOTIF-25', 1, '2026-09-20 10:00:00'),
-(26, 26, N'Thông báo học tập số 26', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 26 cho phụ huynh.', 'ATTENDANCE', 'REF-NOTIF-26', 0, '2026-09-21 10:00:00'),
-(27, 27, N'Thông báo học tập số 27', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 27 cho phụ huynh.', 'SYSTEM', 'REF-NOTIF-27', 1, '2026-09-22 10:00:00'),
-(28, 28, N'Thông báo học tập số 28', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 28 cho phụ huynh.', 'ACADEMIC', 'REF-NOTIF-28', 0, '2026-09-23 10:00:00'),
-(29, 29, N'Thông báo học tập số 29', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 29 cho phụ huynh.', 'TUITION', 'REF-NOTIF-29', 1, '2026-09-24 10:00:00'),
-(30, 30, N'Thông báo học tập số 30', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 30 cho phụ huynh.', 'ATTENDANCE', 'REF-NOTIF-30', 0, '2026-09-10 10:00:00'),
-(31, 31, N'Thông báo học tập số 31', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 31 cho phụ huynh.', 'SYSTEM', 'REF-NOTIF-31', 1, '2026-09-11 10:00:00'),
-(32, 32, N'Thông báo học tập số 32', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 32 cho phụ huynh.', 'ACADEMIC', 'REF-NOTIF-32', 0, '2026-09-12 10:00:00'),
-(33, 1, N'Thông báo học tập số 33', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 33 cho phụ huynh.', 'TUITION', 'REF-NOTIF-33', 1, '2026-09-13 10:00:00'),
-(34, 2, N'Thông báo học tập số 34', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 34 cho phụ huynh.', 'ATTENDANCE', 'REF-NOTIF-34', 0, '2026-09-14 10:00:00'),
-(35, 3, N'Thông báo học tập số 35', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 35 cho phụ huynh.', 'SYSTEM', 'REF-NOTIF-35', 1, '2026-09-15 10:00:00'),
-(36, 4, N'Thông báo học tập số 36', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 36 cho phụ huynh.', 'ACADEMIC', 'REF-NOTIF-36', 0, '2026-09-16 10:00:00'),
-(37, 5, N'Thông báo học tập số 37', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 37 cho phụ huynh.', 'TUITION', 'REF-NOTIF-37', 1, '2026-09-17 10:00:00'),
-(38, 6, N'Thông báo học tập số 38', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 38 cho phụ huynh.', 'ATTENDANCE', 'REF-NOTIF-38', 0, '2026-09-18 10:00:00'),
-(39, 7, N'Thông báo học tập số 39', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 39 cho phụ huynh.', 'SYSTEM', 'REF-NOTIF-39', 1, '2026-09-19 10:00:00'),
-(40, 8, N'Thông báo học tập số 40', N'Cập nhật tình hình học tập và rèn luyện môn Toán Tư Duy số 40 cho phụ huynh.', 'ACADEMIC', 'REF-NOTIF-40', 0, '2026-09-20 10:00:00');
+INSERT INTO [dbo].[NOTIFICATION] (id, type, title, body, ref_id, created_by_account_id, created_at) VALUES
+(1, 'ANNOUNCEMENT', N'Thông báo lịch nghỉ lễ', N'Trung tâm nghỉ lễ từ ngày 01/11 đến hết ngày 03/11. Lịch học bù sẽ được cập nhật trong ứng dụng.', 'SEED-ANNOUNCEMENT-PARENTS-01', 1, '2026-10-25 09:00:00'),
+(2, 'SYSTEM', N'Cập nhật lịch giảng dạy', N'Giáo viên vui lòng kiểm tra thời khóa biểu tuần mới trên hệ thống trước buổi dạy đầu tiên.', 'SEED-SYSTEM-TEACHERS-01', 1, '2026-10-27 08:30:00'),
+(3, 'ANNOUNCEMENT', N'Thông báo cập nhật hệ thống', N'Hệ thống sẽ được bảo trì từ 22:00 đến 23:00 ngày 05/11. Vui lòng lưu lại các thay đổi trước thời gian này.', 'SEED-ANNOUNCEMENT-ALL-01', 1, '2026-10-29 14:00:00');
 SET IDENTITY_INSERT [dbo].[NOTIFICATION] OFF;
 
--- Thông báo mẫu cho giáo viên và quản trị viên
-SET IDENTITY_INSERT [dbo].[NOTIFICATION] ON;
-INSERT INTO [dbo].[NOTIFICATION] (id, parent_id, teacher_id, admin_id, title, body, type, ref_id, is_read, created_at) VALUES
-(41, NULL, 1, NULL, N'Đơn xin nghỉ mới', N'Phụ huynh Trần Quang Huy gửi đơn xin nghỉ cho bé Khang.', 'LEAVE_REQUEST', 'SAMPLE-LRQ-T1', 0, '2026-09-26 08:00:00'),
-(42, NULL, 1, NULL, N'Lịch dạy tuần tới', N'Lịch dạy tuần tới đã được cập nhật. Vui lòng kiểm tra trước Thứ 2.', 'SYSTEM', 'SAMPLE-SYS-T1', 0, '2026-09-25 09:00:00'),
-(43, NULL, 2, NULL, N'Học sinh mới đăng ký lớp', N'Bé Nguyễn Hoàng Nam vừa đăng ký lớp Finger Math FGM-01.', 'ENROLLMENT', 'SAMPLE-ENR-T2', 1, '2026-09-24 10:00:00'),
-(44, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), N'Phụ huynh mới đăng ký', N'Phụ huynh Đặng Thanh Mai vừa tạo tài khoản.', 'ACCOUNT', 'SAMPLE-ACC-A1', 0, '2026-09-26 07:30:00'),
-(45, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), N'Đăng ký lớp học mới', N'Bé Lê Gia Hưng vừa đăng ký lớp Soroban SRB-01 (hóa đơn #9001).', 'ENROLLMENT', 'SAMPLE-ENR-A1', 0, '2026-09-26 08:15:00'),
-(46, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), N'Thanh toán học phí thành công', N'Hóa đơn #9001 của bé Lê Gia Hưng đã được thanh toán thành công.', 'PAYMENT', 'SAMPLE-PAY-A1', 1, '2026-09-26 09:00:00');
-SET IDENTITY_INSERT [dbo].[NOTIFICATION] OFF;
+INSERT INTO [dbo].[OUTBOX] (notification_id, audience_spec, status, attempts, available_at, created_at, processed_at, last_error) VALUES
+(1, N'{"targets":[{"kind":"ALL_PARENTS"}]}', 2, 0, '2026-10-25 09:00:00', '2026-10-25 09:00:00', '2026-10-25 09:00:02', NULL),
+(2, N'{"targets":[{"kind":"ALL_TEACHERS"}]}', 2, 0, '2026-10-27 08:30:00', '2026-10-27 08:30:00', '2026-10-27 08:30:02', NULL),
+(3, N'{"targets":[{"kind":"ALL_PARENTS"},{"kind":"ALL_TEACHERS"}]}', 2, 0, '2026-10-29 14:00:00', '2026-10-29 14:00:00', '2026-10-29 14:00:02', NULL);
 
--- =============================================================================
--- 11. BẢNG NOTIFICATION_SETTING (40 cài đặt thông báo)
--- =============================================================================
-SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] ON;
-INSERT INTO [dbo].[NOTIFICATION_SETTING] (id, parent_id, type, enabled) VALUES
-(1, 1, 'EMAIL_NOTIFICATION', 1),
-(2, 2, 'PUSH_NOTIFICATION', 1),
-(3, 3, 'SMS_ALERT', 1),
-(4, 4, 'REPORT_WEEKLY', 1),
-(5, 5, 'EMAIL_NOTIFICATION', 0),
-(6, 6, 'PUSH_NOTIFICATION', 1),
-(7, 7, 'SMS_ALERT', 1),
-(8, 8, 'REPORT_WEEKLY', 1),
-(9, 9, 'EMAIL_NOTIFICATION', 1),
-(10, 10, 'PUSH_NOTIFICATION', 0),
-(11, 11, 'SMS_ALERT', 1),
-(12, 12, 'REPORT_WEEKLY', 1),
-(13, 13, 'EMAIL_NOTIFICATION', 1),
-(14, 14, 'PUSH_NOTIFICATION', 1),
-(15, 15, 'SMS_ALERT', 0),
-(16, 16, 'REPORT_WEEKLY', 1),
-(17, 17, 'EMAIL_NOTIFICATION', 1),
-(18, 18, 'PUSH_NOTIFICATION', 1),
-(19, 19, 'SMS_ALERT', 1),
-(20, 20, 'REPORT_WEEKLY', 0),
-(21, 21, 'EMAIL_NOTIFICATION', 1),
-(22, 22, 'PUSH_NOTIFICATION', 1),
-(23, 23, 'SMS_ALERT', 1),
-(24, 24, 'REPORT_WEEKLY', 1),
-(25, 25, 'EMAIL_NOTIFICATION', 0),
-(26, 26, 'PUSH_NOTIFICATION', 1),
-(27, 27, 'SMS_ALERT', 1),
-(28, 28, 'REPORT_WEEKLY', 1),
-(29, 29, 'EMAIL_NOTIFICATION', 1),
-(30, 30, 'PUSH_NOTIFICATION', 0),
-(31, 31, 'SMS_ALERT', 1),
-(32, 32, 'REPORT_WEEKLY', 1),
-(33, 1, 'EMAIL_NOTIFICATION', 1),
-(34, 2, 'PUSH_NOTIFICATION', 1),
-(35, 3, 'SMS_ALERT', 0),
-(36, 4, 'REPORT_WEEKLY', 1),
-(37, 5, 'EMAIL_NOTIFICATION', 1),
-(38, 6, 'PUSH_NOTIFICATION', 1),
-(39, 7, 'SMS_ALERT', 1),
-(40, 8, 'REPORT_WEEKLY', 0);
-SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] OFF;
+INSERT INTO [dbo].[USER_INBOX] (notification_id, account_id, type, ref_id, is_read, created_at, read_at)
+SELECT notification.id, parent.account_id, notification.type, notification.ref_id,
+       CASE WHEN parent.id % 3 = 0 THEN 1 ELSE 0 END,
+       notification.created_at,
+       CASE WHEN parent.id % 3 = 0 THEN DATEADD(MINUTE, 15, notification.created_at) ELSE NULL END
+FROM [dbo].[NOTIFICATION] AS notification
+CROSS JOIN [dbo].[PARENT_PROFILE] AS parent
+INNER JOIN [dbo].[ACCOUNT] AS account ON account.id = parent.account_id AND account.is_active = 1
+WHERE notification.id IN (1, 3);
 
--- Cài đặt thông báo mẫu cho giáo viên và quản trị viên
-SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] ON;
-INSERT INTO [dbo].[NOTIFICATION_SETTING] (id, parent_id, teacher_id, admin_id, type, enabled) VALUES
-(41, NULL, 1, NULL, 'IN_APP_NOTIFICATION', 1),
-(42, NULL, 1, NULL, 'EMAIL_NOTIFICATION', 1),
-(43, NULL, 2, NULL, 'IN_APP_NOTIFICATION', 1),
-(44, NULL, NULL, (SELECT TOP 1 id FROM [dbo].[ADMIN_PROFILE] ORDER BY id), 'IN_APP_NOTIFICATION', 1);
-SET IDENTITY_INSERT [dbo].[NOTIFICATION_SETTING] OFF;
+INSERT INTO [dbo].[USER_INBOX] (notification_id, account_id, type, ref_id, is_read, created_at, read_at)
+SELECT notification.id, teacher.account_id, notification.type, notification.ref_id,
+       CASE WHEN teacher.id % 2 = 0 THEN 1 ELSE 0 END,
+       notification.created_at,
+       CASE WHEN teacher.id % 2 = 0 THEN DATEADD(MINUTE, 20, notification.created_at) ELSE NULL END
+FROM [dbo].[NOTIFICATION] AS notification
+CROSS JOIN [dbo].[TEACHER_PROFILE] AS teacher
+INNER JOIN [dbo].[ACCOUNT] AS account ON account.id = teacher.account_id AND account.is_active = 1
+WHERE notification.id IN (2, 3);
+
+-- Mỗi tài khoản có cấu hình mặc định cho đủ các kênh thông báo của hệ thống.
+INSERT INTO [dbo].[NOTIFICATION_SETTING] (account_id, type, enabled, updated_at)
+SELECT account.id, setting.type, setting.enabled, '2026-10-01 00:00:00'
+FROM [dbo].[ACCOUNT] AS account
+CROSS JOIN (VALUES
+    ('IN_APP_NOTIFICATION', CONVERT(bit, 1)),
+    ('EMAIL_NOTIFICATION', CONVERT(bit, 1)),
+    ('PUSH_NOTIFICATION', CONVERT(bit, 1)),
+    ('SMS_ALERT', CONVERT(bit, 0)),
+    ('REPORT_WEEKLY', CONVERT(bit, 1))
+) AS setting(type, enabled)
+WHERE account.role IN ('Parent', 'Teacher', 'Admin')
+  AND account.is_active = 1;
 
 -- =============================================================================
 -- 12. BẢNG QUESTION (40 câu hỏi Toán Tư Duy thực tế)
