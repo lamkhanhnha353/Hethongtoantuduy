@@ -28,6 +28,24 @@ public sealed class PayrollsController(
         return Ok(payrolls);
     }
 
+    /// <summary>Sets the salary rate paid to a teacher for each eligible session.</summary>
+    [HttpPut("teachers/{teacherId:int}/base-rate")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType<TeacherBaseRateDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TeacherBaseRateDto>> UpdateTeacherBaseRate(
+        int teacherId,
+        [FromBody] UpdateTeacherBaseRateRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var rate = await payrollService.UpdateTeacherBaseRateAsync(
+            teacherId,
+            request,
+            cancellationToken);
+        return Ok(rate);
+    }
+
     /// <summary>Returns one teacher's session and adjustment details for a month.</summary>
     [HttpGet("detail")]
     [Authorize(Roles = "Admin,Teacher")]

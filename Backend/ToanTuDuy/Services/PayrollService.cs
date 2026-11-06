@@ -296,6 +296,46 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
             adjustment.AppliedDate);
     }
 
+    public async Task<TeacherBaseRateDto> UpdateTeacherBaseRateAsync(
+        int teacherId,
+        UpdateTeacherBaseRateRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (teacherId <= 0)
+        {
+            throw ApiException.BadRequest("Mã giáo viên không hợp lệ.");
+        }
+
+        if (request.BaseRatePerSession is < 0 or > 9999999999999999.99m)
+        {
+            throw ApiException.BadRequest("Đơn giá mỗi buổi phải nằm trong khoảng hợp lệ.");
+        }
+
+        var teacherExists = await context.TeacherProfiles
+            .AnyAsync(teacher => teacher.Id == teacherId, cancellationToken);
+        if (!teacherExists)
+        {
+            throw ApiException.NotFound("Không tìm thấy giáo viên.");
+        }
+
+        var config = await context.TeacherSalaryConfigs
+            .SingleOrDefaultAsync(item => item.TeacherId == teacherId, cancellationToken);
+        if (config is null)
+        {
+            config = new TeacherSalaryConfig { TeacherId = teacherId };
+            context.TeacherSalaryConfigs.Add(config);
+        }
+
+        config.BaseRatePerSession = decimal.Round(
+            request.BaseRatePerSession,
+            2,
+            MidpointRounding.AwayFromZero);
+        await context.SaveChangesAsync(cancellationToken);
+
+        return new TeacherBaseRateDto(teacherId, config.BaseRatePerSession);
+    }
+
     public Task<int?> GetTeacherIdForAccountAsync(
         int accountId,
         CancellationToken cancellationToken = default) =>

@@ -10,11 +10,13 @@ const loading = ref(false);
 const batchLoading = ref(false);
 const detailLoading = ref(false);
 const adjustmentLoading = ref(false);
+const baseRateLoading = ref(false);
 const emailLoadingId = ref(null);
 const previewLoading = ref(false);
 
 const detailDialogVisible = ref(false);
 const adjustmentDialogVisible = ref(false);
+const baseRateDialogVisible = ref(false);
 const previewDialogVisible = ref(false);
 const selectedPayroll = ref(null);
 const selectedDetail = ref(null);
@@ -26,6 +28,11 @@ const adjustmentForm = ref({
   amount: null,
   reason: "",
   appliedDate: new Date(),
+});
+
+const baseRateForm = ref({
+  teacherId: null,
+  baseRatePerSession: 0,
 });
 
 const periodQuery = computed(() => ({
@@ -118,6 +125,37 @@ function openAdjustmentForm(payroll) {
     appliedDate: new Date(period.value.getFullYear(), period.value.getMonth(), 1),
   };
   adjustmentDialogVisible.value = true;
+}
+
+function openBaseRateForm(payroll) {
+  selectedPayroll.value = payroll;
+  baseRateForm.value = {
+    teacherId: payroll.teacherId,
+    baseRatePerSession: Number(payroll.baseRatePerSession ?? 0),
+  };
+  baseRateDialogVisible.value = true;
+}
+
+async function submitBaseRate() {
+  const form = baseRateForm.value;
+  if (!form.teacherId || form.baseRatePerSession == null || !Number.isFinite(Number(form.baseRatePerSession)) || form.baseRatePerSession < 0) {
+    ElMessage.warning("Vui lòng nhập đơn giá mỗi buổi hợp lệ.");
+    return;
+  }
+
+  baseRateLoading.value = true;
+  try {
+    await api.put(`/teachers/${form.teacherId}/base-rate`, {
+      baseRatePerSession: Number(form.baseRatePerSession),
+    });
+    baseRateDialogVisible.value = false;
+    ElMessage.success("Đã cập nhật đơn giá lương cho giáo viên.");
+    await loadPayrolls();
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, "Không thể cập nhật đơn giá lương."));
+  } finally {
+    baseRateLoading.value = false;
+  }
 }
 
 function toLocalDateString(date) {
@@ -238,7 +276,7 @@ async function sendBatchEmails() {
       <div>
         <p class="eyebrow">Quản lý tài chính</p>
         <h1>Bảng lương giáo viên</h1>
-        <p class="page-description">Đối soát buổi dạy hợp lệ, các khoản điều chỉnh và trạng thái gửi phiếu lương.</p>
+        <p class="page-description">Lương cơ bản được tính theo đơn giá mỗi buổi hợp lệ đã cấu hình cho từng giáo viên.</p>
       </div>
       <div class="header-actions">
         <el-date-picker
@@ -279,6 +317,9 @@ async function sendBatchEmails() {
         <el-table-column label="Lương cơ bản" min-width="150" align="right">
           <template #default="{ row }">{{ formatCurrency(row.baseSalary) }}</template>
         </el-table-column>
+        <el-table-column label="Đơn giá / buổi" min-width="190" align="right">
+          <template #default="{ row }">{{ formatCurrency(row.baseRatePerSession) }}</template>
+        </el-table-column>
         <el-table-column label="Thưởng / Phạt" min-width="165" align="right">
           <template #default="{ row }">
             <span class="adjustment-values">
@@ -308,6 +349,7 @@ async function sendBatchEmails() {
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
+                    <el-dropdown-item @click="openBaseRateForm(row)">Thay đổi lương cơ bản</el-dropdown-item>
                     <el-dropdown-item @click="openAdjustmentForm(row)">Thêm Phạt/Thưởng</el-dropdown-item>
                     <el-dropdown-item :disabled="!row.payrollId" @click="openEmailPreview(row)">Preview Mail</el-dropdown-item>
                     <el-dropdown-item
@@ -364,6 +406,33 @@ async function sendBatchEmails() {
           </el-table>
         </template>
       </div>
+    </el-dialog>
+
+    <el-dialog
+      v-model="baseRateDialogVisible"
+      :title="`Cấu hình lương — ${selectedPayroll?.teacherName ?? ''}`"
+      width="min(480px, 94vw)"
+      destroy-on-close
+    >
+      <el-form label-position="top" @submit.prevent="submitBaseRate">
+        <el-form-item label="Giáo viên">
+          <el-input :model-value="selectedPayroll?.teacherName" disabled />
+        </el-form-item>
+        <el-form-item label="Đơn giá lương cơ bản mỗi buổi (VND)" required>
+          <el-input-number
+            v-model="baseRateForm.baseRatePerSession"
+            :min="0"
+            :precision="0"
+            :step="50000"
+            class="full-width"
+          />
+        </el-form-item>
+        <p class="form-hint">Đơn giá này được nhân với số buổi dạy hợp lệ trong kỳ lương.</p>
+      </el-form>
+      <template #footer>
+        <el-button @click="baseRateDialogVisible = false">Hủy</el-button>
+        <el-button type="primary" :loading="baseRateLoading" @click="submitBaseRate">Lưu cấu hình</el-button>
+      </template>
     </el-dialog>
 
     <el-dialog v-model="adjustmentDialogVisible" title="Thêm khoản phạt / thưởng" width="min(540px, 94vw)" destroy-on-close>
@@ -430,6 +499,7 @@ h1 { margin: 0; color: #431407; font-size: clamp(24px, 3vw, 32px); font-weight: 
 .detail-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding: 12px 15px; border-radius: 12px; background: #fff7ed; color: #7c2d12; font-size: 13px; }
 .detail-summary strong { font-size: 17px; }
 .adjustments-heading { margin: 22px 0 10px; color: #431407; font-size: 15px; }
+.form-hint { margin: -4px 0 0; color: #78716c; font-size: 12px; }
 .preview-frame { min-height: 60vh; }
 .preview-frame iframe { width: 100%; height: 68vh; border: 1px solid #e5e7eb; border-radius: 10px; background: white; }
 .full-width { width: 100%; }

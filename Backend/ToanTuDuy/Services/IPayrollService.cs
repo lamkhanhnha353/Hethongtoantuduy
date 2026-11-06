@@ -19,6 +19,11 @@ public interface IPayrollService
         CreateAdjustmentRequestDto request,
         CancellationToken cancellationToken = default);
 
+    Task<TeacherBaseRateDto> UpdateTeacherBaseRateAsync(
+        int teacherId,
+        UpdateTeacherBaseRateRequestDto request,
+        CancellationToken cancellationToken = default);
+
     Task<int?> GetTeacherIdForAccountAsync(
         int accountId,
         CancellationToken cancellationToken = default);

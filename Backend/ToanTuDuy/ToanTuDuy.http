@@ -59,6 +59,15 @@ Authorization: Bearer {{adminToken}}
 GET {{ToanTuDuy_HostAddress}}/api/payrolls/detail?teacherId=1&month=11&year=2026
 Authorization: Bearer {{teacherToken}}
 
+### Cấu hình đơn giá lương cơ bản theo buổi (Admin)
+PUT {{ToanTuDuy_HostAddress}}/api/payrolls/teachers/1/base-rate
+Authorization: ******
+Content-Type: application/json
+
+{
+  "baseRatePerSession": 250000
+}
+
 ### Thêm khoản thưởng
 POST {{ToanTuDuy_HostAddress}}/api/payrolls/adjustments
 Authorization: Bearer {{adminToken}}
