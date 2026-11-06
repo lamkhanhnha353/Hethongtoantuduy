@@ -7,10 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.api.health import router as health_router
+from app.api.rag import router as rag_router
 from app.config import settings
 from app.core.security import verify_jwt_token
 from app.db.database import init_db
-
+# Import rag_service từ module services của bạn
+from app.services.rag_service import rag_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,7 +37,7 @@ app.add_middleware(
 )
 
 app.include_router(health_router)
-
+app.include_router(rag_router)
 
 class ChatRequest(BaseModel):
     prompt: str
@@ -55,18 +57,32 @@ def root():
 @app.post("/api/chat")
 def chat_with_ai(request: ChatRequest, user: dict = Depends(verify_jwt_token)):
     try:
+        # Bước 1: Tìm kiếm tài liệu liên quan trong ChromaDB dựa trên câu hỏi
+        relevant_chunks = rag_service.query_rag(request.prompt)
+        
+        # Bước 2: Gom các đoạn tài liệu lại làm ngữ cảnh (Context)
+        context_text = "\n\n".join(relevant_chunks)
+        
+        # Bước 3: Xây dựng System Prompt kết hợp tài liệu
+        system_prompt = f"""Bạn là một trợ lý AI thông minh. Hãy trả lời câu hỏi của người dùng dựa CHÍNH XÁC vào các tài liệu được cung cấp dưới đây. Nếu thông tin không có trong tài liệu, hãy nói rằng bạn không biết, tuyệt đối không được tự bịa ra.
+
+Tài liệu tham khảo:
+{context_text}
+"""
+
+        # Bước 4: Gửi cho LLM (qwen2.5) kèm ngữ cảnh
         response = ollama.chat(
             model=settings.CHAT_MODEL,
             messages=[
-                {
-                    "role": "user",
-                    "content": request.prompt,
-                },
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': request.prompt},
             ],
         )
+        
         return {
             "success": True,
             "answer": response["message"]["content"],
+            "source_chunks_used": len(relevant_chunks) # Trả về số lượng đoạn tài liệu đã dùng tham khảo
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

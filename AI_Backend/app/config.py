@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +36,30 @@ class Settings(BaseSettings):
     TOP_K: int = 4
     CHUNK_SIZE: int = 900
     CHUNK_OVERLAP: int = 150
+
+    @field_validator("CHROMA_PERSIST_DIRECTORY", "DOCUMENTS_DIR", mode="after")
+    @classmethod
+    def resolve_storage_path(cls, value: str) -> str:
+        path = Path(value)
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        return str(path)
+
+    @field_validator("SQLITE_URL", mode="after")
+    @classmethod
+    def resolve_sqlite_url(cls, value: str) -> str:
+        prefix = "sqlite:///"
+        if not value.startswith(prefix):
+            return value
+
+        db_path = value[len(prefix):]
+        if db_path == ":memory:":
+            return value
+
+        path = Path(db_path)
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        return prefix + path.as_posix()
 
     @property
     def cors_origin_list(self) -> list[str]:
