@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 900
     CHUNK_OVERLAP: int = 150
 
+    CHAT_MAX_PROMPT_CHARS: int = 2000
+    CHAT_MAX_HISTORY_MESSAGES: int = 20
+    CHAT_MAX_HISTORY_MESSAGE_CHARS: int = 4000
+    CHAT_MAX_HISTORY_CHARS: int = 12000
+    CHAT_KEEP_ALIVE: str = "30m"
+    CHAT_NUM_PREDICT: int = 512
+    CHAT_TEMPERATURE: float = 0.3
+
     @field_validator("CHROMA_PERSIST_DIRECTORY", "DOCUMENTS_DIR", mode="after")
     @classmethod
     def resolve_storage_path(cls, value: str) -> str:

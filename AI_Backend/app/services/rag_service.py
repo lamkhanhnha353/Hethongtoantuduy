@@ -106,7 +106,7 @@ class RAGService:
             "deleted_stale_chunks": len(stale_ids),
         }
 
-    def query_rag(self, user_query: str, n_results: int | None = None) -> list[str]:
+    def query_rag_with_sources(self,user_query: str,n_results: int | None = None, ) -> list[dict]:
         user_query = user_query.strip()
         if not user_query:
             return []
@@ -122,12 +122,50 @@ class RAGService:
         results = self.collection.query(
             query_embeddings=[query_vector],
             n_results=n_results,
+            include=["documents", "metadatas", "distances"],
         )
 
         documents = results.get("documents") or []
         if not documents or not documents[0]:
             return []
-        return documents[0]
+
+        metadatas = results.get("metadatas") or []
+        distances = results.get("distances") or []
+        first_metadatas = metadatas[0] if metadatas and metadatas[0] else []
+        first_distances = distances[0] if distances and distances[0] else []
+
+        sources: list[dict] = []
+        for index, document in enumerate(documents[0]):
+            metadata = (
+                first_metadatas[index]
+                if index < len(first_metadatas) and first_metadatas[index]
+                else {}
+            )
+            distance = (
+                first_distances[index] if index < len(first_distances) else None
+            )
+            try:
+                chunk_index = int(metadata.get("chunk_index", 0))
+            except (TypeError, ValueError):
+                chunk_index = 0
+
+            sources.append(
+                {
+                    "text": document,
+                    "doc_id": str(metadata.get("doc_id", "")),
+                    "title": str(metadata.get("title", "")),
+                    "chunk_index": chunk_index,
+                    "distance": float(distance) if distance is not None else None,
+                }
+            )
+
+        return sources
+
+    def query_rag(self, user_query: str, n_results: int | None = None) -> list[str]:
+        return [
+            source["text"]
+            for source in self.query_rag_with_sources(user_query, n_results)
+        ]
 
 
 rag_service = RAGService()
