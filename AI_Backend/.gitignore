@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 .env
 venv/
+storage/
 chroma_data/
 app.db
-__init__.py
+.pytest_cache/
+*.log
