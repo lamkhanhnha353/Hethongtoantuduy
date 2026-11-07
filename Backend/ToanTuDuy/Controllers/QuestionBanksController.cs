@@ -165,6 +165,27 @@ namespace ToanTuDuy.Controllers
             return Ok(new { message = "Xóa câu hỏi thành công." });
         }
 
+        /// <summary>
+        /// Xóa hàng loạt câu hỏi khỏi ngân hàng.
+        /// </summary>
+        [HttpPost("questions/bulk-delete")]
+        [Authorize(Roles = "Teacher,Admin")]
+        public async Task<IActionResult> BulkDeleteQuestions([FromBody] BulkQuestionDeleteRequest request)
+        {
+            if (request?.Ids == null || request.Ids.Count == 0)
+            {
+                return BadRequest(new { message = "Vui lòng chọn ít nhất một câu hỏi để xóa." });
+            }
+
+            var result = await _bankService.DeleteQuestionsAsync(request.Ids);
+            if (result.DeletedCount == 0)
+            {
+                return NotFound(new { message = result.Message });
+            }
+
+            return Ok(result);
+        }
+
         #endregion
     }
 }

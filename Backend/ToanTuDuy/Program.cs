@@ -198,6 +198,7 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 builder.Services.AddSingleton<IChatAttachmentStorage, CloudinaryChatAttachmentStorage>();
+builder.Services.AddSingleton<ICourseMediaStorage, CloudinaryCourseMediaStorage>();
 
 
 var app = builder.Build();
