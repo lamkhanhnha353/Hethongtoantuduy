@@ -141,12 +141,16 @@ namespace ToanTuDuy.Services
 
             if (bank == null) return false;
 
-            // Kiểm tra xem có câu hỏi nào trong ngân hàng đang được dùng ở đề thi không
             var questionIds = bank.Questions.Select(q => q.Id).ToList();
-            var isUsedInExam = await _context.QuestionAssignments.AnyAsync(qa => questionIds.Contains(qa.QuestionId));
-            if (isUsedInExam)
+
+            // Gỡ các câu hỏi khỏi bài kiểm tra trước khi xóa để không vi phạm khóa ngoại
+            // (QUESTION_ASSIGNMENT đang dùng DeleteBehavior.Restrict).
+            var assignments = await _context.QuestionAssignments
+                .Where(qa => questionIds.Contains(qa.QuestionId))
+                .ToListAsync();
+            if (assignments.Count > 0)
             {
-                throw ApiException.BadRequest("Không thể xóa ngân hàng câu hỏi này vì có câu hỏi đang được sử dụng trong bài kiểm tra.");
+                _context.QuestionAssignments.RemoveRange(assignments);
             }
 
             _context.Questions.RemoveRange(bank.Questions);
@@ -318,15 +322,74 @@ namespace ToanTuDuy.Services
             var question = await _context.Questions.FindAsync(id);
             if (question == null) return false;
 
-            var isUsedInExam = await _context.QuestionAssignments.AnyAsync(qa => qa.QuestionId == id);
-            if (isUsedInExam)
+            // Gỡ câu hỏi khỏi bài kiểm tra trước khi xóa để không vi phạm khóa ngoại.
+            var assignments = await _context.QuestionAssignments
+                .Where(qa => qa.QuestionId == id)
+                .ToListAsync();
+            if (assignments.Count > 0)
             {
-                throw ApiException.BadRequest("Không thể xóa câu hỏi vì đang được sử dụng trong bài kiểm tra.");
+                _context.QuestionAssignments.RemoveRange(assignments);
             }
 
             _context.Questions.Remove(question);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<BulkQuestionDeleteResponse> DeleteQuestionsAsync(IEnumerable<int> ids)
+        {
+            var distinctIds = (ids ?? Enumerable.Empty<int>())
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (distinctIds.Count == 0)
+            {
+                return new BulkQuestionDeleteResponse
+                {
+                    DeletedCount = 0,
+                    RemovedAssignmentCount = 0,
+                    Message = "Vui lòng chọn ít nhất một câu hỏi để xóa."
+                };
+            }
+
+            var questions = await _context.Questions
+                .Where(q => distinctIds.Contains(q.Id))
+                .ToListAsync();
+
+            if (questions.Count == 0)
+            {
+                return new BulkQuestionDeleteResponse
+                {
+                    DeletedCount = 0,
+                    RemovedAssignmentCount = 0,
+                    Message = "Không tìm thấy câu hỏi nào để xóa."
+                };
+            }
+
+            var existingIds = questions.Select(q => q.Id).ToList();
+            var assignments = await _context.QuestionAssignments
+                .Where(qa => existingIds.Contains(qa.QuestionId))
+                .ToListAsync();
+
+            if (assignments.Count > 0)
+            {
+                _context.QuestionAssignments.RemoveRange(assignments);
+            }
+
+            _context.Questions.RemoveRange(questions);
+            await _context.SaveChangesAsync();
+
+            var message = assignments.Count > 0
+                ? $"Đã xóa {questions.Count} câu hỏi và gỡ {assignments.Count} liên kết khỏi bài kiểm tra."
+                : $"Đã xóa {questions.Count} câu hỏi.";
+
+            return new BulkQuestionDeleteResponse
+            {
+                DeletedCount = questions.Count,
+                RemovedAssignmentCount = assignments.Count,
+                Message = message
+            };
         }
 
         #endregion
