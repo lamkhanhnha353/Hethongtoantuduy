@@ -1,7 +1,11 @@
+import logging
+
 import chromadb
 import ollama
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class RAGService:
@@ -49,12 +53,25 @@ class RAGService:
 
         return chunks
 
-    def _embed(self, text: str) -> list[float]:
+    @staticmethod
+    def _with_embedding_prefix(text: str, prefix: str) -> str:
+        text = text.strip()
+        prefix = prefix.strip()
+        return f"{prefix} {text}" if prefix else text
+
+    def _embed(self, text: str, prefix: str = "") -> list[float]:
+        prompt = self._with_embedding_prefix(text, prefix)
         response = self.ollama_client.embeddings(
             model=settings.EMBEDDING_MODEL,
-            prompt=text,
+            prompt=prompt,
         )
         return response["embedding"]
+
+    def _embed_document(self, text: str) -> list[float]:
+        return self._embed(text, settings.EMBEDDING_DOCUMENT_PREFIX)
+
+    def _embed_query(self, text: str) -> list[float]:
+        return self._embed(text, settings.EMBEDDING_QUERY_PREFIX)
 
     def ingest_text_document(self, doc_id: str, title: str, content: str) -> dict:
         doc_id = doc_id.strip()
@@ -75,7 +92,7 @@ class RAGService:
         ids: list[str] = []
 
         for idx, chunk in enumerate(chunks):
-            vector = self._embed(chunk)
+            vector = self._embed_document(chunk)
             chunk_id = f"{doc_id}_chunk_{idx}"
             documents.append(chunk)
             embeddings.append(vector)
@@ -106,7 +123,49 @@ class RAGService:
             "deleted_stale_chunks": len(stale_ids),
         }
 
-    def query_rag_with_sources(self,user_query: str,n_results: int | None = None, ) -> list[dict]:
+    def reindex_embeddings(self) -> dict:
+        data = self.collection.get(include=["documents"])
+        ids = data.get("ids") or []
+        documents = data.get("documents") or []
+
+        if len(ids) != len(documents):
+            raise ValueError("Số lượng id và document trong collection không khớp")
+        if not ids:
+            return {
+                "status": "success",
+                "collection": self.collection_name,
+                "reindexed_chunks": 0,
+                "embedding_model": settings.EMBEDDING_MODEL,
+                "document_prefix": settings.EMBEDDING_DOCUMENT_PREFIX,
+            }
+
+        embeddings: list[list[float]] = []
+        for chunk_id, document in zip(ids, documents):
+            if not document or not document.strip():
+                raise ValueError(f"Chunk {chunk_id} không có nội dung để reindex")
+            embeddings.append(self._embed_document(document))
+
+        self.collection.update(ids=ids, embeddings=embeddings)
+        logger.info(
+            "Đã reindex %s chunk bằng model %s với prefix %r",
+            len(ids),
+            settings.EMBEDDING_MODEL,
+            settings.EMBEDDING_DOCUMENT_PREFIX,
+        )
+
+        return {
+            "status": "success",
+            "collection": self.collection_name,
+            "reindexed_chunks": len(ids),
+            "embedding_model": settings.EMBEDDING_MODEL,
+            "document_prefix": settings.EMBEDDING_DOCUMENT_PREFIX,
+        }
+
+    def query_rag_with_sources(
+        self,
+        user_query: str,
+        n_results: int | None = None,
+    ) -> list[dict]:
         user_query = user_query.strip()
         if not user_query:
             return []
@@ -118,7 +177,7 @@ class RAGService:
         n_results = n_results or settings.TOP_K
         n_results = min(max(1, n_results), total)
 
-        query_vector = self._embed(user_query)
+        query_vector = self._embed_query(user_query)
         results = self.collection.query(
             query_embeddings=[query_vector],
             n_results=n_results,

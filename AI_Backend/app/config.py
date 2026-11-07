@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     CHAT_MODEL: str = "qwen2.5:3b-instruct"
     EMBEDDING_MODEL: str = "nomic-embed-text"
+    EMBEDDING_QUERY_PREFIX: str = "search_query:"
+    EMBEDDING_DOCUMENT_PREFIX: str = "search_document:"
 
     CHROMA_PERSIST_DIRECTORY: str = str(STORAGE_DIR / "chroma")
     SQLITE_URL: str = f"sqlite:///{(STORAGE_DIR / 'app.db').as_posix()}"
@@ -44,6 +46,35 @@ class Settings(BaseSettings):
     CHAT_KEEP_ALIVE: str = "30m"
     CHAT_NUM_PREDICT: int = 512
     CHAT_TEMPERATURE: float = 0.3
+
+    CONTEXT_TOKEN_BUDGET: int = 6000
+    RECENT_TURNS_TO_KEEP: int = 10
+    MIN_RECENT_TURNS: int = 2
+    TOKEN_ESTIMATE_CHARS_PER_TOKEN: float = 3.0
+    MESSAGE_TOKEN_OVERHEAD: int = 4
+    SUMMARY_MODEL: str = "qwen2.5:3b-instruct"
+    SUMMARY_MAX_TOKENS: int = 400
+
+    @field_validator(
+        "CONTEXT_TOKEN_BUDGET",
+        "RECENT_TURNS_TO_KEEP",
+        "MIN_RECENT_TURNS",
+        "MESSAGE_TOKEN_OVERHEAD",
+        "SUMMARY_MAX_TOKENS",
+        mode="after",
+    )
+    @classmethod
+    def validate_positive_int(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("Giá trị cấu hình phải lớn hơn 0")
+        return value
+
+    @field_validator("TOKEN_ESTIMATE_CHARS_PER_TOKEN", mode="after")
+    @classmethod
+    def validate_chars_per_token(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("TOKEN_ESTIMATE_CHARS_PER_TOKEN phải lớn hơn 0")
+        return value
 
     @field_validator("CHROMA_PERSIST_DIRECTORY", "DOCUMENTS_DIR", mode="after")
     @classmethod
