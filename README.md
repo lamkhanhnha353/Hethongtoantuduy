@@ -86,26 +86,17 @@ dotnet ef database update
 dotnet run
 ```
 
-API lắng nghe ở `http://localhost:5114` và `https://localhost:7206` theo `Properties/launchSettings.json`.
+Theo `launchSettings.json`, HTTP chạy tại `http://localhost:5114`, HTTPS tại `https://localhost:7206`. OpenAPI trong môi trường Development: `http://localhost:5114/openapi/v1.json`.
 
-Chuỗi kết nối được đọc từ khóa `ConnectionStrings:DefaultConnection`. Giá trị trong `appsettings.json` đang trỏ tới SQL Server LocalDB; trên máy phát triển nên ghi đè bằng biến môi trường:
-
-```powershell
-[Environment]::SetEnvironmentVariable(
-  'ConnectionStrings__DefaultConnection',
-  'Server=.;Database=ToanTuDuyDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true',
-  'User')
-```
-
-Mở terminal mới sau khi đặt biến để ứng dụng nhận giá trị.
-
-Kết nối trực tiếp bằng `sqlcmd`:
+### 3. Web Frontend
 
 ```powershell
 sqlcmd -S . -E -C -d ToanTuDuyDb
 ```
 
-Khi có thay đổi model, tạo migration mới với tên mô tả thay đổi:
+Vite chạy tại `http://localhost:5173`. Mặc định `/api` được proxy tới `http://localhost:5114`; `/api/parser` được proxy tới `http://localhost:8000`. Có thể thay địa chỉ backend bằng biến `VITE_API_BASE_URL`.
+
+### 4. Import Worker
 
 ```powershell
 dotnet ef migrations add TenMigrationMoi
@@ -118,86 +109,81 @@ Cài công cụ EF Core lần đầu: `dotnet tool install --global dotnet-ef --
 
 ## Mobile App
 
-`Mobile_App/` là ứng dụng Expo với NativeWind. Điều hướng theo cấu trúc thư mục: mọi file trong `src/app/` là một màn hình, các file `_layout.tsx` định nghĩa navigator.
-
-| Đường dẫn | Nội dung |
-| --- | --- |
-| `src/app/_layout.tsx` | Root navigator, dùng `Stack`, ẩn header |
-| `src/app/index.tsx` | Màn hình khởi đầu, hiện là nội dung mẫu |
-| `src/global.css` | Điểm vào cho các chỉ thị Tailwind |
-| `app.json` | Cấu hình ứng dụng, icon, splash, plugin |
-| `eas.json` | Profile build: development, preview, production |
-| `tailwind.config.js` | Dùng preset `nativewind/preset` |
-| `AGENTS.md` | Quy ước phát triển cho phần mobile |
-
-Lệnh thường dùng:
-
-```bash
-npx expo start          # chạy dev server
-npx expo start --android
-npx expo start --ios
-npx expo start --web
-npx expo lint
-npx tsc --noEmit        # kiểm tra kiểu
+```powershell
+cd Mobile_App
+npm install
+npx expo start
 ```
 
-Cấu hình đáng chú ý trong `app.json`: bundle Android là `com.beckham205.Mobile_App`, scheme là `mobileapp`, bật `typedRoutes` và `reactCompiler`. Profile `development` trong `eas.json` tạo development client phân phối nội bộ; `production` tự tăng số build.
+Dùng `npx expo start --android`, `npx expo start --ios` hoặc `npm run web` để chọn nền tảng. Dự án dùng Expo Continuous Native Generation; không tạo thủ công thư mục `ios/` hoặc `android/`.
 
-Không có thư mục `ios/` và `android/` vì dự án dùng Continuous Native Generation. Không tạo hoặc sửa hai thư mục này bằng tay; hãy khai báo trong `app.json` và dùng config plugin.
+## Nghiệp vụ chính
 
----
+- **Quản trị:** quản lý tài khoản, phụ huynh/học sinh, giáo viên, khóa học, lớp học, lịch học, hóa đơn, bảng lương và thông báo.
+- **Giáo viên:** quản lý lớp, học sinh, điểm danh, bài tập, chấm điểm, lịch dạy và thông báo phụ huynh.
+- **Học tập:** ngân hàng câu hỏi, bài tập và tiến độ học sinh.
+- **Thông báo:** quản lý thông báo tập trung, hộp thư theo từng tài khoản, đánh dấu đã đọc, tùy chọn kênh và cập nhật realtime.
+- **Nhập đề:** nhận PDF/DOCX, trích xuất nội dung và chuẩn hóa câu hỏi qua import worker.
 
-## Web Frontend
+### Luồng thông báo
 
-`Web_Frontend/` là ứng dụng Vue 3 dùng Vite, viết bằng JavaScript. Cấu hình khai báo alias `@` trỏ về `src/` trong cả `vite.config.js` và `jsconfig.json`.
+Thông báo được lưu trong `NOTIFICATION`; đối tượng nhận được đưa vào `OUTBOX`. `NotificationFanoutWorker` phân giải đối tượng nhận, tạo từng bản ghi hộp thư trong `USER_INBOX`, cập nhật bộ đếm chưa đọc và phát sự kiện SignalR. Cấu hình kênh theo tài khoản được lưu trong `NOTIFICATION_SETTING`.
 
-| Đường dẫn | Nội dung |
-| --- | --- |
-| `src/main.js` | Khởi tạo ứng dụng Vue, đăng ký router |
-| `src/App.vue` | Component gốc |
-| `src/router/index.js` | Cấu hình vue-router, chế độ HTML5 |
+Trang admin dùng `GET /api/admin/notifications` để lọc và phân trang lịch sử, `POST /api/admin/notifications` để tạo thông báo. Hiện có thể gửi tới phụ huynh, giáo viên hoặc cả hai; thông báo được đưa vào hàng đợi để worker xử lý.
 
-Lệnh thường dùng:
+## Cơ sở dữ liệu và migration
 
-```bash
-npm run dev
+Database mặc định là `ToanTuDuyDb` trên SQL Server. Schema được quản lý bằng EF Core migrations trong `Backend/ToanTuDuy/Migrations/`. Các nhóm dữ liệu nghiệp vụ gồm:
+
+- Tài khoản và hồ sơ: `ACCOUNT`, `ADMIN_PROFILE`, `PARENT_PROFILE`, `STUDENT_PROFILE`, `TEACHER_PROFILE`
+- Đào tạo: khóa học, cấp độ, lớp, lịch học, buổi học, học viên lớp, điểm danh
+- Học tập: ngân hàng câu hỏi, câu hỏi, bài tập, bài làm, huy hiệu
+- Vận hành: đơn xin nghỉ, hóa đơn, thanh toán, bảng lương và điều chỉnh lương
+- Thông báo: `NOTIFICATION`, `OUTBOX`, `USER_INBOX`, `NOTIFICATION_SETTING`
+- ASP.NET Core Identity và lịch sử migration EF Core
+
+Tạo migration và cập nhật database:
+
+```powershell
+cd Backend\ToanTuDuy
+dotnet ef migrations add TenMigrationMoi
+dotnet ef database update
+```
+
+## API tiêu biểu
+
+API được bảo vệ bằng JWT và phân quyền theo vai trò tùy endpoint. Xem OpenAPI khi chạy backend ở Development để tra cứu đầy đủ request/response.
+
+| Nhóm | Endpoint tiêu biểu | Mô tả |
+| --- | --- | --- |
+| Xác thực | `/api/auth/register`, `/api/auth/login`, `/api/auth/google-login` | Đăng ký và đăng nhập |
+| Hồ sơ | `/api/profile` | Hồ sơ tài khoản |
+| Khóa học/lớp | `/api/courses`, `/api/classes`, `/api/classSchedules` | Quản lý khóa học, lớp và lịch |
+| Học tập | `/api/question-banks`, `/api/assignments`, `/api/lessons` | Câu hỏi, bài tập và buổi học |
+| Điểm danh | `/api/attendance` | Điểm danh theo buổi hoặc học sinh |
+| Hóa đơn | `/api/invoice/history`, `/api/admin/invoices` | Lịch sử và tra cứu hóa đơn |
+| Thông báo cá nhân | `/api/notifications`, `/api/notifications/settings` | Hộp thư, trạng thái đọc và cài đặt |
+| Thông báo admin | `/api/admin/notifications` | Lịch sử và tạo thông báo |
+| Chat | `/api/chat/conversations`, `/api/chat/send`, `/api/chat/send-attachment` | Hội thoại và gửi tin nhắn/tệp đính kèm |
+| Realtime | `/hubs/notifications`, `/chathub` | SignalR cho thông báo và chat |
+
+## Kiểm tra
+
+```powershell
+# Build backend
+dotnet build Backend\ToanTuDuy\ToanTuDuy.csproj
+
+# Build web
+cd Web_Frontend
 npm run build
-npm run preview
+
+# Kiểm tra kiểu/lint ứng dụng di động
+cd ..\Mobile_App
+npm run lint
 ```
 
-Trong môi trường phát triển, Vite chuyển tiếp các request `/api` tới Backend tại `http://localhost:5114`. Hãy chạy Backend trước khi gọi API từ frontend.
+Import worker có kiểm thử trong `import-worker/tests/`; cách chạy cụ thể được mô tả trong [import-worker/README.md](./import-worker/README.md).
 
----
+## Git
 
-## Trạng thái hiện tại
-
-| Phần | Trạng thái |
-| --- | --- |
-| Backend | Đã có API xác thực hoạt động, đủ model và migration cho toàn bộ nghiệp vụ |
-| Backend | Endpoint mới chưa phát triển: khóa học, lớp, buổi học, bài tập, hóa đơn, huy hiệu |
-| Backend | Đăng ký JWT Bearer chưa được cấu hình trong `Program.cs`; token được sinh thủ công trong `AuthService` |
-| Backend | 57 cảnh báo CS8618 về thuộc tính non-nullable chưa được xử lý |
-| Mobile | Màn hình mẫu; `index.tsx` gọi `router.push('/login')` nhưng route `/login` chưa tồn tại |
-| Mobile | Phần lớn gói Expo đã cài nhưng chưa dùng: reanimated, gesture-handler, safe-area-context, expo-image, expo-glass-effect, @expo/ui |
-| Mobile | Script `lint` khai báo nhưng chưa có tệp cấu hình ESLint |
-| Web | Khung dựng, chưa có route, chưa có tích hợp API |
-
-### Việc cần xử lý trước khi triển khai
-
-- Khóa JWT hiện nằm trực tiếp trong `appsettings.json` và có giá trị dự phòng trong `AuthService.GenerateJwtToken`. Cần chuyển sang biến môi trường và thêm kiểm tra độ dài khóa tối thiểu 32 byte.
-- `appsettings.json` chứa thông tin nhạy cảm nên không nên commit cho môi trường thật; nên tách cấu hình theo môi trường.
-- Chưa có kiểm thử tự động, chưa có tệp solution `.sln` cho phần Backend, chưa có CI.
-
----
-
-## Quy trình Git
-
-Mỗi phần làm việc trên một nhánh riêng theo dạng `<module>/feat/<mo-ta>`:
-
-| Phần | Nhánh ví dụ |
-| --- | --- |
-| Backend | `backend/feat/local-sqlserver-db` |
-| Mobile | `mobile/feat/add-nativewind` |
-
-Trước khi merge, cần commit hoặc `git stash -u` các thay đổi chưa commit vì Git thường từ chối merge trên cây làm việc bẩn.
-
+Có thể đặt nhánh theo dạng `<module>/feat/<mo-ta>`, ví dụ `backend/feat/course-endpoints`, `mobile/feat/login-screen` hoặc `web/feat/admin-notifications`. Trước khi merge, kiểm tra trạng thái worktree và lưu các thay đổi cần thiết.
