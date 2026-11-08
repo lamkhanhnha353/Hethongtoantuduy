@@ -41,6 +41,33 @@ class AIConversation(Base):
     )
 
 
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    doc_id = Column(String(200), nullable=False, unique=True, index=True)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), nullable=True, index=True)
+    source_type = Column(String(20), nullable=False, default="text")
+    source_url = Column(String(1000), nullable=True)
+    file_path = Column(String(1000), nullable=True)
+    raw_content = Column(Text, nullable=True)
+    content_hash = Column(String(64), nullable=True, index=True)
+    status = Column(String(20), nullable=False, default="pending", index=True)
+    chunk_count = Column(Integer, nullable=False, default=0)
+    embedding_model = Column(String(100), nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_by = Column(String(100), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+    )
+
+
 class AIMessage(Base):
     __tablename__ = "ai_messages"
 

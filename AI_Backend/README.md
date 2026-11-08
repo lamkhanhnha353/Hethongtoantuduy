@@ -1,6 +1,6 @@
 # AI_Backend — RAG Chatbot Service
 
-FastAPI service độc lập cho chatbot RAG của Hệ thống Toán Tư Duy. Giai đoạn M1 gồm khung service, xác thực JWT dùng chung với Backend .NET, SQLite và health check. Giai đoạn M2 bổ sung ingest văn bản vào ChromaDB và truy vấn RAG. Giai đoạn M3 bổ sung chat streaming SSE, history do client gửi lên và nguồn trích dẫn. Giai đoạn M4 bổ sung lưu hội thoại AI, quản lý context theo token và tóm tắt lịch sử. Giai đoạn M5 bổ sung prefix embedding Nomic, script reindex và đánh giá chất lượng retrieval.
+FastAPI service độc lập cho chatbot RAG của Hệ thống Toán Tư Duy. Giai đoạn M1 gồm khung service, xác thực JWT dùng chung với Backend .NET, SQLite và health check. Giai đoạn M2 bổ sung ingest văn bản vào ChromaDB và truy vấn RAG. Giai đoạn M3 bổ sung chat streaming SSE, history do client gửi lên và nguồn trích dẫn. Giai đoạn M4 bổ sung lưu hội thoại AI, quản lý context theo token và tóm tắt lịch sử. Giai đoạn M5 bổ sung prefix embedding Nomic, script reindex và đánh giá chất lượng retrieval. Giai đoạn M6 bổ sung registry tài liệu trong SQLite, upload `.txt/.md/.docx/.pdf` và API quản lý tri thức cho Admin.
 
 ## Yêu cầu
 
@@ -29,6 +29,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 - Swagger: http://localhost:8001/docs
 - Health (cần Bearer token .NET): http://localhost:8001/api/ai/health
 - Ingest (chỉ Admin): `POST http://localhost:8001/api/ai/ingest`
+- Quản lý tài liệu tri thức (chỉ Admin): `GET/POST /api/ai/documents`, `GET/PATCH/DELETE /api/ai/documents/{doc_id}`, `POST /api/ai/documents/upload`, `POST /api/ai/documents/{doc_id}/reingest`, `GET /api/ai/documents/{doc_id}/chunks`, `GET /api/ai/documents/stats`, `POST /api/ai/documents/backfill`
 - Chat RAG: `POST http://localhost:8001/api/chat`
 - Chat RAG streaming (mọi role đã đăng nhập): `POST http://localhost:8001/api/ai/chat/stream`
 - Quản lý hội thoại AI: `GET/POST /api/ai/conversations`, `GET/PATCH/DELETE /api/ai/conversations/{id}`, `GET /api/ai/conversations/{id}/messages`
@@ -51,6 +52,45 @@ Invoke-RestMethod `
 ```
 
 Ingest lại cùng `doc_id` sẽ cập nhật các chunk mới và tự xóa các chunk cũ không còn dùng. Nội dung rỗng trả `400`; tài khoản không phải Admin trả `403`.
+
+## Quản lý tài liệu tri thức (M6)
+
+`ChromaDB` chỉ lưu chunk và vector; metadata tài liệu được lưu trong bảng SQLite `knowledge_documents` (trạng thái, số chunk, nguồn file, lỗi ingest). Tất cả endpoint dưới đây cần Bearer token .NET của tài khoản **Admin**.
+
+```text
+GET    /api/ai/documents?page=1&page_size=20&search=&status=&category=
+POST   /api/ai/documents                 # ingest văn bản trực tiếp
+POST   /api/ai/documents/upload          # multipart: file + doc_id/title/description/category
+GET    /api/ai/documents/stats
+POST   /api/ai/documents/backfill        # tạo registry từ dữ liệu Chroma hiện có
+GET    /api/ai/documents/{doc_id}
+GET    /api/ai/documents/{doc_id}/chunks
+PATCH  /api/ai/documents/{doc_id}        # title/description/category
+POST   /api/ai/documents/{doc_id}/reingest
+DELETE /api/ai/documents/{doc_id}
+```
+
+- `doc_id` chỉ gồm chữ, số, `.`, `_`, `-` và tối đa 200 ký tự. Nếu bỏ trống khi upload, backend tự sinh.
+- Định dạng upload hỗ trợ: `.txt`, `.md`, `.markdown`, `.docx`, `.pdf`; dung lượng tối đa `MAX_DOCUMENT_FILE_SIZE_MB` (mặc định `20`).
+- File được lưu tại `DOCUMENTS_DIR/{doc_id}/{tên_file}` để có thể reingest sau này.
+- `reingest` đọc lại `raw_content` (hoặc file đã lưu) và tạo lại toàn bộ chunk/vector.
+- `backfill` dùng khi nâng cấp từ phiên bản chỉ có Chroma; chạy một lần sau khi deploy để registry có dữ liệu cũ.
+- `GET /stats` trả tổng số tài liệu, số chunk và số lượng theo trạng thái.
+
+Upload bằng PowerShell:
+
+```powershell
+$token = "<access_token_của_Admin>"
+Invoke-RestMethod `
+  -Uri http://localhost:8001/api/ai/documents/upload `
+  -Method Post `
+  -Headers @{ Authorization = "Bearer $token" } `
+  -Form @{
+    file = Get-Item .\tai-lieu.pdf
+    title = "Tài liệu hướng dẫn"
+    category = "Hướng dẫn"
+  }
+```
 
 ## Chất lượng RAG
 
@@ -216,10 +256,12 @@ AI_Backend/
 │   ├── config.py        # Pydantic Settings từ .env
 │   ├── api/health.py    # Health check Ollama/Chroma/SQLite
 │   ├── api/rag.py       # API ingest tài liệu (Admin)
+│   ├── api/documents.py # API quản lý tài liệu tri thức (Admin)
 │   ├── api/chat.py      # API chat streaming SSE
 │   ├── api/conversations.py # API quản lý hội thoại AI
+│   ├── api/deps.py      # Dependency xác thực/role dùng chung
 │   ├── core/security.py # Verify JWT .NET (HS256)
-│   ├── services/        # RAG, chat, conversation, memory
+│   ├── services/        # RAG, document, chat, conversation, memory
 │   └── db/              # SQLite engine, session, models
 ├── storage/             # Tự tạo: chroma/, documents/, app.db
 ├── check_chroma.py      # Script kiểm tra dữ liệu Chroma

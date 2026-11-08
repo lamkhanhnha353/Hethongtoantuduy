@@ -161,6 +161,94 @@ class RAGService:
             "document_prefix": settings.EMBEDDING_DOCUMENT_PREFIX,
         }
 
+    def get_document_chunks(self, doc_id: str) -> list[dict]:
+        data = self.collection.get(
+            where={"doc_id": doc_id},
+            include=["documents", "metadatas"],
+        )
+        ids = data.get("ids") or []
+        documents = data.get("documents") or []
+        metadatas = data.get("metadatas") or []
+
+        chunks: list[dict] = []
+        for index, chunk_id in enumerate(ids):
+            metadata = metadatas[index] if index < len(metadatas) and metadatas[index] else {}
+            document = documents[index] if index < len(documents) else ""
+            try:
+                chunk_index = int(metadata.get("chunk_index", 0))
+            except (TypeError, ValueError):
+                chunk_index = 0
+
+            chunks.append(
+                {
+                    "id": chunk_id,
+                    "content": document,
+                    "chunkIndex": chunk_index,
+                    "title": str(metadata.get("title", "")),
+                }
+            )
+
+        chunks.sort(key=lambda chunk: chunk["chunkIndex"])
+        return chunks
+
+    def count_document_chunks(self, doc_id: str) -> int:
+        data = self.collection.get(where={"doc_id": doc_id}, include=["metadatas"])
+        return len(data.get("ids") or [])
+
+    def delete_document(self, doc_id: str) -> int:
+        data = self.collection.get(where={"doc_id": doc_id}, include=["metadatas"])
+        ids = data.get("ids") or []
+        if ids:
+            self.collection.delete(ids=ids)
+        return len(ids)
+
+    def update_document_metadata(self, doc_id: str, title: str) -> int:
+        data = self.collection.get(
+            where={"doc_id": doc_id},
+            include=["metadatas"],
+        )
+        ids = data.get("ids") or []
+        metadatas = data.get("metadatas") or []
+        if not ids:
+            return 0
+
+        updated_metadatas: list[dict] = []
+        for metadata in metadatas:
+            next_metadata = dict(metadata or {})
+            next_metadata["doc_id"] = doc_id
+            next_metadata["title"] = title
+            updated_metadatas.append(next_metadata)
+
+        self.collection.update(ids=ids, metadatas=updated_metadatas)
+        return len(ids)
+
+    def list_document_metadata(self) -> list[dict]:
+        data = self.collection.get(include=["metadatas"])
+        ids = data.get("ids") or []
+        metadatas = data.get("metadatas") or []
+
+        documents: dict[str, dict] = {}
+        for index, chunk_id in enumerate(ids):
+            metadata = metadatas[index] if index < len(metadatas) and metadatas[index] else {}
+            doc_id = str(metadata.get("doc_id") or "").strip()
+            if not doc_id:
+                logger.warning("Bỏ qua chunk %s vì thiếu doc_id", chunk_id)
+                continue
+
+            entry = documents.setdefault(
+                doc_id,
+                {
+                    "doc_id": doc_id,
+                    "title": str(metadata.get("title") or ""),
+                    "chunk_count": 0,
+                },
+            )
+            entry["chunk_count"] += 1
+            if not entry["title"]:
+                entry["title"] = str(metadata.get("title") or "")
+
+        return sorted(documents.values(), key=lambda item: item["doc_id"])
+
     def query_rag_with_sources(
         self,
         user_query: str,

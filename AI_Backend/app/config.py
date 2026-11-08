@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     CHROMA_PERSIST_DIRECTORY: str = str(STORAGE_DIR / "chroma")
     SQLITE_URL: str = f"sqlite:///{(STORAGE_DIR / 'app.db').as_posix()}"
     DOCUMENTS_DIR: str = str(STORAGE_DIR / "documents")
+    MAX_DOCUMENT_FILE_SIZE_MB: int = 20
 
     CORS_ORIGINS: str = "*"
 
@@ -61,6 +62,7 @@ class Settings(BaseSettings):
         "MIN_RECENT_TURNS",
         "MESSAGE_TOKEN_OVERHEAD",
         "SUMMARY_MAX_TOKENS",
+        "MAX_DOCUMENT_FILE_SIZE_MB",
         mode="after",
     )
     @classmethod
