@@ -1,75 +1,94 @@
 # Hệ thống Toán Tư Duy
 
-Nền tảng quản lý học tập toán tư duy: khóa học, lớp học, buổi học, bài tập, điểm, chuyên cần và học phí — dành cho phụ huynh, học sinh và giáo viên.
+Nền tảng quản lý trung tâm toán tư duy, phục vụ quản trị viên, giáo viên, phụ huynh và học sinh. Hệ thống gồm API nghiệp vụ, cổng quản trị web, ứng dụng di động và dịch vụ nhập câu hỏi từ tài liệu.
 
----
+## Cấu trúc repository
 
-## Tổng quan
+| Thư mục | Nội dung |
+| --- | --- |
+| `Backend/ToanTuDuy/` | ASP.NET Core Web API, mô hình dữ liệu, migration, xác thực và nghiệp vụ |
+| `Backend/SeedData.sql` | Dữ liệu demo cho SQL Server; chạy sau khi đã áp dụng migration |
+| `Web_Frontend/` | SPA Vue cho quản trị viên và giáo viên |
+| `Mobile_App/` | Ứng dụng Expo cho thiết bị di động |
+| `import-worker/` | FastAPI worker trích xuất câu hỏi từ PDF/DOCX |
+| `docker-compose.yml` | SQL Server, chạy migration và seed dữ liệu qua Docker Compose |
 
-| Module | Thư mục | Vai trò |
-| --- | --- | --- |
-| Backend API | `Backend/` | REST API (.NET 10), xử lý nghiệp vụ, SQL Server |
-| AI Backend | `AI_Backend/` | RAG chatbot (FastAPI + Ollama + ChromaDB) |
-| Import Worker | `import-worker/` | Trích xuất tài liệu (PDF/DOCX) và nhập vào vector DB |
-| Mobile App | `Mobile_App/` | App iOS/Android (Expo 58, React Native 0.88) |
-| Web Frontend | `Web_Frontend/` | SPA quản trị (Vue 3, Vite) |
-
----
+Repository hiện không có thư mục `AI_Backend/`. Chức năng chat và các tích hợp liên quan cần được kiểm tra theo cấu hình/dịch vụ thực tế trong từng môi trường.
 
 ## Công nghệ
 
-### Backend — `Backend/`
-
-- **.NET 10** · ASP.NET Core Web API · Entity Framework Core 10
-- **SQL Server 2022** · ASP.NET Core Identity · JWT Bearer
-- OpenAPI (Swagger) ở môi trường Development
-
-### AI Backend — `AI_Backend/`
-
-- **FastAPI** · Uvicorn · Python
-- **Ollama** (chat model + embedding model cục bộ)
-- **ChromaDB** (vector store, lưu trên disk)
-- SQLAlchemy · Pydantic v2 · python-jose (JWT)
-
-### Import Worker — `import-worker/`
-
-- **FastAPI** · Uvicorn · Python
-- Trích xuất PDF (`PyMuPDF`) và DOCX (`python-docx`)
-- Tích hợp LLM: **Google Gemini** (`google-genai`) · **OpenAI** · Ollama
-- Pydantic v2 · aiofiles · httpx
-
-### Mobile App — `Mobile_App/`
-
-- **Expo 58** · React Native 0.88 · React 19 · TypeScript 6
-- **NativeWind 4** (Tailwind CSS cho React Native)
-- Expo Router (file-based routing)
-- **Zustand** (state management) · **TanStack Query** (data fetching)
-- **Skia** (đồ họa) · SignalR (realtime) · Axios · jwt-decode
-- EAS Build (build & deploy trên cloud)
-
-### Web Frontend — `Web_Frontend/`
-
-- **Vue 3** · Vue Router 5 · Vite 8 · JavaScript (ESM)
-- **Element Plus** (UI component library) · Heroicons
-- **Tailwind CSS 4** · Axios · Google Sign-In
-
----
-
-## Chạy từng module
-
 ### Backend
 
-Yêu cầu: .NET SDK 10 · SQL Server đang chạy.
+- .NET 10, ASP.NET Core Web API, Entity Framework Core 10
+- SQL Server 2022, ASP.NET Core Identity và JWT
+- SignalR cho chat và thông báo realtime
+- Redis cho bộ đếm thông báo chưa đọc
+- Resend cho email; Cloudinary cho ảnh/tệp đính kèm
+- OpenAPI chỉ được bật trong môi trường Development
+
+### Web
+
+- Vue 3, Vue Router 5, Vite 8, JavaScript ESM
+- Tailwind CSS 4, Element Plus, Heroicons, Axios
+- Có cổng quản trị và giáo viên; Vite proxy API tới backend và `/api/parser` tới import worker.
+
+### Mobile
+
+- Expo SDK 58, React Native 0.88, React 19, TypeScript 6
+- Expo Router, NativeWind 4, Zustand, TanStack Query
+- SignalR, Axios, Skia
+
+### Import Worker
+
+- FastAPI, Uvicorn, Python
+- Trích xuất PDF bằng PyMuPDF và DOCX bằng `python-docx`
+- LLM provider cấu hình được: Gemini, OpenAI hoặc `mock`
+- Mặc định chạy ở cổng `8000`; dữ liệu tải lên/ảnh được lưu trong thư mục `storage/`.
+
+## Yêu cầu
+
+- .NET SDK 10
+- SQL Server 2022 hoặc Docker Desktop với Docker Compose
+- Node.js theo `engines` của `Web_Frontend/package.json` (22.18+ hoặc 24.12+)
+- Node.js tương thích với Expo SDK 58 cho ứng dụng di động
+- Python 3.11+ cho import worker
+
+## Khởi chạy
+
+### 1. Cơ sở dữ liệu
+
+**Chạy SQL Server bằng Docker Compose:**
+
+Tạo file `.env` ở thư mục gốc và khai báo mật khẩu SQL Server cho biến `MSSQL_SA_PASSWORD`. Không đưa file `.env` hoặc thông tin bí mật vào Git.
+
+```powershell
+docker compose up -d sqlserver
+docker compose run --rm migrate
+```
+
+Sau khi migration hoàn tất, có thể nạp dữ liệu demo:
+
+```powershell
+docker compose --profile seed run --rm seed
+```
+
+`Backend/SeedData.sql` xóa và tạo lại dữ liệu demo trong các bảng nghiệp vụ trước khi chèn dữ liệu mới. **Chỉ chạy trên cơ sở dữ liệu phát triển có thể làm mới; không chạy trên dữ liệu cần giữ lại.**
+
+**Hoặc dùng SQL Server LocalDB trên Windows:**
 
 ```powershell
 cd Backend\ToanTuDuy
-dotnet ef database update   # áp dụng migration
+
+# Áp dụng migration
+dotnet ef database update
+
+# Chạy API
 dotnet run
 ```
 
-API: `http://localhost:5114` / `https://localhost:7206`
+API lắng nghe ở `http://localhost:5114` và `https://localhost:7206` theo `Properties/launchSettings.json`.
 
-Ghi đè chuỗi kết nối (một lần duy nhất):
+Chuỗi kết nối được đọc từ khóa `ConnectionStrings:DefaultConnection`. Giá trị trong `appsettings.json` đang trỏ tới SQL Server LocalDB; trên máy phát triển nên ghi đè bằng biến môi trường:
 
 ```powershell
 [Environment]::SetEnvironmentVariable(
@@ -78,102 +97,107 @@ Ghi đè chuỗi kết nối (một lần duy nhất):
   'User')
 ```
 
-### AI Backend
+Mở terminal mới sau khi đặt biến để ứng dụng nhận giá trị.
 
-Yêu cầu: Python 3.11+ · Ollama đang chạy cục bộ.
-
-```bash
-cd AI_Backend
-python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env   # điền các biến cần thiết
-uvicorn app.main:app --reload
-```
-
-### Import Worker
-
-Yêu cầu: Python 3.11+.
-
-```bash
-cd import-worker
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload --port 8001
-```
-
-### Mobile App
-
-Yêu cầu: Node.js 22+ · Expo CLI.
-
-```bash
-cd Mobile_App
-npm install
-npx expo start          # mở Expo Go hoặc dev client
-npx expo start --android
-npx expo start --ios
-```
-
-> Không tạo thư mục `ios/` hoặc `android/` thủ công — dự án dùng Continuous Native Generation, mọi cấu hình native đặt trong `app.json`.
-
-### Web Frontend
-
-Yêu cầu: Node.js 22+.
-
-```bash
-cd Web_Frontend
-npm install
-npm run dev     # dev server, proxy /api → http://localhost:5114
-npm run build
-```
-
----
-
-## Cơ sở dữ liệu
-
-Database `ToanTuDuyDb` trên SQL Server, xác thực Windows. **24 bảng**: 17 bảng nghiệp vụ, 6 bảng Identity, 1 bảng migration.
-
-Bảng nghiệp vụ: `ACCOUNT`, `PARENT_PROFILE`, `STUDENT_PROFILE`, `TEACHER_PROFILE`, `COURSE`, `CLASSES`, `CLASS_SCHEDULE`, `CLASS_STUDENT`, `LESSON`, `ATTENDANCE`, `LEAVE_REQUEST`, `ASSIGNMENT`, `STUDENT_ASSIGNMENT`, `QUESTION`, `INVOICE`, `BADGE`, `STUDENT_BADGE`.
-
-Lệnh migration:
+Kết nối trực tiếp bằng `sqlcmd`:
 
 ```powershell
-cd Backend\ToanTuDuy
+sqlcmd -S . -E -C -d ToanTuDuyDb
+```
+
+Khi có thay đổi model, tạo migration mới với tên mô tả thay đổi:
+
+```powershell
 dotnet ef migrations add TenMigrationMoi
 dotnet ef database update
 ```
 
+Cài công cụ EF Core lần đầu: `dotnet tool install --global dotnet-ef --version 10.0.12`.
+
 ---
 
-## API hiện có
+## Mobile App
 
-| Method | Endpoint | Mô tả |
-| --- | --- | --- |
-| POST | `/api/auth/register` | Đăng ký (Parent / Teacher) |
-| POST | `/api/auth/login` | Đăng nhập, trả access + refresh token |
-| POST | `/api/chat` | Chat với AI (yêu cầu JWT) |
-| GET | `/openapi/v1.json` | Tài liệu OpenAPI (dev only) |
+`Mobile_App/` là ứng dụng Expo với NativeWind. Điều hướng theo cấu trúc thư mục: mọi file trong `src/app/` là một màn hình, các file `_layout.tsx` định nghĩa navigator.
+
+| Đường dẫn | Nội dung |
+| --- | --- |
+| `src/app/_layout.tsx` | Root navigator, dùng `Stack`, ẩn header |
+| `src/app/index.tsx` | Màn hình khởi đầu, hiện là nội dung mẫu |
+| `src/global.css` | Điểm vào cho các chỉ thị Tailwind |
+| `app.json` | Cấu hình ứng dụng, icon, splash, plugin |
+| `eas.json` | Profile build: development, preview, production |
+| `tailwind.config.js` | Dùng preset `nativewind/preset` |
+| `AGENTS.md` | Quy ước phát triển cho phần mobile |
+
+Lệnh thường dùng:
+
+```bash
+npx expo start          # chạy dev server
+npx expo start --android
+npx expo start --ios
+npx expo start --web
+npx expo lint
+npx tsc --noEmit        # kiểm tra kiểu
+```
+
+Cấu hình đáng chú ý trong `app.json`: bundle Android là `com.beckham205.Mobile_App`, scheme là `mobileapp`, bật `typedRoutes` và `reactCompiler`. Profile `development` trong `eas.json` tạo development client phân phối nội bộ; `production` tự tăng số build.
+
+Không có thư mục `ios/` và `android/` vì dự án dùng Continuous Native Generation. Không tạo hoặc sửa hai thư mục này bằng tay; hãy khai báo trong `app.json` và dùng config plugin.
+
+---
+
+## Web Frontend
+
+`Web_Frontend/` là ứng dụng Vue 3 dùng Vite, viết bằng JavaScript. Cấu hình khai báo alias `@` trỏ về `src/` trong cả `vite.config.js` và `jsconfig.json`.
+
+| Đường dẫn | Nội dung |
+| --- | --- |
+| `src/main.js` | Khởi tạo ứng dụng Vue, đăng ký router |
+| `src/App.vue` | Component gốc |
+| `src/router/index.js` | Cấu hình vue-router, chế độ HTML5 |
+
+Lệnh thường dùng:
+
+```bash
+npm run dev
+npm run build
+npm run preview
+```
+
+Trong môi trường phát triển, Vite chuyển tiếp các request `/api` tới Backend tại `http://localhost:5114`. Hãy chạy Backend trước khi gọi API từ frontend.
+
+---
+
+## Trạng thái hiện tại
+
+| Phần | Trạng thái |
+| --- | --- |
+| Backend | Đã có API xác thực hoạt động, đủ model và migration cho toàn bộ nghiệp vụ |
+| Backend | Endpoint mới chưa phát triển: khóa học, lớp, buổi học, bài tập, hóa đơn, huy hiệu |
+| Backend | Đăng ký JWT Bearer chưa được cấu hình trong `Program.cs`; token được sinh thủ công trong `AuthService` |
+| Backend | 57 cảnh báo CS8618 về thuộc tính non-nullable chưa được xử lý |
+| Mobile | Màn hình mẫu; `index.tsx` gọi `router.push('/login')` nhưng route `/login` chưa tồn tại |
+| Mobile | Phần lớn gói Expo đã cài nhưng chưa dùng: reanimated, gesture-handler, safe-area-context, expo-image, expo-glass-effect, @expo/ui |
+| Mobile | Script `lint` khai báo nhưng chưa có tệp cấu hình ESLint |
+| Web | Khung dựng, chưa có route, chưa có tích hợp API |
+
+### Việc cần xử lý trước khi triển khai
+
+- Khóa JWT hiện nằm trực tiếp trong `appsettings.json` và có giá trị dự phòng trong `AuthService.GenerateJwtToken`. Cần chuyển sang biến môi trường và thêm kiểm tra độ dài khóa tối thiểu 32 byte.
+- `appsettings.json` chứa thông tin nhạy cảm nên không nên commit cho môi trường thật; nên tách cấu hình theo môi trường.
+- Chưa có kiểm thử tự động, chưa có tệp solution `.sln` cho phần Backend, chưa có CI.
 
 ---
 
 ## Quy trình Git
 
-Nhánh theo dạng `<module>/feat/<mo-ta>`, ví dụ:
+Mỗi phần làm việc trên một nhánh riêng theo dạng `<module>/feat/<mo-ta>`:
 
-- `backend/feat/course-endpoints`
-- `mobile/feat/login-screen`
-- `ai/feat/rag-service`
-
-Commit hoặc `git stash -u` trước khi merge để tránh lỗi trên cây làm việc bẩn.
-
----
-
-## Trạng thái
-
-| Module | Trạng thái |
+| Phần | Nhánh ví dụ |
 | --- | --- |
-| Backend | Xác thực hoạt động; endpoint nghiệp vụ (khóa học, lớp, bài tập…) chưa phát triển |
-| AI Backend | RAG chatbot hoạt động với Ollama + ChromaDB |
-| Import Worker | Trích xuất PDF/DOCX, hỗ trợ Gemini / OpenAI / Ollama |
-| Mobile | Cấu trúc khung; màn hình đăng nhập chưa hoàn thiện |
-| Web | Khung dựng; chưa có tích hợp API |
+| Backend | `backend/feat/local-sqlserver-db` |
+| Mobile | `mobile/feat/add-nativewind` |
+
+Trước khi merge, cần commit hoặc `git stash -u` các thay đổi chưa commit vì Git thường từ chối merge trên cây làm việc bẩn.
+

@@ -276,7 +276,15 @@
             </span>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button
+              v-if="selectedQuestionIds.length > 0"
+              type="button"
+              @click="confirmDeleteSelectedQuestions"
+              class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 font-semibold cursor-pointer"
+            >
+              <TrashIcon class="w-3.5 h-3.5" /> Xóa đã chọn ({{ selectedQuestionIds.length }})
+            </button>
             <button
               v-if="selectedQuestionIds.length > 0"
               type="button"
@@ -909,7 +917,49 @@
       </div>
     </div>
 
-    <!-- ─── Modal 3: Import đề thi bằng Import Worker AI ─────────────────────── -->
+    <!-- ─── Modal 3: Xác nhận xóa (dùng chung) ───────────────────────────────── -->
+    <div
+      v-if="confirmDialog.show"
+      class="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4 backdrop-blur-2xs"
+      @click.self="closeConfirm"
+    >
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-orange-100 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+            <ExclamationTriangleIcon class="w-5 h-5" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base font-bold text-orange-950">{{ confirmDialog.title }}</h3>
+            <p class="text-xs text-gray-600 mt-1.5 leading-relaxed whitespace-pre-line">
+              {{ confirmDialog.message }}
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-orange-100 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            :disabled="confirmDialog.loading"
+            @click="closeConfirm"
+            class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            :disabled="confirmDialog.loading"
+            @click="executeConfirm"
+            class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <ArrowPathIcon v-if="confirmDialog.loading" class="w-3.5 h-3.5 animate-spin" />
+            <TrashIcon v-else class="w-3.5 h-3.5" />
+            <span>{{ confirmDialog.loading ? 'Đang xử lý...' : confirmDialog.confirmText }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Modal 4: Import đề thi bằng Import Worker AI ─────────────────────── -->
     <ImportQuestionsModal
       v-model="showImportModal"
       :banks="questionBanks"
@@ -936,6 +986,7 @@ import {
   EyeSlashIcon,
   PhotoIcon,
   SparklesIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -986,6 +1037,56 @@ function notify(text, isError = false) {
       actionMessage.text = ''
     }
   }, 4000)
+}
+
+// ─── Confirmation Dialog ───────────────────────────────────────────────────
+const confirmDialog = reactive({
+  show: false,
+  title: '',
+  message: '',
+  confirmText: 'Xóa',
+  loading: false,
+  onConfirm: null,
+})
+
+function askConfirm({ title, message, confirmText = 'Xóa', onConfirm }) {
+  confirmDialog.title = title
+  confirmDialog.message = message
+  confirmDialog.confirmText = confirmText
+  confirmDialog.loading = false
+  confirmDialog.onConfirm = onConfirm
+  confirmDialog.show = true
+}
+
+function closeConfirm() {
+  if (confirmDialog.loading) return
+  confirmDialog.show = false
+  confirmDialog.onConfirm = null
+}
+
+async function executeConfirm() {
+  if (confirmDialog.loading || !confirmDialog.onConfirm) return
+  confirmDialog.loading = true
+  try {
+    const shouldClose = await confirmDialog.onConfirm()
+    if (shouldClose !== false) {
+      confirmDialog.show = false
+      confirmDialog.onConfirm = null
+    }
+  } finally {
+    confirmDialog.loading = false
+  }
+}
+
+function getApiErrorMessage(err, fallback) {
+  return (
+    err?.response?.data?.message ||
+    err?.response?.data?.details ||
+    err?.response?.data?.detail ||
+    err?.response?.data?.title ||
+    err?.message ||
+    fallback
+  )
 }
 
 // ─── Modal State: Import Worker ───────────────────────────────────────────
@@ -1253,23 +1354,32 @@ async function saveBank() {
   }
 }
 
-async function confirmDeleteBank(bank) {
-  const confirmed = confirm(
-    `Bạn có chắc chắn muốn xóa ngân hàng "${bank.name}"? Toàn bộ câu hỏi bên trong cũng sẽ bị xóa.`
-  )
-  if (!confirmed) return
-
-  try {
-    await questionBankService.delete(bank.id)
-    notify(`Đã xóa ngân hàng "${bank.name}".`)
-    if (selectedBank.value?.id === bank.id) {
-      selectedBank.value = null
-    }
-    await fetchBanks()
-  } catch (err) {
-    console.error('Lỗi xóa ngân hàng:', err)
-    notify('Không thể xóa ngân hàng câu hỏi.', true)
-  }
+function confirmDeleteBank(bank) {
+  const total = bank.totalQuestions || 0
+  askConfirm({
+    title: 'Xóa ngân hàng câu hỏi',
+    message: `Bạn có chắc chắn muốn xóa ngân hàng "${bank.name}"? ${
+      total > 0 ? `Toàn bộ ${total} câu hỏi bên trong cũng sẽ bị xóa. ` : ''
+    }Các câu hỏi đang được dùng trong bài kiểm tra sẽ bị gỡ khỏi bài kiểm tra. Hành động này không thể hoàn tác.`,
+    confirmText: 'Xóa ngân hàng',
+    onConfirm: async () => {
+      try {
+        await questionBankService.delete(bank.id)
+        notify(`Đã xóa ngân hàng "${bank.name}".`)
+        if (selectedBank.value?.id === bank.id) {
+          selectedBank.value = null
+          questions.value = []
+          selectedQuestionIds.value = []
+        }
+        await fetchBanks()
+        return true
+      } catch (err) {
+        console.error('Lỗi xóa ngân hàng:', err)
+        notify(getApiErrorMessage(err, 'Không thể xóa ngân hàng câu hỏi.'), true)
+        return false
+      }
+    },
+  })
 }
 
 // ─── Question Actions (Create / Edit / Delete) ──────────────────────────────
@@ -1415,23 +1525,61 @@ async function saveQuestion() {
   }
 }
 
-async function confirmDeleteQuestion(q) {
-  const confirmed = confirm('Bạn có chắc chắn muốn xóa câu hỏi này khỏi ngân hàng?')
-  if (!confirmed) return
+function confirmDeleteQuestion(q) {
+  askConfirm({
+    title: 'Xóa câu hỏi',
+    message:
+      'Bạn có chắc chắn muốn xóa câu hỏi này khỏi ngân hàng? Nếu câu hỏi đang được dùng trong bài kiểm tra, nó sẽ bị gỡ khỏi bài kiểm tra. Hành động này không thể hoàn tác.',
+    confirmText: 'Xóa câu hỏi',
+    onConfirm: async () => {
+      try {
+        await questionBankService.deleteQuestion(q.id)
+        notify('Đã xóa câu hỏi khỏi ngân hàng.')
+        selectedQuestionIds.value = selectedQuestionIds.value.filter(id => id !== q.id)
+        await fetchQuestions()
+        await fetchBanks() // refresh total count
+        return true
+      } catch (err) {
+        console.error('Lỗi xóa câu hỏi:', err)
+        notify(getApiErrorMessage(err, 'Không thể xóa câu hỏi.'), true)
+        return false
+      }
+    },
+  })
+}
 
-  try {
-    await questionBankService.deleteQuestion(q.id)
-    notify('Đã xóa câu hỏi khỏi ngân hàng.')
-    await fetchQuestions()
-    await fetchBanks() // refresh total count
-  } catch (err) {
-    console.error('Lỗi xóa câu hỏi:', err)
-    notify('Không thể xóa câu hỏi.', true)
+function confirmDeleteSelectedQuestions() {
+  const ids = [...selectedQuestionIds.value]
+  if (ids.length === 0) {
+    notify('Vui lòng chọn ít nhất một câu hỏi để xóa.', true)
+    return
   }
+
+  askConfirm({
+    title: `Xóa ${ids.length} câu hỏi đã chọn`,
+    message: `Bạn có chắc chắn muốn xóa ${ids.length} câu hỏi khỏi ngân hàng "${
+      selectedBank.value?.name || ''
+    }"? Các câu hỏi đang được dùng trong bài kiểm tra sẽ bị gỡ khỏi bài kiểm tra. Hành động này không thể hoàn tác.`,
+    confirmText: 'Xóa câu hỏi',
+    onConfirm: async () => {
+      try {
+        const result = await questionBankService.bulkDeleteQuestions(ids)
+        notify(result?.message || `Đã xóa ${ids.length} câu hỏi.`)
+        selectedQuestionIds.value = []
+        await fetchQuestions()
+        await fetchBanks() // refresh total count
+        return true
+      } catch (err) {
+        console.error('Lỗi xóa nhiều câu hỏi:', err)
+        notify(getApiErrorMessage(err, 'Không thể xóa các câu hỏi đã chọn.'), true)
+        return false
+      }
+    },
+  })
 }
 
 function exportSelectedQuestions() {
-  alert(`Đã trích xuất ${selectedQuestionIds.value.length} câu hỏi đã chọn.`)
+  notify(`Đã trích xuất ${selectedQuestionIds.value.length} câu hỏi đã chọn.`)
 }
 
 // ─── Lifecycle ─────────────────────────────────────────────────────────────

@@ -13,6 +13,11 @@ namespace ToanTuDuy.DTOs
         public int MinAge { get; set; }
         public int MaxAge { get; set; }
         public string? ImageUrl { get; set; }
+        public string? VideoUrl { get; set; }
+        public List<string>? Benefits { get; set; }
+        public List<string>? FacilityImages { get; set; }
+        public double Rating { get; set; }
+        public int Reviews { get; set; }
         public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

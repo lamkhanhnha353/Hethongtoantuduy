@@ -1,9 +1,12 @@
 import logging
 
 import chromadb
-import ollama
 
 from app.config import settings
+from app.services.embedding_provider import (
+    EmbeddingProvider,
+    create_embedding_provider,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +21,18 @@ class RAGService:
         self.collection = self.chroma_client.get_or_create_collection(
             name=self.collection_name
         )
-        self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
+        self._embedding_provider: EmbeddingProvider | None = None
+
+    @property
+    def embedding_provider(self) -> EmbeddingProvider:
+        if self._embedding_provider is None:
+            self._embedding_provider = create_embedding_provider()
+        return self._embedding_provider
+
+    def close(self) -> None:
+        if self._embedding_provider is not None:
+            self._embedding_provider.close()
+            self._embedding_provider = None
 
     def simple_chunking(
         self,
@@ -59,19 +73,27 @@ class RAGService:
         prefix = prefix.strip()
         return f"{prefix} {text}" if prefix else text
 
-    def _embed(self, text: str, prefix: str = "") -> list[float]:
-        prompt = self._with_embedding_prefix(text, prefix)
-        response = self.ollama_client.embeddings(
-            model=settings.EMBEDDING_MODEL,
-            prompt=prompt,
-        )
-        return response["embedding"]
+    def _embed(self, text: str, task_type: str) -> list[float]:
+        text = text.strip()
+        if not text:
+            raise ValueError("Nội dung embedding không được để trống")
+
+        provider = self.embedding_provider
+        if provider.uses_prefixes:
+            prefix = (
+                settings.EMBEDDING_QUERY_PREFIX
+                if task_type == "search_query"
+                else settings.EMBEDDING_DOCUMENT_PREFIX
+            )
+            text = self._with_embedding_prefix(text, prefix)
+
+        return provider.embed(text, task_type=task_type)
 
     def _embed_document(self, text: str) -> list[float]:
-        return self._embed(text, settings.EMBEDDING_DOCUMENT_PREFIX)
+        return self._embed(text, "search_document")
 
     def _embed_query(self, text: str) -> list[float]:
-        return self._embed(text, settings.EMBEDDING_QUERY_PREFIX)
+        return self._embed(text, "search_query")
 
     def ingest_text_document(self, doc_id: str, title: str, content: str) -> dict:
         doc_id = doc_id.strip()
@@ -135,7 +157,8 @@ class RAGService:
                 "status": "success",
                 "collection": self.collection_name,
                 "reindexed_chunks": 0,
-                "embedding_model": settings.EMBEDDING_MODEL,
+                "embedding_provider": settings.embedding_provider_name,
+                "embedding_model": settings.embedding_model,
                 "document_prefix": settings.EMBEDDING_DOCUMENT_PREFIX,
             }
 
@@ -147,17 +170,18 @@ class RAGService:
 
         self.collection.update(ids=ids, embeddings=embeddings)
         logger.info(
-            "Đã reindex %s chunk bằng model %s với prefix %r",
+            "Đã reindex %s chunk bằng provider %s, model %s",
             len(ids),
-            settings.EMBEDDING_MODEL,
-            settings.EMBEDDING_DOCUMENT_PREFIX,
+            settings.embedding_provider_name,
+            settings.embedding_model,
         )
 
         return {
             "status": "success",
             "collection": self.collection_name,
             "reindexed_chunks": len(ids),
-            "embedding_model": settings.EMBEDDING_MODEL,
+            "embedding_provider": settings.embedding_provider_name,
+            "embedding_model": settings.embedding_model,
             "document_prefix": settings.EMBEDDING_DOCUMENT_PREFIX,
         }
 

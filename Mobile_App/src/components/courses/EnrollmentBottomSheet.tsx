@@ -172,7 +172,7 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm, onP
     return true;
   };
 
-  const createReservation = async (studentId: number, classId: number, seatAlreadyReserved = false) => {
+  const createReservation = async (studentId: number, classId: number) => {
     setIsSubmitting(true);
     try {
       const invoiceId = await onConfirm(studentId, classId);
@@ -190,13 +190,6 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm, onP
         ...current.filter(item => item.studentId !== studentId),
         enrollment,
       ]);
-      if (!seatAlreadyReserved) {
-        setClasses(current => current.map(cls =>
-          cls.id === classId
-            ? { ...cls, activeStudentsCount: (cls.activeStudentsCount ?? 0) + 1 }
-            : cls
-        ));
-      }
       setShowResult(true);
     } catch (error) {
       console.error('Lỗi giữ chỗ khóa học:', error);
@@ -216,7 +209,7 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm, onP
       if (isValidInvoiceId(selectedEnrollment.invoiceId)) {
         onPayInvoice(selectedEnrollment.invoiceId);
       } else {
-        await createReservation(selectedStudent, selectedEnrollment.classId, true);
+        await createReservation(selectedStudent, selectedEnrollment.classId);
       }
       return;
     }

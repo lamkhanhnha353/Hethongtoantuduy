@@ -4,9 +4,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-import ollama
-
 from app.config import settings
+from app.services.llm_provider import (
+    LLMProvider,
+    create_fallback_provider,
+    create_primary_provider,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -175,13 +178,29 @@ def should_summarize(
     )
 
 
-def _summary_model_candidates() -> list[str]:
-    models = [settings.SUMMARY_MODEL, settings.CHAT_MODEL]
-    result: list[str] = []
-    for model in models:
-        if model and model not in result:
-            result.append(model)
-    return result
+def _summary_candidates(
+    primary: LLMProvider,
+    fallback: LLMProvider | None,
+) -> list[tuple[LLMProvider, str]]:
+    candidates: list[tuple[LLMProvider, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    def add(provider: LLMProvider | None, model: str) -> None:
+        if provider is None or not model:
+            return
+        key = (provider.name, model)
+        if key in seen:
+            return
+        seen.add(key)
+        candidates.append((provider, model))
+
+    add(primary, settings.summary_model)
+    add(primary, settings.chat_model)
+    if fallback is not None:
+        add(fallback, settings.OLLAMA_SUMMARY_MODEL)
+        add(fallback, settings.OLLAMA_CHAT_MODEL)
+
+    return candidates
 
 
 def _is_valid_summary(content: str) -> bool:
@@ -196,19 +215,6 @@ def _is_valid_summary(content: str) -> bool:
         "as an ai",
     )
     return not any(marker in lowered for marker in invalid_markers)
-
-
-def _response_content(response: Any) -> str:
-    if isinstance(response, Mapping):
-        message = response.get("message") or {}
-        if isinstance(message, Mapping):
-            return str(message.get("content") or "").strip()
-        return ""
-
-    message = getattr(response, "message", None)
-    if message is None:
-        return ""
-    return str(getattr(message, "content", "") or "").strip()
 
 
 def _summary_prompt(
@@ -240,50 +246,62 @@ async def summarize_messages(
     messages: Sequence[Mapping[str, Any]],
 ) -> str:
     prompt = _summary_prompt(existing_summary, messages)
-    client = ollama.AsyncClient(host=settings.OLLAMA_BASE_URL)
+    summary_messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a conversation summarizer. Write a concise "
+                "summary in Vietnamese. Include only the main topics, "
+                "questions, answers, and important facts from the "
+                "conversation. Do not copy the conversation verbatim, "
+                "do not add new information, and do not invent details."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "Summarize the following conversation in 2-5 bullet "
+                "points. Respond in Vietnamese. Use only information "
+                "from the conversation.\n\n" + prompt
+            ),
+        },
+    ]
 
     try:
-        for model in _summary_model_candidates():
+        primary = create_primary_provider()
+        fallback = create_fallback_provider()
+    except Exception:
+        logger.exception("Cấu hình LLM provider không hợp lệ khi tóm tắt")
+        raise RuntimeError("Không thể tóm tắt hội thoại") from None
+
+    try:
+        for provider, model in _summary_candidates(primary, fallback):
             try:
-                response = await client.chat(
+                content = await provider.chat(
+                    messages=summary_messages,
                     model=model,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "You are a conversation summarizer. Write a concise "
-                                "summary in Vietnamese. Include only the main topics, "
-                                "questions, answers, and important facts from the "
-                                "conversation. Do not copy the conversation verbatim, "
-                                "do not add new information, and do not invent details."
-                            ),
-                        },
-                        {
-                            "role": "user",
-                            "content": (
-                                "Summarize the following conversation in 2-5 bullet "
-                                "points. Respond in Vietnamese. Use only information "
-                                "from the conversation.\n\n" + prompt
-                            ),
-                        },
-                    ],
-                    stream=False,
-                    keep_alive=settings.CHAT_KEEP_ALIVE,
-                    options={
-                        "temperature": 0.0,
-                        "num_predict": settings.SUMMARY_MAX_TOKENS,
-                    },
+                    temperature=0.0,
+                    max_tokens=settings.SUMMARY_MAX_TOKENS,
                 )
-                content = _response_content(response)
                 if _is_valid_summary(content):
                     return content
             except Exception:
-                logger.exception("Không thể tóm tắt hội thoại bằng model %s", model)
+                logger.exception(
+                    "Không thể tóm tắt hội thoại bằng %s/%s",
+                    provider.name,
+                    model,
+                )
     finally:
-        try:
-            await client.close()
-        except Exception:
-            logger.exception("Không thể đóng Ollama AsyncClient khi tóm tắt")
+        for provider in (primary, fallback):
+            if provider is None:
+                continue
+            try:
+                await provider.close()
+            except Exception:
+                logger.exception(
+                    "Không thể đóng LLM provider %s khi tóm tắt",
+                    provider.name,
+                )
 
     raise RuntimeError("Không thể tóm tắt hội thoại")
 

@@ -201,16 +201,11 @@ function ParentNotifications() {
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
       <View className="flex-row items-center border-b border-slate-200 bg-white px-4 py-4">
-        <TouchableOpacity
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          className="h-10 w-10 items-center justify-center rounded-full bg-slate-50"
-          onPress={() => router.back()}
-        >
-          <Ionicons color="#334155" name="arrow-back" size={24} />
-        </TouchableOpacity>
+        <View className="h-10 w-10 items-center justify-center rounded-full bg-sky-50">
+          <Ionicons color="#0284c7" name="notifications-outline" size={22} />
+        </View>
 
-        <View className="ml-2 flex-1">
+        <View className="ml-3 flex-1">
           <Text className="text-lg font-black text-slate-800">Thông báo</Text>
           <Text className="text-[11px] text-slate-500">
             {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : 'Bạn đã xem hết thông báo'}

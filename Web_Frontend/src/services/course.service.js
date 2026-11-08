@@ -17,6 +17,18 @@ class CourseService {
     return res.data;
   }
 
+  // Tải ảnh/video khóa học trực tiếp lên Cloudinary [POST] /api/courses/media
+  // type: 'image' | 'video'
+  async uploadMedia(file, type) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+    const res = await this.api.post("/media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  }
+
   // Tạo mới một khóa học [POST] /api/courses
   async create(data) {
     const res = await this.api.post("", data);

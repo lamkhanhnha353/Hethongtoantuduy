@@ -91,7 +91,6 @@ namespace ToanTuDuy.Services
 
             var classInfo = await _context.Classes
                 .Include(classEntity => classEntity.CourseLevel)
-                .Include(classEntity => classEntity.ClassStudents)
                 .FirstOrDefaultAsync(classEntity => classEntity.Id == request.ClassId);
 
             if (classInfo == null)
@@ -119,16 +118,6 @@ namespace ToanTuDuy.Services
                 .FirstOrDefaultAsync(enrollment =>
                     enrollment.StudentId == request.StudentId
                     && enrollment.ClassId == request.ClassId);
-
-            var occupiedSlots = classInfo.ClassStudents.Count(enrollment =>
-                (enrollment.Status == "ACTIVE" || enrollment.Status == "PENDING")
-                && enrollment.Id != existingEnrollment?.Id);
-
-            if (occupiedSlots >= classInfo.MaxCapacity)
-            {
-                throw ApiException.BadRequest(
-                    "Lớp học này đã hết chỗ hoặc các slot đang được giữ chờ thanh toán.");
-            }
 
             var fee = classInfo.CourseLevel.Fee;
             if (fee <= 0 || fee > int.MaxValue)

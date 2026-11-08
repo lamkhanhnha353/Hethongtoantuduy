@@ -120,6 +120,16 @@ class QuestionBankService {
     const res = await this.api.delete(`/questions/${id}`);
     return res.data;
   }
+
+  /**
+   * Xóa hàng loạt câu hỏi khỏi ngân hàng
+   * POST /api/question-banks/questions/bulk-delete
+   * @param {number[]} ids
+   */
+  async bulkDeleteQuestions(ids) {
+    const res = await this.api.post("/questions/bulk-delete", { ids });
+    return res.data;
+  }
 }
 
 export default new QuestionBankService();

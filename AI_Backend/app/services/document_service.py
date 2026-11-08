@@ -190,7 +190,7 @@ def _start_ingest(
         document.status = STATUS_PROCESSING
         document.chunk_count = 0
         document.error_message = None
-        document.embedding_model = settings.EMBEDDING_MODEL
+        document.embedding_model = settings.embedding_model
         document.updated_at = _now()
         db.commit()
     finally:
@@ -509,7 +509,7 @@ def backfill_documents_from_chroma(
                 source_type="chroma",
                 status=STATUS_READY,
                 chunk_count=int(entry.get("chunk_count", 0)),
-                embedding_model=settings.EMBEDDING_MODEL,
+                embedding_model=settings.embedding_model,
                 created_by=created_by,
                 created_at=now,
                 updated_at=now,

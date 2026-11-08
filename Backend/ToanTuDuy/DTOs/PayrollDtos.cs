@@ -64,5 +64,15 @@ public sealed record CreateAdjustmentRequestDto
     public DateOnly AppliedDate { get; init; }
 }
 
+/// <summary>Request to set a teacher's salary rate for each eligible session.</summary>
+public sealed record UpdateTeacherBaseRateRequestDto
+{
+    [Range(typeof(decimal), "0", "9999999999999999.99")]
+    public decimal BaseRatePerSession { get; init; }
+}
+
+/// <summary>Configured salary rate for one teacher.</summary>
+public sealed record TeacherBaseRateDto(int TeacherId, decimal BaseRatePerSession);
+
 /// <summary>Number of payslip emails accepted or skipped by the background queue.</summary>
 public sealed record QueueBatchEmailsResponse(int QueuedCount, int SkippedCount);

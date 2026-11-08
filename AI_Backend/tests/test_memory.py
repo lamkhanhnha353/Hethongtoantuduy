@@ -5,6 +5,29 @@ from app.config import settings
 from app.services import memory
 
 
+class FakeSummaryProvider:
+    def __init__(
+        self,
+        name: str,
+        content: str | None = None,
+        error: Exception | None = None,
+    ):
+        self.name = name
+        self.content = content
+        self.error = error
+        self.closed = False
+        self.calls: list[dict] = []
+
+    async def chat(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        return self.content or ""
+
+    async def close(self) -> None:
+        self.closed = True
+
+
 class MemoryTests(unittest.IsolatedAsyncioTestCase):
     def test_estimate_tokens(self):
         self.assertEqual(memory.estimate_tokens(""), 0)
@@ -136,6 +159,39 @@ class MemoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(context.summarized)
         self.assertEqual(context.messages[-2]["content"], "câu trả lời cũ")
         self.assertEqual(context.messages[-1]["content"], "câu hỏi mới")
+
+    async def test_summarize_messages_falls_back_to_ollama(self):
+        primary = FakeSummaryProvider(
+            "groq",
+            error=RuntimeError("groq down"),
+        )
+        fallback = FakeSummaryProvider(
+            "ollama",
+            content="- Tóm tắt lịch sử",
+        )
+
+        with (
+            patch.object(
+                memory,
+                "create_primary_provider",
+                return_value=primary,
+            ),
+            patch.object(
+                memory,
+                "create_fallback_provider",
+                return_value=fallback,
+            ),
+        ):
+            summary = await memory.summarize_messages(
+                None,
+                [{"role": "user", "content": "xin chào"}],
+            )
+
+        self.assertEqual(summary, "- Tóm tắt lịch sử")
+        self.assertTrue(primary.closed)
+        self.assertTrue(fallback.closed)
+        self.assertGreaterEqual(len(primary.calls), 1)
+        self.assertGreaterEqual(len(fallback.calls), 1)
 
 
 if __name__ == "__main__":

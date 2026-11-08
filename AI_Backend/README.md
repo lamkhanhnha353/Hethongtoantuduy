@@ -1,11 +1,13 @@
 # AI_Backend — RAG Chatbot Service
 
-FastAPI service độc lập cho chatbot RAG của Hệ thống Toán Tư Duy. Giai đoạn M1 gồm khung service, xác thực JWT dùng chung với Backend .NET, SQLite và health check. Giai đoạn M2 bổ sung ingest văn bản vào ChromaDB và truy vấn RAG. Giai đoạn M3 bổ sung chat streaming SSE, history do client gửi lên và nguồn trích dẫn. Giai đoạn M4 bổ sung lưu hội thoại AI, quản lý context theo token và tóm tắt lịch sử. Giai đoạn M5 bổ sung prefix embedding Nomic, script reindex và đánh giá chất lượng retrieval. Giai đoạn M6 bổ sung registry tài liệu trong SQLite, upload `.txt/.md/.docx/.pdf` và API quản lý tri thức cho Admin.
+FastAPI service độc lập cho chatbot RAG của Hệ thống Toán Tư Duy. Giai đoạn M1 gồm khung service, xác thực JWT dùng chung với Backend .NET, SQLite và health check. Giai đoạn M2 bổ sung ingest văn bản vào ChromaDB và truy vấn RAG. Giai đoạn M3 bổ sung chat streaming SSE, history do client gửi lên và nguồn trích dẫn. Giai đoạn M4 bổ sung lưu hội thoại AI, quản lý context theo token và tóm tắt lịch sử. Giai đoạn M5 bổ sung prefix embedding Nomic, script reindex và đánh giá chất lượng retrieval. Giai đoạn M6 bổ sung registry tài liệu trong SQLite, upload `.txt/.md/.docx/.pdf` và API quản lý tri thức cho Admin. Giai đoạn M7 bổ sung provider LLM ngoài (Groq/OpenAI-compatible) với fallback Ollama. Giai đoạn M8 bổ sung provider embedding Nomic API cho RAG.
 
 ## Yêu cầu
 
 - Python 3.10+
-- Ollama (cho M2-M5): `ollama pull qwen2.5:3b-instruct` và `ollama pull nomic-embed-text`
+- Groq API key nếu dùng `LLM_PROVIDER=groq`
+- Nomic API key nếu dùng `EMBEDDING_PROVIDER=nomic`
+- Ollama chỉ cần khi dùng `EMBEDDING_PROVIDER=ollama` hoặc bật chat fallback Ollama: `ollama pull nomic-embed-text`, `ollama pull qwen2.5:3b-instruct`
 
 ## Cài đặt
 
@@ -19,6 +21,49 @@ Copy-Item .env.example .env
 ```
 
 Cập nhật `JWT_SECRET_KEY` trong `.env` trùng `Jwt:Key` của `Backend/ToanTuDuy/appsettings.json`. `JWT_ISSUER` và `JWT_AUDIENCE` phải trùng cấu hình .NET.
+
+## Cấu hình LLM provider (Groq + fallback Ollama)
+
+`.env.example` dùng Groq cho chat/summary. Cấu hình tối thiểu:
+
+```dotenv
+LLM_PROVIDER=groq
+LLM_BASE_URL=https://api.groq.com/openai/v1
+LLM_API_KEY=gsk_...
+LLM_CHAT_MODEL=openai/gpt-oss-120b
+LLM_SUMMARY_MODEL=openai/gpt-oss-20b
+LLM_FALLBACK_ENABLED=false
+
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_CHAT_MODEL=qwen2.5:3b-instruct
+OLLAMA_SUMMARY_MODEL=qwen2.5:3b-instruct
+OLLAMA_CHAT_KEEP_ALIVE=5m
+```
+
+- Khi `LLM_FALLBACK_ENABLED=true` và Groq lỗi trước delta đầu tiên, chat stream fallback sang Ollama. Nếu đã phát delta thì không fallback để tránh lặp nội dung.
+- Tóm tắt lần lượt thử Groq summary → Groq chat → Ollama summary → Ollama chat.
+- Không fallback với lỗi xác thực, request sai hoặc không đủ quyền.
+- Rollback: đặt `LLM_PROVIDER=ollama` và khởi động lại service.
+- `LLM_CHAT_MODEL`/`LLM_SUMMARY_MODEL` chỉ dùng cho provider ngoài; Ollama dùng `OLLAMA_CHAT_MODEL`/`OLLAMA_SUMMARY_MODEL`.
+
+## Cấu hình embedding provider (Nomic API)
+
+Groq không cung cấp embedding model, nên RAG dùng Nomic API:
+
+```dotenv
+EMBEDDING_PROVIDER=nomic
+NOMIC_API_KEY=nk_...
+NOMIC_BASE_URL=https://api-atlas.nomic.ai/v1
+NOMIC_EMBEDDING_MODEL=nomic-embed-text-v1.5
+NOMIC_EMBEDDING_DIMENSIONS=768
+NOMIC_TIMEOUT_SECONDS=30
+NOMIC_MAX_RETRIES=2
+```
+
+- Nomic API dùng `task_type=search_document` khi ingest và `search_query` khi truy vấn; không dùng prefix.
+- Có thể quay lại Ollama bằng `EMBEDDING_PROVIDER=ollama` và `EMBEDDING_MODEL=nomic-embed-text`.
+- Sau khi đổi provider/model embedding phải reindex toàn bộ collection (xem mục Chất lượng RAG).
+- Không cần reindex khi chỉ đổi provider chat.
 
 ## Chạy service
 
@@ -94,14 +139,14 @@ Invoke-RestMethod `
 
 ## Chất lượng RAG
 
-`nomic-embed-text` dùng task prefix khác nhau cho tài liệu và câu hỏi:
+Với Nomic API, service gửi `task_type=search_document` khi ingest và `task_type=search_query` khi truy vấn. Với Ollama `nomic-embed-text`, service dùng prefix:
 
 ```dotenv
 EMBEDDING_QUERY_PREFIX=search_query:
 EMBEDDING_DOCUMENT_PREFIX=search_document:
 ```
 
-Khi ingest, nội dung chunk được embed với prefix tài liệu; khi truy vấn, câu hỏi được embed với prefix truy vấn. Nếu đổi `EMBEDDING_MODEL` hoặc prefix, phải reindex toàn bộ collection:
+Nếu đổi `EMBEDDING_PROVIDER`, `NOMIC_EMBEDDING_MODEL`, `EMBEDDING_MODEL` hoặc prefix, phải reindex toàn bộ collection:
 
 ```powershell
 python scripts\reindex_embeddings.py
@@ -231,7 +276,7 @@ Backend ghi log audit vào bảng `ai_chat_logs` (best-effort) và lưu hội th
 - Backend ước lượng token theo ký tự, cấu hình bằng `TOKEN_ESTIMATE_CHARS_PER_TOKEN` (mặc định `3.0`).
 - Luôn cố giữ 10 cặp `user + assistant` gần nhất (`RECENT_TURNS_TO_KEEP=10`).
 - Nếu còn ngân sách token, các lượt cũ chưa tóm tắt vẫn được đưa vào context.
-- Khi tổng context vượt `CONTEXT_TOKEN_BUDGET` (mặc định `6000`), các lượt cũ hơn sẽ được tóm tắt bằng `SUMMARY_MODEL` (mặc định `qwen2.5:3b-instruct`).
+- Khi tổng context vượt `CONTEXT_TOKEN_BUDGET` (mặc định `6000`), các lượt cũ hơn sẽ được tóm tắt bằng `LLM_SUMMARY_MODEL` khi dùng provider ngoài hoặc `OLLAMA_SUMMARY_MODEL` khi dùng Ollama.
 - Tóm tắt được lưu vào `ai_conversations.summary` và mốc `summary_until_message_id`, nên không phải tóm tắt lại từ đầu.
 - Nếu tóm tắt lỗi, backend fallback sang cắt bớt history để vẫn trả lời được.
 - Nếu vẫn vượt ngân sách, backend giảm số lượt gần nhất nhưng không thấp hơn `MIN_RECENT_TURNS`, sau đó cắt bớt nội dung message dài.
@@ -245,7 +290,7 @@ Lấy access token bằng API đăng nhập của Backend .NET, sau đó:
 curl http://localhost:8001/api/ai/health -H "Authorization: Bearer <access_token>"
 ```
 
-Kết quả mong đợi: `{"status":"ok","ollama":"ok","chroma":"ok","sqlite":"ok",...}`. Nếu chưa cài Ollama, `ollama` sẽ là `error` và `status` là `degraded`.
+Kết quả mong đợi khi dùng Groq + Nomic: `{"status":"ok","llm":"ok","llm_provider":"groq","embedding":"ok","embedding_provider":"nomic","ollama":"not_used","chroma":"ok","sqlite":"ok",...}`. `llm` kiểm tra provider chat đang cấu hình; `embedding` kiểm tra provider embedding. `ollama` chỉ được kiểm tra khi thực sự cần (embedding Ollama hoặc bật fallback chat). Nếu một trong các thành phần bắt buộc lỗi, `status` là `degraded`.
 
 ## Cấu trúc
 
@@ -254,14 +299,14 @@ AI_Backend/
 ├── app/
 │   ├── main.py          # FastAPI app, CORS, lifespan, DB init
 │   ├── config.py        # Pydantic Settings từ .env
-│   ├── api/health.py    # Health check Ollama/Chroma/SQLite
+│   ├── api/health.py    # Health check LLM/embedding/Ollama/Chroma/SQLite
 │   ├── api/rag.py       # API ingest tài liệu (Admin)
 │   ├── api/documents.py # API quản lý tài liệu tri thức (Admin)
 │   ├── api/chat.py      # API chat streaming SSE
 │   ├── api/conversations.py # API quản lý hội thoại AI
 │   ├── api/deps.py      # Dependency xác thực/role dùng chung
 │   ├── core/security.py # Verify JWT .NET (HS256)
-│   ├── services/        # RAG, document, chat, conversation, memory
+│   ├── services/        # RAG, document, chat, conversation, memory, LLM/embedding provider
 │   └── db/              # SQLite engine, session, models
 ├── storage/             # Tự tạo: chroma/, documents/, app.db
 ├── check_chroma.py      # Script kiểm tra dữ liệu Chroma

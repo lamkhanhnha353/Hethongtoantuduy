@@ -156,6 +156,7 @@ builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IAdminReportService, AdminReportService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<IPayslipMailService, PayslipMailService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -198,6 +199,7 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 builder.Services.AddSingleton<IChatAttachmentStorage, CloudinaryChatAttachmentStorage>();
+builder.Services.AddSingleton<ICourseMediaStorage, CloudinaryCourseMediaStorage>();
 
 
 var app = builder.Build();
