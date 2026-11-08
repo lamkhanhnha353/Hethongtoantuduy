@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+venv/
+storage/
+chroma_data/
+app.db
+.pytest_cache/
+*.log
+tests
+documents
