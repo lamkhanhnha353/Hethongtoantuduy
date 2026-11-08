@@ -78,15 +78,11 @@ docker compose --profile seed run --rm seed
 
 ```powershell
 cd Backend\ToanTuDuy
+
+# Áp dụng migration
 dotnet ef database update
-```
 
-Backend dùng `ConnectionStrings:DefaultConnection`; nếu không cấu hình, sẽ thử kết nối `ToanTuDuyDb` trên LocalDB. Có thể đặt cấu hình bằng biến môi trường `ConnectionStrings__DefaultConnection`.
-
-### 2. Backend API
-
-```powershell
-cd Backend\ToanTuDuy
+# Chạy API
 dotnet run
 ```
 
@@ -95,10 +91,7 @@ Theo `launchSettings.json`, HTTP chạy tại `http://localhost:5114`, HTTPS t�
 ### 3. Web Frontend
 
 ```powershell
-cd Web_Frontend
-npm install
-npm run dev
-npm run build
+sqlcmd -S . -E -C -d ToanTuDuyDb
 ```
 
 Vite chạy tại `http://localhost:5173`. Mặc định `/api` được proxy tới `http://localhost:5114`; `/api/parser` được proxy tới `http://localhost:8000`. Có thể thay địa chỉ backend bằng biến `VITE_API_BASE_URL`.
@@ -106,17 +99,15 @@ Vite chạy tại `http://localhost:5173`. Mặc định `/api` được proxy t
 ### 4. Import Worker
 
 ```powershell
-cd import-worker
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-uvicorn app.main:app --reload --port 8000
+dotnet ef migrations add TenMigrationMoi
+dotnet ef database update
 ```
 
-Chọn `LLM_PROVIDER=gemini` hoặc `LLM_PROVIDER=openai` và cấu hình API key tương ứng trong file `.env`. Có thể chọn `LLM_PROVIDER=mock` để chạy luồng kiểm thử không dùng dịch vụ LLM bên ngoài. API docs có tại `http://localhost:8000/docs`; health check tại `http://localhost:8000/health`.
+Cài công cụ EF Core lần đầu: `dotnet tool install --global dotnet-ef --version 10.0.12`.
 
-### 5. Mobile App
+---
+
+## Mobile App
 
 ```powershell
 cd Mobile_App

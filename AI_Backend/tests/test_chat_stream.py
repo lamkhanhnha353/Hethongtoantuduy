@@ -11,34 +11,44 @@ from app.services import chat_service, memory
 from app.services import conversation_service as service
 
 
-class FakeChatStream:
-    def __init__(self):
-        self._chunks = iter(
-            [
-                {"message": {"content": "Xin "}},
-                {"message": {"content": "chào"}},
-            ]
-        )
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        try:
-            return next(self._chunks)
-        except StopIteration as exc:
-            raise StopAsyncIteration from exc
-
-
-class FakeOllamaClient:
-    def __init__(self, host=None):
-        self.host = host
+class FakeLLMProvider:
+    def __init__(
+        self,
+        chunks: list[str] | None = None,
+        error: Exception | None = None,
+        name: str = "fake",
+    ):
+        self.chunks = chunks if chunks is not None else ["Xin ", "chào"]
+        self.error = error
+        self.name = name
+        self.closed = False
+        self.calls: list[dict] = []
 
     async def chat(self, **kwargs):
-        return FakeChatStream()
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        return "".join(self.chunks)
 
-    async def close(self):
-        return None
+    async def chat_stream(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        for chunk in self.chunks:
+            yield chunk
+
+    async def health(self) -> bool:
+        return True
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class FailingAfterDeltaProvider(FakeLLMProvider):
+    async def chat_stream(self, **kwargs):
+        self.calls.append(kwargs)
+        yield "Phần"
+        raise RuntimeError("stream broke")
 
 
 class ChatStreamTests(unittest.IsolatedAsyncioTestCase):
@@ -91,9 +101,14 @@ class ChatStreamTests(unittest.IsolatedAsyncioTestCase):
                 return_value=sources,
             ),
             patch.object(
-                chat_service.ollama,
-                "AsyncClient",
-                FakeOllamaClient,
+                chat_service,
+                "create_primary_provider",
+                return_value=FakeLLMProvider(name="groq"),
+            ),
+            patch.object(
+                chat_service,
+                "create_fallback_provider",
+                return_value=None,
             ),
             patch.object(chat_service, "log_chat", MagicMock()),
         ):
@@ -148,9 +163,14 @@ class ChatStreamTests(unittest.IsolatedAsyncioTestCase):
                 return_value=[],
             ),
             patch.object(
-                chat_service.ollama,
-                "AsyncClient",
-                FakeOllamaClient,
+                chat_service,
+                "create_primary_provider",
+                return_value=FakeLLMProvider(name="groq"),
+            ),
+            patch.object(
+                chat_service,
+                "create_fallback_provider",
+                return_value=None,
             ),
             patch.object(chat_service, "log_chat", MagicMock()),
         ):
@@ -178,6 +198,138 @@ class ChatStreamTests(unittest.IsolatedAsyncioTestCase):
 
         done = [event for event in events if event["event"] == "done"][0]
         self.assertEqual(done["data"]["content"], "Xin chào")
+
+    async def test_stream_falls_back_before_first_delta(self):
+        primary = FakeLLMProvider(
+            error=RuntimeError("groq down"),
+            name="groq",
+        )
+        fallback = FakeLLMProvider(chunks=["Dự phòng"], name="ollama")
+
+        with (
+            patch.object(
+                chat_service.rag_service,
+                "query_rag_with_sources",
+                return_value=[],
+            ),
+            patch.object(
+                chat_service,
+                "create_primary_provider",
+                return_value=primary,
+            ),
+            patch.object(
+                chat_service,
+                "create_fallback_provider",
+                return_value=fallback,
+            ),
+            patch.object(chat_service, "log_chat", MagicMock()),
+        ):
+            events = [
+                event
+                async for event in chat_service.stream_chat(
+                    prompt="Câu hỏi",
+                    history=[],
+                    account_id="acc-1",
+                )
+            ]
+
+        deltas = [
+            event["data"]["content"]
+            for event in events
+            if event["event"] == "delta"
+        ]
+        self.assertEqual("".join(deltas), "Dự phòng")
+        done = [event for event in events if event["event"] == "done"][0]
+        self.assertEqual(done["data"]["content"], "Dự phòng")
+        self.assertFalse(
+            any(event["event"] == "error" for event in events)
+        )
+        self.assertTrue(primary.closed)
+        self.assertTrue(fallback.closed)
+
+    async def test_stream_falls_back_when_primary_returns_no_content(self):
+        primary = FakeLLMProvider(chunks=[], name="groq")
+        fallback = FakeLLMProvider(chunks=["Dự phòng"], name="ollama")
+
+        with (
+            patch.object(
+                chat_service.rag_service,
+                "query_rag_with_sources",
+                return_value=[],
+            ),
+            patch.object(
+                chat_service,
+                "create_primary_provider",
+                return_value=primary,
+            ),
+            patch.object(
+                chat_service,
+                "create_fallback_provider",
+                return_value=fallback,
+            ),
+            patch.object(chat_service, "log_chat", MagicMock()),
+        ):
+            events = [
+                event
+                async for event in chat_service.stream_chat(
+                    prompt="Câu hỏi",
+                    history=[],
+                    account_id="acc-1",
+                )
+            ]
+
+        done = [event for event in events if event["event"] == "done"][0]
+        self.assertEqual(done["data"]["content"], "Dự phòng")
+        self.assertFalse(
+            any(event["event"] == "error" for event in events)
+        )
+
+    async def test_stream_does_not_fallback_after_first_delta(self):
+        primary = FailingAfterDeltaProvider(name="groq")
+        fallback = FakeLLMProvider(chunks=["không dùng"], name="ollama")
+
+        with (
+            patch.object(
+                chat_service.rag_service,
+                "query_rag_with_sources",
+                return_value=[],
+            ),
+            patch.object(
+                chat_service,
+                "create_primary_provider",
+                return_value=primary,
+            ),
+            patch.object(
+                chat_service,
+                "create_fallback_provider",
+                return_value=fallback,
+            ),
+            patch.object(chat_service, "log_chat", MagicMock()),
+        ):
+            events = [
+                event
+                async for event in chat_service.stream_chat(
+                    prompt="Câu hỏi",
+                    history=[],
+                    account_id="acc-1",
+                )
+            ]
+
+        deltas = [
+            event["data"]["content"]
+            for event in events
+            if event["event"] == "delta"
+        ]
+        self.assertEqual("".join(deltas), "Phần")
+        self.assertTrue(
+            any(event["event"] == "error" for event in events)
+        )
+        self.assertFalse(
+            any(event["event"] == "done" for event in events)
+        )
+        self.assertEqual(fallback.calls, [])
+        self.assertTrue(primary.closed)
+        self.assertTrue(fallback.closed)
 
 
 if __name__ == "__main__":

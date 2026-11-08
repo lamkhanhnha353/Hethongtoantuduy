@@ -10,10 +10,9 @@ class RAGServiceTests(unittest.TestCase):
         service = RAGService.__new__(RAGService)
         service.collection_name = "test_collection"
         service.collection = Mock()
-        service.ollama_client = Mock()
-        service.ollama_client.embeddings.return_value = {
-            "embedding": [0.1, 0.2]
-        }
+        service._embedding_provider = Mock()
+        service._embedding_provider.uses_prefixes = True
+        service._embedding_provider.embed.return_value = [0.1, 0.2]
         return service
 
     def test_embedding_prefix_is_normalized(self):
@@ -30,17 +29,33 @@ class RAGServiceTests(unittest.TestCase):
         service = self._service()
 
         self.assertEqual(service._embed_query("học phí"), [0.1, 0.2])
-        service.ollama_client.embeddings.assert_called_once_with(
-            model=settings.EMBEDDING_MODEL,
-            prompt="search_query: học phí",
+        service._embedding_provider.embed.assert_called_once_with(
+            "search_query: học phí",
+            task_type="search_query",
         )
 
-        service.ollama_client.embeddings.reset_mock()
+        service._embedding_provider.embed.reset_mock()
         self.assertEqual(service._embed_document("học phí"), [0.1, 0.2])
-        service.ollama_client.embeddings.assert_called_once_with(
-            model=settings.EMBEDDING_MODEL,
-            prompt="search_document: học phí",
+        service._embedding_provider.embed.assert_called_once_with(
+            "search_document: học phí",
+            task_type="search_document",
         )
+
+    def test_nomic_embeddings_do_not_add_prefixes(self):
+        service = self._service()
+        service._embedding_provider.uses_prefixes = False
+
+        self.assertEqual(service._embed_query("học phí"), [0.1, 0.2])
+        service._embedding_provider.embed.assert_called_once_with(
+            "học phí",
+            task_type="search_query",
+        )
+
+    def test_embed_rejects_empty_text(self):
+        service = self._service()
+
+        with self.assertRaises(ValueError):
+            service._embed_query("   ")
 
     def test_ingest_embeds_document_prefix_and_keeps_raw_chunks(self):
         service = self._service()
@@ -76,7 +91,7 @@ class RAGServiceTests(unittest.TestCase):
         result = service.reindex_embeddings()
 
         self.assertEqual(result["reindexed_chunks"], 2)
-        self.assertEqual(result["embedding_model"], settings.EMBEDDING_MODEL)
+        self.assertEqual(result["embedding_model"], settings.embedding_model)
         service.collection.update.assert_called_once_with(
             ids=["chunk-1", "chunk-2"],
             embeddings=[[1.0], [2.0]],

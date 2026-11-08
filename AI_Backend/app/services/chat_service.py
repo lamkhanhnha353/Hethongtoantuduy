@@ -1,9 +1,8 @@
 import asyncio
 import logging
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator
 from typing import Any
 
-import ollama
 from fastapi.concurrency import run_in_threadpool
 
 from app.config import settings
@@ -11,6 +10,11 @@ from app.db.database import SessionLocal
 from app.db.models import AIChatLog
 from app.services import conversation_service, memory
 from app.services.conversation_service import ConversationNotFoundError
+from app.services.llm_provider import (
+    create_fallback_provider,
+    create_primary_provider,
+    should_fallback,
+)
 from app.services.rag_service import rag_service
 
 logger = logging.getLogger(__name__)
@@ -55,19 +59,6 @@ def log_chat(account_id: str, prompt: str, response: str) -> None:
         logger.exception("Không thể ghi AIChatLog")
     finally:
         db.close()
-
-
-def _chunk_content(chunk: Any) -> str:
-    if isinstance(chunk, Mapping):
-        message = chunk.get("message") or {}
-        if isinstance(message, Mapping):
-            return str(message.get("content") or "")
-        return ""
-
-    message = getattr(chunk, "message", None)
-    if message is None:
-        return ""
-    return str(getattr(message, "content", "") or "")
 
 
 def _source_payload(source: RAGSource) -> dict[str, Any]:
@@ -216,37 +207,64 @@ async def stream_chat(
         )
         return
 
-    client = ollama.AsyncClient(host=settings.OLLAMA_BASE_URL)
+    try:
+        primary = create_primary_provider()
+        fallback = create_fallback_provider()
+    except Exception:
+        logger.exception("Cấu hình LLM provider không hợp lệ")
+        yield _error_event(
+            "Cấu hình mô hình AI chưa đúng. Vui lòng kiểm tra LLM_PROVIDER/LLM_API_KEY.",
+            conversation_id,
+        )
+        return
+
     answer_parts: list[str] = []
     assistant_message_id: int | None = None
     failed = False
     cancelled = False
+    first_delta = False
 
     try:
-        stream = await client.chat(
-            model=settings.CHAT_MODEL,
-            messages=prepared.messages,
-            stream=True,
-            keep_alive=settings.CHAT_KEEP_ALIVE,
-            options={
-                "temperature": settings.CHAT_TEMPERATURE,
-                "num_predict": settings.CHAT_NUM_PREDICT,
-            },
-        )
-
-        async for chunk in stream:
-            content = _chunk_content(chunk)
-            if not content:
-                continue
-            answer_parts.append(content)
-            yield {"event": "delta", "data": {"content": content}}
+        try:
+            async for content in primary.chat_stream(
+                messages=prepared.messages,
+                model=settings.chat_model,
+                temperature=settings.CHAT_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
+            ):
+                first_delta = True
+                answer_parts.append(content)
+                yield {"event": "delta", "data": {"content": content}}
+            if not first_delta:
+                raise RuntimeError("Mô hình AI trả về nội dung rỗng")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            if first_delta or fallback is None or not should_fallback(exc):
+                raise
+            logger.warning(
+                "Provider %s lỗi trước khi có delta, fallback sang Ollama: %s",
+                primary.name,
+                exc,
+            )
+            async for content in fallback.chat_stream(
+                messages=prepared.messages,
+                model=settings.OLLAMA_CHAT_MODEL,
+                temperature=settings.CHAT_TEMPERATURE,
+                max_tokens=settings.CHAT_NUM_PREDICT,
+            ):
+                first_delta = True
+                answer_parts.append(content)
+                yield {"event": "delta", "data": {"content": content}}
+            if not first_delta:
+                raise RuntimeError("Mô hình AI trả về nội dung rỗng")
     except asyncio.CancelledError:
         cancelled = True
         logger.info("Client đã ngắt kết nối chat stream")
         raise
     except Exception:
         failed = True
-        logger.exception("Lỗi khi stream câu trả lời từ Ollama")
+        logger.exception("Lỗi khi stream câu trả lời từ LLM provider")
         yield _error_event(
             "Không thể kết nối tới mô hình AI. Vui lòng thử lại.",
             conversation_id,
@@ -283,12 +301,15 @@ async def stream_chat(
                 except Exception:
                     logger.exception("Không thể ghi log chat")
 
-        try:
-            await client.close()
-        except asyncio.CancelledError:
-            pass
-        except Exception:
-            logger.exception("Không thể đóng Ollama AsyncClient")
+        for provider in (primary, fallback):
+            if provider is None:
+                continue
+            try:
+                await provider.close()
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                logger.exception("Không thể đóng LLM provider %s", provider.name)
 
     if not failed:
         done_data: dict[str, Any] = {

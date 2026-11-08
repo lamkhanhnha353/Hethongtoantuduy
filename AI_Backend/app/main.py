@@ -1,7 +1,9 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -14,14 +16,24 @@ from app.config import settings
 from app.core.security import verify_jwt_token
 from app.db.database import init_db
 from app.services.chat_service import build_messages
+from app.services.llm_provider import (
+    create_fallback_provider,
+    create_primary_provider,
+    should_fallback,
+)
 from app.services.rag_service import rag_service
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Path(settings.DOCUMENTS_DIR).mkdir(parents=True, exist_ok=True)
     Path(settings.CHROMA_PERSIST_DIRECTORY).mkdir(parents=True, exist_ok=True)
     init_db()
-    yield
+    try:
+        yield
+    finally:
+        rag_service.close()
 
 
 app = FastAPI(
@@ -54,34 +66,69 @@ def root():
         "service": settings.APP_NAME,
         "status": "running",
         "docs_url": "/docs",
-        "chat_model": settings.CHAT_MODEL,
-        "embedding_model": settings.EMBEDDING_MODEL,
+        "llm_provider": settings.llm_provider_name,
+        "chat_model": settings.chat_model,
+        "embedding_provider": settings.embedding_provider_name,
+        "embedding_model": settings.embedding_model,
     }
 
 
 @app.post("/api/chat")
-def chat_with_ai(request: ChatRequest, user: dict = Depends(verify_jwt_token)):
+async def chat_with_ai(request: ChatRequest, user: dict = Depends(verify_jwt_token)):
+    primary = None
+    fallback = None
     try:
-        sources = rag_service.query_rag_with_sources(request.prompt)
+        sources = await run_in_threadpool(
+            rag_service.query_rag_with_sources,
+            request.prompt,
+        )
         messages = build_messages(request.prompt, [], sources)
 
-        response = rag_service.ollama_client.chat(
-            model=settings.CHAT_MODEL,
-            messages=messages,
-            keep_alive=settings.CHAT_KEEP_ALIVE,
-            options={
-                "temperature": settings.CHAT_TEMPERATURE,
-                "num_predict": settings.CHAT_NUM_PREDICT,
-            },
-        )
+        primary = create_primary_provider()
+        fallback = create_fallback_provider()
+
+        try:
+            answer = await primary.chat(
+                messages=messages,
+                model=settings.chat_model,
+                temperature=settings.CHAT_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
+            )
+            if not answer:
+                raise RuntimeError("Mô hình AI trả về nội dung rỗng")
+        except Exception as exc:
+            if fallback is None or not should_fallback(exc):
+                raise
+            logger.warning(
+                "Provider %s lỗi, fallback sang Ollama: %s",
+                primary.name,
+                exc,
+            )
+            answer = await fallback.chat(
+                messages=messages,
+                model=settings.OLLAMA_CHAT_MODEL,
+                temperature=settings.CHAT_TEMPERATURE,
+                max_tokens=settings.CHAT_NUM_PREDICT,
+            )
 
         return {
             "success": True,
-            "answer": response["message"]["content"],
+            "answer": answer,
             "source_chunks_used": len(sources),
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        for provider in (primary, fallback):
+            if provider is None:
+                continue
+            try:
+                await provider.close()
+            except Exception:
+                logger.exception(
+                    "Không thể đóng LLM provider %s",
+                    provider.name,
+                )
 
 
 if __name__ == "__main__":

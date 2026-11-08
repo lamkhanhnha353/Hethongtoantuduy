@@ -23,8 +23,32 @@ class Settings(BaseSettings):
     JWT_ISSUER: str = "ToanTuDuy"
     JWT_AUDIENCE: str = "ToanTuDuyClient"
 
+    LLM_PROVIDER: str = "ollama"
+    LLM_BASE_URL: str = ""
+    LLM_API_KEY: str = ""
+    LLM_CHAT_MODEL: str = ""
+    LLM_SUMMARY_MODEL: str = ""
+    LLM_TIMEOUT_SECONDS: float = 60.0
+    LLM_MAX_RETRIES: int = 2
+    LLM_MAX_TOKENS: int = 512
+    LLM_FALLBACK_ENABLED: bool = True
+
     OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_CHAT_MODEL: str = "qwen2.5:3b-instruct"
+    OLLAMA_SUMMARY_MODEL: str = "qwen2.5:3b-instruct"
+    OLLAMA_CHAT_KEEP_ALIVE: str = "5m"
+
+    EMBEDDING_PROVIDER: str = "ollama"
+    NOMIC_API_KEY: str = ""
+    NOMIC_BASE_URL: str = "https://api-atlas.nomic.ai/v1"
+    NOMIC_EMBEDDING_MODEL: str = "nomic-embed-text-v1.5"
+    NOMIC_EMBEDDING_DIMENSIONS: int = 768
+    NOMIC_TIMEOUT_SECONDS: float = 30.0
+    NOMIC_MAX_RETRIES: int = 2
+
+    # Legacy aliases, dùng khi chưa cấu hình LLM_CHAT_MODEL/LLM_SUMMARY_MODEL.
     CHAT_MODEL: str = "qwen2.5:3b-instruct"
+    SUMMARY_MODEL: str = "qwen2.5:3b-instruct"
     EMBEDDING_MODEL: str = "nomic-embed-text"
     EMBEDDING_QUERY_PREFIX: str = "search_query:"
     EMBEDDING_DOCUMENT_PREFIX: str = "search_document:"
@@ -44,7 +68,6 @@ class Settings(BaseSettings):
     CHAT_MAX_HISTORY_MESSAGES: int = 20
     CHAT_MAX_HISTORY_MESSAGE_CHARS: int = 4000
     CHAT_MAX_HISTORY_CHARS: int = 12000
-    CHAT_KEEP_ALIVE: str = "30m"
     CHAT_NUM_PREDICT: int = 512
     CHAT_TEMPERATURE: float = 0.3
 
@@ -53,7 +76,6 @@ class Settings(BaseSettings):
     MIN_RECENT_TURNS: int = 2
     TOKEN_ESTIMATE_CHARS_PER_TOKEN: float = 3.0
     MESSAGE_TOKEN_OVERHEAD: int = 4
-    SUMMARY_MODEL: str = "qwen2.5:3b-instruct"
     SUMMARY_MAX_TOKENS: int = 400
 
     @field_validator(
@@ -63,12 +85,28 @@ class Settings(BaseSettings):
         "MESSAGE_TOKEN_OVERHEAD",
         "SUMMARY_MAX_TOKENS",
         "MAX_DOCUMENT_FILE_SIZE_MB",
+        "LLM_MAX_TOKENS",
+        "NOMIC_EMBEDDING_DIMENSIONS",
         mode="after",
     )
     @classmethod
     def validate_positive_int(cls, value: int) -> int:
         if value < 1:
             raise ValueError("Giá trị cấu hình phải lớn hơn 0")
+        return value
+
+    @field_validator("LLM_TIMEOUT_SECONDS", "NOMIC_TIMEOUT_SECONDS", mode="after")
+    @classmethod
+    def validate_timeout(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("Timeout phải lớn hơn 0")
+        return value
+
+    @field_validator("LLM_MAX_RETRIES", "NOMIC_MAX_RETRIES", mode="after")
+    @classmethod
+    def validate_max_retries(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("Số lần retry phải >= 0")
         return value
 
     @field_validator("TOKEN_ESTIMATE_CHARS_PER_TOKEN", mode="after")
@@ -106,6 +144,32 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
         return origins or ["*"]
+
+    @property
+    def llm_provider_name(self) -> str:
+        return (self.LLM_PROVIDER or "ollama").strip().lower()
+
+    @property
+    def chat_model(self) -> str:
+        if self.llm_provider_name in {"ollama", "local"}:
+            return self.OLLAMA_CHAT_MODEL or self.CHAT_MODEL
+        return self.LLM_CHAT_MODEL
+
+    @property
+    def summary_model(self) -> str:
+        if self.llm_provider_name in {"ollama", "local"}:
+            return self.OLLAMA_SUMMARY_MODEL or self.SUMMARY_MODEL
+        return self.LLM_SUMMARY_MODEL or self.LLM_CHAT_MODEL
+
+    @property
+    def embedding_provider_name(self) -> str:
+        return (self.EMBEDDING_PROVIDER or "ollama").strip().lower()
+
+    @property
+    def embedding_model(self) -> str:
+        if self.embedding_provider_name == "nomic":
+            return self.NOMIC_EMBEDDING_MODEL
+        return self.EMBEDDING_MODEL
 
 
 settings = Settings()
