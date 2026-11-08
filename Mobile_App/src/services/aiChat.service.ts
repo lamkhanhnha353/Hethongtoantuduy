@@ -269,12 +269,17 @@ export async function streamAIChat({ prompt, conversationId, signal, onEvent, }:
         break;
       }
 
-      buffer += decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
+      buffer += chunk;
       buffer = consumeSSEBlocks(buffer, onEvent);
     }
 
     buffer += decoder.decode();
-    emitSSEBlock(buffer, onEvent);
+    // Xử lý tất cả các block còn lại trong buffer (không chỉ block đầu tiên)
+    buffer = consumeSSEBlocks(buffer, onEvent);
+    if (buffer.trim()) {
+      emitSSEBlock(buffer, onEvent);
+    }
   } finally {
     reader.releaseLock();
   }

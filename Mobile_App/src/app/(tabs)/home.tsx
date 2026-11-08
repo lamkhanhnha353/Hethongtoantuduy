@@ -156,6 +156,27 @@ export default function ScreenHome() {
           </View>
         </View>
 
+        {/* TRỢ LÝ AI */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          className="mb-4 flex-row items-center overflow-hidden rounded-2xl bg-indigo-600 px-4 py-3.5"
+          onPress={() => router.push('/chat/ai')}
+        >
+          <View className="absolute -right-4 -top-6 h-24 w-24 rounded-full bg-white/10" />
+          <View className="mr-3 h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
+            <Feather name="cpu" size={22} color="white" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm font-bold text-white">Trợ lý AI Toán Tư Duy</Text>
+            <Text className="mt-0.5 text-[11px] text-indigo-100" numberOfLines={1}>
+              Hỏi nhanh về khóa học, lịch học và chính sách
+            </Text>
+          </View>
+          <View className="ml-2 rounded-full bg-white/20 px-2.5 py-1">
+            <Text className="text-[10px] font-bold text-white">Hỏi ngay</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* BÀI TẬP CẦN LÀM */}
         <View className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm flex-row items-center justify-between mb-4">
           <View className="flex-row items-center gap-3">
