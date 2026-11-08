@@ -39,9 +39,9 @@ namespace ToanTuDuy.Services
                 CourseId = c.CourseLevel != null ? c.CourseLevel.CourseId : null,
                 CourseName = c.CourseLevel?.Course != null ? c.CourseLevel.Course.Name : null,
 
-                // Đếm số lượng học sinh ACTIVE từ danh sách ClassStudents
-                // Đếm số lượng học sinh đã thanh toán (ACTIVE) và đang giữ chỗ (PENDING)
-                ActiveStudentsCount = c.ClassStudents != null ? c.ClassStudents.Count(cs => cs.Status == "ACTIVE" || cs.Status == "PENDING") : 0
+                ActiveStudentsCount = c.ClassStudents != null
+                    ? c.ClassStudents.Count(cs => cs.Status == "ACTIVE")
+                    : 0
             };
         }
 
@@ -192,7 +192,7 @@ namespace ToanTuDuy.Services
             }
 
             // Kiểm tra sĩ số lớp
-            var currentCount = classItem.ClassStudents.Count(cs => cs.Status == "ACTIVE" || cs.Status == "PENDING");
+            var currentCount = classItem.ClassStudents.Count(cs => cs.Status == "ACTIVE");
             if (currentCount >= classItem.MaxCapacity)
             {
                 throw new Exception($"Lớp học đã đạt sĩ số tối đa ({classItem.MaxCapacity} học viên).");

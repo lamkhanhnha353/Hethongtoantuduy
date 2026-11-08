@@ -21,9 +21,15 @@ import ClassesView from "@/views/admin/training/ClassesView.vue";
 import ClassDetailView from "@/views/admin/training/ClassDetailView.vue";
 import ScheduleView from "@/views/admin/training/ScheduleView.vue";
 
+// Admin - Reports
+// import AdminAttendanceReportView from "@/views/admin/reports/AttendanceReportView.vue";
 // Financial Management
 import InvoicesView from "@/views/admin/finance/InvoicesView.vue";
 import AdminPayrollView from "@/views/admin/finance/AdminPayrollView.vue";
+import AdminNotificationsView from "@/views/admin/communication/AdminNotificationsView.vue";
+import RevenueReportView from "@/views/admin/reports/RevenueReportView.vue";
+import StudentGrowthReportView from "@/views/admin/reports/StudentGrowthReportView.vue";
+import AttendanceReportView from "@/views/admin/reports/AttendanceReportView.vue";
 
 // Account Module
 import AdminProfileView from '@/views/admin/account/AdminProfileView.vue'
@@ -41,6 +47,7 @@ import TeacherGradingView from "@/views/teacher/TeacherGradingView.vue";
 import TeacherSubmissionDetailView from "@/views/teacher/TeacherSubmissionDetailView.vue";
 import TeacherAttendanceReportView from "@/views/teacher/TeacherAttendanceReportView.vue";
 import TeacherNoticesView from "@/views/teacher/TeacherNoticesView.vue";
+import TeacherChatView from "@/views/teacher/TeacherChatView.vue";
 import TeacherProfileView from "@/views/teacher/TeacherProfileView.vue";
 import TeacherPasswordView from "@/views/teacher/TeacherPasswordView.vue";
 import TeacherPayslipView from "@/views/teacher/TeacherPayslipView.vue";
@@ -132,6 +139,12 @@ const router = createRouter({
           name: "teacher-notices",
           component: TeacherNoticesView,
           meta: { title: "Gửi thông báo & Nhắc nhở" },
+        },
+        {
+          path: "communication/chat",
+          name: "teacher-chat",
+          component: TeacherChatView,
+          meta: { title: "Chat với phụ huynh" },
         },
 
         // Tài khoản của tôi
@@ -244,24 +257,24 @@ const router = createRouter({
         // Communication
         {
           path: "communication/notifications",
-          component: PlaceholderView,
+          component: AdminNotificationsView,
           meta: { title: "Quản lý Thông báo" },
         },
 
         // Reports
         {
           path: "reports/revenue",
-          component: PlaceholderView,
+          component: RevenueReportView,
           meta: { title: "Báo cáo Doanh thu" },
         },
         {
           path: "reports/growth",
-          component: PlaceholderView,
+          component: StudentGrowthReportView,
           meta: { title: "Tăng trưởng học viên" },
         },
         {
           path: "reports/attendance",
-          component: PlaceholderView,
+          component: AttendanceReportView,
           meta: { title: "Thống kê chuyên cần" },
         },
 

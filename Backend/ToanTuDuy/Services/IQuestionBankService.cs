@@ -20,5 +20,6 @@ namespace ToanTuDuy.Services
         Task<IEnumerable<QuestionResponse>> BulkCreateQuestionsAsync(BulkQuestionCreateRequest request);
         Task<bool> UpdateQuestionAsync(int id, QuestionRequest request);
         Task<bool> DeleteQuestionAsync(int id);
+        Task<BulkQuestionDeleteResponse> DeleteQuestionsAsync(IEnumerable<int> ids);
     }
 }

@@ -250,7 +250,8 @@
                     step="0.1"
                     min="0"
                     max="100"
-                    v-model.number="gradeForm.score"
+                    :value="gradeForm.score"
+                    @input="gradeForm.score = normalizeScore($event.target.value)"
                     placeholder="VD: 85.5"
                     class="w-full text-base font-extrabold text-orange-950 bg-amber-50/50 border border-amber-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
@@ -322,7 +323,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/vue/24/outline'
 import assignmentService from '@/services/assignment.service'
-import { calculateExamScore } from '@/utils/media.helper'
+import { calculateExamScore, normalizeScore } from '@/utils/media.helper'
 
 const route = useRoute()
 const router = useRouter()
@@ -444,10 +445,12 @@ async function loadSubmission() {
 }
 
 async function submitGrading() {
-  if (gradeForm.score === null || gradeForm.score === undefined || gradeForm.score < 0) {
+  const score = normalizeScore(gradeForm.score)
+  if (score === null) {
     notify('Vui lòng nhập điểm bài thi hợp lệ (từ 0 đến 100 điểm)!', 'error')
     return
   }
+  gradeForm.score = score
   if (!gradeForm.teacherFeedback.trim()) {
     notify('Vui lòng nhập lời nhận xét / đánh giá cho học sinh!', 'error')
     return
@@ -456,7 +459,7 @@ async function submitGrading() {
   isSubmitting.value = true
   try {
     await assignmentService.gradeStudent(assignmentId.value, studentId.value, {
-      score: gradeForm.score,
+      score,
       teacherFeedback: gradeForm.teacherFeedback.trim(),
       status: 'GRADED',
     })

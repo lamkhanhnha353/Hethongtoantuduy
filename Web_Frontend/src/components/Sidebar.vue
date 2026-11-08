@@ -291,6 +291,7 @@ const teacherMenuItems = [
     label: 'Giao tiếp & Thống kê',
     icon: ChatBubbleLeftRightIcon,
     children: [
+      { id: 't-chat', label: 'Chat với phụ huynh', icon: ChatBubbleLeftRightIcon, to: '/teacher/communication/chat' },
       { id: 't-attendance-rep', label: 'Thống kê chuyên cần', icon: ChartBarIcon, to: '/teacher/reports/attendance' },
       { id: 't-payslip', label: 'Phiếu lương cá nhân', icon: BanknotesIcon, to: '/teacher/payslip' },
       { id: 't-notices', label: 'Gửi thông báo, nhắc nhở', icon: BellAlertIcon, to: '/teacher/communication/notices' },

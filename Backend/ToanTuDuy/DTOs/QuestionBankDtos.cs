@@ -95,4 +95,20 @@ namespace ToanTuDuy.DTOs
         [Required(ErrorMessage = "Danh sách câu hỏi không được để trống")]
         public List<QuestionItemDto> Questions { get; set; } = new List<QuestionItemDto>();
     }
+
+    public class BulkQuestionDeleteRequest
+    {
+        [Required(ErrorMessage = "Danh sách ID câu hỏi không được để trống")]
+        public List<int> Ids { get; set; } = new List<int>();
+    }
+
+    public class BulkQuestionDeleteResponse
+    {
+        public int DeletedCount { get; set; }
+
+        /// <summary>Số lượt câu hỏi bị gỡ khỏi bài kiểm tra (QUESTION_ASSIGNMENT).</summary>
+        public int RemovedAssignmentCount { get; set; }
+
+        public string Message { get; set; } = string.Empty;
+    }
 }

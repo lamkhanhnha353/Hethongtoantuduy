@@ -95,6 +95,13 @@ export function calculateExamScore(earnedPoints, totalPoints) {
   return Math.min(100, Math.max(0, Math.round(rawScore * 10) / 10))
 }
 
+export function normalizeScore(value) {
+  if (value === null || value === undefined || value === '') return null
+  const score = Number(value)
+  if (!Number.isFinite(score)) return null
+  return Math.min(100, Math.max(0, Math.round(score * 10) / 10))
+}
+
 // ─── Multiple Choice Helper ──────────────────────────────────────────────────
 
 /**

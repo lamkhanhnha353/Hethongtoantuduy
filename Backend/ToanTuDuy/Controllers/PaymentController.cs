@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Net;
 using System.Threading.Tasks;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
@@ -52,34 +51,18 @@ namespace ToanTuDuy.Controllers
                 throw new InvalidOperationException("Thiếu cấu hình VnPay:MobileDeepLink.");
             }
 
-            var redirectUrl = WebUtility.HtmlEncode(
-                $"{mobileDeepLink}?code={WebUtility.UrlEncode(responseCode)}");
-            var isSuccessful = invoice != null && responseCode == "00";
-            var statusColor = isSuccessful ? "green" : invoice == null ? "red" : "orange";
-            var statusIcon = isSuccessful ? "✓" : invoice == null ? string.Empty : "⚠";
-            var statusMessage = isSuccessful
-                ? "Thanh toán thành công!"
-                : invoice == null
-                    ? "Giao dịch không hợp lệ"
-                    : "Giao dịch bị hủy hoặc lỗi";
+            var mobileResponseCode = invoice?.Status == "PAID"
+                ? "00"
+                : responseCode == "00"
+                    ? "99"
+                    : responseCode;
 
-            var htmlContent = $"""
-                <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    </head>
-                    <body style="display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;text-align:center;">
-                        <h1 style="color:{statusColor};font-size:70px;margin:0;">{statusIcon}</h1>
-                        <h2 style="color:{statusColor};">{statusMessage}</h2>
-                        <a href="{redirectUrl}" style="display:inline-block;margin-top:20px;padding:12px 24px;background-color:#4f46e5;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">
-                            QUAY LẠI ỨNG DỤNG
-                        </a>
-                    </body>
-                </html>
-                """;
+            var redirectUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
+                mobileDeepLink,
+                "code",
+                mobileResponseCode);
 
-            return Content(htmlContent, "text/html; charset=utf-8");
+            return Redirect(redirectUrl);
         }
 
         [AllowAnonymous]

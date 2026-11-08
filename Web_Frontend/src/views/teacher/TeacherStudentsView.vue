@@ -251,6 +251,16 @@
                     <PencilSquareIcon class="w-4 h-4" />
                   </router-link>
 
+                  <!-- Chat with parent -->
+                  <router-link
+                    v-if="st.parentId"
+                    :to="{ path: '/teacher/communication/chat', query: { parentId: st.parentId } }"
+                    class="p-1.5 rounded-lg text-sky-600 hover:bg-sky-50 transition-colors"
+                    title="Chat với phụ huynh"
+                  >
+                    <ChatBubbleLeftRightIcon class="w-4 h-4" />
+                  </router-link>
+
                   <!-- Phone / Contact -->
                   <a
                     v-if="st.parentPhone"
@@ -414,6 +424,7 @@ import {
   PhoneIcon,
   XMarkIcon,
   CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'

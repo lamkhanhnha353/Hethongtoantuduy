@@ -48,6 +48,20 @@ namespace ToanTuDuy.Services.Notifications
                         .Select(admin => admin.AccountId)
                         .ToListAsync(cancellationToken);
 
+                case AudienceKinds.AllParents:
+                    return await _context.ParentProfiles
+                        .AsNoTracking()
+                        .Where(parent => parent.Account.IsActive)
+                        .Select(parent => parent.AccountId)
+                        .ToListAsync(cancellationToken);
+
+                case AudienceKinds.AllTeachers:
+                    return await _context.TeacherProfiles
+                        .AsNoTracking()
+                        .Where(teacher => teacher.Account.IsActive)
+                        .Select(teacher => teacher.AccountId)
+                        .ToListAsync(cancellationToken);
+
                 case AudienceKinds.ClassTeacher:
                     if (target.Id is not int classId) return new List<int>();
                     return await _context.Classes
