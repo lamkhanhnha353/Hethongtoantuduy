@@ -29,7 +29,7 @@ export function AIMessageItem({
   }
 
   const sources = message.sources ?? [];
-  const showSources = Boolean(message.content) && sources.length > 0;
+  const showSources = false && Boolean(message.content) && sources.length > 0;
 
   return (
     <View className="mb-4 w-full max-w-[92%] self-start">
@@ -41,8 +41,8 @@ export function AIMessageItem({
         <View className="flex-1">
           <View
             className={`rounded-2xl rounded-tl-md border px-4 py-2.5 ${message.error
-                ? 'border-rose-200 bg-rose-50'
-                : 'border-slate-200 bg-white'
+              ? 'border-rose-200 bg-rose-50'
+              : 'border-slate-200 bg-white'
               }`}
           >
             {message.streaming && !message.content ? (
