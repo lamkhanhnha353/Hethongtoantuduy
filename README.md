@@ -10,10 +10,11 @@ Nền tảng quản lý trung tâm toán tư duy, phục vụ quản trị viên
 | `Backend/SeedData.sql` | Dữ liệu demo cho SQL Server; chạy sau khi đã áp dụng migration |
 | `Web_Frontend/` | SPA Vue cho quản trị viên và giáo viên |
 | `Mobile_App/` | Ứng dụng Expo cho thiết bị di động |
-| `import-worker/` | FastAPI worker trích xuất câu hỏi từ PDF/DOCX |
-| `docker-compose.yml` | SQL Server, chạy migration và seed dữ liệu qua Docker Compose |
+| `AI_Backend/` | FastAPI service cho chatbot RAG (ingest tài liệu, chat streaming) |
+| `docker-compose.yml` | Chạy toàn bộ stack bằng Docker: SQL Server, Redis, API, AI service và web |
+| `DOCKER.md` | Hướng dẫn chi tiết cấu hình và vận hành Docker |
 
-Repository hiện không có thư mục `AI_Backend/`. Chức năng chat và các tích hợp liên quan cần được kiểm tra theo cấu hình/dịch vụ thực tế trong từng môi trường.
+Hướng dẫn Docker đầy đủ nằm trong [DOCKER.md](./DOCKER.md).
 
 ## Công nghệ
 
