@@ -51,6 +51,19 @@ namespace ToanTuDuy.Services
         /// </summary>
         Task<IEnumerable<AssignmentResponse>> GetAssignmentsByStudentAsync(int studentId, int? lessonId = null);
 
+        Task<IEnumerable<StudentPracticeAssignmentDto>> GetStudentPracticeAssignmentsAsync(int accountId, int studentId);
+
+        Task<StudentPracticeAssignmentDetailDto?> GetStudentPracticeAssignmentDetailAsync(
+            int accountId,
+            int assignmentId,
+            int studentId);
+
+        Task<StudentPracticeSubmissionResponseDto?> SubmitStudentPracticeAssignmentAsync(
+            int accountId,
+            int assignmentId,
+            int studentId,
+            SubmitStudentPracticeRequest request);
+
         /// <summary>
         /// Chấm điểm và lưu nhận xét cho một học sinh.
         /// </summary>

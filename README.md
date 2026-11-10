@@ -7,6 +7,8 @@ Nền tảng quản lý trung tâm toán tư duy, phục vụ quản trị viên
 | Thư mục | Nội dung |
 | --- | --- |
 | `Backend/ToanTuDuy/` | ASP.NET Core Web API, mô hình dữ liệu, migration, xác thực và nghiệp vụ |
+| `Backend/import-worker/` | FastAPI worker trích xuất câu hỏi từ PDF/DOCX |
+| `AI_Backend/` | Dịch vụ Python cho chat AI và truy xuất tài liệu |
 | `Backend/SeedData.sql` | Dữ liệu demo cho SQL Server; chạy sau khi đã áp dụng migration |
 | `Web_Frontend/` | SPA Vue cho quản trị viên và giáo viên |
 | `Mobile_App/` | Ứng dụng Expo cho thiết bị di động |
@@ -15,6 +17,9 @@ Nền tảng quản lý trung tâm toán tư duy, phục vụ quản trị viên
 | `DOCKER.md` | Hướng dẫn chi tiết cấu hình và vận hành Docker |
 
 Hướng dẫn Docker đầy đủ nằm trong [DOCKER.md](./DOCKER.md).
+| `docker-compose.yml` | SQL Server, chạy migration và seed dữ liệu qua Docker Compose |
+
+Hai dịch vụ Python chạy độc lập; cài requirements và cấu hình `.env` riêng trong từng thư mục dịch vụ.
 
 ## Công nghệ
 
@@ -183,7 +188,7 @@ cd ..\Mobile_App
 npm run lint
 ```
 
-Import worker có kiểm thử trong `import-worker/tests/`; cách chạy cụ thể được mô tả trong [import-worker/README.md](./import-worker/README.md).
+Import worker có kiểm thử trong `Backend/import-worker/tests/`; cách chạy cụ thể được mô tả trong [Backend/import-worker/README.md](./Backend/import-worker/README.md).
 
 ## Git
 

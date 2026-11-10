@@ -1,0 +1,18 @@
+KHÓA HỌC: FingerMath
+CẤP ĐỘ: 1
+CHỦ ĐỀ: Cộng trừ cơ bản và tính nhẩm
+
+Câu 1: Tính nhẩm theo nhịp: 1, +2, +3. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 6
+Câu 2: Tính nhẩm theo nhịp: 3, +2, +1, +2. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 8
+Câu 3: Tính nhẩm theo nhịp: 4, +2, -1. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 5
+Câu 4: Tính nhẩm theo nhịp: 9, -3, +1, -2. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 5
+Câu 5: Tính nhẩm theo nhịp: 9, -2, -2, +1. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 6
+Câu 6: Tính nhẩm theo nhịp: 9, -1, -3, +2. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 7
+
+

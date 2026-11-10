@@ -33,6 +33,7 @@ class JobDetailResponse(BaseModel):
     status: JobStatus
     progress_percentage: int = Field(0, ge=0, le=100)
     bank_id: int
+    parser_provider: str
     file_name: str
     total_chunks: int = 0
     total_questions: int = 0

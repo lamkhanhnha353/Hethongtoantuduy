@@ -45,7 +45,8 @@ Dựa theo thiết kế kiến trúc hệ thống:
    - Gắn thẻ (tagging) các ảnh đã bóc tách thuộc về đúng câu hỏi tương ứng.
 3. **LLM + Validate (`app/services/llm_parser.py`)**:
    - Sử dụng `Pydantic v2` và chế độ Structured Outputs với `google-genai` (`gemini-2.0-flash`) hoặc `openai` (`gpt-4o-mini`).
-   - Tự động nhận diện `type`: `MULTIPLE_CHOICE` (trắc nghiệm), `FILL_IN` (điền đáp số/từ), `ESSAY` (tự luận).
+   - AI nhận diện `type`: `MULTIPLE_CHOICE` (trắc nghiệm), `FILL_IN` (điền đáp số/từ), `TRUE_FALSE` (đúng/sai), `TIMED_SEQUENCE` (tính nhẩm theo nhịp) và `ESSAY` (tự luận).
+   - `TIMED_SEQUENCE` cần nội dung theo mẫu `Tính nhẩm theo nhịp: 1, +2, -3`; app trình chiếu mỗi số trong 1 giây. `ESSAY` có thể lưu vào ngân hàng nhưng chưa hỗ trợ nộp/chấm qua app.
    - Tự động đánh giá `difficulty`: `EASY`, `MEDIUM`, `HARD` theo độ phức tạp toán tư duy.
    - Phân tách rõ ràng đề bài (`content`) và đáp án / lời giải chi tiết (`answer`).
 4. **Staging / API Controller (`app/api/` & `app/services/job_manager.py`)**:
@@ -62,7 +63,7 @@ Dựa theo thiết kế kiến trúc hệ thống:
   "bankId": 1,
   "type": "MULTIPLE_CHOICE",
   "content": "Cho hình vuông ABCD có chu vi 36 cm. Diện tích của hình vuông là:\nA. 81 cm2\nB. 36 cm2\nC. 72 cm2\nD. 18 cm2",
-  "imageUrl": "http://localhost:8000/static/images/job123_img_1.png",
+  "imageUrl": "http://127.0.0.1:8000/static/images/job123_img_1.png",
   "difficulty": "EASY",
   "answer": "A. 81 cm2. Lời giải: Cạnh hình vuông là 36:4=9 (cm). Diện tích là 9x9=81 (cm2)."
 }
@@ -91,6 +92,9 @@ import-worker/
 │   │   └── job_manager.py     # Background Pipeline Orchestrator & Staging Store
 │   └── api/
 │       └── routes.py          # FastAPI Endpoints: /process-file, /process-path, /job/{id}
+├── question-bank-samples/     # Câu hỏi mẫu để sao chép vào Word
+├── tools/
+│   └── gemini-key-check.html  # Trang kiểm tra key Gemini đã cấu hình
 ├── storage/
 │   ├── uploads/               # Thư mục chứa file tải lên tạm thời
 │   └── images/                # Thư mục chứa hình ảnh bóc tách từ đề thi
@@ -111,8 +115,8 @@ import-worker/
 Yêu cầu: **Python 3.10+**
 
 ```bash
-# Di chuyển vào thư mục project
-cd import-worker
+# Từ thư mục gốc repository
+cd Backend\import-worker
 
 # Cài đặt các thư viện cần thiết
 pip install -r requirements.txt
@@ -126,7 +130,7 @@ cp .env.example .env
 Nội dung `.env`:
 ```env
 LLM_PROVIDER=gemini
-GEMINI_API_KEY=AIzaSy...
+GEMINI_API_KEYS=key_1,key_2
 GEMINI_MODEL=gemini-2.0-flash
 
 # Hoặc dùng OpenAI:
@@ -136,17 +140,32 @@ GEMINI_MODEL=gemini-2.0-flash
 
 APP_HOST=0.0.0.0
 APP_PORT=8000
-BASE_URL=http://localhost:8000
+BASE_URL=http://127.0.0.1:8000
 DEFAULT_BANK_ID=1
 ```
-*(Ghi chú: Nếu chưa có API Key ngay, hệ thống tích hợp sẵn Heuristic Parser tự động nhận diện theo luật để hỗ trợ phát triển và chạy thử offline không lỗi)*.
+Để dùng AI thật, cần cấu hình `LLM_PROVIDER=gemini` hoặc `openai` cùng API key tương ứng. Nếu thiếu key hoặc gọi mô hình thất bại, worker sẽ báo job `FAILED` thay vì âm thầm trả kết quả từ bộ luật. Chỉ đặt `LLM_PROVIDER=mock` khi cần chạy thử offline; mock không sử dụng AI và không nên dùng để chứng minh mô hình AI đang hoạt động.
+
+Các tài liệu mẫu để sao chép vào Word nằm trong `question-bank-samples/`. Nên lưu Word dạng `.docx` hoặc xuất PDF có lớp văn bản. Tài liệu scan chưa có OCR. Sau khi AI bóc tách, giáo viên cần xem lại và duyệt trước khi lưu vào ngân hàng.
+
+Có thể cấu hình nhiều Gemini key bằng `GEMINI_API_KEYS=key_1,key_2` (phân cách bằng dấu phẩy, chấm phẩy hoặc xuống dòng). Worker sẽ luân phiên key và tự thử key kế tiếp khi Gemini báo key không hợp lệ, hết quota hoặc giới hạn tốc độ; lỗi máy chủ 5xx tạm thời sẽ được thử lại tối đa ba lần trên cùng key. Worker xử lý tối đa hai câu hỏi đồng thời để rút ngắn thời gian nhưng vẫn giới hạn tải lên Gemini. `GEMINI_API_KEY` vẫn được hỗ trợ để tương thích cấu hình một key cũ.
+
+### Kiểm tra Gemini keys
+
+1. Điền key vào `Backend/import-worker/.env` (không chia sẻ file này).
+2. Từ thư mục gốc repository, chạy `cd Backend\import-worker` rồi `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000`.
+3. Mở `http://127.0.0.1:8000/api/parser/tools/gemini-key-check` trong trình duyệt và nhấn **Kiểm tra tất cả Gemini keys**.
+
+Trang chỉ gọi endpoint kiểm tra cục bộ; endpoint từ chối yêu cầu không xuất phát từ localhost. Mỗi key tiêu thụ một yêu cầu thử nghiệm nhỏ. Kết quả không trả về nội dung key. Nếu key hợp lệ nhưng model không khả dụng, kiểm tra giá trị `GEMINI_MODEL` và quyền truy cập model.
 
 ### 4.3 Khởi chạy Service Worker
 ```bash
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-- Swagger API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Health Check: [http://localhost:8000/health](http://localhost:8000/health)
+- Swagger API Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Health Check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+
+Trên Windows, có thể chạy nhanh bằng cách nhấp đúp `run-import-worker.bat` trong thư mục `import-worker`. Tệp sẽ tự chuyển vào đúng thư mục và chạy Worker tại `127.0.0.1:8000`; giữ cửa sổ terminal mở trong lúc sử dụng web và nhấn `Ctrl+C` để dừng.
 
 ---
 
@@ -194,6 +213,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
   "status": "COMPLETED",
   "progress_percentage": 100,
   "bank_id": 1,
+  "parser_provider": "gemini",
   "file_name": "de_thi_toan_tu_duy.docx",
   "total_chunks": 3,
   "total_questions": 3,
@@ -202,7 +222,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       "bankId": 1,
       "type": "MULTIPLE_CHOICE",
       "content": "Câu 1: Cho hình vuông ABCD như hình vẽ bên dưới. Biết chu vi của hình vuông là 36 cm. Hãy tính diện tích của hình vuông ABCD?\nA. 81 cm2\nB. 36 cm2\nC. 72 cm2\nD. 18 cm2",
-      "imageUrl": "http://localhost:8000/static/images/9b1deb4d_img_1.png",
+      "imageUrl": "http://127.0.0.1:8000/static/images/9b1deb4d_img_1.png",
       "difficulty": "EASY",
       "answer": "A. 81 cm2. Lời giải: Cạnh của hình vuông là 36 : 4 = 9 (cm). Diện tích hình vuông là 9 x 9 = 81 (cm2)."
     },
@@ -262,5 +282,10 @@ python tests/test_pipeline.py
 Test sẽ tự động kiểm tra:
 1. Trích xuất text và bóc tách ảnh nhúng `.png` từ file `.docx`.
 2. Phân đoạn Regex và gán đúng link ảnh cho Câu 1.
-3. Chạy qua Parser để validate 100% khớp schema JSON.
+3. Phân loại câu hỏi và kiểm tra schema trong chế độ mock offline.
 4. Kiểm tra Failure Branch khi đưa vào file scan không có text layer.
+
+Chạy các kiểm tra parser:
+```bash
+python -m unittest discover -s tests -p test_question_parser.py -v
+```

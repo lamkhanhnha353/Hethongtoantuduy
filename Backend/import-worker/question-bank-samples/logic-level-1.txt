@@ -1,0 +1,32 @@
+KHÓA HỌC: Toán logic
+CẤP ĐỘ: 1
+CHỦ ĐỀ: Quy luật và suy luận cơ bản
+
+Câu 1: Số tiếp theo trong dãy 2, 4, 6, ___ là số nào?
+A. 7
+B. 8
+C. 9
+D. 10
+Đáp án giáo viên: B. 8
+
+Câu 2: Điền hình còn thiếu theo quy luật: Tròn, Vuông, Tròn, Vuông, ___.
+Đáp án giáo viên: Tròn
+
+Câu 3: Nhận định sau đúng hay sai: Hình tam giác có 3 cạnh.
+Đáp án giáo viên: Đúng.
+
+Câu 4: An có 2 quả táo, Bình có nhiều hơn An 1 quả táo. Bình có bao nhiêu quả táo?
+A. 1 quả
+B. 2 quả
+C. 3 quả
+D. 4 quả
+Đáp án giáo viên: C. 3 quả
+
+Câu 5: Điền số còn thiếu: 1, 3, 5, ___.
+Đáp án giáo viên: 7
+
+Câu 6: Nhận định sau đúng hay sai: Trong dãy 5, 4, 3, các số đang tăng dần.
+Đáp án giáo viên: Sai. Các số đang giảm dần.
+
+Câu 7: Lan đứng trước Minh trong hàng. Nhận định “Minh đứng trước Lan” đúng hay sai?
+Đáp án giáo viên: Sai.

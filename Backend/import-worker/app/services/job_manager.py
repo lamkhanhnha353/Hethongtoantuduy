@@ -9,10 +9,12 @@ from app.schemas.api import JobStatus, JobDetailResponse
 from app.schemas.question import QuestionItem
 from app.extractors.factory import ExtractorFactory
 from app.extractors.base import ExtractionException, ScannedDocumentException
-from app.services.chunker import QuestionChunker
+from app.services.chunker import QuestionChunk, QuestionChunker
 from app.services.llm_parser import LLMParserService
 
 logger = logging.getLogger(__name__)
+
+MAX_CONCURRENT_QUESTION_PARSING = 2
 
 
 class JobManager:
@@ -33,6 +35,7 @@ class JobManager:
             status=JobStatus.PENDING,
             progress_percentage=0,
             bank_id=bank_id,
+            parser_provider=self.parser.provider,
             file_name=file_name,
             total_chunks=0,
             total_questions=0,
@@ -76,19 +79,45 @@ class JobManager:
 
             # BƯỚC 3: LLM + VALIDATE (JSON THEO SCHEMA)
             job.status = JobStatus.PARSING
-            parsed_questions: list[QuestionItem] = []
             total_chunks = len(chunks)
+            job.progress_percentage = 40
+            job.total_questions = 0
 
             logger.info(f"[{job_id}] Tìm thấy {total_chunks} khối câu hỏi. Bắt đầu gọi LLM...")
 
-            for idx, chunk in enumerate(chunks):
-                # Gọi LLM xử lý từng chunk
-                question_item = await self.parser.parse_chunk(chunk, bank_id)
-                parsed_questions.append(question_item)
+            semaphore = asyncio.Semaphore(MAX_CONCURRENT_QUESTION_PARSING)
+            progress_lock = asyncio.Lock()
+            completed_chunks = 0
 
-                # Cập nhật tiến độ: từ 40% -> 95%
-                progress = int(40 + (idx + 1) / total_chunks * 55)
-                job.progress_percentage = min(progress, 98)
+            async def parse_one_chunk(index: int, chunk: QuestionChunk) -> QuestionItem:
+                nonlocal completed_chunks
+                async with semaphore:
+                    question_item = await self.parser.parse_chunk(chunk, bank_id)
+
+                async with progress_lock:
+                    completed_chunks += 1
+                    job.total_questions = completed_chunks
+                    job.progress_percentage = min(
+                        int(40 + completed_chunks / total_chunks * 55),
+                        98,
+                    )
+                    logger.info(
+                        "[%s] Đã phân tích xong khối %s/%s.",
+                        job_id,
+                        index + 1,
+                        total_chunks,
+                    )
+                return question_item
+
+            results = await asyncio.gather(
+                *(parse_one_chunk(index, chunk) for index, chunk in enumerate(chunks)),
+                return_exceptions=True,
+            )
+            parsed_questions: list[QuestionItem] = []
+            for result in results:
+                if isinstance(result, Exception):
+                    raise result
+                parsed_questions.append(result)
 
             # BƯỚC 4: HOÀN TẤT VÀ LƯU STAGING
             job.status = JobStatus.COMPLETED

@@ -169,7 +169,7 @@
                     {{ q.difficulty === 'EASY' ? 'Dễ (1.0đ)' : q.difficulty === 'MEDIUM' ? 'Trung bình (1.5đ)' : 'Khó (2.0đ)' }}
                   </span>
                   <span class="text-[10px] font-semibold text-gray-500">
-                    {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
+                    {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'TRUE_FALSE' ? 'Đúng / Sai' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
                   </span>
                 </div>
 

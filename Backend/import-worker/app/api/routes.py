@@ -1,9 +1,12 @@
 import shutil
+import ipaddress
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlsplit
 import uuid
 
-from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException, Body, status
+from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException, Request, status
+from fastapi.responses import FileResponse
 from app.config import settings
 from app.schemas.api import (
     ProcessFileResponse,
@@ -12,8 +15,54 @@ from app.schemas.api import (
     ProcessFileRequest,
 )
 from app.services.job_manager import job_manager
+from app.services.llm_parser import LLMConfigurationError
 
 router = APIRouter(prefix="/api/parser", tags=["Question Parser Worker"])
+
+
+@router.get("/tools/gemini-key-check", include_in_schema=False)
+async def gemini_key_check_page():
+    page_path = Path(__file__).resolve().parents[2] / "tools" / "gemini-key-check.html"
+    return FileResponse(page_path, media_type="text/html")
+
+
+@router.post("/test-gemini")
+async def test_gemini_keys(request: Request):
+    """Test locally configured Gemini keys without returning any key material."""
+    client_host = request.client.host if request.client else ""
+    try:
+        is_loopback = ipaddress.ip_address(client_host).is_loopback
+    except ValueError:
+        is_loopback = False
+    if not is_loopback:
+        raise HTTPException(status_code=403, detail="Chỉ cho phép kiểm tra Gemini từ máy đang chạy worker.")
+    origin = request.headers.get("origin")
+    parsed_origin = urlsplit(origin or "")
+    try:
+        origin_is_loopback = ipaddress.ip_address(parsed_origin.hostname or "").is_loopback
+    except ValueError:
+        origin_is_loopback = False
+    if not origin_is_loopback or parsed_origin.netloc != request.url.netloc:
+        raise HTTPException(status_code=403, detail="Chỉ chấp nhận yêu cầu từ trang kiểm tra Gemini trên worker cục bộ.")
+
+    parser = job_manager.parser
+    if parser.provider != "gemini":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Worker hiện đang dùng provider '{parser.provider}', không phải Gemini.",
+        )
+    try:
+        results = await parser.test_gemini_keys()
+    except LLMConfigurationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return {
+        "provider": "gemini",
+        "model": settings.GEMINI_MODEL,
+        "total_keys": len(results),
+        "working_keys": sum(result["status"] == "working" for result in results),
+        "results": results,
+    }
 
 
 @router.post("/process-file", response_model=ProcessFileResponse, status_code=status.HTTP_202_ACCEPTED)

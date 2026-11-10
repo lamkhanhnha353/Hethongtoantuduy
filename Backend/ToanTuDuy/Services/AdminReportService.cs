@@ -81,6 +81,42 @@ public sealed class AdminReportService(ApplicationDbContext context) : IAdminRep
         };
     }
 
+    public async Task<AdminPayrollTrendResponse> GetPayrollTrendAsync(int months)
+    {
+        var localNow = DateTime.UtcNow.AddHours(7);
+        var firstMonth = new DateTime(localNow.Year, localNow.Month, 1)
+            .AddMonths(1 - months);
+
+        var persistedTotals = await context.PayrollSummaries
+            .AsNoTracking()
+            .Where(summary =>
+                (summary.Year > firstMonth.Year
+                    || (summary.Year == firstMonth.Year && summary.Month >= firstMonth.Month))
+                && (summary.Year < localNow.Year
+                    || (summary.Year == localNow.Year && summary.Month <= localNow.Month)))
+            .GroupBy(summary => new { summary.Year, summary.Month })
+            .Select(group => new
+            {
+                group.Key.Year,
+                group.Key.Month,
+                Amount = group.Sum(summary => summary.FinalSalary)
+            })
+            .ToDictionaryAsync(
+                item => (item.Year, item.Month),
+                item => item.Amount);
+
+        var monthlyPayroll = Enumerable.Range(0, months)
+            .Select(index => firstMonth.AddMonths(index))
+            .Select(month => new AdminMonthlyPayroll
+            {
+                Month = month,
+                Amount = persistedTotals.GetValueOrDefault((month.Year, month.Month))
+            })
+            .ToList();
+
+        return new AdminPayrollTrendResponse { MonthlyPayroll = monthlyPayroll };
+    }
+
     public async Task<AdminStudentGrowthReportResponse> GetStudentGrowthAsync(int months)
     {
         var now = DateTime.UtcNow;

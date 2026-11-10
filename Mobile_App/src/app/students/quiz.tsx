@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { ActivityIndicator, Platform, ScrollView, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { audio } from '@/audio';
@@ -11,13 +11,26 @@ import { Banner } from '@/components/Banner';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { ClassroomBoard } from '@/components/game/ClassroomBoard';
-import { GameIntroCard } from '@/components/game/GameIntroCard';
-import { REWARD, generateQuestion } from '@/lib/mathQuestion';
+import { PracticeModePicker } from '@/components/game/PracticeModePicker';
+import { TimedSequenceBoard } from '@/components/game/TimedSequenceBoard';
+import { TrueFalseBoard } from '@/components/game/TrueFalseBoard';
+import {
+  generateQuestion,
+  generateTimedSequenceQuestion,
+  generateTrueFalseQuestion,
+} from '@/lib/mathQuestion';
 import { useGameStore } from '@/store/gameStore';
 import { useSession } from '@/hooks/useSession';
 import { useStudentQuery } from '@/hooks/useStudents';
 import { toApiError } from '@/services/apiError';
-import type { MathQuestion, QuizStatus } from '@/types/game';
+import type {
+  MathQuestion,
+  QuizStatus,
+  TimedSequenceQuestion,
+  TrueFalseQuestion,
+} from '@/types/game';
+
+type PracticeMode = 'classic' | 'timed' | 'trueFalse' | null;
 
 export default function ScreenMathQuiz() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -28,6 +41,9 @@ export default function ScreenMathQuiz() {
   const addReward = useGameStore((state) => state.addReward);
 
   const [question, setQuestion] = useState<MathQuestion | null>(null);
+  const [timedQuestion, setTimedQuestion] = useState<TimedSequenceQuestion | null>(null);
+  const [trueFalseQuestion, setTrueFalseQuestion] = useState<TrueFalseQuestion | null>(null);
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [status, setStatus] = useState<QuizStatus>('idle');
   const rewardedRef = useRef(false);
@@ -89,12 +105,60 @@ export default function ScreenMathQuiz() {
     return null;
   }
 
-  function handleStart() {
+  function prepareQuestion() {
     rewardedRef.current = false;
     setSelected(null);
-    setQuestion(generateQuestion());
-    audio.pop();
+    setTimedQuestion(null);
+    setTrueFalseQuestion(null);
     setStatus('playing');
+    audio.pop();
+  }
+
+  function handleStartClassic() {
+    prepareQuestion();
+    setPracticeMode('classic');
+    setQuestion(generateQuestion());
+  }
+
+  function handleStartTimed() {
+    prepareQuestion();
+    setPracticeMode('timed');
+    setTimedQuestion(generateTimedSequenceQuestion());
+  }
+
+  function handleStartTrueFalse() {
+    prepareQuestion();
+    setPracticeMode('trueFalse');
+    setTrueFalseQuestion(generateTrueFalseQuestion());
+  }
+
+  function handleNextTimed() {
+    rewardedRef.current = false;
+    setTimedQuestion(generateTimedSequenceQuestion());
+    audio.pop();
+  }
+
+  function handleNextTrueFalse() {
+    rewardedRef.current = false;
+    setTrueFalseQuestion(generateTrueFalseQuestion());
+    audio.pop();
+  }
+
+  function handleCorrectAnswer() {
+    if (!rewardedRef.current) {
+      rewardedRef.current = true;
+      addReward(studentId);
+    }
+  }
+
+  function handleChangeMode() {
+    setPracticeMode(null);
+    setQuestion(null);
+    setTimedQuestion(null);
+    setTrueFalseQuestion(null);
+    setSelected(null);
+    setStatus('idle');
+    audio.pop();
   }
 
   function handleSelect(index: number) {
@@ -102,10 +166,7 @@ export default function ScreenMathQuiz() {
     audio.pop();
     setSelected(index);
     if (index === question.correctIndex) {
-      if (!rewardedRef.current) {
-        rewardedRef.current = true;
-        addReward(studentId);
-      }
+      handleCorrectAnswer();
       audio.correct();
       setStatus('correct');
       return;
@@ -140,24 +201,49 @@ export default function ScreenMathQuiz() {
       >
         {status === 'idle' ? (
           <View className="flex-1 justify-center">
-            <View className="w-full max-w-xl self-center">
-              <GameIntroCard
-                title="Sẵn sàng chưa?"
-                description={`Bé sẽ thấy phép tính cộng hoặc trừ trong phạm vi 20 qua những hình ảnh ngộ nghĩnh. Kéo số vào ô trống để nhận ${REWARD.points} điểm và ${REWARD.stars} sao nhé!`}
-                onStart={handleStart}
-              />
-            </View>
+            <PracticeModePicker
+              onSelectClassic={handleStartClassic}
+              onSelectTimed={handleStartTimed}
+              onSelectTrueFalse={handleStartTrueFalse}
+            />
           </View>
-        ) : question ? (
-          <ClassroomBoard
-            onNext={handleStart}
-            onRetry={handleRetry}
-            onSelect={handleSelect}
-            question={question}
-            selectedIndex={selected}
-            status={status}
-          />
-        ) : null}
+        ) : (
+          <>
+            <View className="mb-2 items-end">
+              <TouchableOpacity
+                accessibilityRole="button"
+                className="rounded-full bg-indigo-100 px-4 py-2"
+                onPress={handleChangeMode}
+              >
+                <Text className="font-bold text-indigo-800">Đổi dạng luyện tập</Text>
+              </TouchableOpacity>
+            </View>
+            {practiceMode === 'classic' && question ? (
+              <ClassroomBoard
+                onNext={handleStartClassic}
+                onRetry={handleRetry}
+                onSelect={handleSelect}
+                question={question}
+                selectedIndex={selected}
+                status={status}
+              />
+            ) : practiceMode === 'timed' && timedQuestion ? (
+              <TimedSequenceBoard
+                key={timedQuestion.id}
+                onCorrect={handleCorrectAnswer}
+                onNext={handleNextTimed}
+                question={timedQuestion}
+              />
+            ) : practiceMode === 'trueFalse' && trueFalseQuestion ? (
+              <TrueFalseBoard
+                key={trueFalseQuestion.id}
+                onCorrect={handleCorrectAnswer}
+                onNext={handleNextTrueFalse}
+                question={trueFalseQuestion}
+              />
+            ) : null}
+          </>
+        )}
       </View>
     </SafeAreaView>
   );

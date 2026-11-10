@@ -1,5 +1,6 @@
 import sys
 import time
+from unittest.mock import AsyncMock, patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -12,14 +13,80 @@ if sys.stdout.encoding != 'utf-8':
 
 from fastapi.testclient import TestClient
 from app.main import app
+from app.services.job_manager import job_manager
 
 client = TestClient(app)
+job_manager.parser.provider = "mock"
 
 
 def test_api_health():
     res = client.get("/health")
     assert res.status_code == 200
     assert res.json() == {"status": "healthy"}
+
+
+def test_gemini_key_check_page_is_served_by_local_worker():
+    response = client.get("/api/parser/tools/gemini-key-check")
+    assert response.status_code == 200
+    assert "Kiểm tra Gemini API keys" in response.text
+
+
+def test_gemini_key_check_is_local_and_does_not_return_keys():
+    client = TestClient(
+        app,
+        base_url="http://127.0.0.1:8000",
+        client=("127.0.0.1", 12345),
+    )
+    with (
+        patch.object(job_manager.parser, "provider", "gemini"),
+        patch.object(
+            job_manager.parser,
+            "test_gemini_keys",
+            new=AsyncMock(return_value=[
+                {"key_index": 1, "status": "working"},
+                {"key_index": 2, "status": "failed", "message": "Key hết hạn mức hoặc bị giới hạn tốc độ."},
+            ]),
+        ),
+    ):
+        response = client.post(
+            "/api/parser/test-gemini",
+            json={},
+            headers={"Origin": "http://127.0.0.1:8000"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["working_keys"] == 1
+    assert "key_index" in str(data).lower()
+    assert "api_key" not in str(data).lower()
+
+
+def test_gemini_key_check_rejects_non_loopback_clients():
+    client = TestClient(
+        app,
+        base_url="http://127.0.0.1:8000",
+        client=("192.0.2.10", 12345),
+    )
+    response = client.post(
+        "/api/parser/test-gemini",
+        json={},
+        headers={"Origin": "http://127.0.0.1:8000"},
+    )
+    assert response.status_code == 403
+
+
+def test_gemini_key_check_rejects_cross_origin():
+    client = TestClient(
+        app,
+        base_url="http://127.0.0.1:8000",
+        client=("127.0.0.1", 12345),
+    )
+    response = client.post(
+        "/api/parser/test-gemini",
+        json={},
+        headers={"Origin": "https://example.com"},
+    )
+    assert response.status_code == 403
 
 
 def test_api_process_file():
@@ -63,4 +130,8 @@ def test_api_process_file():
 
 if __name__ == "__main__":
     test_api_health()
+    test_gemini_key_check_page_is_served_by_local_worker()
+    test_gemini_key_check_is_local_and_does_not_return_keys()
+    test_gemini_key_check_rejects_non_loopback_clients()
+    test_gemini_key_check_rejects_cross_origin()
     test_api_process_file()
