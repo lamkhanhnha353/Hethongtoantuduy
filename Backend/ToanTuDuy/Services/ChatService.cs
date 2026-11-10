@@ -73,6 +73,33 @@ namespace ToanTuDuy.Services
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<List<ConversationDto>> GetAdminHumanConversationsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Conversations
+                .AsNoTracking()
+                .Where(conversation =>
+                    conversation.ChatType == HumanChatType && conversation.TeacherId != null)
+                .OrderByDescending(conversation => conversation.LastMessageAt)
+                .Select(conversation => new ConversationDto
+                {
+                    Id = conversation.Id,
+                    ChatType = conversation.ChatType,
+                    PartnerId = conversation.ParentId,
+                    PartnerName = conversation.Parent.FullName,
+                    PartnerAvatar = conversation.Parent.Avatar,
+                    LastMessage = conversation.LastMessage,
+                    LastMessageAt = conversation.LastMessageAt,
+                    LastMessageSenderType = _context.Messages
+                        .Where(message => message.ConversationId == conversation.Id)
+                        .OrderByDescending(message => message.CreatedAt)
+                        .ThenByDescending(message => message.Id)
+                        .Select(message => message.SenderType)
+                        .FirstOrDefault()
+                })
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<List<ChatMessageDto>> GetMessagesAsync(
             int accountId, string role, int conversationId, int page = 1,
             CancellationToken cancellationToken = default)
