@@ -337,15 +337,6 @@ const adminMenuItems = [
     ],
   },
   {
-    id: 'learning',
-    label: 'Học tập & Đánh giá',
-    icon: QuestionMarkCircleIcon,
-    children: [
-      { id: 'question-bank', label: 'Ngân hàng câu hỏi', icon: DocumentTextIcon, to: '/learning/questions' },
-      { id: 'gamification', label: 'Gamification', icon: TrophyIcon, to: '/learning/gamification' },
-    ],
-  },
-  {
     id: 'finance',
     label: 'Quản lý Tài chính',
     icon: BanknotesIcon,
