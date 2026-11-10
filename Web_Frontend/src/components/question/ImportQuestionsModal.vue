@@ -823,8 +823,8 @@ async function startProcessing() {
         if (cancelPolling) return
         updatePipelineStatus(statusData)
       },
-      1500,
-      80
+      2500,
+      240
     )
 
     if (cancelPolling) return
@@ -884,7 +884,9 @@ function updatePipelineStatus(statusData) {
       : `Mô hình ${provider} AI đang phân tích đề...`
     processingSubText.value = provider === 'mock' || provider === 'heuristic'
       ? `Chế độ này không gọi mô hình AI, chỉ dùng để kiểm thử offline (${p}%).`
-      : `Đang dùng mô hình AI ${provider} để nhận diện dạng câu hỏi và đáp án (${p}%)...`
+      : statusData.total_chunks
+        ? `Đang dùng mô hình AI ${provider} phân tích ${statusData.total_questions || 0}/${statusData.total_chunks} câu (${p}%)...`
+        : `Đang dùng mô hình AI ${provider} để nhận diện dạng câu hỏi và đáp án (${p}%)...`
   }
 }
 

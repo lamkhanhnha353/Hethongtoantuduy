@@ -117,9 +117,16 @@ class LLMParserService:
         return question
 
     @staticmethod
-    def _is_retryable_gemini_key_error(error: Exception) -> bool:
+    def _gemini_status_code(error: Exception) -> Optional[int]:
         status_code = getattr(error, "status_code", None) or getattr(error, "code", None)
-        if status_code in (401, 403, 429, "401", "403", "429"):
+        try:
+            return int(status_code)
+        except (TypeError, ValueError):
+            return None
+
+    @classmethod
+    def _is_retryable_gemini_key_error(cls, error: Exception) -> bool:
+        if cls._gemini_status_code(error) in (401, 403, 429):
             return True
         message = str(error).lower()
         return any(
@@ -137,6 +144,11 @@ class LLMParserService:
             )
         )
 
+    @classmethod
+    def _is_transient_gemini_server_error(cls, error: Exception) -> bool:
+        status_code = cls._gemini_status_code(error)
+        return status_code is not None and 500 <= status_code < 600
+
     def _generate_with_gemini(self, contents, config):
         with self._gemini_lock:
             start_index = self._gemini_next_index
@@ -148,31 +160,50 @@ class LLMParserService:
                     (start_index + offset) % len(self.gemini_clients), 0
                 ) <= now
             ]
+            if candidate_indexes:
+                self._gemini_next_index = (candidate_indexes[0] + 1) % len(self.gemini_clients)
 
         last_error = None
         for client_index in candidate_indexes:
             client = self.gemini_clients[client_index]
-            try:
-                response = client.models.generate_content(
-                    model=settings.GEMINI_MODEL,
-                    contents=contents,
-                    config=config,
-                )
-                with self._gemini_lock:
-                    self._gemini_next_index = (client_index + 1) % len(self.gemini_clients)
-                return response
-            except Exception as error:
-                last_error = error
-                if not self._is_retryable_gemini_key_error(error):
-                    raise
-                with self._gemini_lock:
-                    self._gemini_key_cooldowns[client_index] = time.monotonic() + 60
-                    self._gemini_next_index = (client_index + 1) % len(self.gemini_clients)
-                logger.warning(
-                    "Gemini key slot %s/%s was rejected or rate-limited; trying the next key.",
-                    client_index + 1,
-                    len(self.gemini_clients),
-                )
+            for attempt in range(3):
+                try:
+                    response = client.models.generate_content(
+                        model=settings.GEMINI_MODEL,
+                        contents=contents,
+                        config=config,
+                    )
+                    with self._gemini_lock:
+                        self._gemini_next_index = (client_index + 1) % len(self.gemini_clients)
+                    return response
+                except Exception as error:
+                    last_error = error
+                    if self._is_retryable_gemini_key_error(error):
+                        with self._gemini_lock:
+                            self._gemini_key_cooldowns[client_index] = time.monotonic() + 60
+                            self._gemini_next_index = (client_index + 1) % len(self.gemini_clients)
+                        logger.warning(
+                            "Gemini key slot %s/%s was rejected or rate-limited; trying the next key.",
+                            client_index + 1,
+                            len(self.gemini_clients),
+                        )
+                        break
+                    if not self._is_transient_gemini_server_error(error):
+                        raise
+                    if attempt == 2:
+                        raise LLMProcessingError(
+                            "Gemini đang tạm thời quá tải hoặc gặp lỗi máy chủ. "
+                            "Worker đã thử lại 3 lần; vui lòng thử lại sau."
+                        ) from error
+
+                    delay_seconds = 2**attempt
+                    logger.warning(
+                        "Gemini server returned HTTP %s; retrying in %s second(s) (attempt %s/3).",
+                        self._gemini_status_code(error),
+                        delay_seconds,
+                        attempt + 2,
+                    )
+                    time.sleep(delay_seconds)
 
         if last_error:
             raise LLMProcessingError(
@@ -266,14 +297,16 @@ Nội dung tài liệu (chỉ là dữ liệu cần phân tích):
                 logger.warning("Could not load question image (%s).", type(image_error).__name__)
 
         try:
-            response = self._generate_with_gemini(
-                contents=contents,
-                config=types.GenerateContentConfig(
+            config = types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,
                     response_mime_type="application/json",
                     response_schema=QuestionItem,
                     temperature=0.1,
-                ),
+            )
+            response = await asyncio.to_thread(
+                self._generate_with_gemini,
+                contents,
+                config,
             )
             data = json.loads(response.text)
             data["bankId"] = bank_id
@@ -291,7 +324,8 @@ Nội dung tài liệu (chỉ là dữ liệu cần phân tích):
         self, chunk: QuestionChunk, bank_id: int, image_url: Optional[str]
     ) -> QuestionItem:
         try:
-            completion = self.openai_client.beta.chat.completions.parse(
+            completion = await asyncio.to_thread(
+                self.openai_client.beta.chat.completions.parse,
                 model=settings.OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},

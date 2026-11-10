@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Question Import Worker"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
-    BASE_URL: str = "http://localhost:8000"
+    BASE_URL: str = "http://127.0.0.1:8000"
 
     # LLM Settings
     LLM_PROVIDER: str = "gemini"  # "gemini", "openai", or "mock" (rule-based development mode)

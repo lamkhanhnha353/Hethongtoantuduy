@@ -146,44 +146,150 @@
             ></textarea>
           </div>
 
-          <!-- Ảnh đại diện & Video URL -->
+          <!-- Ảnh bìa & Video giới thiệu (tải trực tiếp lên Cloudinary) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Ảnh bìa -->
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1.5">
-                Link ảnh bìa (ImageUrl)
+                Ảnh bìa khóa học
               </label>
-              <input
-                v-model.trim="form.imageUrl"
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
-              />
-              <!-- Image preview -->
-              <div v-if="form.imageUrl" class="mt-2 relative w-full h-24 rounded-lg overflow-hidden border border-orange-100 bg-gray-50">
+
+              <div
+                v-if="form.imageUrl"
+                class="relative w-full h-28 rounded-xl overflow-hidden border border-orange-100 bg-gray-50 group"
+              >
                 <img
                   :src="form.imageUrl"
-                  alt="Preview"
+                  alt="Ảnh bìa khóa học"
                   class="w-full h-full object-cover"
                   @error="imagePreviewError = true"
                   @load="imagePreviewError = false"
                 />
                 <div v-if="imagePreviewError" class="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400 text-[10px]">
-                  Link ảnh không hợp lệ
+                  Không tải được ảnh
+                </div>
+                <div class="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <label class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white/90 hover:bg-white text-gray-700 text-[10px] font-semibold rounded-lg cursor-pointer transition-colors">
+                    <ArrowUpTrayIcon class="w-3.5 h-3.5" />
+                    Đổi ảnh
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      :disabled="uploadingCover"
+                      @change="handleCoverImageChange"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    @click="form.imageUrl = ''; imagePreviewError = false"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-500/90 hover:bg-red-500 text-white text-[10px] font-semibold rounded-lg transition-colors"
+                  >
+                    <TrashIcon class="w-3.5 h-3.5" />
+                    Xóa
+                  </button>
+                </div>
+                <div v-if="uploadingCover" class="absolute inset-0 bg-black/55 flex items-center justify-center gap-2 text-white text-[10px] font-semibold">
+                  <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Đang tải lên Cloudinary...
                 </div>
               </div>
+
+              <label
+                v-else
+                class="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 hover:bg-orange-50 cursor-pointer transition-colors"
+                :class="{ 'opacity-60 pointer-events-none': uploadingCover }"
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  class="sr-only"
+                  :disabled="uploadingCover"
+                  @change="handleCoverImageChange"
+                />
+                <ArrowUpTrayIcon class="w-6 h-6 text-orange-400 mb-1" />
+                <span class="text-xs font-semibold text-orange-600">
+                  {{ uploadingCover ? 'Đang tải lên Cloudinary...' : 'Tải ảnh bìa lên' }}
+                </span>
+                <span class="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WEBP · tối đa 10MB</span>
+              </label>
+
+              <p class="text-[10px] text-gray-400 mt-1">
+                Ảnh được tải trực tiếp lên Cloudinary, không cần dán link.
+              </p>
             </div>
 
+            <!-- Video giới thiệu -->
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1.5">
-                Link video giới thiệu (VideoUrl)
+                Video giới thiệu khóa học
               </label>
-              <input
-                v-model.trim="form.videoUrl"
-                type="url"
-                placeholder="https://youtube.com/watch?v=..."
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
-              />
-              <p class="text-[10px] text-gray-400 mt-1">Video trailer hoặc bài học mẫu hiển thị trên ứng dụng</p>
+
+              <div v-if="form.videoUrl" class="space-y-2">
+                <div v-if="isYouTubeUrl(form.videoUrl)" class="w-full h-28 rounded-xl overflow-hidden border border-orange-100 bg-black">
+                  <iframe
+                    :src="getYouTubeEmbedUrl(form.videoUrl)"
+                    class="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+                <video
+                  v-else
+                  :src="form.videoUrl"
+                  controls
+                  class="w-full h-28 rounded-xl border border-orange-100 bg-black object-contain"
+                ></video>
+
+                <div class="flex items-center gap-2">
+                  <label class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 text-[10px] font-semibold rounded-lg cursor-pointer transition-colors">
+                    <ArrowUpTrayIcon class="w-3.5 h-3.5" />
+                    {{ uploadingVideo ? 'Đang tải...' : 'Đổi video' }}
+                    <input
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+                      class="sr-only"
+                      :disabled="uploadingVideo"
+                      @change="handleVideoChange"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    @click="form.videoUrl = ''"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-600 hover:bg-red-50 text-[10px] font-semibold rounded-lg transition-colors"
+                  >
+                    <TrashIcon class="w-3.5 h-3.5" />
+                    Xóa video
+                  </button>
+                </div>
+                <p class="text-[10px] text-gray-400 break-all">{{ form.videoUrl }}</p>
+              </div>
+
+              <label
+                v-else
+                class="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 hover:bg-orange-50 cursor-pointer transition-colors"
+                :class="{ 'opacity-60 pointer-events-none': uploadingVideo }"
+              >
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+                  class="sr-only"
+                  :disabled="uploadingVideo"
+                  @change="handleVideoChange"
+                />
+                <VideoCameraIcon class="w-6 h-6 text-orange-400 mb-1" />
+                <span class="text-xs font-semibold text-orange-600">
+                  {{ uploadingVideo ? 'Đang tải lên Cloudinary...' : 'Tải video lên' }}
+                </span>
+                <span class="text-[10px] text-gray-400 mt-0.5">MP4, MOV, WEBM · tối đa 100MB</span>
+              </label>
+
+              <p class="text-[10px] text-gray-400 mt-1">
+                Video được tải trực tiếp lên Cloudinary, không cần dán link.
+              </p>
             </div>
           </div>
 
@@ -234,48 +340,97 @@
             </div>
           </div>
 
-          <!-- Ảnh cơ sở vật chất (FacilityImages) -->
+          <!-- Ảnh cơ sở vật chất (FacilityImages) - tải trực tiếp lên Cloudinary -->
           <div class="pt-2 border-t border-orange-100">
             <div class="flex items-center justify-between mb-2">
               <label class="text-xs font-bold text-gray-700 flex items-center gap-1.5">
                 <PhotoIcon class="w-3.5 h-3.5 text-orange-500" />
                 Ảnh cơ sở vật chất (FacilityImages)
               </label>
-              <button
-                type="button"
-                @click="addFacilityImage"
-                class="text-xs text-orange-600 hover:text-orange-700 font-semibold inline-flex items-center gap-1"
-              >
+              <label class="text-xs text-orange-600 hover:text-orange-700 font-semibold inline-flex items-center gap-1 cursor-pointer">
                 <PlusIcon class="w-3.5 h-3.5" />
                 Thêm ảnh
-              </button>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  class="sr-only"
+                  :disabled="uploadingFacilityIndex !== -1"
+                  @change="handleFacilityImagesChange"
+                />
+              </label>
             </div>
 
             <div v-if="form.facilityImages.length === 0" class="text-[11px] text-gray-400 italic">
-              Chưa có ảnh cơ sở vật chất nào.
+              Chưa có ảnh cơ sở vật chất nào. Bấm "Thêm ảnh" để tải ảnh lên Cloudinary.
             </div>
 
-            <div v-else class="space-y-2">
+            <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div
                 v-for="(imgUrl, index) in form.facilityImages"
                 :key="index"
-                class="flex items-center gap-2"
+                class="relative h-24 rounded-xl overflow-hidden border border-orange-100 bg-gray-50 group"
+              >
+                <img
+                  v-if="imgUrl"
+                  :src="imgUrl"
+                  alt="Ảnh cơ sở vật chất"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-[10px] text-gray-400">
+                  Đang tải ảnh...
+                </div>
+
+                <div class="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                  <label class="p-1.5 bg-white/90 hover:bg-white text-gray-700 rounded-lg cursor-pointer transition-colors" title="Đổi ảnh">
+                    <ArrowUpTrayIcon class="w-3.5 h-3.5" />
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      :disabled="uploadingFacilityIndex === index"
+                      @change="handleFacilityImageReplace($event, index)"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    @click="removeFacilityImage(index)"
+                    class="p-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-lg transition-colors"
+                    title="Xóa ảnh"
+                  >
+                    <TrashIcon class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div v-if="uploadingFacilityIndex === index" class="absolute inset-0 bg-black/55 flex items-center justify-center gap-1.5 text-white text-[10px] font-semibold">
+                  <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Đang tải...
+                </div>
+              </div>
+
+              <label
+                class="h-24 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 hover:bg-orange-50 cursor-pointer flex flex-col items-center justify-center transition-colors"
+                :class="{ 'opacity-60 pointer-events-none': uploadingFacilityIndex !== -1 }"
               >
                 <input
-                  v-model.trim="form.facilityImages[index]"
-                  type="url"
-                  placeholder="https://example.com/classroom-1.jpg"
-                  class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-hidden"
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  class="sr-only"
+                  :disabled="uploadingFacilityIndex !== -1"
+                  @change="handleFacilityImagesChange"
                 />
-                <button
-                  type="button"
-                  @click="removeFacilityImage(index)"
-                  class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                >
-                  <TrashIcon class="w-4 h-4" />
-                </button>
-              </div>
+                <PlusIcon class="w-5 h-5 text-orange-400 mb-0.5" />
+                <span class="text-[10px] font-semibold text-orange-600">Thêm ảnh</span>
+              </label>
             </div>
+
+            <p class="text-[10px] text-gray-400 mt-1">
+              Ảnh được tải trực tiếp lên Cloudinary, tối đa 10MB/ảnh.
+            </p>
           </div>
 
           <!-- ─── Footer Buttons ────────────────────────────────────────────── -->
@@ -303,7 +458,7 @@
               </button>
               <button
                 type="submit"
-                :disabled="saving || deleting"
+                :disabled="saving || deleting || uploadingCover || uploadingVideo || uploadingFacilityIndex !== -1"
                 class="inline-flex items-center gap-1.5 px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-50"
               >
                 <svg v-if="saving" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
@@ -331,8 +486,19 @@ import {
   PhotoIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
+  ArrowUpTrayIcon,
+  VideoCameraIcon,
 } from '@heroicons/vue/24/outline'
 import courseService from '@/services/course.service'
+import { getYouTubeEmbedUrl, isYouTubeUrl } from '@/utils/media.helper'
+
+// ─── Giới hạn upload media (đồng bộ với backend) ────────────────────────────
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024
+const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
+const ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v']
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v']
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -348,6 +514,9 @@ const deleting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 const imagePreviewError = ref(false)
+const uploadingCover = ref(false)
+const uploadingVideo = ref(false)
+const uploadingFacilityIndex = ref(-1)
 
 const form = ref({
   code: '',
@@ -366,6 +535,9 @@ function initForm() {
   errorMessage.value = ''
   successMessage.value = ''
   imagePreviewError.value = false
+  uploadingCover.value = false
+  uploadingVideo.value = false
+  uploadingFacilityIndex.value = -1
 
   if (props.course) {
     let parsedBenefits = []
@@ -436,22 +608,177 @@ function removeBenefit(index) {
   form.value.benefits.splice(index, 1)
 }
 
-function addFacilityImage() {
-  form.value.facilityImages.push('')
+function getFileExtension(fileName) {
+  const name = (fileName || '').toLowerCase()
+  const dot = name.lastIndexOf('.')
+  return dot >= 0 ? name.slice(dot) : ''
+}
+
+function validateImageFile(file) {
+  const extension = getFileExtension(file?.name)
+  if (
+    !ALLOWED_IMAGE_EXTENSIONS.includes(extension) ||
+    (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type))
+  ) {
+    errorMessage.value = 'Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.'
+    return false
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    errorMessage.value = 'Ảnh vượt quá giới hạn 10MB.'
+    return false
+  }
+  return true
+}
+
+function validateVideoFile(file) {
+  const extension = getFileExtension(file?.name)
+  const contentTypeAllowed =
+    !file.type ||
+    file.type.startsWith('video/') ||
+    ALLOWED_VIDEO_TYPES.includes(file.type)
+  if (!ALLOWED_VIDEO_EXTENSIONS.includes(extension) || !contentTypeAllowed) {
+    errorMessage.value = 'Chỉ chấp nhận video MP4, MOV, WEBM hoặc M4V.'
+    return false
+  }
+  if (file.size > MAX_VIDEO_BYTES) {
+    errorMessage.value = 'Video vượt quá giới hạn 100MB.'
+    return false
+  }
+  return true
+}
+
+function getUploadErrorMessage(err, fallback) {
+  return (
+    err?.response?.data?.message ||
+    err?.response?.data?.detail ||
+    err?.message ||
+    fallback
+  )
+}
+
+async function handleCoverImageChange(event) {
+  const input = event.target
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  errorMessage.value = ''
+  if (!validateImageFile(file)) return
+
+  uploadingCover.value = true
+  try {
+    const result = await courseService.uploadMedia(file, 'image')
+    if (!result?.url) throw new Error('Máy chủ không trả về URL ảnh.')
+    form.value.imageUrl = result.url
+    imagePreviewError.value = false
+  } catch (err) {
+    console.error('Lỗi khi tải ảnh bìa lên Cloudinary:', err)
+    errorMessage.value = getUploadErrorMessage(err, 'Tải ảnh bìa lên Cloudinary thất bại.')
+  } finally {
+    uploadingCover.value = false
+  }
+}
+
+async function handleVideoChange(event) {
+  const input = event.target
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  errorMessage.value = ''
+  if (!validateVideoFile(file)) return
+
+  uploadingVideo.value = true
+  try {
+    const result = await courseService.uploadMedia(file, 'video')
+    if (!result?.url) throw new Error('Máy chủ không trả về URL video.')
+    form.value.videoUrl = result.url
+  } catch (err) {
+    console.error('Lỗi khi tải video lên Cloudinary:', err)
+    errorMessage.value = getUploadErrorMessage(err, 'Tải video lên Cloudinary thất bại.')
+  } finally {
+    uploadingVideo.value = false
+  }
+}
+
+async function handleFacilityImagesChange(event) {
+  const input = event.target
+  const files = Array.from(input.files || [])
+  input.value = ''
+  if (files.length === 0 || uploadingFacilityIndex.value !== -1) return
+
+  errorMessage.value = ''
+  for (const file of files) {
+    if (!validateImageFile(file)) return
+  }
+
+  for (const file of files) {
+    const index = form.value.facilityImages.length
+    form.value.facilityImages.push('')
+    uploadingFacilityIndex.value = index
+    try {
+      const result = await courseService.uploadMedia(file, 'image')
+      if (!result?.url) throw new Error('Máy chủ không trả về URL ảnh.')
+      form.value.facilityImages[index] = result.url
+    } catch (err) {
+      form.value.facilityImages.splice(index, 1)
+      console.error('Lỗi khi tải ảnh cơ sở vật chất lên Cloudinary:', err)
+      errorMessage.value = getUploadErrorMessage(err, 'Tải ảnh cơ sở vật chất lên Cloudinary thất bại.')
+      break
+    } finally {
+      uploadingFacilityIndex.value = -1
+    }
+  }
+}
+
+async function handleFacilityImageReplace(event, index) {
+  const input = event.target
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || uploadingFacilityIndex.value !== -1) return
+
+  errorMessage.value = ''
+  if (!validateImageFile(file)) return
+
+  uploadingFacilityIndex.value = index
+  try {
+    const result = await courseService.uploadMedia(file, 'image')
+    if (!result?.url) throw new Error('Máy chủ không trả về URL ảnh.')
+    form.value.facilityImages[index] = result.url
+  } catch (err) {
+    console.error('Lỗi khi thay ảnh cơ sở vật chất trên Cloudinary:', err)
+    errorMessage.value = getUploadErrorMessage(err, 'Thay ảnh cơ sở vật chất thất bại.')
+  } finally {
+    uploadingFacilityIndex.value = -1
+  }
 }
 
 function removeFacilityImage(index) {
+  if (uploadingFacilityIndex.value !== -1) return
   form.value.facilityImages.splice(index, 1)
+}
+
+function isUploadingMedia() {
+  return uploadingCover.value || uploadingVideo.value || uploadingFacilityIndex.value !== -1
 }
 
 function handleClose() {
   if (saving.value || deleting.value) return
+  if (isUploadingMedia()) {
+    errorMessage.value = 'Vui lòng chờ quá trình tải media lên Cloudinary hoàn tất.'
+    return
+  }
   emit('close')
 }
 
 async function handleSubmit() {
   errorMessage.value = ''
   successMessage.value = ''
+
+  if (isUploadingMedia()) {
+    errorMessage.value = 'Vui lòng chờ quá trình tải media lên Cloudinary hoàn tất.'
+    return
+  }
 
   if (!form.value.code?.trim()) {
     errorMessage.value = 'Mã khóa học không được để trống.'

@@ -1,6 +1,9 @@
+import json
 import sys
+import threading
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -133,6 +136,80 @@ class QuestionParserTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.calls, 1)
         self.assertEqual(second.calls, 1)
         self.assertEqual(parser._gemini_next_index, 0)
+
+    async def test_gemini_retries_temporary_server_error_on_same_key(self):
+        class ServerError(Exception):
+            status_code = 503
+
+        class ModelClient:
+            def __init__(self):
+                self.models = self
+                self.calls = 0
+
+            def generate_content(self, **kwargs):
+                self.calls += 1
+                if self.calls == 1:
+                    raise ServerError("service unavailable")
+                return "response"
+
+        with patch.object(settings, "LLM_PROVIDER", "mock"):
+            parser = LLMParserService()
+        client = ModelClient()
+        parser.gemini_clients = [client]
+
+        with patch("app.services.llm_parser.time.sleep"):
+            result = parser._generate_with_gemini([], {})
+
+        self.assertEqual(result, "response")
+        self.assertEqual(client.calls, 2)
+
+    async def test_gemini_reports_overload_after_bounded_retries(self):
+        class ServerError(Exception):
+            status_code = 503
+
+        class ModelClient:
+            def __init__(self):
+                self.models = self
+                self.calls = 0
+
+            def generate_content(self, **kwargs):
+                self.calls += 1
+                raise ServerError("service unavailable")
+
+        with patch.object(settings, "LLM_PROVIDER", "mock"):
+            parser = LLMParserService()
+        client = ModelClient()
+        parser.gemini_clients = [client]
+
+        with patch("app.services.llm_parser.time.sleep"):
+            with self.assertRaisesRegex(LLMProcessingError, "quá tải"):
+                parser._generate_with_gemini([], {})
+
+        self.assertEqual(client.calls, 3)
+
+    async def test_gemini_network_call_runs_off_the_event_loop_thread(self):
+        chunk = QuestionChunk(chunk_index=1, label="Question 1", raw_text="1 + 1 = ?")
+        parser = LLMParserService()
+        call_thread_ids = []
+        response = SimpleNamespace(
+            text=json.dumps({
+                "bankId": 1,
+                "type": "FILL_IN",
+                "content": "1 + 1 = ?",
+                "difficulty": "EASY",
+                "answer": "2",
+            })
+        )
+
+        def generate_with_gemini(*args, **kwargs):
+            call_thread_ids.append(threading.get_ident())
+            return response
+
+        with patch.object(parser, "_generate_with_gemini", side_effect=generate_with_gemini):
+            result = await parser._parse_with_gemini(chunk, bank_id=1, image_url=None)
+
+        self.assertEqual(result.answer, "2")
+        self.assertNotEqual(call_thread_ids[0], threading.get_ident())
 
     async def test_gemini_key_list_supports_delimiters_and_legacy_key(self):
         with (

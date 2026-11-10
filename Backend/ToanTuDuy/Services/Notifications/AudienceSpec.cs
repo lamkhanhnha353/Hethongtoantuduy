@@ -7,6 +7,8 @@ namespace ToanTuDuy.Services.Notifications
     public static class AudienceKinds
     {
         public const string AllAdmins = "ALL_ADMINS";
+        public const string AllParents = "ALL_PARENTS";
+        public const string AllTeachers = "ALL_TEACHERS";
         public const string ClassTeacher = "CLASS_TEACHER";
         public const string ClassParents = "CLASS_PARENTS";
         public const string StudentParent = "STUDENT_PARENT";
@@ -31,6 +33,16 @@ namespace ToanTuDuy.Services.Notifications
         public static AudienceSpec AllAdmins() => new()
         {
             Targets = { new AudienceTarget { Kind = AudienceKinds.AllAdmins } },
+        };
+
+        public static AudienceSpec AllParents() => new()
+        {
+            Targets = { new AudienceTarget { Kind = AudienceKinds.AllParents } },
+        };
+
+        public static AudienceSpec AllTeachers() => new()
+        {
+            Targets = { new AudienceTarget { Kind = AudienceKinds.AllTeachers } },
         };
 
         public static AudienceSpec ClassTeacher(int classId) => new()
