@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
@@ -21,6 +23,16 @@ namespace ToanTuDuy.Services
 
         public async Task<AssignmentDetailResponse> CreateAssignmentAsync(CreateAssignmentRequest request)
         {
+            if (request.Questions == null || request.Questions.Count == 0)
+            {
+                throw ApiException.BadRequest("Cần chọn ít nhất một câu hỏi trước khi giao bài.");
+            }
+
+            if (request.MaxAttempt.GetValueOrDefault(1) != 1)
+            {
+                throw ApiException.BadRequest("Hiện tại mỗi bài tập chỉ hỗ trợ một lần nộp.");
+            }
+
             var lesson = await _context.Lessons
                 .Include(l => l.Class)
                 .FirstOrDefaultAsync(l => l.Id == request.LessonId);
@@ -35,6 +47,32 @@ namespace ToanTuDuy.Services
                 throw ApiException.BadRequest("Hạn nộp bài (Deadline) phải lớn hơn thời gian bắt đầu (StartTime).");
             }
 
+            var requestedQuestions = request.Questions ?? new List<QuestionAssignmentItemDto>();
+            var requestedQuestionIds = requestedQuestions
+                .Select(question => question.QuestionId)
+                .Distinct()
+                .ToList();
+            var bankQuestions = requestedQuestionIds.Count == 0
+                ? new List<Question>()
+                : await _context.Questions
+                    .Where(question => requestedQuestionIds.Contains(question.Id))
+                    .ToListAsync();
+            var existingQuestionIds = bankQuestions.Select(question => question.Id).ToHashSet();
+            var invalidQuestionIds = requestedQuestionIds
+                .Where(questionId => !existingQuestionIds.Contains(questionId))
+                .ToList();
+            if (invalidQuestionIds.Count > 0)
+            {
+                throw ApiException.BadRequest(
+                    $"Các câu hỏi có ID [{string.Join(", ", invalidQuestionIds)}] không tồn tại.");
+            }
+
+            var questionsById = bankQuestions.ToDictionary(question => question.Id);
+            foreach (var requestedQuestion in requestedQuestions)
+            {
+                EnsureSupportedPracticeQuestion(questionsById[requestedQuestion.QuestionId]);
+            }
+
             // Tạo Assignment
             var assignment = new Assignment
             {
@@ -44,7 +82,7 @@ namespace ToanTuDuy.Services
                 StartTime = request.StartTime,
                 Deadline = request.Deadline,
                 TimeLimitMinutes = request.TimeLimitMinutes,
-                MaxAttempt = request.MaxAttempt,
+                MaxAttempt = 1,
                 Status = string.IsNullOrWhiteSpace(request.Status) ? "OPEN" : request.Status.Trim().ToUpper()
             };
 
@@ -52,22 +90,10 @@ namespace ToanTuDuy.Services
             await _context.SaveChangesAsync();
 
             // Đính kèm các câu hỏi từ ngân hàng câu hỏi
-            if (request.Questions != null && request.Questions.Any())
+            if (requestedQuestions.Count > 0)
             {
-                var inputQuestionIds = request.Questions.Select(q => q.QuestionId).Distinct().ToList();
-                var validQuestions = await _context.Questions
-                    .Where(q => inputQuestionIds.Contains(q.Id))
-                    .Select(q => q.Id)
-                    .ToListAsync();
-
-                var invalidQuestionIds = inputQuestionIds.Except(validQuestions).ToList();
-                if (invalidQuestionIds.Any())
-                {
-                    throw ApiException.BadRequest($"Các câu hỏi có ID [{string.Join(", ", invalidQuestionIds)}] không tồn tại.");
-                }
-
                 int order = 1;
-                foreach (var q in request.Questions)
+                foreach (var q in requestedQuestions)
                 {
                     var questionAssignment = new QuestionAssignment
                     {
@@ -127,11 +153,17 @@ namespace ToanTuDuy.Services
         {
             var source = await _context.Assignments
                 .Include(a => a.QuestionAssignments)
+                    .ThenInclude(questionAssignment => questionAssignment.Question)
                 .FirstOrDefaultAsync(a => a.Id == request.SourceAssignmentId);
 
             if (source == null)
             {
                 throw ApiException.NotFound($"Không tìm thấy bài kiểm tra nguồn với ID {request.SourceAssignmentId}.");
+            }
+
+            foreach (var questionAssignment in source.QuestionAssignments)
+            {
+                EnsureSupportedPracticeQuestion(questionAssignment.Question);
             }
 
             var targetLesson = await _context.Lessons
@@ -160,7 +192,7 @@ namespace ToanTuDuy.Services
                 StartTime = startTime,
                 Deadline = deadline,
                 TimeLimitMinutes = source.TimeLimitMinutes,
-                MaxAttempt = source.MaxAttempt,
+                MaxAttempt = 1,
                 Status = "OPEN"
             };
 
@@ -321,6 +353,11 @@ namespace ToanTuDuy.Services
 
         public async Task<bool> UpdateAssignmentAsync(int id, UpdateAssignmentRequest request)
         {
+            if (request.MaxAttempt.GetValueOrDefault(1) != 1)
+            {
+                throw ApiException.BadRequest("Hiện tại mỗi bài tập chỉ hỗ trợ một lần nộp.");
+            }
+
             var assignment = await _context.Assignments
                 .Include(a => a.QuestionAssignments)
                 .FirstOrDefaultAsync(a => a.Id == id);
@@ -337,7 +374,7 @@ namespace ToanTuDuy.Services
             assignment.StartTime = request.StartTime;
             assignment.Deadline = request.Deadline;
             assignment.TimeLimitMinutes = request.TimeLimitMinutes;
-            assignment.MaxAttempt = request.MaxAttempt;
+            assignment.MaxAttempt = 1;
             assignment.Status = request.Status.Trim().ToUpper();
 
             // Nếu có cập nhật lại danh sách câu hỏi
@@ -493,6 +530,361 @@ namespace ToanTuDuy.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<StudentPracticeAssignmentDto>> GetStudentPracticeAssignmentsAsync(
+            int accountId,
+            int studentId)
+        {
+            var isParentOfStudent = await _context.StudentProfiles
+                .AnyAsync(student => student.Id == studentId && student.Parent!.AccountId == accountId);
+
+            if (!isParentOfStudent)
+            {
+                throw ApiException.NotFound("Không tìm thấy học sinh.");
+            }
+
+            var now = DateTime.UtcNow;
+            return await _context.StudentAssignments
+                .AsNoTracking()
+                .Include(studentAssignment => studentAssignment.Assignment)
+                    .ThenInclude(assignment => assignment.Lesson)
+                .Include(studentAssignment => studentAssignment.Assignment)
+                    .ThenInclude(assignment => assignment.QuestionAssignments)
+                .Where(studentAssignment => studentAssignment.StudentId == studentId)
+                .OrderByDescending(studentAssignment => studentAssignment.Assignment.StartTime)
+                .Select(studentAssignment => new StudentPracticeAssignmentDto
+                {
+                    AssignmentId = studentAssignment.AssignmentId,
+                    Title = studentAssignment.Assignment.Title,
+                    LessonTitle = studentAssignment.Assignment.Lesson.Title,
+                    StartTime = studentAssignment.Assignment.StartTime,
+                    Deadline = studentAssignment.Assignment.Deadline,
+                    TimeLimitMinutes = studentAssignment.Assignment.TimeLimitMinutes,
+                    TotalQuestions = studentAssignment.Assignment.QuestionAssignments.Count,
+                    TotalPoints = studentAssignment.Assignment.QuestionAssignments.Sum(question => question.PointValue),
+                    StudentStatus = studentAssignment.Status,
+                    Score = studentAssignment.Score,
+                    CompletedAt = studentAssignment.CompletedAt,
+                    IsAvailable = studentAssignment.Assignment.Status == "OPEN"
+                        && studentAssignment.Assignment.StartTime <= now
+                        && studentAssignment.Assignment.Deadline >= now
+                        && studentAssignment.Status != "GRADED"
+                        && studentAssignment.Status != "SUBMITTED"
+                })
+                .ToListAsync();
+        }
+
+        public async Task<StudentPracticeAssignmentDetailDto?> GetStudentPracticeAssignmentDetailAsync(
+            int accountId,
+            int assignmentId,
+            int studentId)
+        {
+            var studentAssignment = await FindStudentAssignmentForPracticeAsync(accountId, assignmentId, studentId);
+            if (studentAssignment == null)
+            {
+                return null;
+            }
+
+            EnsureAssignmentIsOpen(studentAssignment.Assignment);
+            if (studentAssignment.Status == "GRADED" || studentAssignment.Status == "SUBMITTED")
+            {
+                throw ApiException.BadRequest("Bài tập này đã được nộp.");
+            }
+            EnsureSupportedPracticeQuestions(studentAssignment.Assignment);
+            return MapStudentPracticeAssignmentDetail(studentAssignment);
+        }
+
+        public async Task<StudentPracticeSubmissionResponseDto?> SubmitStudentPracticeAssignmentAsync(
+            int accountId,
+            int assignmentId,
+            int studentId,
+            SubmitStudentPracticeRequest request)
+        {
+            var studentAssignment = await FindStudentAssignmentForPracticeAsync(accountId, assignmentId, studentId);
+            if (studentAssignment == null)
+            {
+                return null;
+            }
+
+            EnsureAssignmentIsOpen(studentAssignment.Assignment);
+            if (studentAssignment.Status == "GRADED" || studentAssignment.Status == "SUBMITTED")
+            {
+                throw ApiException.BadRequest("Bài tập này đã được nộp.");
+            }
+
+            var now = DateTime.UtcNow;
+            var questions = studentAssignment.Assignment.QuestionAssignments
+                .OrderBy(question => question.OrderIndex)
+                .ToList();
+            EnsureSupportedPracticeQuestions(studentAssignment.Assignment);
+            var answersByQuestionId = request.Answers
+                .GroupBy(answer => answer.QuestionAssignmentId)
+                .ToDictionary(group => group.Key, group => group.ToList());
+
+            if (answersByQuestionId.Count != questions.Count
+                || questions.Any(question => !answersByQuestionId.TryGetValue(question.Id, out var answers) || answers.Count != 1)
+                || answersByQuestionId.Keys.Any(id => questions.All(question => question.Id != id)))
+            {
+                throw ApiException.BadRequest("Cần gửi đúng một câu trả lời cho mỗi câu hỏi trong bài tập.");
+            }
+
+            var score = 0f;
+            var correctCount = 0;
+            foreach (var questionAssignment in questions)
+            {
+                var answerText = answersByQuestionId[questionAssignment.Id][0].Answer.Trim();
+                var (isCorrect, pointsAwarded) = GradeAnswer(questionAssignment.Question, answerText, questionAssignment.PointValue);
+                if (isCorrect == true)
+                {
+                    correctCount += 1;
+                    score += pointsAwarded;
+                }
+            }
+
+            var updatedRows = await _context.StudentAssignments
+                .Where(item => item.Id == studentAssignment.Id
+                    && item.Status != "SUBMITTED"
+                    && item.Status != "GRADED")
+                .ExecuteUpdateAsync(updates => updates
+                    .SetProperty(item => item.Score, score)
+                    .SetProperty(item => item.Status, "SUBMITTED")
+                    .SetProperty(item => item.CompletedAt, now));
+            if (updatedRows == 0)
+            {
+                throw ApiException.BadRequest("Bài tập này đã được nộp.");
+            }
+
+            return new StudentPracticeSubmissionResponseDto
+            {
+                AssignmentId = assignmentId,
+                Status = "SUBMITTED",
+                Score = score,
+                TotalPoints = questions.Sum(question => question.PointValue),
+                CorrectCount = correctCount,
+                TotalQuestions = questions.Count,
+                SubmittedAt = now
+            };
+        }
+
+        private async Task<StudentAssignment?> FindStudentAssignmentForPracticeAsync(
+            int accountId,
+            int assignmentId,
+            int studentId)
+        {
+            var isParentOfStudent = await _context.StudentProfiles
+                .AnyAsync(student => student.Id == studentId && student.Parent!.AccountId == accountId);
+            if (!isParentOfStudent)
+            {
+                return null;
+            }
+
+            return await _context.StudentAssignments
+                .Include(studentAssignment => studentAssignment.Assignment)
+                    .ThenInclude(assignment => assignment.Lesson)
+                .Include(studentAssignment => studentAssignment.Assignment)
+                    .ThenInclude(assignment => assignment.QuestionAssignments)
+                        .ThenInclude(questionAssignment => questionAssignment.Question)
+                .FirstOrDefaultAsync(studentAssignment =>
+                    studentAssignment.StudentId == studentId
+                    && studentAssignment.AssignmentId == assignmentId);
+        }
+
+        private static void EnsureAssignmentIsOpen(Assignment assignment)
+        {
+            var now = DateTime.UtcNow;
+            if (!string.Equals(assignment.Status, "OPEN", StringComparison.OrdinalIgnoreCase))
+            {
+                throw ApiException.BadRequest("Bài tập hiện không mở.");
+            }
+            if (now < assignment.StartTime)
+            {
+                throw ApiException.BadRequest("Bài tập chưa đến thời gian bắt đầu.");
+            }
+            if (now > assignment.Deadline)
+            {
+                throw ApiException.BadRequest("Bài tập đã quá hạn nộp.");
+            }
+        }
+
+        private static void EnsureSupportedPracticeQuestions(Assignment assignment)
+        {
+            foreach (var questionAssignment in assignment.QuestionAssignments)
+            {
+                EnsureSupportedPracticeQuestion(questionAssignment.Question);
+            }
+        }
+
+        private static void EnsureSupportedPracticeQuestion(Question question)
+        {
+            var type = question.Type.Trim().ToUpperInvariant();
+            if (type != "MULTIPLE_CHOICE" && type != "TRUE_FALSE" && type != "FILL_IN" && type != "TIMED_SEQUENCE")
+            {
+                throw ApiException.BadRequest(
+                    $"Loại câu hỏi '{question.Type}' chưa được hỗ trợ khi giao bài trên app. "
+                    + "Các loại hiện hỗ trợ: MULTIPLE_CHOICE, TRUE_FALSE, FILL_IN, TIMED_SEQUENCE.");
+            }
+
+            if (type == "MULTIPLE_CHOICE" && ParseMultipleChoice(question.Content).Options.Count == 0)
+            {
+                throw ApiException.BadRequest("Câu trắc nghiệm cần có các lựa chọn theo định dạng A., B., C., D.");
+            }
+            if (type == "TIMED_SEQUENCE" && ParseTimedSequence(question.Content).Count < 2)
+            {
+                throw ApiException.BadRequest("Câu tính nhẩm theo nhịp cần có định dạng: Tính nhẩm theo nhịp: 1, +2, -3.");
+            }
+        }
+
+        private static StudentPracticeAssignmentDetailDto MapStudentPracticeAssignmentDetail(
+            StudentAssignment studentAssignment)
+        {
+            var assignment = studentAssignment.Assignment;
+            var questions = assignment.QuestionAssignments
+                .OrderBy(question => question.OrderIndex)
+                .Select(questionAssignment =>
+                {
+                    var question = questionAssignment.Question;
+                    var (content, options) = string.Equals(
+                        question.Type,
+                        "MULTIPLE_CHOICE",
+                        StringComparison.OrdinalIgnoreCase)
+                        ? ParseMultipleChoice(question.Content)
+                        : (question.Content, new List<StudentPracticeQuestionOptionDto>());
+
+                    return new StudentPracticeQuestionDto
+                    {
+                        QuestionAssignmentId = questionAssignment.Id,
+                        OrderIndex = questionAssignment.OrderIndex,
+                        PointValue = questionAssignment.PointValue,
+                        Type = question.Type,
+                        Content = content,
+                        ImageUrl = question.ImageUrl,
+                        Difficulty = question.Difficulty,
+                        Options = options,
+                        SequenceTerms = string.Equals(
+                            question.Type,
+                            "TIMED_SEQUENCE",
+                            StringComparison.OrdinalIgnoreCase)
+                            ? ParseTimedSequence(question.Content)
+                            : new List<StudentPracticeSequenceTermDto>()
+                    };
+                })
+                .ToList();
+
+            return new StudentPracticeAssignmentDetailDto
+            {
+                AssignmentId = assignment.Id,
+                Title = assignment.Title,
+                LessonTitle = assignment.Lesson?.Title,
+                Deadline = assignment.Deadline,
+                TimeLimitMinutes = assignment.TimeLimitMinutes,
+                TotalPoints = questions.Sum(question => question.PointValue),
+                Questions = questions
+            };
+        }
+
+        private static (bool? IsCorrect, float PointsAwarded) GradeAnswer(
+            Question question,
+            string studentAnswer,
+            float pointValue)
+        {
+            var answer = question.Answer.Trim();
+            switch (question.Type.ToUpperInvariant())
+            {
+                case "MULTIPLE_CHOICE":
+                {
+                    var correctOption = Regex.Match(answer, @"^\s*([A-D])(?:[\.:\)\s-]|$)", RegexOptions.IgnoreCase);
+                    var selectedOption = studentAnswer.Trim();
+                    var isCorrect = correctOption.Success
+                        && string.Equals(correctOption.Groups[1].Value, selectedOption, StringComparison.OrdinalIgnoreCase);
+                    return (isCorrect, isCorrect ? pointValue : 0f);
+                }
+                case "TRUE_FALSE":
+                {
+                    var correctValue = Regex.Match(answer, @"^\s*(Đúng|Sai)\b", RegexOptions.IgnoreCase);
+                    var isCorrect = correctValue.Success
+                        && string.Equals(
+                            NormalizeAnswer(correctValue.Groups[1].Value),
+                            NormalizeAnswer(studentAnswer),
+                            StringComparison.OrdinalIgnoreCase);
+                    return (isCorrect, isCorrect ? pointValue : 0f);
+                }
+                case "FILL_IN":
+                case "TIMED_SEQUENCE":
+                {
+                    var correctValue = answer.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)[0].Trim();
+                    var isCorrect = NormalizeAnswer(correctValue)
+                        .Equals(NormalizeAnswer(studentAnswer), StringComparison.OrdinalIgnoreCase);
+                    return (isCorrect, isCorrect ? pointValue : 0f);
+                }
+                default:
+                    return (null, 0f);
+            }
+        }
+
+        private static List<StudentPracticeSequenceTermDto> ParseTimedSequence(string content)
+        {
+            var sequenceMatch = Regex.Match(
+                content,
+                @"tính\s+nhẩm\s+theo\s+nhịp\s*:\s*(?<sequence>\d+\s*(?:[,;]\s*[+\-−]\s*\d+)+)",
+                RegexOptions.IgnoreCase);
+            if (!sequenceMatch.Success)
+            {
+                return new List<StudentPracticeSequenceTermDto>();
+            }
+
+            var tokens = Regex.Matches(sequenceMatch.Groups["sequence"].Value, @"(?<operator>[+\-−]?)\s*(?<value>\d+)");
+            if (tokens.Count < 2 || tokens[0].Groups["operator"].Value.Length > 0)
+            {
+                return new List<StudentPracticeSequenceTermDto>();
+            }
+
+            var terms = new List<StudentPracticeSequenceTermDto>();
+            foreach (Match token in tokens)
+            {
+                if (!int.TryParse(token.Groups["value"].Value, out var value))
+                {
+                    return new List<StudentPracticeSequenceTermDto>();
+                }
+
+                var operation = token.Groups["operator"].Value;
+                terms.Add(new StudentPracticeSequenceTermDto
+                {
+                    Operator = operation.Length == 0 ? null : operation == "−" ? "-" : operation,
+                    Value = value
+                });
+            }
+
+            return terms;
+        }
+
+        private static string NormalizeAnswer(string value)
+        {
+            var normalized = value.Normalize(NormalizationForm.FormKC).Trim();
+            return Regex.Replace(normalized, @"\s+", " ");
+        }
+
+        private static (string Content, List<StudentPracticeQuestionOptionDto> Options) ParseMultipleChoice(string content)
+        {
+            var pattern = @"(?:^|\n|\s)(?<key>[A-D])[\.:\)]\s*(?<value>[\s\S]*?)(?=(?:\s+[A-D][\.:\)]\s*)|$)";
+            var matches = Regex.Matches(content, pattern, RegexOptions.IgnoreCase);
+            if (matches.Count < 4)
+            {
+                return (content, new List<StudentPracticeQuestionOptionDto>());
+            }
+
+            var options = matches
+                .Cast<Match>()
+                .Take(4)
+                .Select(match => new StudentPracticeQuestionOptionDto
+                {
+                    Key = match.Groups["key"].Value.ToUpperInvariant(),
+                    Text = match.Groups["value"].Value.Trim().TrimEnd(';')
+                })
+                .ToList();
+
+            var questionText = content.Substring(0, matches[0].Index).Trim();
+            return (questionText, options);
+        }
+
         public async Task<StudentAssignmentResponse?> GradeStudentAsync(int assignmentId, int studentId, GradeStudentRequest request)
         {
             var sa = await _context.StudentAssignments
@@ -581,7 +973,6 @@ namespace ToanTuDuy.Services
 
             var sa = assignment.StudentAssignments.FirstOrDefault(s => s.StudentId == studentId);
             if (sa == null) return null;
-
             return new StudentSubmissionDetailResponse
             {
                 AssignmentId = assignment.Id,
