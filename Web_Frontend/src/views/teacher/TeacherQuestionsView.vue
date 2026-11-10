@@ -244,7 +244,9 @@
               >
                 <option value="">-- Tất cả loại --</option>
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm (4 phương án)</option>
+                <option value="TRUE_FALSE">Đúng / Sai</option>
                 <option value="FILL_IN">Điền khuyết / Điền số</option>
+                <option value="TIMED_SEQUENCE">Tính nhẩm theo nhịp</option>
                 <option value="ESSAY">Tự luận / Lời giải</option>
               </select>
             </div>
@@ -347,6 +349,8 @@
                 <span class="text-[10px] font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
                   {{
                     q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' :
+                    q.type === 'TRUE_FALSE' ? 'Đúng / Sai' :
+                    q.type === 'TIMED_SEQUENCE' ? 'Tính nhẩm theo nhịp' :
                     q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận'
                   }}
                 </span>
@@ -595,7 +599,9 @@
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 font-medium bg-white"
               >
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm (Hiện 4 ô A, B, C, D)</option>
+                <option value="TRUE_FALSE">Đúng / Sai</option>
                 <option value="FILL_IN">Điền khuyết / Điền số</option>
+                <option value="TIMED_SEQUENCE">Tính nhẩm theo nhịp</option>
                 <option value="ESSAY">Tự luận / Trình bày giải</option>
               </select>
             </div>
@@ -836,7 +842,39 @@
             </div>
           </div>
 
-          <!-- ─── CASE 2: ĐIỀN KHUYẾT (Input chuẩn bình thường) ─── -->
+          <!-- ─── CASE 2: ĐÚNG / SAI ─── -->
+          <div
+            v-else-if="questionForm.type === 'TRUE_FALSE'"
+            class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-3"
+          >
+            <div>
+              <label class="block font-semibold text-gray-800 mb-1 text-xs">
+                Đáp án đúng <span class="text-red-500">*</span>
+              </label>
+              <select
+                v-model="trueFalseAnswer"
+                required
+                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-orange-950"
+              >
+                <option value="" disabled>-- Chọn đáp án --</option>
+                <option value="Đúng">Đúng</option>
+                <option value="Sai">Sai</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1 text-[11px]">
+                Giải thích (Tùy chọn)
+              </label>
+              <textarea
+                v-model="trueFalseExplanation"
+                rows="2"
+                placeholder="Giải thích ngắn gọn vì sao nhận định đúng hoặc sai..."
+                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- ─── CASE 3: ĐIỀN KHUYẾT ─── -->
           <div
             v-else-if="questionForm.type === 'FILL_IN'"
             class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-3"
@@ -1041,6 +1079,8 @@ const mcExplanation = ref('')
 // Fill-in & Essay state
 const fillInAnswer = ref('')
 const fillInExplanation = ref('')
+const trueFalseAnswer = ref('')
+const trueFalseExplanation = ref('')
 const essayAnswer = ref('')
 
 // Media State
@@ -1315,6 +1355,20 @@ function openQuestionModal(q = null) {
       questionForm.content = q.content || ''
       fillInAnswer.value = q.answer || ''
       fillInExplanation.value = ''
+    } else if (questionForm.type === 'TRUE_FALSE') {
+      questionForm.content = q.content || ''
+      const answerText = (q.answer || '').trim()
+      const answerMatch = answerText.match(/^\s*(đúng|sai)\b/i)
+      if (answerMatch) {
+        trueFalseAnswer.value = answerMatch[1].toLowerCase() === 'sai' ? 'Sai' : 'Đúng'
+      } else {
+        trueFalseAnswer.value = ''
+      }
+      trueFalseExplanation.value = answerMatch
+        ? answerText
+            .replace(/^\s*(đúng|sai)\b[.!]?\s*/i, '')
+            .replace(/^\s*[-–]\s*(Giải thích|Lời giải)\s*:\s*/i, '')
+        : answerText
     } else {
       questionForm.content = q.content || ''
       essayAnswer.value = q.answer || ''
@@ -1337,6 +1391,8 @@ function openQuestionModal(q = null) {
 
     fillInAnswer.value = ''
     fillInExplanation.value = ''
+    trueFalseAnswer.value = ''
+    trueFalseExplanation.value = ''
     essayAnswer.value = ''
 
     mediaType.value = 'none'
@@ -1376,6 +1432,15 @@ async function saveQuestion() {
     finalAnswer = fillInAnswer.value.trim()
     if (fillInExplanation.value.trim()) {
       finalAnswer += `\n- Hướng dẫn giải: ${fillInExplanation.value.trim()}`
+    }
+  } else if (questionForm.type === 'TRUE_FALSE') {
+    if (!trueFalseAnswer.value) {
+      notify('Vui lòng chọn đáp án Đúng hoặc Sai!', true)
+      return
+    }
+    finalAnswer = trueFalseAnswer.value
+    if (trueFalseExplanation.value.trim()) {
+      finalAnswer += `\n- Giải thích: ${trueFalseExplanation.value.trim()}`
     }
   } else if (questionForm.type === 'ESSAY') {
     if (!essayAnswer.value.trim()) {

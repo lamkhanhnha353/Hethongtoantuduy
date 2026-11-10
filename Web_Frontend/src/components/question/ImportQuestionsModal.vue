@@ -375,7 +375,13 @@
                 MC: {{ countByType('MULTIPLE_CHOICE') }}
               </span>
               <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+                Đúng/Sai: {{ countByType('TRUE_FALSE') }}
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
                 Điền số: {{ countByType('FILL_IN') }}
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+                Tính theo nhịp: {{ countByType('TIMED_SEQUENCE') }}
               </span>
               <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
                 Tự luận: {{ countByType('ESSAY') }}
@@ -408,7 +414,9 @@
               >
                 <option value="">Tất cả dạng câu</option>
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm</option>
+                <option value="TRUE_FALSE">Đúng / Sai</option>
                 <option value="FILL_IN">Điền số</option>
+                <option value="TIMED_SEQUENCE">Tính nhẩm theo nhịp</option>
                 <option value="ESSAY">Tự luận</option>
               </select>
             </div>
@@ -439,9 +447,17 @@
                   </span>
 
                   <!-- Type Badge -->
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">
-                    {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
-                  </span>
+                  <select
+                    v-model="q.type"
+                    class="text-[10px] font-bold px-2 py-1 rounded-full border border-gray-200 bg-white text-gray-800"
+                    aria-label="Loại câu hỏi đã nhận diện"
+                  >
+                    <option value="MULTIPLE_CHOICE">Trắc nghiệm</option>
+                    <option value="TRUE_FALSE">Đúng / Sai</option>
+                    <option value="FILL_IN">Điền khuyết</option>
+                    <option value="TIMED_SEQUENCE">Tính nhẩm theo nhịp</option>
+                    <option value="ESSAY">Tự luận</option>
+                  </select>
 
                   <!-- Editable Difficulty Badge -->
                   <select
@@ -862,8 +878,13 @@ function updatePipelineStatus(statusData) {
     pipelineStages[1].status = 'completed'
     pipelineStages[2].status = 'completed'
     pipelineStages[3].status = 'active'
-    currentStatusText.value = 'AI đang phân tích và chuẩn hóa đề thi...'
-    processingSubText.value = `Sử dụng mô hình AI LLM phân tích cấu trúc, nhận diện trắc nghiệm & lời giải (${p}%)...`
+    const provider = (statusData.parser_provider || 'AI').toLowerCase()
+    currentStatusText.value = provider === 'mock' || provider === 'heuristic'
+      ? 'Bộ phân tích thử nghiệm đang xử lý đề...'
+      : `Mô hình ${provider} AI đang phân tích đề...`
+    processingSubText.value = provider === 'mock' || provider === 'heuristic'
+      ? `Chế độ này không gọi mô hình AI, chỉ dùng để kiểm thử offline (${p}%).`
+      : `Đang dùng mô hình AI ${provider} để nhận diện dạng câu hỏi và đáp án (${p}%)...`
   }
 }
 

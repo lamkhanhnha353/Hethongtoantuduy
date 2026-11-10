@@ -199,7 +199,7 @@
                 Thời gian: <strong>{{ item.timeLimitMinutes }} phút</strong>
               </span>
               <span>•</span>
-              <span>Số lần làm: <strong>{{ item.maxAttempt || 1 }} lần</strong></span>
+              <span>Số lần nộp: <strong>1 lần</strong></span>
               <span>•</span>
               <span>Bắt đầu: <strong>{{ formatDateTime(item.startTime) }}</strong></span>
               <span>•</span>
@@ -374,17 +374,6 @@
                 />
               </div>
               <div>
-                <label class="block font-semibold text-gray-700 mb-1">Số lần làm tối đa</label>
-                <input
-                  type="number"
-                  v-model.number="createForm.maxAttempt"
-                  min="1"
-                  max="10"
-                  required
-                  class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                />
-              </div>
-              <div>
                 <label class="block font-semibold text-gray-700 mb-1">Trạng thái</label>
                 <select
                   v-model="createForm.status"
@@ -425,6 +414,9 @@
                   {{ b.name }} ({{ b.totalQuestions || 0 }} câu) - {{ b.courseName }}
                 </option>
               </select>
+              <p class="mt-1 text-[11px] text-gray-500">
+                Chọn ngân hàng chỉ tải danh sách câu hỏi; hãy tích các câu bên dưới hoặc dùng “Chọn tất cả” để đưa câu vào bài.
+              </p>
             </div>
 
             <!-- Bank questions checklist -->
@@ -437,6 +429,15 @@
               v-else-if="modalBankQuestions.length > 0"
               class="max-h-56 overflow-y-auto space-y-2 border border-orange-100 rounded-xl p-2.5 bg-orange-50/20"
             >
+              <label class="flex items-center gap-2 rounded-lg border border-orange-200 bg-white px-3 py-2 text-xs font-semibold text-orange-900">
+                <input
+                  type="checkbox"
+                  :checked="areAllBankQuestionsSelected"
+                  @change="toggleAllBankQuestions"
+                  class="rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
+                />
+                <span>Chọn tất cả câu hỏi có thể giao trên app</span>
+              </label>
               <div
                 v-for="q in modalBankQuestions"
                 :key="q.id"
@@ -445,8 +446,9 @@
                 <input
                   type="checkbox"
                   :checked="isQuestionSelected(q.id)"
+                  :disabled="!isSupportedPracticeQuestion(q)"
                   @change="toggleSelectQuestionForCreate(q)"
-                  class="mt-1 rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
+                  class="mt-1 rounded text-orange-500 focus:ring-orange-400 cursor-pointer disabled:cursor-not-allowed"
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
@@ -460,7 +462,10 @@
                       {{ q.difficulty === 'EASY' ? 'Dễ (1.0đ)' : q.difficulty === 'MEDIUM' ? 'Trung bình (1.5đ)' : 'Khó (2.0đ)' }}
                     </span>
                     <span class="text-[10px] font-semibold text-orange-800">
-                      {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
+                      {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'TRUE_FALSE' ? 'Đúng / Sai' : q.type === 'TIMED_SEQUENCE' ? 'Tính nhẩm theo nhịp' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
+                    </span>
+                    <span v-if="!isSupportedPracticeQuestion(q)" class="text-[10px] font-medium text-rose-600">
+                      Chưa hỗ trợ giao trên app
                     </span>
                   </div>
                   <p class="text-xs text-gray-900 line-clamp-2">{{ q.content }}</p>
@@ -482,6 +487,13 @@
               </div>
             </div>
           </div>
+
+          <p
+            v-if="createForm.selectedQuestions.length === 0"
+            class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800"
+          >
+            Hãy chọn ít nhất một câu hỏi để có thể phát hành bài kiểm tra.
+          </p>
 
           <!-- Assignment Scope: All Class vs Specific Students -->
           <div class="space-y-3 p-3.5 rounded-2xl bg-orange-50/40 border border-orange-100">
@@ -546,8 +558,8 @@
             </button>
             <button
               type="submit"
-              :disabled="isSubmittingCreate"
-              class="px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+              :disabled="isSubmittingCreate || createForm.selectedQuestions.length === 0"
+              class="px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
             >
               <ArrowPathIcon v-if="isSubmittingCreate" class="w-3.5 h-3.5 animate-spin" />
               <span>Phát hành bài kiểm tra</span>
@@ -725,7 +737,7 @@
                 Câu {{ idx + 1 }} ({{ q.pointValue }} điểm)
               </span>
               <span class="text-[10px] font-semibold text-gray-500">
-                {{ q.difficulty }} • {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
+                {{ q.difficulty }} • {{ q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : q.type === 'TRUE_FALSE' ? 'Đúng / Sai' : q.type === 'TIMED_SEQUENCE' ? 'Tính nhẩm theo nhịp' : q.type === 'FILL_IN' ? 'Điền khuyết' : 'Tự luận' }}
               </span>
             </div>
 
@@ -931,13 +943,9 @@
               />
             </div>
             <div>
-              <label class="block font-semibold text-gray-700 mb-1">Số lần làm tối đa</label>
-              <input
-                type="number"
-                v-model.number="editForm.maxAttempt"
-                min="1"
-                class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
-              />
+              <p class="self-end rounded-xl bg-orange-50 p-2.5 text-gray-600">
+                Mỗi học sinh nộp bài một lần.
+              </p>
             </div>
             <div>
               <label class="block font-semibold text-gray-700 mb-1">Trạng thái</label>
@@ -1182,13 +1190,18 @@ const isSubmittingCreate = ref(false)
 const createModalBankId = ref(null)
 const modalBankQuestions = ref([])
 const loadingModalQuestions = ref(false)
+const supportedPracticeQuestionTypes = new Set([
+  'MULTIPLE_CHOICE',
+  'TRUE_FALSE',
+  'FILL_IN',
+  'TIMED_SEQUENCE',
+])
 
 const createForm = reactive({
   title: '',
   startTime: '',
   deadline: '',
   timeLimitMinutes: 30,
-  maxAttempt: 1,
   status: 'OPEN',
   selectedQuestions: [], // [{ questionId, orderIndex, pointValue }]
   assignAllStudentsInClass: true,
@@ -1197,6 +1210,11 @@ const createForm = reactive({
 
 const totalPointsCreate = computed(() => {
   return createForm.selectedQuestions.reduce((sum, q) => sum + (Number(q.pointValue) || 0), 0)
+})
+const areAllBankQuestionsSelected = computed(() => {
+  const assignableQuestions = modalBankQuestions.value.filter(isSupportedPracticeQuestion)
+  return assignableQuestions.length > 0
+    && assignableQuestions.every(q => isQuestionSelected(q.id))
 })
 
 async function openCreateModal() {
@@ -1217,7 +1235,6 @@ async function openCreateModal() {
   createForm.startTime = toLocalDatetimeString(now)
   createForm.deadline = toLocalDatetimeString(nextWeek)
   createForm.timeLimitMinutes = 30
-  createForm.maxAttempt = 1
   createForm.status = 'OPEN'
   createForm.selectedQuestions = []
   createForm.assignAllStudentsInClass = true
@@ -1251,6 +1268,29 @@ function isQuestionSelected(qId) {
   return createForm.selectedQuestions.some(x => x.questionId === qId)
 }
 
+function isSupportedPracticeQuestion(question) {
+  return supportedPracticeQuestionTypes.has(String(question.type).trim().toUpperCase())
+}
+
+function getCreateAssignmentErrorMessage(error) {
+  const response = error?.response
+  const data = response?.data
+  const validationMessages = data?.errors && typeof data.errors === 'object'
+    ? Object.values(data.errors).flat().filter(Boolean)
+    : []
+  const apiMessage = typeof data === 'string'
+    ? data
+    : data?.message || data?.title || data?.details || validationMessages[0]
+
+  if (apiMessage) {
+    return `Không thể tạo bài kiểm tra: ${apiMessage}`
+  }
+  if (response?.status) {
+    return `Không thể tạo bài kiểm tra (HTTP ${response.status}). Vui lòng kiểm tra Backend API.`
+  }
+  return 'Không kết nối được Backend API. Hãy kiểm tra Backend có đang chạy không rồi thử lại.'
+}
+
 function getQuestionPoint(qId) {
   const found = createForm.selectedQuestions.find(x => x.questionId === qId)
   return found ? found.pointValue : 1.0
@@ -1276,6 +1316,25 @@ function toggleSelectQuestionForCreate(q) {
   }
 }
 
+function toggleAllBankQuestions() {
+  if (areAllBankQuestionsSelected.value) {
+    const bankQuestionIds = new Set(
+      modalBankQuestions.value
+        .filter(isSupportedPracticeQuestion)
+        .map(q => q.id),
+    )
+    createForm.selectedQuestions = createForm.selectedQuestions
+      .filter(question => !bankQuestionIds.has(question.questionId))
+    return
+  }
+
+  for (const question of modalBankQuestions.value.filter(isSupportedPracticeQuestion)) {
+    if (!isQuestionSelected(question.id)) {
+      toggleSelectQuestionForCreate(question)
+    }
+  }
+}
+
 function toggleSpecificStudent(stId) {
   const idx = createForm.specificStudentIds.indexOf(stId)
   if (idx >= 0) {
@@ -1288,6 +1347,10 @@ function toggleSpecificStudent(stId) {
 async function submitCreateAssignment() {
   if (!createForm.title.trim()) {
     notify('Vui lòng nhập tiêu đề bài kiểm tra!', 'error')
+    return
+  }
+  if (createForm.selectedQuestions.length === 0) {
+    notify('Vui lòng chọn ít nhất một câu hỏi để giao!', 'error')
     return
   }
   if (!createForm.assignAllStudentsInClass && createForm.specificStudentIds.length === 0) {
@@ -1303,7 +1366,7 @@ async function submitCreateAssignment() {
       startTime: new Date(createForm.startTime).toISOString(),
       deadline: new Date(createForm.deadline).toISOString(),
       timeLimitMinutes: createForm.timeLimitMinutes,
-      maxAttempt: createForm.maxAttempt,
+      maxAttempt: 1,
       status: createForm.status,
       questions: createForm.selectedQuestions.map((q, i) => ({
         questionId: q.questionId,
@@ -1320,7 +1383,7 @@ async function submitCreateAssignment() {
     await reloadLessonAssignments()
   } catch (err) {
     console.error('Lỗi tạo bài kiểm tra:', err)
-    notify('Không thể tạo bài kiểm tra.', 'error')
+    notify(getCreateAssignmentErrorMessage(err), 'error')
   } finally {
     isSubmittingCreate.value = false
   }
@@ -1475,7 +1538,6 @@ const editForm = reactive({
   startTime: '',
   deadline: '',
   timeLimitMinutes: 30,
-  maxAttempt: 1,
   status: 'OPEN',
 })
 
@@ -1485,7 +1547,6 @@ function openEditModal(item) {
   editForm.startTime = item.startTime ? toLocalDatetimeString(new Date(item.startTime)) : ''
   editForm.deadline = item.deadline ? toLocalDatetimeString(new Date(item.deadline)) : ''
   editForm.timeLimitMinutes = item.timeLimitMinutes || 30
-  editForm.maxAttempt = item.maxAttempt || 1
   editForm.status = item.status || 'OPEN'
   showEditModal.value = true
 }
@@ -1498,7 +1559,7 @@ async function submitEditAssignment() {
       startTime: new Date(editForm.startTime).toISOString(),
       deadline: new Date(editForm.deadline).toISOString(),
       timeLimitMinutes: editForm.timeLimitMinutes,
-      maxAttempt: editForm.maxAttempt,
+      maxAttempt: 1,
       status: editForm.status,
     }
 
