@@ -330,6 +330,7 @@
                 type="text"
                 v-model="createForm.title"
                 required
+                maxlength="200"
                 placeholder="VD: Kiểm tra 15 phút - Tính nhanh dãy số quy luật"
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
@@ -343,6 +344,7 @@
                 <input
                   type="datetime-local"
                   v-model="createForm.startTime"
+                  :max="createForm.deadline || undefined"
                   required
                   class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
                 />
@@ -355,6 +357,7 @@
                 <input
                   type="datetime-local"
                   v-model="createForm.deadline"
+                  :min="createForm.startTime || undefined"
                   required
                   class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
                 />
@@ -820,6 +823,7 @@
             <input
               type="text"
               v-model="cloneForm.newTitle"
+              maxlength="200"
               class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
@@ -830,6 +834,7 @@
               <input
                 type="datetime-local"
                 v-model="cloneForm.startTime"
+                :max="cloneForm.deadline || undefined"
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
@@ -838,6 +843,7 @@
               <input
                 type="datetime-local"
                 v-model="cloneForm.deadline"
+                :min="cloneForm.startTime || undefined"
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
@@ -895,6 +901,7 @@
               type="text"
               v-model="editForm.title"
               required
+              maxlength="200"
               class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
@@ -905,6 +912,7 @@
               <input
                 type="datetime-local"
                 v-model="editForm.startTime"
+                :max="editForm.deadline || undefined"
                 required
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
@@ -914,6 +922,7 @@
               <input
                 type="datetime-local"
                 v-model="editForm.deadline"
+                :min="editForm.startTime || undefined"
                 required
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
@@ -927,6 +936,8 @@
                 type="number"
                 v-model.number="editForm.timeLimitMinutes"
                 min="1"
+                max="1440"
+                required
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
@@ -936,6 +947,8 @@
                 type="number"
                 v-model.number="editForm.maxAttempt"
                 min="1"
+                max="10"
+                required
                 class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
@@ -1010,6 +1023,11 @@ import {
   getDifficultyPoint,
   parseMultipleChoice,
 } from '@/utils/media.helper'
+import {
+  validateDateRange,
+  validateNumberRange,
+  validateTextLength,
+} from '@/utils/validation.helper'
 
 // ─── Current User & State ──────────────────────────────────────────────────
 const { profile, fetchProfile } = useUserState()
@@ -1286,8 +1304,48 @@ function toggleSpecificStudent(stId) {
 }
 
 async function submitCreateAssignment() {
-  if (!createForm.title.trim()) {
-    notify('Vui lòng nhập tiêu đề bài kiểm tra!', 'error')
+  const titleCheck = validateTextLength(createForm.title, {
+    label: 'Tiêu đề bài kiểm tra',
+    required: true,
+    max: 200,
+  })
+  if (!titleCheck.valid) {
+    notify(titleCheck.message, 'error')
+    return
+  }
+  const dateCheck = validateDateRange(createForm.startTime, createForm.deadline, {
+    startLabel: 'Thời gian mở đề',
+    endLabel: 'Hạn chót nộp bài',
+    required: true,
+  })
+  if (!dateCheck.valid) {
+    notify(dateCheck.message, 'error')
+    return
+  }
+  const timeLimitCheck = validateNumberRange(createForm.timeLimitMinutes, {
+    label: 'Thời gian làm bài',
+    required: true,
+    integer: true,
+    min: 1,
+    max: 1440,
+  })
+  if (!timeLimitCheck.valid) {
+    notify(`${timeLimitCheck.message} (phút)`, 'error')
+    return
+  }
+  const maxAttemptCheck = validateNumberRange(createForm.maxAttempt, {
+    label: 'Số lần làm tối đa',
+    required: true,
+    integer: true,
+    min: 1,
+    max: 10,
+  })
+  if (!maxAttemptCheck.valid) {
+    notify(maxAttemptCheck.message, 'error')
+    return
+  }
+  if (createForm.selectedQuestions.length === 0) {
+    notify('Vui lòng chọn ít nhất một câu hỏi cho bài kiểm tra!', 'error')
     return
   }
   if (!createForm.assignAllStudentsInClass && createForm.specificStudentIds.length === 0) {
@@ -1440,6 +1498,22 @@ async function submitCloneAssignment() {
     notify('Vui lòng chọn buổi học đích!', 'error')
     return
   }
+  const titleCheck = validateTextLength(cloneForm.newTitle, {
+    label: 'Tiêu đề bài kiểm tra mới',
+    max: 200,
+  })
+  if (!titleCheck.valid) {
+    notify(titleCheck.message, 'error')
+    return
+  }
+  const dateCheck = validateDateRange(cloneForm.startTime, cloneForm.deadline, {
+    startLabel: 'Thời gian mở đề mới',
+    endLabel: 'Hạn nộp mới',
+  })
+  if (!dateCheck.valid) {
+    notify(dateCheck.message, 'error')
+    return
+  }
 
   isSubmittingClone.value = true
   try {
@@ -1491,6 +1565,47 @@ function openEditModal(item) {
 }
 
 async function submitEditAssignment() {
+  const titleCheck = validateTextLength(editForm.title, {
+    label: 'Tiêu đề bài kiểm tra',
+    required: true,
+    max: 200,
+  })
+  if (!titleCheck.valid) {
+    notify(titleCheck.message, 'error')
+    return
+  }
+  const dateCheck = validateDateRange(editForm.startTime, editForm.deadline, {
+    startLabel: 'Thời gian bắt đầu',
+    endLabel: 'Hạn nộp',
+    required: true,
+  })
+  if (!dateCheck.valid) {
+    notify(dateCheck.message, 'error')
+    return
+  }
+  const timeLimitCheck = validateNumberRange(editForm.timeLimitMinutes, {
+    label: 'Thời gian làm bài',
+    required: true,
+    integer: true,
+    min: 1,
+    max: 1440,
+  })
+  if (!timeLimitCheck.valid) {
+    notify(`${timeLimitCheck.message} (phút)`, 'error')
+    return
+  }
+  const maxAttemptCheck = validateNumberRange(editForm.maxAttempt, {
+    label: 'Số lần làm tối đa',
+    required: true,
+    integer: true,
+    min: 1,
+    max: 10,
+  })
+  if (!maxAttemptCheck.valid) {
+    notify(maxAttemptCheck.message, 'error')
+    return
+  }
+
   isSubmittingEdit.value = true
   try {
     const payload = {

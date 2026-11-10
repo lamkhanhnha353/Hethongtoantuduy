@@ -77,13 +77,14 @@
           <!-- Fee range -->
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Học phí (từ)</label>
-            <input v-model.number="filters.feeMin" type="number" min="0" placeholder="0"
+            <input v-model.number="filters.feeMin" type="number" min="0" max="1000000000" placeholder="0"
               class="filter-select" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 mb-1.5">Học phí (đến)</label>
-            <input v-model.number="filters.feeMax" type="number" min="0" placeholder="Không giới hạn"
+            <input v-model.number="filters.feeMax" type="number" min="0" max="1000000000" placeholder="Không giới hạn"
               class="filter-select" />
+            <p v-if="feeRangeError" class="mt-1 text-[11px] font-medium text-rose-600">{{ feeRangeError }}</p>
           </div>
           <!-- Sort -->
           <div>
@@ -269,6 +270,14 @@ const activeFilterCount = computed(() =>
   [filters.value.courseId, filters.value.status, filters.value.feeMin, filters.value.feeMax].filter(v => v !== '' && v != null).length
 )
 
+const feeRangeError = computed(() => {
+  const { feeMin, feeMax } = filters.value
+  if (feeMin != null && feeMin !== '' && feeMax != null && feeMax !== '' && Number(feeMin) > Number(feeMax)) {
+    return 'Học phí "từ" không được lớn hơn học phí "đến".'
+  }
+  return ''
+})
+
 const filteredCourses = computed(() => {
   let list = [...courses.value]
 
@@ -294,12 +303,14 @@ const filteredCourses = computed(() => {
     list = list.filter(c => String(c.status || '').toLowerCase() === targetStatus)
   }
 
-  // Fee range (so sánh theo fee/minFee)
-  if (filters.value.feeMin != null && filters.value.feeMin !== '') {
-    list = list.filter(c => (c.fee ?? 0) >= filters.value.feeMin)
-  }
-  if (filters.value.feeMax != null && filters.value.feeMax !== '') {
-    list = list.filter(c => (c.fee ?? 0) <= filters.value.feeMax)
+  // Fee range (so sánh theo fee/minFee) — chỉ áp dụng khi khoảng học phí hợp lệ
+  if (!feeRangeError.value) {
+    if (filters.value.feeMin != null && filters.value.feeMin !== '') {
+      list = list.filter(c => (c.fee ?? 0) >= filters.value.feeMin)
+    }
+    if (filters.value.feeMax != null && filters.value.feeMax !== '') {
+      list = list.filter(c => (c.fee ?? 0) <= filters.value.feeMax)
+    }
   }
 
   // Sort

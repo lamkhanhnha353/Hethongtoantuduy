@@ -40,6 +40,22 @@ const periodQuery = computed(() => ({
   year: period.value.getFullYear(),
 }));
 
+// Không cho chọn tháng trong tương lai
+function disableFutureMonth(date) {
+  const now = new Date();
+  return (
+    date.getFullYear() > now.getFullYear() ||
+    (date.getFullYear() === now.getFullYear() && date.getMonth() > now.getMonth())
+  );
+}
+
+// Không cho chọn ngày trong tương lai
+function disableFutureDate(date) {
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+  return date.getTime() > endOfToday.getTime();
+}
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -138,8 +154,15 @@ function openBaseRateForm(payroll) {
 
 async function submitBaseRate() {
   const form = baseRateForm.value;
-  if (!form.teacherId || form.baseRatePerSession == null || !Number.isFinite(Number(form.baseRatePerSession)) || form.baseRatePerSession < 0) {
-    ElMessage.warning("Vui lòng nhập đơn giá lương cơ bản hợp lệ.");
+  if (
+    !form.teacherId ||
+    form.baseRatePerSession == null ||
+    !Number.isFinite(Number(form.baseRatePerSession)) ||
+    !Number.isInteger(Number(form.baseRatePerSession)) ||
+    form.baseRatePerSession < 0 ||
+    form.baseRatePerSession > 100000000
+  ) {
+    ElMessage.warning("Đơn giá lương cơ bản phải là số nguyên từ 0 đến 100.000.000 VND.");
     return;
   }
 
@@ -167,8 +190,24 @@ function toLocalDateString(date) {
 
 async function submitAdjustment() {
   const form = adjustmentForm.value;
-  if (!form.teacherId || !form.amount || form.amount <= 0 || !form.reason.trim() || !form.appliedDate) {
+  if (!form.teacherId || !form.amount || !form.reason.trim() || !form.appliedDate) {
     ElMessage.warning("Vui lòng nhập đầy đủ thông tin điều chỉnh hợp lệ.");
+    return;
+  }
+  const amount = Number(form.amount);
+  if (!Number.isInteger(amount) || amount < 1 || amount > 1000000000) {
+    ElMessage.warning("Số tiền điều chỉnh phải là số nguyên từ 1 đến 1.000.000.000 VND.");
+    return;
+  }
+  if (form.reason.trim().length > 500) {
+    ElMessage.warning("Lý do điều chỉnh không được vượt quá 500 ký tự.");
+    return;
+  }
+  const appliedDate = new Date(form.appliedDate);
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+  if (Number.isNaN(appliedDate.getTime()) || appliedDate.getTime() > endOfToday.getTime()) {
+    ElMessage.warning("Ngày áp dụng không hợp lệ hoặc đang ở tương lai.");
     return;
   }
 
@@ -285,6 +324,7 @@ async function sendBatchEmails() {
           format="MM/YYYY"
           placeholder="Chọn tháng"
           :clearable="false"
+          :disabled-date="disableFutureMonth"
           aria-label="Chọn tháng tính lương"
         />
         <el-button type="primary" :loading="batchLoading" @click="sendBatchEmails">
@@ -419,6 +459,7 @@ async function sendBatchEmails() {
           <el-input-number
             v-model="baseRateForm.baseRatePerSession"
             :min="0"
+            :max="100000000"
             :precision="0"
             :step="50000"
             class="full-width"
@@ -444,10 +485,17 @@ async function sendBatchEmails() {
           </el-radio-group>
         </el-form-item>
         <el-form-item label="Số tiền (VND)" required>
-          <el-input-number v-model="adjustmentForm.amount" :min="1" :precision="0" :step="50000" class="full-width" />
+          <el-input-number v-model="adjustmentForm.amount" :min="1" :max="1000000000" :precision="0" :step="50000" class="full-width" />
         </el-form-item>
         <el-form-item label="Ngày áp dụng" required>
-          <el-date-picker v-model="adjustmentForm.appliedDate" type="date" format="DD/MM/YYYY" :clearable="false" class="full-width" />
+          <el-date-picker
+            v-model="adjustmentForm.appliedDate"
+            type="date"
+            format="DD/MM/YYYY"
+            :clearable="false"
+            :disabled-date="disableFutureDate"
+            class="full-width"
+          />
         </el-form-item>
         <el-form-item label="Lý do" required>
           <el-input v-model="adjustmentForm.reason" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="Nhập lý do điều chỉnh" />

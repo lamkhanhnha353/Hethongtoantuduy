@@ -35,6 +35,7 @@
               id="currentPassword"
               v-model="passwordForm.currentPassword"
               required
+              maxlength="128"
               type="password"
               autocomplete="current-password"
               placeholder="••••••••"
@@ -48,6 +49,7 @@
               v-model="passwordForm.newPassword"
               required
               minlength="6"
+              maxlength="128"
               type="password"
               autocomplete="new-password"
               placeholder="••••••••"
@@ -61,6 +63,7 @@
               v-model="passwordForm.confirmNewPassword"
               required
               minlength="6"
+              maxlength="128"
               type="password"
               autocomplete="new-password"
               placeholder="••••••••"
@@ -142,6 +145,18 @@ async function changePassword() {
   passwordMessage.value = ''
   passwordError.value = ''
 
+  if (!passwordForm.currentPassword) {
+    passwordError.value = 'Vui lòng nhập mật khẩu hiện tại.'
+    return
+  }
+  if (passwordForm.newPassword.length < 6) {
+    passwordError.value = 'Mật khẩu mới phải có ít nhất 6 ký tự.'
+    return
+  }
+  if (passwordForm.newPassword.length > 128 || passwordForm.currentPassword.length > 128) {
+    passwordError.value = 'Mật khẩu không được vượt quá 128 ký tự.'
+    return
+  }
   if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
     passwordError.value = 'Mật khẩu xác nhận không khớp.'
     return

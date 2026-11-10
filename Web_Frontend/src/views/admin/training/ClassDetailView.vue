@@ -675,6 +675,7 @@
                     <input
                       v-model="searchStudent"
                       type="text"
+                      maxlength="100"
                       placeholder="Tìm kiếm học viên..."
                       class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-orange-200 rounded-lg focus:outline-hidden focus:border-orange-500"
                     />
@@ -828,6 +829,7 @@
                   <input
                     v-model="studentSearchQuery"
                     type="text"
+                    maxlength="100"
                     placeholder="Nhập tên học sinh để tìm (VD: Minh Khang, Bảo Ngọc...)"
                     class="w-full pl-9 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
                   />

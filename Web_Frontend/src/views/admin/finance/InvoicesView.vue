@@ -40,6 +40,7 @@
           <input
             v-model="search"
             type="search"
+            maxlength="100"
             placeholder="Tìm mã hóa đơn, phụ huynh, học viên..."
             aria-label="Tìm kiếm hóa đơn"
             class="w-full rounded-xl border border-orange-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"

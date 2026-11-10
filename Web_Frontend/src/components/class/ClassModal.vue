@@ -90,6 +90,7 @@
               v-model.trim="form.name"
               type="text"
               required
+              maxlength="150"
               placeholder="VD: Soroban Nhập môn Sáng T7 - CN (Phòng 201)"
               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
             />
@@ -176,6 +177,7 @@
               <input
                 v-model="form.endDate"
                 type="date"
+                :min="form.startDate || undefined"
                 class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden font-mono"
               />
               <p class="text-[10px] text-gray-400 mt-1">Có thể để trống để hệ thống tự tính toán theo lịch học</p>
@@ -237,6 +239,11 @@ import {
 import classService from '@/services/class.service'
 import courseService from '@/services/course.service'
 import teacherService from '@/services/teacher.service'
+import {
+  validateDateRange,
+  validateNumberRange,
+  validateTextLength,
+} from '@/utils/validation.helper'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -367,12 +374,38 @@ async function handleSubmit() {
     errorMessage.value = 'Vui lòng chọn cấp độ khóa học cho lớp này.'
     return
   }
-  if (!form.value.name?.trim()) {
-    errorMessage.value = 'Tên lớp học không được để trống.'
+  const nameCheck = validateTextLength(form.value.name, {
+    label: 'Tên lớp học',
+    required: true,
+    max: 150,
+  })
+  if (!nameCheck.valid) {
+    errorMessage.value = nameCheck.message
     return
   }
   if (!form.value.startDate) {
     errorMessage.value = 'Ngày khai giảng không được để trống.'
+    return
+  }
+
+  const capacityCheck = validateNumberRange(form.value.maxCapacity, {
+    label: 'Sĩ số tối đa',
+    required: true,
+    integer: true,
+    min: 1,
+    max: 100,
+  })
+  if (!capacityCheck.valid) {
+    errorMessage.value = capacityCheck.message
+    return
+  }
+
+  const dateCheck = validateDateRange(form.value.startDate, form.value.endDate, {
+    startLabel: 'Ngày khai giảng',
+    endLabel: 'Ngày bế giảng',
+  })
+  if (!dateCheck.valid) {
+    errorMessage.value = dateCheck.message
     return
   }
 

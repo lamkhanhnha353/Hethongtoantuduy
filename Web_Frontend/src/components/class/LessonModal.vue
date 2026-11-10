@@ -56,6 +56,8 @@
               v-model="form.lessonDate"
               type="date"
               required
+              :min="minLessonDate"
+              :max="maxLessonDate"
               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden font-mono"
             />
           </div>
@@ -180,6 +182,26 @@ const emit = defineEmits(['close', 'saved', 'deleted'])
 
 const isEdit = computed(() => Boolean(props.lesson && props.lesson.id))
 
+// Giới hạn ngày diễn ra buổi học: từ 1 năm trước đến 2 năm sau
+function toDateInputValue(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const minLessonDate = computed(() => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 1)
+  return toDateInputValue(d)
+})
+
+const maxLessonDate = computed(() => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() + 2)
+  return toDateInputValue(d)
+})
+
 const saving = ref(false)
 const deleting = ref(false)
 const errorMessage = ref('')
@@ -268,6 +290,10 @@ async function handleSubmit() {
 
   if (!form.value.lessonDate) {
     errorMessage.value = 'Ngày diễn ra buổi học không được để trống.'
+    return
+  }
+  if (form.value.lessonDate < minLessonDate.value || form.value.lessonDate > maxLessonDate.value) {
+    errorMessage.value = `Ngày diễn ra buổi học phải nằm trong khoảng ${minLessonDate.value} đến ${maxLessonDate.value}.`
     return
   }
   if (!form.value.startTime || !form.value.endTime) {

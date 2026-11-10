@@ -62,6 +62,7 @@
             <input
               v-model="keyword"
               type="search"
+              maxlength="100"
               placeholder="Tìm theo tiêu đề hoặc nội dung..."
               class="w-full rounded-xl border border-orange-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
             />
@@ -298,6 +299,7 @@ import {
   UsersIcon,
 } from "@heroicons/vue/24/outline";
 import adminNotificationService from "@/services/admin-notification.service";
+import { validateTextLength } from "@/utils/validation.helper";
 
 const pageSize = 20;
 const page = ref(1);
@@ -389,8 +391,22 @@ function changePage(nextPage) {
 }
 
 async function submitNotification() {
-  if (!form.value.title.trim()) {
-    composeError.value = "Vui lòng nhập tiêu đề thông báo.";
+  const titleCheck = validateTextLength(form.value.title, {
+    label: "Tiêu đề thông báo",
+    max: 200,
+    required: true,
+  });
+  if (!titleCheck.valid) {
+    composeError.value = titleCheck.message;
+    return;
+  }
+
+  const bodyCheck = validateTextLength(form.value.body, {
+    label: "Nội dung thông báo",
+    max: 2000,
+  });
+  if (!bodyCheck.valid) {
+    composeError.value = bodyCheck.message;
     return;
   }
 

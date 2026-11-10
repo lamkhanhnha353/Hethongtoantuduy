@@ -132,9 +132,11 @@
             <input
               type="text"
               v-model="newNotice.title"
+              maxlength="200"
               placeholder="VD: Nhắc nhở hoàn thành bài tập về nhà tuần 44"
               class="w-full rounded-xl border border-orange-200 p-2.5"
             />
+            <p class="text-[10px] text-gray-400 mt-1 text-right">{{ newNotice.title.length }}/200 ký tự</p>
           </div>
 
           <div>
@@ -142,9 +144,11 @@
             <textarea
               v-model="newNotice.content"
               rows="4"
+              maxlength="2000"
               placeholder="Nhập nội dung cần gửi đến phụ huynh..."
               class="w-full rounded-xl border border-orange-200 p-2.5"
             ></textarea>
+            <p class="text-[10px] text-gray-400 mt-1 text-right">{{ newNotice.content.length }}/2000 ký tự</p>
           </div>
 
           <div>
@@ -193,6 +197,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { validateTextLength } from '@/utils/validation.helper'
 
 const activeTab = ref('sent')
 const search = ref('')
@@ -237,17 +242,32 @@ const filteredList = computed(() => {
 })
 
 function sendNotice() {
-  if (!newNotice.value.title || !newNotice.value.content) {
-    alert('Vui lòng nhập tiêu đề và nội dung tin nhắn!')
+  const titleCheck = validateTextLength(newNotice.value.title, {
+    label: 'Tiêu đề thông báo',
+    required: true,
+    max: 200,
+  })
+  if (!titleCheck.valid) {
+    alert(titleCheck.message)
+    return
+  }
+
+  const contentCheck = validateTextLength(newNotice.value.content, {
+    label: 'Nội dung tin nhắn',
+    required: true,
+    max: 2000,
+  })
+  if (!contentCheck.valid) {
+    alert(contentCheck.message)
     return
   }
 
   sentList.value.unshift({
     id: Date.now(),
-    title: newNotice.value.title,
+    title: newNotice.value.title.trim(),
     recipientType: newNotice.value.recipientType,
     recipientName: newNotice.value.recipientType === 'class' ? 'Lớp Toán Tư Duy 3A' : newNotice.value.studentName,
-    content: newNotice.value.content,
+    content: newNotice.value.content.trim(),
     sentAt: 'Vừa xong',
     channels: ['App Phụ huynh', 'SMS'],
     readCount: 0,

@@ -357,6 +357,7 @@
             <input
               type="text"
               v-model="searchQuery"
+              maxlength="100"
               placeholder="Tìm theo tên học sinh..."
               class="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
@@ -560,6 +561,7 @@
                 <input
                   type="text"
                   v-model="st.teacherNotes"
+                  maxlength="500"
                   :disabled="lockState.isLocked"
                   :placeholder="st.status === 'ABSENT' ? 'Lý do vắng mặt...' : 'Ghi chú thêm...'"
                   :class="[

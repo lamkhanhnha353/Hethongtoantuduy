@@ -103,12 +103,14 @@
                 <form @submit.prevent="saveParent" class="p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
-                        <input v-model="form.fullName" required type="text"
+                        <input v-model="form.fullName" required type="text" maxlength="100"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Mã PIN bảo mật</label>
-                        <input v-model="form.pin" type="text" placeholder="Nhập mã PIN mới (nếu muốn đổi)..."
+                        <input v-model.trim="form.pin" type="text" inputmode="numeric" minlength="4" maxlength="6"
+                            pattern="[0-9]{4,6}" title="Mã PIN gồm 4 đến 6 chữ số"
+                            placeholder="Nhập mã PIN mới (nếu muốn đổi)..."
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div class="flex justify-end gap-3 mt-6">
@@ -131,6 +133,7 @@
 import { ref, computed, onMounted } from 'vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import parentService from '@/services/parent.service'
+import { PIN_REGEX, validateTextLength } from '@/utils/validation.helper'
 
 const parents = ref([])
 const keyword = ref('')
@@ -172,15 +175,29 @@ function openEditModal(parent) {
     form.value = {
         id: parent.id,
         fullName: parent.fullName,
-        pin: parent.pin || ''
+        pin: ''
     }
     showModal.value = true
 }
 
 async function saveParent() {
+    const fullNameCheck = validateTextLength(form.value.fullName, {
+        label: 'Họ và tên',
+        required: true,
+        max: 100,
+    })
+    if (!fullNameCheck.valid) {
+        alert(fullNameCheck.message)
+        return
+    }
+    if (form.value.pin && !PIN_REGEX.test(form.value.pin)) {
+        alert('Mã PIN phải gồm 4 đến 6 chữ số.')
+        return
+    }
+
     try {
         await parentService.update(form.value.id, {
-            fullName: form.value.fullName,
+            fullName: form.value.fullName.trim(),
             pin: form.value.pin
         })
         showModal.value = false

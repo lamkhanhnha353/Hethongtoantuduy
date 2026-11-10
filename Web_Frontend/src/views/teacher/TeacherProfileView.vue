@@ -299,6 +299,7 @@
               <input
                 id="specialize"
                 v-model.trim="teacherSpecialize"
+                maxlength="100"
                 :disabled="!isEditingSpecialize"
                 placeholder="VD: Toán Tư Duy Tiểu Học, Toán Logic, Hình Học Không Gian"
                 class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-600"
@@ -478,6 +479,7 @@ import profileService from '@/services/profile.service'
 import teacherService from '@/services/teacher.service'
 import classService from '@/services/class.service'
 import { getProfileId } from '@/services/auth-storage'
+import { validateEmail, validateTextLength } from '@/utils/validation.helper'
 
 // ─── State ─────────────────────────────────────────────────────────────────
 const profile = ref(null)
@@ -746,9 +748,16 @@ function cancelEditingEmail() {
 }
 
 async function saveEmail() {
-  isSavingEmail.value = true
   emailMessage.value = ''
   emailError.value = ''
+
+  const emailCheck = validateEmail(email.value, { label: 'Email' })
+  if (!emailCheck.valid) {
+    emailError.value = emailCheck.message
+    return
+  }
+
+  isSavingEmail.value = true
   try {
     if (teacherId.value) {
       await teacherService.update(teacherId.value, {
@@ -785,9 +794,19 @@ function cancelEditingSpecialize() {
 }
 
 async function saveSpecialize() {
-  isSavingSpecialize.value = true
   specializeMessage.value = ''
   specializeError.value = ''
+
+  const specializeCheck = validateTextLength(teacherSpecialize.value, {
+    label: 'Chuyên môn phụ trách',
+    max: 100,
+  })
+  if (!specializeCheck.valid) {
+    specializeError.value = specializeCheck.message
+    return
+  }
+
+  isSavingSpecialize.value = true
   try {
     if (teacherId.value) {
       await teacherService.update(teacherId.value, {

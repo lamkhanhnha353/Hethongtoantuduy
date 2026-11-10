@@ -18,7 +18,11 @@
             id="phone"
             v-model.trim="phone"
             type="tel"
+            inputmode="tel"
             autocomplete="username"
+            maxlength="12"
+            pattern="(\+84|0)[0-9]{9}"
+            title="Số điện thoại gồm 10 chữ số (VD: 0912345678) hoặc bắt đầu bằng +84"
             required
             class="w-full rounded-xl border border-orange-200 px-4 py-3 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
             placeholder="Nhập số điện thoại"
@@ -35,6 +39,7 @@
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               autocomplete="current-password"
+              maxlength="128"
               required
               class="w-full rounded-xl border border-orange-200 px-4 py-3 pr-20 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
               placeholder="Nhập mật khẩu"
@@ -125,6 +130,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { GoogleSignInButton } from "vue3-google-signin";
 import authService from "@/services/auth.service";
+import { validatePhone, validateTextLength } from "@/utils/validation.helper";
 
 const router = useRouter();
 const phone = ref("");
@@ -136,6 +142,22 @@ const googleClientConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
 async function handleSubmit() {
   errorMessage.value = "";
+
+  const phoneCheck = validatePhone(phone.value, { label: "Số điện thoại", required: true });
+  if (!phoneCheck.valid) {
+    errorMessage.value = phoneCheck.message;
+    return;
+  }
+  const passwordCheck = validateTextLength(password.value, {
+    label: "Mật khẩu",
+    required: true,
+    max: 128,
+  });
+  if (!passwordCheck.valid) {
+    errorMessage.value = passwordCheck.message;
+    return;
+  }
+
   isSubmitting.value = true;
 
   try {
