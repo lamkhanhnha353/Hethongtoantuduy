@@ -139,7 +139,7 @@ services:
     image: toantuduy/web:local
     container_name: toantuduy-web
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "${WEB_PORT:-8088}:80"
     depends_on:
       backend:
         condition: service_started
