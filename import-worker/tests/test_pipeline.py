@@ -60,6 +60,7 @@ async def test_docx_pipeline():
     # 3. Test LLM Parser & Structured Output
     print("\n--- BƯỚC 3: LLM PARSER & SCHEMA VALIDATION ---")
     parser = LLMParserService()
+    parser.provider = "mock"
     questions: list[QuestionItem] = []
 
     for c in chunks:

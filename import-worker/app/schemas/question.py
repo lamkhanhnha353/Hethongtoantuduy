@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class QuestionType(str, Enum):
     MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
     FILL_IN = "FILL_IN"
+    TRUE_FALSE = "TRUE_FALSE"
+    TIMED_SEQUENCE = "TIMED_SEQUENCE"
     ESSAY = "ESSAY"
 
 
@@ -25,7 +27,7 @@ class QuestionItem(BaseModel):
     )
     type: QuestionType = Field(
         ...,
-        description="Loại câu hỏi: MULTIPLE_CHOICE (trắc nghiệm), FILL_IN (điền khuyết/đáp số), ESSAY (tự luận)"
+        description="Loại câu hỏi: MULTIPLE_CHOICE, FILL_IN, TRUE_FALSE, TIMED_SEQUENCE hoặc ESSAY"
     )
     content: str = Field(
         ...,

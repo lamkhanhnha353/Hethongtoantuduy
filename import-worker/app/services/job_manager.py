@@ -33,6 +33,7 @@ class JobManager:
             status=JobStatus.PENDING,
             progress_percentage=0,
             bank_id=bank_id,
+            parser_provider=self.parser.provider,
             file_name=file_name,
             total_chunks=0,
             total_questions=0,
