@@ -9,6 +9,10 @@ class AdminReportService {
     return (await this.api.get("/revenue", { params: { months } })).data;
   }
 
+  async getPayrollTrend(months = 6) {
+    return (await this.api.get("/payroll", { params: { months } })).data;
+  }
+
   async getStudentGrowth(months = 6) {
     return (await this.api.get("/student-growth", { params: { months } })).data;
   }
