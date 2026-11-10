@@ -13,8 +13,10 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-   npx expo start
+   npx expo start --go
    ```
+
+   This project also includes `expo-dev-client`; use `--go` to make the QR code open in Expo Go. Run `npx expo start --dev-client` when you intend to use a development build.
 
 In the output, you'll find options to open the app in a
 
