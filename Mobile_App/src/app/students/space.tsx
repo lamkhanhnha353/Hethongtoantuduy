@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import type React from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -9,6 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useGameStore } from '@/store/gameStore';
 import { useStudentQuery } from '@/hooks/useStudents';
+import { useStudentPracticeAssignmentsQuery } from '@/hooks/useStudentPracticeAssignments';
 import { toApiError } from '@/services/apiError';
 import { audio } from '@/audio';
 
@@ -24,9 +25,11 @@ export default function StudentSpaceScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const studentId = Number(id);
   const { data: student, isPending, isError, error, refetch } = useStudentQuery(studentId);
+  const assignmentsQuery = useStudentPracticeAssignmentsQuery(studentId);
   const bonus = useGameStore((state) => state.bonusByStudentId[studentId]);
 
   const loadError = isError ? toApiError(error) : null;
+  const assignmentsError = assignmentsQuery.error ? toApiError(assignmentsQuery.error) : null;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
@@ -49,7 +52,7 @@ export default function StudentSpaceScreen() {
         </View>
       </View>
 
-      <View className="flex-1 px-5 pt-6">
+      <ScrollView className="flex-1" contentContainerClassName="px-5 pb-8 pt-6">
         {isPending ? (
           <View className="items-center pt-16">
             <ActivityIndicator size="large" color="#4f46e5" />
@@ -111,12 +114,93 @@ export default function StudentSpaceScreen() {
               />
             </View>
 
-            <Text className="mt-5 text-xs leading-4 text-slate-400 text-center">
-              Tiến độ chi tiết, bảng xếp hạng và bài tập sẽ được cập nhật trong bản tới.
-            </Text>
+            <View className="mt-7">
+              <Text className="mb-3 text-lg font-bold text-slate-900">Bài tập từ giáo viên</Text>
+
+              {assignmentsQuery.isPending ? (
+                <View className="items-center rounded-2xl bg-white py-6">
+                  <ActivityIndicator color="#4f46e5" />
+                  <Text className="mt-2 text-sm text-slate-500">Đang tải bài tập...</Text>
+                </View>
+              ) : null}
+
+              {assignmentsError ? (
+                <View className="gap-3">
+                  <AlertBanner tone="error" message={assignmentsError.message} />
+                  <PrimaryButton
+                    label="Tải lại bài tập"
+                    onPress={() => {
+                      void assignmentsQuery.refetch();
+                    }}
+                    variant="ghost"
+                  />
+                </View>
+              ) : null}
+
+              {!assignmentsQuery.isPending && !assignmentsError
+                && (assignmentsQuery.data?.length ?? 0) === 0 ? (
+                  <View className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <Text className="text-sm text-slate-500">Hiện chưa có bài tập được giao.</Text>
+                  </View>
+                ) : null}
+
+              {assignmentsQuery.data?.map((assignment) => {
+                const isCompleted = assignment.studentStatus === 'SUBMITTED'
+                  || assignment.studentStatus === 'GRADED';
+
+                return (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    className={`mb-3 rounded-2xl border border-slate-200 bg-white p-4 ${
+                      assignment.isAvailable ? 'active:opacity-70' : 'opacity-75'
+                    }`}
+                    disabled={!assignment.isAvailable}
+                    key={assignment.assignmentId}
+                    onPress={() => {
+                      audio.pop();
+                      router.push({
+                        pathname: '/students/assignment',
+                        params: {
+                          assignmentId: String(assignment.assignmentId),
+                          studentId: String(student.id),
+                        },
+                      });
+                    }}
+                  >
+                    <View className="flex-row items-start justify-between gap-3">
+                      <View className="flex-1">
+                        <Text className="font-semibold text-slate-900">{assignment.title}</Text>
+                        {assignment.lessonTitle ? (
+                          <Text className="mt-1 text-sm text-slate-500">
+                            {assignment.lessonTitle}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Text className={`text-xs font-semibold ${
+                        assignment.isAvailable ? 'text-indigo-600' : 'text-slate-500'
+                      }`}>
+                        {assignment.isAvailable
+                          ? 'Làm bài'
+                          : isCompleted
+                            ? 'Đã nộp'
+                            : 'Chưa mở / đã hết hạn'}
+                      </Text>
+                    </View>
+                    <Text className="mt-3 text-xs text-slate-500">
+                      {assignment.totalQuestions} câu · Hạn {new Date(assignment.deadline).toLocaleString()}
+                    </Text>
+                    {isCompleted && assignment.score !== null ? (
+                      <Text className="mt-1 text-sm font-medium text-emerald-700">
+                        Điểm: {assignment.score}/{assignment.totalPoints}
+                      </Text>
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         ) : null}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
