@@ -109,7 +109,7 @@
             </div>
             <div>
               <label for="phone" class="mb-2 block text-sm font-medium text-gray-700">Số điện thoại đăng nhập</label>
-              <input id="phone" v-model.trim="form.phone" :disabled="!isEditingProfile" required type="tel" maxlength="20" autocomplete="tel" class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-600" />
+              <input id="phone" v-model.trim="form.phone" :disabled="!isEditingProfile" required type="tel" maxlength="12" pattern="(?:\+84|0)[0-9]{9}" autocomplete="tel" class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-600" />
               <p class="mt-2 text-xs leading-5 text-gray-500">Số điện thoại mới có hiệu lực cho lần đăng nhập tiếp theo.</p>
             </div>
           </div>
@@ -164,15 +164,15 @@
             <div class="grid gap-5 md:grid-cols-2">
               <div class="md:col-span-2">
                 <label for="currentPassword" class="mb-2 block text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
-                <input id="currentPassword" v-model="passwordForm.currentPassword" required type="password" autocomplete="current-password" class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100" />
+                <input id="currentPassword" v-model="passwordForm.currentPassword" required type="password" maxlength="128" autocomplete="current-password" class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100" />
               </div>
               <div>
                 <label for="newPassword" class="mb-2 block text-sm font-medium text-gray-700">Mật khẩu mới</label>
-                <input id="newPassword" v-model="passwordForm.newPassword" required minlength="6" type="password" autocomplete="new-password" class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100" />
+                <input id="newPassword" v-model="passwordForm.newPassword" required minlength="6" maxlength="128" type="password" autocomplete="new-password" class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100" />
               </div>
               <div>
                 <label for="confirmNewPassword" class="mb-2 block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
-                <input id="confirmNewPassword" v-model="passwordForm.confirmNewPassword" required minlength="6" type="password" autocomplete="new-password" class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100" />
+                <input id="confirmNewPassword" v-model="passwordForm.confirmNewPassword" required minlength="6" maxlength="128" type="password" autocomplete="new-password" class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100" />
               </div>
             </div>
           </template>
@@ -196,6 +196,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import authService from '@/services/auth.service'
 import profileService from '@/services/profile.service'
+import { validateEmail, validatePhone, validateTextLength } from '@/utils/validation.helper'
 
 const profile = ref(null)
 const isLoading = ref(true)
@@ -368,9 +369,27 @@ async function loadProfile() {
 }
 
 async function saveProfile() {
-  isSavingProfile.value = true
   profileMessage.value = ''
   profileError.value = ''
+
+  const nameCheck = validateTextLength(form.fullName, {
+    label: 'Họ và tên',
+    min: 2,
+    max: 100,
+    required: true,
+  })
+  if (!nameCheck.valid) {
+    profileError.value = nameCheck.message
+    return
+  }
+
+  const phoneCheck = validatePhone(form.phone, { label: 'Số điện thoại', required: true })
+  if (!phoneCheck.valid) {
+    profileError.value = phoneCheck.message
+    return
+  }
+
+  isSavingProfile.value = true
   try {
     applyProfile(await profileService.update({
       fullName: form.fullName,
@@ -387,9 +406,16 @@ async function saveProfile() {
 }
 
 async function saveEmail() {
-  isSavingEmail.value = true
   emailMessage.value = ''
   emailError.value = ''
+
+  const emailCheck = validateEmail(email.value, { label: 'Email', required: true })
+  if (!emailCheck.valid) {
+    emailError.value = emailCheck.message
+    return
+  }
+
+  isSavingEmail.value = true
   try {
     applyProfile(await profileService.updateEmail({ email: email.value }))
     emailMessage.value = 'Đã gửi link xác minh đến email mới. Email hiện tại chỉ đổi sau khi xác minh.'
@@ -447,6 +473,19 @@ async function saveAvatar() {
 async function changePassword() {
   passwordMessage.value = ''
   passwordError.value = ''
+
+  if (!passwordForm.currentPassword) {
+    passwordError.value = 'Vui lòng nhập mật khẩu hiện tại.'
+    return
+  }
+  if (passwordForm.newPassword.length < 6) {
+    passwordError.value = 'Mật khẩu mới phải có ít nhất 6 ký tự.'
+    return
+  }
+  if (passwordForm.newPassword.length > 128 || passwordForm.currentPassword.length > 128) {
+    passwordError.value = 'Mật khẩu không được vượt quá 128 ký tự.'
+    return
+  }
   if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
     passwordError.value = 'Mật khẩu xác nhận không khớp.'
     return

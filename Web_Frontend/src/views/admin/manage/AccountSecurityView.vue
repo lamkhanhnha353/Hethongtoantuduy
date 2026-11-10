@@ -28,6 +28,7 @@
         id="account-search"
         v-model="keyword"
         type="search"
+        maxlength="100"
         placeholder="Tìm theo tên, email hoặc số điện thoại..."
         class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 sm:max-w-md"
       />

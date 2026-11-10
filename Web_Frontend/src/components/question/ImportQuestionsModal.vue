@@ -148,6 +148,7 @@
                 <input
                   type="text"
                   v-model="newBankName"
+                  maxlength="200"
                   placeholder="VD: Bộ đề thi giữa kỳ Toán tư duy..."
                   class="w-full text-xs font-medium bg-white border border-orange-200 text-gray-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
                 />
@@ -641,6 +642,9 @@ import {
 import importWorkerService from '@/services/importWorker.service'
 import questionBankService from '@/services/questionBank.service'
 import { parseMultipleChoice } from '@/utils/media.helper'
+import { validateTextLength } from '@/utils/validation.helper'
+
+const MAX_FILE_BYTES = 50 * 1024 * 1024
 
 const props = defineProps({
   modelValue: {
@@ -754,6 +758,10 @@ function validateAndSetFile(file) {
     emit('notify', `Định dạng tệp ${ext} không hợp lệ. Vui lòng chọn tệp .docx hoặc .pdf!`, true)
     return
   }
+  if (file.size > MAX_FILE_BYTES) {
+    emit('notify', `Tệp vượt quá giới hạn 50MB (${formatFileSize(file.size)}). Vui lòng chọn tệp nhỏ hơn!`, true)
+    return
+  }
   selectedFile.value = file
 }
 
@@ -777,6 +785,15 @@ async function startProcessing() {
   // Nếu người dùng chọn tạo ngân hàng mới tại chỗ, tạo trước qua API
   let finalBankId = targetBankId.value
   if (isCreatingNewBank.value) {
+    const bankNameCheck = validateTextLength(newBankName.value, {
+      label: 'Tên ngân hàng mới',
+      required: true,
+      max: 200,
+    })
+    if (!bankNameCheck.valid) {
+      emit('notify', bankNameCheck.message, true)
+      return
+    }
     try {
       const created = await questionBankService.create({
         courseId: newBankCourseId.value,

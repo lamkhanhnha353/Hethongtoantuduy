@@ -540,6 +540,7 @@
               type="text"
               v-model="bankForm.name"
               required
+              maxlength="200"
               placeholder="VD: Chuyên đề Số học & Dãy số logic Lớp 3"
               class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
@@ -550,6 +551,7 @@
             <textarea
               v-model="bankForm.description"
               rows="3"
+              maxlength="1000"
               placeholder="Ghi chú về phạm vi kiến thức, mục tiêu rèn luyện..."
               class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
             ></textarea>
@@ -645,6 +647,7 @@
               v-model="questionForm.content"
               required
               rows="3"
+              maxlength="2000"
               placeholder="Nhập nội dung đề bài, các điều kiện hoặc yêu cầu của câu hỏi..."
               class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
             ></textarea>
@@ -826,6 +829,7 @@
                   type="text"
                   v-model="mcOptions[opt]"
                   required
+                  maxlength="500"
                   :placeholder="`Nhập nội dung phương án ${opt}...`"
                   class="flex-1 bg-transparent border-0 focus:outline-none text-xs font-medium text-gray-900 placeholder:text-gray-400"
                 />
@@ -844,6 +848,7 @@
               <textarea
                 v-model="mcExplanation"
                 rows="2"
+                maxlength="1000"
                 placeholder="Giải thích vì sao phương án này đúng, phương pháp tư duy cần áp dụng..."
                 class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs"
               ></textarea>
@@ -895,6 +900,7 @@
                 type="text"
                 v-model="fillInAnswer"
                 required
+                maxlength="500"
                 placeholder="Nhập từ hoặc con số chính xác học sinh cần điền (VD: 42 hoặc 15 cm)..."
                 class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs font-bold text-orange-950"
               />
@@ -910,6 +916,7 @@
               <textarea
                 v-model="fillInExplanation"
                 rows="2"
+                maxlength="1000"
                 placeholder="Các bước tính toán ra kết quả..."
                 class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs"
               ></textarea>
@@ -928,6 +935,7 @@
               v-model="essayAnswer"
               required
               rows="4"
+              maxlength="5000"
               placeholder="Nhập bài giải mẫu, các bước lập luận, cách phân bổ điểm theo từng ý để giáo viên chấm thi..."
               class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs"
             ></textarea>
@@ -1041,6 +1049,10 @@ import {
   buildMultipleChoiceContent,
   buildMultipleChoiceAnswer,
 } from '@/utils/media.helper'
+import { validateTextLength } from '@/utils/validation.helper'
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
 
 // ─── State ─────────────────────────────────────────────────────────────────
 const courses = ref([])
@@ -1199,8 +1211,20 @@ function clearMedia() {
 }
 
 async function handleImageFileUpload(e) {
-  const file = e.target.files?.[0]
+  const input = e.target
+  const file = input.files?.[0]
+  input.value = ''
   if (!file) return
+
+  if (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    notify('Chỉ chấp nhận tệp ảnh PNG, JPG, JPEG, WEBP hoặc GIF.', true)
+    return
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    notify('Ảnh vượt quá giới hạn 10MB. Vui lòng chọn ảnh nhỏ hơn.', true)
+    return
+  }
+
   uploadFileName.value = file.name
   try {
     const base64 = await fileToBase64(file)
@@ -1361,8 +1385,25 @@ function openBankModal(bank = null) {
 }
 
 async function saveBank() {
-  if (!bankForm.courseId || !bankForm.name.trim()) {
-    notify('Vui lòng chọn khóa học và nhập tên ngân hàng!', true)
+  if (!bankForm.courseId) {
+    notify('Vui lòng chọn khóa học cho ngân hàng câu hỏi!', true)
+    return
+  }
+  const nameCheck = validateTextLength(bankForm.name, {
+    label: 'Tên ngân hàng câu hỏi',
+    required: true,
+    max: 200,
+  })
+  if (!nameCheck.valid) {
+    notify(nameCheck.message, true)
+    return
+  }
+  const descCheck = validateTextLength(bankForm.description, {
+    label: 'Mô tả ngân hàng',
+    max: 1000,
+  })
+  if (!descCheck.valid) {
+    notify(descCheck.message, true)
     return
   }
 
@@ -1512,9 +1553,29 @@ function openQuestionModal(q = null) {
 }
 
 async function saveQuestion() {
-  if (!questionForm.content.trim()) {
-    notify('Vui lòng nhập nội dung đề bài / câu hỏi!', true)
+  const contentCheck = validateTextLength(questionForm.content, {
+    label: 'Nội dung câu hỏi',
+    required: true,
+    max: 2000,
+  })
+  if (!contentCheck.valid) {
+    notify(contentCheck.message, true)
     return
+  }
+
+  const mediaUrl = questionForm.imageUrl?.trim() || ''
+  if (mediaType.value === 'youtube' && mediaUrl && !isYouTubeUrl(mediaUrl)) {
+    notify('Link YouTube không hợp lệ. Vui lòng dán đúng link video YouTube.', true)
+    return
+  }
+  if (mediaType.value === 'url' && mediaUrl) {
+    try {
+      const parsedUrl = new URL(mediaUrl)
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('invalid protocol')
+    } catch {
+      notify('Link ảnh không hợp lệ. Vui lòng nhập URL bắt đầu bằng http:// hoặc https://.', true)
+      return
+    }
   }
 
   let finalContent = questionForm.content.trim()
@@ -1531,12 +1592,29 @@ async function saveQuestion() {
       notify('Vui lòng nhập đầy đủ cả 4 phương án A, B, C, D!', true)
       return
     }
+    const longOption = ['A', 'B', 'C', 'D'].find(opt => mcOptions[opt].trim().length > 500)
+    if (longOption) {
+      notify(`Phương án ${longOption} không được vượt quá 500 ký tự.`, true)
+      return
+    }
+    if (mcExplanation.value.trim().length > 1000) {
+      notify('Lời giải / hướng dẫn giải không được vượt quá 1000 ký tự.', true)
+      return
+    }
 
     finalContent = buildMultipleChoiceContent(questionForm.content, mcOptions)
     finalAnswer = buildMultipleChoiceAnswer(mcCorrectOption.value, mcOptions, mcExplanation.value)
   } else if (questionForm.type === 'FILL_IN') {
     if (!fillInAnswer.value.trim()) {
       notify('Vui lòng nhập đáp án chuẩn cần điền!', true)
+      return
+    }
+    if (fillInAnswer.value.trim().length > 500) {
+      notify('Đáp án điền khuyết không được vượt quá 500 ký tự.', true)
+      return
+    }
+    if (fillInExplanation.value.trim().length > 1000) {
+      notify('Hướng dẫn giải không được vượt quá 1000 ký tự.', true)
       return
     }
     finalAnswer = fillInAnswer.value.trim()
@@ -1555,6 +1633,10 @@ async function saveQuestion() {
   } else if (questionForm.type === 'ESSAY') {
     if (!essayAnswer.value.trim()) {
       notify('Vui lòng nhập đáp án mẫu & tiêu chí chấm điểm tự luận!', true)
+      return
+    }
+    if (essayAnswer.value.trim().length > 5000) {
+      notify('Đáp án mẫu tự luận không được vượt quá 5000 ký tự.', true)
       return
     }
     finalAnswer = essayAnswer.value.trim()

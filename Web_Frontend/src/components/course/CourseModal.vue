@@ -57,6 +57,9 @@
                 v-model.trim="form.code"
                 type="text"
                 required
+                maxlength="50"
+                pattern="[A-Za-z0-9_-]+"
+                title="Chỉ gồm chữ cái, chữ số, gạch ngang hoặc gạch dưới"
                 placeholder="VD: MATH-SOROBAN-01"
                 class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-semibold text-gray-800 uppercase focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
               />
@@ -89,6 +92,7 @@
               v-model.trim="form.name"
               type="text"
               required
+              maxlength="200"
               placeholder="VD: Toán Tư Duy Bàn Tính Soroban Cho Trẻ Em"
               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
             />
@@ -141,6 +145,7 @@
             <textarea
               v-model="form.description"
               rows="3"
+              maxlength="2000"
               placeholder="Giới thiệu mục tiêu đào tạo, đối tượng học viên và phương pháp giảng dạy..."
               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden resize-y"
             ></textarea>
@@ -326,6 +331,7 @@
                 <input
                   v-model.trim="form.benefits[index]"
                   type="text"
+                  maxlength="300"
                   placeholder="VD: Rèn luyện tính toán siêu tốc, phát triển tư duy logic hai bán cầu não..."
                   class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-hidden"
                 />
@@ -491,6 +497,11 @@ import {
 } from '@heroicons/vue/24/outline'
 import courseService from '@/services/course.service'
 import { getYouTubeEmbedUrl, isYouTubeUrl } from '@/utils/media.helper'
+import {
+  CODE_REGEX,
+  validateNumberRange,
+  validateTextLength,
+} from '@/utils/validation.helper'
 
 // ─── Giới hạn upload media (đồng bộ với backend) ────────────────────────────
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -780,16 +791,73 @@ async function handleSubmit() {
     return
   }
 
-  if (!form.value.code?.trim()) {
-    errorMessage.value = 'Mã khóa học không được để trống.'
+  const codeCheck = validateTextLength(form.value.code, {
+    label: 'Mã khóa học',
+    required: true,
+    max: 50,
+  })
+  if (!codeCheck.valid) {
+    errorMessage.value = codeCheck.message
     return
   }
-  if (!form.value.name?.trim()) {
-    errorMessage.value = 'Tên khóa học không được để trống.'
+  if (!CODE_REGEX.test(form.value.code.trim())) {
+    errorMessage.value = 'Mã khóa học chỉ được chứa chữ cái, chữ số, gạch ngang hoặc gạch dưới.'
     return
   }
-  if (form.value.minAge > form.value.maxAge) {
+
+  const nameCheck = validateTextLength(form.value.name, {
+    label: 'Tên khóa học',
+    required: true,
+    max: 200,
+  })
+  if (!nameCheck.valid) {
+    errorMessage.value = nameCheck.message
+    return
+  }
+
+  const descCheck = validateTextLength(form.value.description, {
+    label: 'Mô tả khóa học',
+    max: 2000,
+  })
+  if (!descCheck.valid) {
+    errorMessage.value = descCheck.message
+    return
+  }
+
+  const minAgeCheck = validateNumberRange(form.value.minAge, {
+    label: 'Độ tuổi tối thiểu',
+    required: true,
+    integer: true,
+    min: 3,
+    max: 20,
+  })
+  if (!minAgeCheck.valid) {
+    errorMessage.value = minAgeCheck.message
+    return
+  }
+
+  const maxAgeCheck = validateNumberRange(form.value.maxAge, {
+    label: 'Độ tuổi tối đa',
+    required: true,
+    integer: true,
+    min: 3,
+    max: 25,
+  })
+  if (!maxAgeCheck.valid) {
+    errorMessage.value = maxAgeCheck.message
+    return
+  }
+
+  if (minAgeCheck.value > maxAgeCheck.value) {
     errorMessage.value = 'Độ tuổi tối thiểu không được lớn hơn độ tuổi tối đa.'
+    return
+  }
+
+  const invalidBenefit = form.value.benefits.find(
+    b => b && b.trim() && b.trim().length > 300
+  )
+  if (invalidBenefit) {
+    errorMessage.value = 'Mỗi lợi ích khóa học không được vượt quá 300 ký tự.'
     return
   }
 

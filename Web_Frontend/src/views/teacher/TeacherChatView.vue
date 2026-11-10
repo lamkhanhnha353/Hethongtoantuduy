@@ -417,6 +417,7 @@
               <textarea
                 v-model="composerText"
                 rows="1"
+                maxlength="2000"
                 @keydown="onComposerKeydown"
                 placeholder="Nhập tin nhắn gửi phụ huynh..."
                 class="flex-1 resize-none max-h-32 min-h-[44px] px-3.5 py-2.5 text-sm bg-orange-50/50 border border-orange-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 transition-all"
@@ -889,6 +890,11 @@ async function sendText() {
   const content = composerText.value.trim()
   const partnerId = activePartner.value?.id
   if (!content || !partnerId || isSending.value) return
+
+  if (content.length > 2000) {
+    errorMessage.value = 'Tin nhắn không được vượt quá 2000 ký tự.'
+    return
+  }
 
   isSending.value = true
   errorMessage.value = ''

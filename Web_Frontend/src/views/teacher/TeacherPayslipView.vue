@@ -25,6 +25,15 @@ const periodQuery = computed(() => ({
   year: period.value.getFullYear(),
 }));
 
+// Không cho chọn tháng trong tương lai
+function disableFutureMonth(date) {
+  const now = new Date();
+  return (
+    date.getFullYear() > now.getFullYear() ||
+    (date.getFullYear() === now.getFullYear() && date.getMonth() > now.getMonth())
+  );
+}
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -86,6 +95,7 @@ watch(period, loadPayslip, { immediate: true });
         format="MM/YYYY"
         placeholder="Chọn tháng"
         :clearable="false"
+        :disabled-date="disableFutureMonth"
         aria-label="Chọn tháng tra cứu lương"
       />
     </header>

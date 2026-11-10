@@ -5,6 +5,7 @@
 -- sqlcmd -S "(localdb)\mssqllocaldb" -d ToanTuDuyDb -i SeedData.sql -f 65001
 -- Cần chạy đầy đủ các migration hiện có trước khi chạy script này.
 -- =============================================================================
+EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT ALL";
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 SET QUOTED_IDENTIFIER ON;
@@ -1248,3 +1249,5 @@ BEGIN CATCH
     PRINT N'>>> LỖI XẢY RA KHI SEED DỮ LIỆU: ' + @ErrorMessage;
     RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
 END CATCH;
+
+EXEC sp_MSforeachtable "ALTER TABLE ? CHECK CONSTRAINT ALL";

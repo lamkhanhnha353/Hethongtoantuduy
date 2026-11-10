@@ -8,6 +8,7 @@
       :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
       type="text"
+      maxlength="100"
       :placeholder="placeholder"
       class="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-orange-200 rounded-xl
              text-gray-700 placeholder-gray-400

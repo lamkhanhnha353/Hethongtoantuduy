@@ -258,6 +258,7 @@
               <input
                 type="text"
                 v-model="st.teacherFeedback"
+                maxlength="1000"
                 placeholder="Nhập nhận xét về tư duy logic, sự tiến bộ..."
                 class="w-full text-xs bg-white border border-orange-200 text-gray-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
@@ -313,6 +314,7 @@ import assignmentService from '@/services/assignment.service'
 import { useUserState } from '@/services/user-state'
 import { getProfileId } from '@/services/auth-storage'
 import { normalizeScore } from '@/utils/media.helper'
+import { validateTextLength } from '@/utils/validation.helper'
 
 const router = useRouter()
 const { profile, fetchProfile } = useUserState()
@@ -508,6 +510,15 @@ async function saveSingleStudentGrade(st) {
   }
   st.score = score
 
+  const feedbackCheck = validateTextLength(st.teacherFeedback, {
+    label: 'Lời nhận xét',
+    max: 1000,
+  })
+  if (!feedbackCheck.valid) {
+    notify(`${feedbackCheck.message} (${st.studentName})`, 'error')
+    return
+  }
+
   st.isSaving = true
   try {
     await assignmentService.gradeStudent(selectedAssignmentId.value, st.studentId, {
@@ -534,6 +545,14 @@ async function saveAllGrades() {
   })
   if (invalidGrade) {
     notify(`Vui lòng nhập điểm số hợp lệ cho học sinh ${invalidGrade.studentName}!`, 'error')
+    return
+  }
+
+  const invalidFeedback = studentsList.value.find(
+    (s) => !validateTextLength(s.teacherFeedback, { label: 'Lời nhận xét', max: 1000 }).valid
+  )
+  if (invalidFeedback) {
+    notify(`Lời nhận xét của học sinh ${invalidFeedback.studentName} không được vượt quá 1000 ký tự!`, 'error')
     return
   }
 

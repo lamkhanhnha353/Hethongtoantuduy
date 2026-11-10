@@ -165,6 +165,7 @@
             <input
               v-model="classSearchQuery"
               type="text"
+              maxlength="100"
               placeholder="Lọc tên lớp..."
               class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs placeholder-gray-400 focus:border-orange-400 focus:outline-hidden"
             />

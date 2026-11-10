@@ -89,7 +89,7 @@
                 <form @submit.prevent="saveTeacher" class="p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
-                        <input v-model="form.fullName" required type="text"
+                        <input v-model="form.fullName" required type="text" maxlength="100"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div>
@@ -98,24 +98,26 @@
                         <input v-if="!isCreating" :value="form.phone" disabled type="tel"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm font-mono cursor-not-allowed" />
                         <input v-else v-model.trim="form.phone" required type="tel" autocomplete="tel"
+                            inputmode="tel" maxlength="12" pattern="(\+84|0)[0-9]{9}"
+                            title="Số điện thoại gồm 10 chữ số (VD: 0912345678) hoặc bắt đầu bằng +84"
                             placeholder="Nhập số điện thoại đăng nhập"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm font-mono" />
                     </div>
                     <div v-if="isCreating">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu ban đầu *</label>
-                        <input v-model="form.password" required minlength="6" type="password" autocomplete="new-password"
+                        <input v-model="form.password" required minlength="6" maxlength="128" type="password" autocomplete="new-password"
                             placeholder="Ít nhất 6 ký tự"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input v-model.trim="form.email" type="email" autocomplete="email"
+                        <input v-model.trim="form.email" type="email" autocomplete="email" maxlength="256"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
                     <div v-if="!isCreating">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Chuyên môn / Lĩnh vực giảng
                             dạy</label>
-                        <input v-model="form.specialize" type="text"
+                        <input v-model="form.specialize" type="text" maxlength="100"
                             placeholder="VD: Toán tư duy Soroban, Fingermath..."
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
                     </div>
@@ -139,6 +141,11 @@
 import { ref, computed, onMounted } from 'vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import teacherService from '@/services/teacher.service'
+import {
+    validateEmail,
+    validatePhone,
+    validateTextLength,
+} from '@/utils/validation.helper'
 
 const teachers = ref([])
 const keyword = ref('')
@@ -199,6 +206,52 @@ function closeModal() {
 }
 
 async function saveTeacher() {
+    const fullNameCheck = validateTextLength(form.value.fullName, {
+        label: 'Họ và tên',
+        required: true,
+        max: 100,
+    })
+    if (!fullNameCheck.valid) {
+        alert(fullNameCheck.message)
+        return
+    }
+
+    if (isCreating.value) {
+        const phoneCheck = validatePhone(form.value.phone, {
+            label: 'Số điện thoại',
+            required: true,
+        })
+        if (!phoneCheck.valid) {
+            alert(phoneCheck.message)
+            return
+        }
+        const passwordCheck = validateTextLength(form.value.password, {
+            label: 'Mật khẩu ban đầu',
+            required: true,
+            min: 6,
+            max: 128,
+        })
+        if (!passwordCheck.valid) {
+            alert(passwordCheck.message)
+            return
+        }
+    }
+
+    const emailCheck = validateEmail(form.value.email, { label: 'Email' })
+    if (!emailCheck.valid) {
+        alert(emailCheck.message)
+        return
+    }
+
+    const specializeCheck = validateTextLength(form.value.specialize, {
+        label: 'Chuyên môn',
+        max: 100,
+    })
+    if (!specializeCheck.valid) {
+        alert(specializeCheck.message)
+        return
+    }
+
     isSaving.value = true
     try {
         if (isCreating.value) {

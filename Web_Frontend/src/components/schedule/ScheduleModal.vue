@@ -325,6 +325,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import classScheduleService from '@/services/classSchedule.service'
+import { validateTextLength } from '@/utils/validation.helper'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -464,8 +465,18 @@ async function handleSubmit() {
   successMessage.value = ''
 
   // Validate StartTime < EndTime
+  if (!form.value.startTime || !form.value.endTime) {
+    errorMessage.value = 'Vui lòng nhập giờ bắt đầu và giờ kết thúc!'
+    return
+  }
   if (form.value.startTime >= form.value.endTime) {
     errorMessage.value = 'Giờ kết thúc phải muộn hơn giờ bắt đầu!'
+    return
+  }
+
+  const roomCheck = validateTextLength(form.value.room, { label: 'Phòng học', max: 50 })
+  if (!roomCheck.valid) {
+    errorMessage.value = roomCheck.message
     return
   }
 

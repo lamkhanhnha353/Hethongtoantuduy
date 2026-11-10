@@ -12,6 +12,11 @@ Nền tảng quản lý trung tâm toán tư duy, phục vụ quản trị viên
 | `Backend/SeedData.sql` | Dữ liệu demo cho SQL Server; chạy sau khi đã áp dụng migration |
 | `Web_Frontend/` | SPA Vue cho quản trị viên và giáo viên |
 | `Mobile_App/` | Ứng dụng Expo cho thiết bị di động |
+| `AI_Backend/` | FastAPI service cho chatbot RAG (ingest tài liệu, chat streaming) |
+| `docker-compose.yml` | Chạy toàn bộ stack bằng Docker: SQL Server, Redis, API, AI service và web |
+| `DOCKER.md` | Hướng dẫn chi tiết cấu hình và vận hành Docker |
+
+Hướng dẫn Docker đầy đủ nằm trong [DOCKER.md](./DOCKER.md).
 | `docker-compose.yml` | SQL Server, chạy migration và seed dữ liệu qua Docker Compose |
 
 Hai dịch vụ Python chạy độc lập; cài requirements và cấu hình `.env` riêng trong từng thư mục dịch vụ.

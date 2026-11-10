@@ -1,0 +1,202 @@
+name: toantuduy
+
+# =============================================================================
+# Docker Compose cho Hệ thống Toán Tư Duy
+#
+#   docker compose up -d --build              # chạy toàn bộ stack
+#   docker compose --profile tools run --rm migrate   # áp dụng migration EF Core
+#   docker compose --profile tools run --rm seed      # nạp dữ liệu demo
+#
+# Biến cấu hình được đọc từ file .env ở thư mục gốc (xem .env.example).
+# =============================================================================
+
+services:
+  # ─── SQL Server 2022 ───────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: toantuduy-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Hãy đặt MSSQL_SA_PASSWORD trong file .env}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+    ports:
+      - "${SQLSERVER_PORT:-1433}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - toantuduy
+    restart: unless-stopped
+
+  # ─── Redis (đếm thông báo chưa đọc / SignalR backplane) ────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: toantuduy-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - toantuduy
+    restart: unless-stopped
+
+  # ─── ASP.NET Core Web API ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./Backend/ToanTuDuy
+      dockerfile: Dockerfile
+      target: final
+    image: toantuduy/backend:local
+    container_name: toantuduy-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=${DB_NAME:-ToanTuDuyDb};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Redis__ConnectionString: "redis:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000"
+      Jwt__Key: ${JWT_KEY:-Chuoi_Bi_Mat_Dai_Va_Phuc_Tap_Nhat_Co_The_123!@#}
+      Jwt__Issuer: ${JWT_ISSUER:-ToanTuDuy}
+      Jwt__Audience: ${JWT_AUDIENCE:-ToanTuDuyClient}
+      EmailVerification__BaseUrl: ${PUBLIC_WEB_URL:-http://localhost:8080}
+      PasswordReset__FromEmail: ${PASSWORD_RESET_FROM_EMAIL:-onboarding@resend.dev}
+      Resend__ApiToken: ${RESEND_API_TOKEN:-}
+    ports:
+      - "${BACKEND_PORT:-5114}:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - toantuduy
+    restart: unless-stopped
+
+  # ─── AI RAG service (FastAPI) ──────────────────────────────────────────────
+  ai-backend:
+    build:
+      context: ./AI_Backend
+      dockerfile: Dockerfile
+      target: final
+    image: toantuduy/ai-backend:local
+    container_name: toantuduy-ai-backend
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8001
+      JWT_SECRET_KEY: ${JWT_KEY:-Chuoi_Bi_Mat_Dai_Va_Phuc_Tap_Nhat_Co_The_123!@#}
+      JWT_ALGORITHM: HS256
+      JWT_ISSUER: ${JWT_ISSUER:-ToanTuDuy}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ToanTuDuyClient}
+      LLM_PROVIDER: ${AI_LLM_PROVIDER:-groq}
+      LLM_BASE_URL: ${AI_LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_API_KEY: ${AI_LLM_API_KEY:-}
+      LLM_CHAT_MODEL: ${AI_LLM_CHAT_MODEL:-openai/gpt-oss-120b}
+      LLM_SUMMARY_MODEL: ${AI_LLM_SUMMARY_MODEL:-openai/gpt-oss-20b}
+      LLM_FALLBACK_ENABLED: ${AI_LLM_FALLBACK_ENABLED:-false}
+      EMBEDDING_PROVIDER: ${AI_EMBEDDING_PROVIDER:-nomic}
+      NOMIC_API_KEY: ${AI_NOMIC_API_KEY:-}
+      NOMIC_BASE_URL: ${AI_NOMIC_BASE_URL:-https://api-atlas.nomic.ai/v1}
+      NOMIC_EMBEDDING_MODEL: ${AI_NOMIC_EMBEDDING_MODEL:-nomic-embed-text-v1.5}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      CHROMA_PERSIST_DIRECTORY: /app/storage/chroma
+      SQLITE_URL: sqlite:////app/storage/app.db
+      DOCUMENTS_DIR: /app/storage/documents
+      CORS_ORIGINS: ${AI_CORS_ORIGINS:-*}
+      ANONYMIZED_TELEMETRY: "False"
+    ports:
+      - "${AI_PORT:-8001}:8001"
+    volumes:
+      - ai_storage:/app/storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - toantuduy
+    restart: unless-stopped
+
+  # ─── Web Frontend (Vue + Nginx) ────────────────────────────────────────────
+  web:
+    build:
+      context: ./Web_Frontend
+      dockerfile: Dockerfile
+      target: final
+      args:
+        # URL backend mà trình duyệt gọi tới. VITE_* được nhúng lúc build.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5114}
+        VITE_IMPORT_WORKER_URL: ${VITE_IMPORT_WORKER_URL:-}
+    image: toantuduy/web:local
+    container_name: toantuduy-web
+    ports:
+      - "${WEB_PORT:-8088}:80"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - toantuduy
+    restart: unless-stopped
+
+  # ─── EF Core migration (chạy một lần) ─────────────────────────────────────
+  migrate:
+    profiles: ["tools"]
+    build:
+      context: ./Backend/ToanTuDuy
+      dockerfile: Dockerfile
+      target: migrations
+    image: toantuduy/backend-migrations:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=${DB_NAME:-ToanTuDuyDb};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Jwt__Key: ${JWT_KEY:-Chuoi_Bi_Mat_Dai_Va_Phuc_Tap_Nhat_Co_The_123!@#}
+      Jwt__Issuer: ${JWT_ISSUER:-ToanTuDuy}
+      Jwt__Audience: ${JWT_AUDIENCE:-ToanTuDuyClient}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - toantuduy
+
+  # ─── Nạp dữ liệu demo (chạy một lần, XÓA dữ liệu hiện có) ─────────────────
+  seed:
+    profiles: ["tools"]
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Hãy đặt MSSQL_SA_PASSWORD trong file .env}
+      DB_NAME: ${DB_NAME:-ToanTuDuyDb}
+    volumes:
+      - ./Backend/SeedData.sql:/scripts/SeedData.sql:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+          # sqlcmd (Go) mặc định đọc UTF-8 và cần -C để tin certificate tự ký
+          exec /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -C -d "$$DB_NAME" -i /scripts/SeedData.sql
+        else
+          # sqlcmd (ODBC) cần -f 65001 để đọc đúng tiếng Việt
+          exec /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -d "$$DB_NAME" -i /scripts/SeedData.sql -f 65001
+        fi
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - toantuduy
+
+networks:
+  toantuduy:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  ai_storage:

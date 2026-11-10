@@ -282,6 +282,7 @@
               <textarea
                 v-model="gradeForm.teacherFeedback"
                 rows="5"
+                maxlength="1000"
                 placeholder="Nhập nhận xét chi tiết về bài làm: ưu điểm về tư duy logic, các câu còn nhầm lẫn, thái độ làm bài và lời khuyên dành cho phụ huynh..."
                 class="w-full text-xs rounded-xl border border-orange-200 p-3 leading-relaxed focus:outline-none focus:ring-2 focus:ring-orange-300 placeholder:text-gray-400"
               ></textarea>
@@ -324,6 +325,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import assignmentService from '@/services/assignment.service'
 import { calculateExamScore, normalizeScore } from '@/utils/media.helper'
+import { validateTextLength } from '@/utils/validation.helper'
 
 const route = useRoute()
 const router = useRouter()
@@ -453,6 +455,16 @@ async function submitGrading() {
   gradeForm.score = score
   if (!gradeForm.teacherFeedback.trim()) {
     notify('Vui lòng nhập lời nhận xét / đánh giá cho học sinh!', 'error')
+    return
+  }
+
+  const feedbackCheck = validateTextLength(gradeForm.teacherFeedback, {
+    label: 'Lời nhận xét',
+    max: 1000,
+    required: true,
+  })
+  if (!feedbackCheck.valid) {
+    notify(feedbackCheck.message, 'error')
     return
   }
 
