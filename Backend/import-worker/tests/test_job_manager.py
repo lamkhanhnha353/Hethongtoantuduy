@@ -62,6 +62,61 @@ class JobManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(job.total_questions, 4)
         self.assertEqual(manager.parser.max_active_calls, 2)
 
+    async def test_parses_chunks_in_batches_reducing_requests(self):
+        chunks = [
+            QuestionChunk(chunk_index=index, label=f"Question {index}", raw_text=f"Q{index}")
+            for index in range(1, 11)
+        ]
+
+        class Extractor:
+            def extract(self, file_path, job_id):
+                return object()
+
+        class Chunker:
+            def chunk(self, document):
+                return chunks
+
+        class BatchParser:
+            provider = "mock"
+
+            def __init__(self):
+                self.batch_calls = 0
+
+            async def parse_batch(self, batch_chunks, bank_id):
+                self.batch_calls += 1
+                return [
+                    QuestionItem(
+                        bankId=bank_id,
+                        type=QuestionType.FILL_IN,
+                        content=c.raw_text,
+                        difficulty=Difficulty.EASY,
+                        answer=c.raw_text,
+                    )
+                    for c in batch_chunks
+                ]
+
+        manager = JobManager()
+        manager.chunker = Chunker()
+        parser = BatchParser()
+        manager.parser = parser
+        job_id = manager.create_job("sample.docx", bank_id=5)
+
+        with (
+            patch.object(ExtractorFactory, "get_extractor", return_value=Extractor()),
+            patch("app.services.job_manager.settings.BATCH_SIZE", 5),
+        ):
+            await manager.run_pipeline(job_id, Path("sample.docx"), bank_id=5)
+
+        job = manager.get_job(job_id)
+        self.assertEqual(job.status, JobStatus.COMPLETED)
+        self.assertEqual(job.total_questions, 10)
+        # 10 câu hỏi với batch_size 5 chỉ tốn 2 lần gọi thay vì 10 lần gọi!
+        self.assertEqual(parser.batch_calls, 2)
+        self.assertEqual(
+            [q.content for q in job.questions],
+            [f"Q{i}" for i in range(1, 11)],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

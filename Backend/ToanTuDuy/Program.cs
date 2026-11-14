@@ -201,8 +201,37 @@ builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 builder.Services.AddSingleton<IChatAttachmentStorage, CloudinaryChatAttachmentStorage>();
 builder.Services.AddSingleton<ICourseMediaStorage, CloudinaryCourseMediaStorage>();
 
+// Seeder sinh dữ liệu mẫu quy mô lớn (Bogus)
+builder.Services.AddScoped<BogusDataSeeder>();
 
 var app = builder.Build();
+
+// Hỗ trợ chạy Seeder bằng CLI: dotnet run --seed-bogus [rowsPerTable] hoặc dotnet run --seed-bogus-sql [rowsPerTable]
+if (args.Contains("--seed-bogus") || args.Contains("--seed-bogus-sql"))
+{
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<BogusDataSeeder>();
+    int count = 1000;
+    for (int i = 0; i < args.Length; i++)
+    {
+        if ((args[i] == "--seed-bogus" || args[i] == "--seed-bogus-sql") && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsedCount))
+        {
+            count = parsedCount;
+            break;
+        }
+    }
+
+    if (args.Contains("--seed-bogus-sql"))
+    {
+        string sqlPath = Path.Combine(Directory.GetCurrentDirectory(), $"DataSeed_Bogus_{count}.sql");
+        await seeder.GenerateSqlScriptAsync(sqlPath, count);
+    }
+    else
+    {
+        await seeder.SeedAsync(count);
+    }
+    return;
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
