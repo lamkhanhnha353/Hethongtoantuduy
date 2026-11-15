@@ -1,11 +1,18 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { usePagination } from "@/composables/usePagination";
 import createApiClient from "@/services/api.service";
 
 const api = createApiClient("/api/payrolls");
+const { page, pageSize, totalCount, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 20,
+});
+
 const period = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 const payrolls = ref([]);
+const keyword = ref("");
+const emailStatusFilter = ref("ALL");
 const loading = ref(false);
 const batchLoading = ref(false);
 const detailLoading = ref(false);
@@ -95,20 +102,68 @@ function getErrorMessage(error, fallback) {
     ?? fallback;
 }
 
+let searchTimer = null;
+let requestToken = 0;
+
 async function loadPayrolls() {
+  const token = ++requestToken;
   loading.value = true;
   try {
-    const response = await api.get("/admin/summary", { params: periodQuery.value });
-    payrolls.value = Array.isArray(response.data) ? response.data : [];
+    const response = await api.get("/admin/summary/paged", {
+      params: {
+        ...periodQuery.value,
+        page: page.value,
+        pageSize: pageSize.value,
+        keyword: keyword.value.trim() || undefined,
+        emailStatus: emailStatusFilter.value !== "ALL" ? emailStatusFilter.value : undefined,
+      },
+    });
+    if (token !== requestToken) return;
+    payrolls.value = applyPagedResult(response.data);
   } catch (error) {
+    if (token !== requestToken) return;
     payrolls.value = [];
+    totalCount.value = 0;
     ElMessage.error(getErrorMessage(error, "Không thể tải bảng lương."));
   } finally {
-    loading.value = false;
+    if (token === requestToken) {
+      loading.value = false;
+    }
   }
 }
 
-watch(period, loadPayrolls, { immediate: true });
+function handlePageChange(nextPage) {
+  page.value = nextPage;
+  loadPayrolls();
+}
+
+function handlePageSizeChange(nextSize) {
+  pageSize.value = nextSize;
+  page.value = 1;
+  loadPayrolls();
+}
+
+watch(period, () => {
+  resetPage();
+  loadPayrolls();
+}, { immediate: true });
+
+watch(emailStatusFilter, () => {
+  resetPage();
+  loadPayrolls();
+});
+
+watch(keyword, () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    resetPage();
+    loadPayrolls();
+  }, 300);
+});
+
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer);
+});
 
 async function openLessonDetails(payroll) {
   selectedPayroll.value = payroll;
@@ -334,6 +389,21 @@ async function sendBatchEmails() {
     </header>
 
     <section class="table-card">
+      <div class="table-toolbar">
+        <el-input
+          v-model="keyword"
+          placeholder="Tìm tên hoặc email giáo viên..."
+          clearable
+          class="toolbar-search"
+        />
+        <el-select v-model="emailStatusFilter" class="toolbar-select" aria-label="Lọc trạng thái gửi email">
+          <el-option label="Tất cả trạng thái mail" value="ALL" />
+          <el-option label="NotSent (Chưa gửi)" value="NotSent" />
+          <el-option label="Pending (Đang chờ)" value="Pending" />
+          <el-option label="Sent (Đã gửi)" value="Sent" />
+          <el-option label="Failed (Thất bại)" value="Failed" />
+        </el-select>
+      </div>
       <el-table v-loading="loading" :data="payrolls" row-key="payrollId" stripe>
         <el-table-column label="Giáo viên" min-width="200">
           <template #default="{ row }">
@@ -405,7 +475,20 @@ async function sendBatchEmails() {
           <el-empty description="Không có dữ liệu lương trong tháng này." />
         </template>
       </el-table>
-      <footer class="table-footer">Kỳ lương: <strong>{{ formatPeriod() }}</strong> · {{ payrolls.length }} giáo viên</footer>
+      <footer class="table-footer">
+        <span>Kỳ lương: <strong>{{ formatPeriod() }}</strong> · {{ totalCount }} giáo viên</span>
+        <el-pagination
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="totalCount"
+          :disabled="loading"
+          background
+          layout="sizes, prev, pager, next"
+          @current-change="handlePageChange"
+          @size-change="handlePageSizeChange"
+        />
+      </footer>
     </section>
 
     <el-dialog v-model="detailDialogVisible" :title="`Chi tiết lương — ${selectedPayroll?.teacherName ?? ''}`" width="min(980px, 94vw)" destroy-on-close>
@@ -523,7 +606,10 @@ h1 { margin: 0; color: #431407; font-size: clamp(24px, 3vw, 32px); font-weight: 
 .page-description { margin: 7px 0 0; color: #6b7280; font-size: 14px; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .table-card { overflow: hidden; border: 1px solid #ffedd5; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgb(124 45 18 / 5%); }
-.table-footer { padding: 13px 18px; border-top: 1px solid #fff7ed; color: #6b7280; font-size: 12px; }
+.table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #fff7ed; background: #fffaf5; }
+.toolbar-search { max-width: 340px; width: 100%; }
+.toolbar-select { width: 210px; }
+.table-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 13px 18px; border-top: 1px solid #fff7ed; color: #6b7280; font-size: 12px; }
 .table-footer strong { color: #9a3412; }
 .teacher-cell { display: flex; align-items: center; gap: 10px; }
 .teacher-cell strong, .teacher-cell small { display: block; }

@@ -844,7 +844,7 @@
                     Danh sách profile học viên (Lấy từ Backend):
                   </label>
                   <span class="text-[11px] text-gray-400">
-                    {{ filteredAvailableStudents.length }} học viên
+                    {{ studentModalTotalCount }} học viên
                   </span>
                 </div>
 
@@ -857,7 +857,7 @@
                   class="space-y-1.5 max-h-56 overflow-y-auto border border-gray-200 rounded-xl p-2 bg-gray-50/50"
                 >
                   <div
-                    v-for="st in filteredAvailableStudents"
+                    v-for="st in availableStudents"
                     :key="st.id"
                     @click="!isStudentInClass(st.id) && selectStudentToAdd(st)"
                     :class="[
@@ -906,10 +906,23 @@
                     </div>
                   </div>
 
-                  <div v-if="filteredAvailableStudents.length === 0" class="py-4 text-center text-xs text-gray-400">
+                  <div v-if="availableStudents.length === 0" class="py-4 text-center text-xs text-gray-400">
                     Không tìm thấy học viên nào phù hợp với từ khóa.
                   </div>
                 </div>
+
+                <PaginationBar
+                  v-model:page="studentModalPage"
+                  v-model:page-size="studentModalPageSize"
+                  :total-count="studentModalTotalCount"
+                  :total-pages="studentModalTotalPages"
+                  :disabled="loadingAvailableStudents"
+                  :bordered="false"
+                  compact
+                  item-label="học viên"
+                  class="mt-2 px-0 py-1"
+                  @change="loadAvailableStudents"
+                />
               </div>
 
               <!-- Selected Student Preview Card -->
@@ -1129,7 +1142,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   UserGroupIcon, UserPlusIcon, ChevronRightIcon, BookOpenIcon, AcademicCapIcon,
@@ -1139,12 +1152,14 @@ import {
   MagnifyingGlassIcon,
 } from '@heroicons/vue/24/outline'
 
+import PaginationBar  from '@/components/common/PaginationBar.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import EmptyState     from '@/components/common/EmptyState.vue'
 import StatusBadge    from '@/components/course/StatusBadge.vue'
 import ClassModal     from '@/components/class/ClassModal.vue'
 import ScheduleModal  from '@/components/schedule/ScheduleModal.vue'
 import LessonModal    from '@/components/class/LessonModal.vue'
+import { usePagination } from '@/composables/usePagination'
 
 import classService         from '@/services/class.service'
 import classScheduleService from '@/services/classSchedule.service'
@@ -1188,6 +1203,15 @@ const showLessonModal   = ref(false)
 const selectedLesson    = ref(null)
 
 // ─── Add Student Modal State ──────────────────────────────────────────────────
+const {
+  page: studentModalPage,
+  pageSize: studentModalPageSize,
+  totalCount: studentModalTotalCount,
+  totalPages: studentModalTotalPages,
+  applyPagedResult: applyStudentModalPaged,
+  resetPage: resetStudentModalPage,
+} = usePagination({ initialPageSize: 10 })
+
 const showAddStudentModal      = ref(false)
 const availableStudents        = ref([])
 const loadingAvailableStudents = ref(false)
@@ -1195,6 +1219,22 @@ const studentSearchQuery       = ref('')
 const selectedStudentToAdd     = ref(null)
 const isAddingStudent          = ref(false)
 const searchStudent            = ref('')
+
+let studentModalSearchTimer = null
+let studentModalRequestToken = 0
+
+watch(studentSearchQuery, () => {
+  if (!showAddStudentModal.value) return
+  if (studentModalSearchTimer) clearTimeout(studentModalSearchTimer)
+  studentModalSearchTimer = setTimeout(() => {
+    resetStudentModalPage()
+    loadAvailableStudents()
+  }, 300)
+})
+
+onBeforeUnmount(() => {
+  if (studentModalSearchTimer) clearTimeout(studentModalSearchTimer)
+})
 
 // ─── Assign Teacher Modal State ───────────────────────────────────────────────
 const showAssignTeacherModal = ref(false)
@@ -1280,17 +1320,6 @@ const filteredClassStudents = computed(() => {
     (s.parentName || '').toLowerCase().includes(q) ||
     (s.parentPhone || '').includes(q) ||
     String(s.studentId).includes(q)
-  )
-})
-
-const filteredAvailableStudents = computed(() => {
-  if (!studentSearchQuery.value.trim()) return availableStudents.value
-  const q = studentSearchQuery.value.toLowerCase().trim()
-  return availableStudents.value.filter(s =>
-    (s.fullName || '').toLowerCase().includes(q) ||
-    (s.parentName || '').toLowerCase().includes(q) ||
-    (s.parentPhone || '').includes(q) ||
-    String(s.id).includes(q)
   )
 })
 
@@ -1460,22 +1489,31 @@ async function confirmDeleteLesson(l) {
 async function openAddStudentModal() {
   selectedStudentToAdd.value = null
   studentSearchQuery.value = ''
+  resetStudentModalPage()
   showAddStudentModal.value = true
-  if (availableStudents.value.length === 0) {
-    await loadAvailableStudents()
-  }
+  await loadAvailableStudents()
 }
 
 async function loadAvailableStudents() {
+  const token = ++studentModalRequestToken
   loadingAvailableStudents.value = true
   try {
-    const data = await parentService.getAllStudents()
-    availableStudents.value = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
+    const paged = await parentService.getStudentsPaged({
+      page: studentModalPage.value,
+      pageSize: studentModalPageSize.value,
+      keyword: studentSearchQuery.value,
+    })
+    if (token !== studentModalRequestToken) return
+    availableStudents.value = applyStudentModalPaged(paged)
   } catch (err) {
+    if (token !== studentModalRequestToken) return
     console.error('Lỗi khi tải danh sách profile học viên từ backend:', err)
     availableStudents.value = []
+    studentModalTotalCount.value = 0
   } finally {
-    loadingAvailableStudents.value = false
+    if (token === studentModalRequestToken) {
+      loadingAvailableStudents.value = false
+    }
   }
 }
 
@@ -1691,7 +1729,6 @@ async function loadAllData() {
 onMounted(() => {
   loadAllData()
   loadAvailableTeachers()
-  loadAvailableStudents()
 })
 </script>
 

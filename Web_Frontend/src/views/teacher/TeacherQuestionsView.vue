@@ -81,7 +81,7 @@
               Ngân hàng đề & chuyên đề
             </h2>
             <span class="text-xs bg-orange-100 text-orange-900 px-2 py-0.5 rounded-full font-bold">
-              {{ questionBanks.length }}
+              {{ bankTotalCount }}
             </span>
           </div>
 
@@ -90,7 +90,7 @@
             <label class="block text-[11px] font-semibold text-gray-500 mb-1">Lọc theo khóa học</label>
             <select
               v-model="filterCourseId"
-              @change="fetchBanks()"
+              @change="handleCourseFilterChange"
               class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
             >
               <option :value="null">-- Tất cả khóa học --</option>
@@ -178,6 +178,19 @@
               </div>
             </div>
           </div>
+
+          <PaginationBar
+            v-model:page="bankPage"
+            v-model:page-size="bankPageSize"
+            :total-count="bankTotalCount"
+            :total-pages="bankTotalPages"
+            :disabled="loadingBanks"
+            :bordered="false"
+            compact
+            item-label="ngân hàng"
+            class="border-t border-orange-50 px-0 pt-2.5 pb-0"
+            @change="fetchBanks"
+          />
         </div>
       </div>
 
@@ -225,7 +238,7 @@
               <label class="block text-[11px] font-semibold text-gray-500 mb-1">Mức độ khó & Điểm</label>
               <select
                 v-model="filterDifficulty"
-                @change="fetchQuestions()"
+                @change="handleQuestionFilterChange"
                 class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
               >
                 <option value="">-- Tất cả mức độ --</option>
@@ -239,7 +252,7 @@
               <label class="block text-[11px] font-semibold text-gray-500 mb-1">Loại câu hỏi</label>
               <select
                 v-model="filterType"
-                @change="fetchQuestions()"
+                @change="handleQuestionFilterChange"
                 class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
               >
                 <option value="">-- Tất cả loại --</option>
@@ -256,6 +269,7 @@
               <SearchBar
                 v-model="questionKeyword"
                 placeholder="Tìm nội dung câu hỏi..."
+                @update:modelValue="debouncedFetchQuestions"
               />
             </div>
           </div>
@@ -271,7 +285,7 @@
                 @change="toggleSelectAll"
                 class="rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
               />
-              Chọn tất cả ({{ filteredQuestions.length }})
+              Chọn trang này ({{ questions.length }})
             </label>
             <span v-if="selectedQuestionIds.length > 0" class="text-orange-600 font-bold">
               • Đã chọn {{ selectedQuestionIds.length }} câu
@@ -295,7 +309,7 @@
             >
               <ArrowDownTrayIcon class="w-3.5 h-3.5" /> Trích xuất câu hỏi
             </button>
-            <span>Hiển thị {{ filteredQuestions.length }} câu hỏi</span>
+            <span>Tìm thấy {{ questionTotalCount }} câu hỏi</span>
           </div>
         </div>
 
@@ -313,7 +327,7 @@
           />
         </div>
 
-        <div v-else-if="filteredQuestions.length === 0" class="bg-white rounded-2xl border border-orange-100 p-12 text-center shadow-sm">
+        <div v-else-if="questions.length === 0" class="bg-white rounded-2xl border border-orange-100 p-12 text-center shadow-sm">
           <EmptyState
             :icon="DocumentTextIcon"
             message="Không tìm thấy câu hỏi nào"
@@ -323,7 +337,7 @@
 
         <div v-else class="space-y-3.5">
           <div
-            v-for="(q, idx) in filteredQuestions"
+            v-for="(q, idx) in questions"
             :key="q.id"
             class="bg-white rounded-2xl border border-orange-100 p-4 shadow-sm hover:border-orange-300 transition-all flex items-start gap-3.5"
           >
@@ -338,7 +352,7 @@
               <!-- Question meta tags -->
               <div class="flex flex-wrap items-center gap-2 mb-2">
                 <span class="text-[11px] font-mono font-bold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
-                  #{{ idx + 1 }} (ID: {{ q.id }})
+                  #{{ (questionPage - 1) * questionPageSize + idx + 1 }} (ID: {{ q.id }})
                 </span>
 
                 <!-- Difficulty & Score Milestone Tag -->
@@ -497,6 +511,19 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+            <PaginationBar
+              v-model:page="questionPage"
+              v-model:page-size="questionPageSize"
+              :total-count="questionTotalCount"
+              :total-pages="questionTotalPages"
+              :disabled="loadingQuestions"
+              :bordered="false"
+              item-label="câu hỏi"
+              @change="fetchQuestions"
+            />
           </div>
         </div>
       </div>
@@ -1018,7 +1045,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onBeforeUnmount, onMounted } from 'vue'
 import {
   PlusIcon,
   FolderIcon,
@@ -1034,9 +1061,11 @@ import {
   SparklesIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ImportQuestionsModal from '@/components/question/ImportQuestionsModal.vue'
+import { usePagination } from '@/composables/usePagination'
 import questionBankService from '@/services/questionBank.service'
 import courseService from '@/services/course.service'
 import {
@@ -1055,6 +1084,24 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
 
 // ─── State ─────────────────────────────────────────────────────────────────
+const {
+  page: bankPage,
+  pageSize: bankPageSize,
+  totalCount: bankTotalCount,
+  totalPages: bankTotalPages,
+  applyPagedResult: applyBankPaged,
+  resetPage: resetBankPage,
+} = usePagination({ initialPageSize: 10 })
+
+const {
+  page: questionPage,
+  pageSize: questionPageSize,
+  totalCount: questionTotalCount,
+  totalPages: questionTotalPages,
+  applyPagedResult: applyQuestionPaged,
+  resetPage: resetQuestionPage,
+} = usePagination({ initialPageSize: 20 })
+
 const courses = ref([])
 const questionBanks = ref([])
 const questions = ref([])
@@ -1265,28 +1312,19 @@ function isCorrectOption(parsed, key) {
 }
 
 // ─── Computed ──────────────────────────────────────────────────────────────
-const filteredQuestions = computed(() => {
-  return questions.value.filter(q => {
-    const matchSearch =
-      !questionKeyword.value.trim() ||
-      q.content.toLowerCase().includes(questionKeyword.value.toLowerCase()) ||
-      q.answer.toLowerCase().includes(questionKeyword.value.toLowerCase())
-    return matchSearch
-  })
-})
-
 const isAllSelected = computed(() => {
   return (
-    filteredQuestions.value.length > 0 &&
-    filteredQuestions.value.every(q => selectedQuestionIds.value.includes(q.id))
+    questions.value.length > 0 &&
+    questions.value.every(q => selectedQuestionIds.value.includes(q.id))
   )
 })
 
 function toggleSelectAll() {
+  const currentIds = questions.value.map(q => q.id)
   if (isAllSelected.value) {
-    selectedQuestionIds.value = []
+    selectedQuestionIds.value = selectedQuestionIds.value.filter(id => !currentIds.includes(id))
   } else {
-    selectedQuestionIds.value = filteredQuestions.value.map(q => q.id)
+    selectedQuestionIds.value = Array.from(new Set([...selectedQuestionIds.value, ...currentIds]))
   }
 }
 
@@ -1295,12 +1333,40 @@ function toggleAnswerView(id) {
 }
 
 // ─── API: Load Courses & Banks ─────────────────────────────────────────────
-let debounceTimer = null
+let bankDebounceTimer = null
+let questionDebounceTimer = null
+let bankRequestToken = 0
+let questionRequestToken = 0
+
+onBeforeUnmount(() => {
+  if (bankDebounceTimer) clearTimeout(bankDebounceTimer)
+  if (questionDebounceTimer) clearTimeout(questionDebounceTimer)
+})
+
 function debouncedFetchBanks() {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
+  clearTimeout(bankDebounceTimer)
+  bankDebounceTimer = setTimeout(() => {
+    resetBankPage()
     fetchBanks()
   }, 300)
+}
+
+function handleCourseFilterChange() {
+  resetBankPage()
+  fetchBanks()
+}
+
+function debouncedFetchQuestions() {
+  clearTimeout(questionDebounceTimer)
+  questionDebounceTimer = setTimeout(() => {
+    resetQuestionPage()
+    fetchQuestions()
+  }, 300)
+}
+
+function handleQuestionFilterChange() {
+  resetQuestionPage()
+  fetchQuestions()
 }
 
 async function loadCourses() {
@@ -1313,34 +1379,52 @@ async function loadCourses() {
 }
 
 async function fetchBanks() {
+  const token = ++bankRequestToken
   loadingBanks.value = true
   try {
-    const res = await questionBankService.getAll(
-      filterCourseId.value || null,
-      bankKeyword.value.trim() || null
-    )
-    questionBanks.value = Array.isArray(res) ? res : []
+    const res = await questionBankService.getPaged({
+      page: bankPage.value,
+      pageSize: bankPageSize.value,
+      courseId: filterCourseId.value || null,
+      keyword: bankKeyword.value.trim() || null,
+    })
+    if (token !== bankRequestToken) return
+
+    const items = applyBankPaged(res)
+    if (items.length === 0 && bankPage.value > 1 && bankTotalPages.value > 0 && bankPage.value > bankTotalPages.value) {
+      bankPage.value = bankTotalPages.value
+      await fetchBanks()
+      return
+    }
+    questionBanks.value = items
 
     if (selectedBank.value) {
       const found = questionBanks.value.find(b => b.id === selectedBank.value.id)
       if (found) {
         selectedBank.value = found
       } else if (questionBanks.value.length > 0) {
-        selectBank(questionBanks.value[0])
+        await selectBank(questionBanks.value[0])
       } else {
         selectedBank.value = null
         questions.value = []
+        questionTotalCount.value = 0
+        questionTotalPages.value = 0
       }
     } else if (questionBanks.value.length > 0) {
-      selectBank(questionBanks.value[0])
+      await selectBank(questionBanks.value[0])
     } else {
       questions.value = []
+      questionTotalCount.value = 0
+      questionTotalPages.value = 0
     }
   } catch (err) {
+    if (token !== bankRequestToken) return
     console.error('Lỗi tải ngân hàng câu hỏi:', err)
     notify('Không thể tải danh sách ngân hàng câu hỏi.', true)
   } finally {
-    loadingBanks.value = false
+    if (token === bankRequestToken) {
+      loadingBanks.value = false
+    }
   }
 }
 
@@ -1348,24 +1432,39 @@ async function fetchBanks() {
 async function selectBank(bank) {
   selectedBank.value = bank
   selectedQuestionIds.value = []
+  resetQuestionPage()
   await fetchQuestions()
 }
 
 async function fetchQuestions() {
   if (!selectedBank.value) return
+  const token = ++questionRequestToken
   loadingQuestions.value = true
   try {
-    const res = await questionBankService.getQuestions(
-      selectedBank.value.id,
-      filterDifficulty.value || null,
-      filterType.value || null
-    )
-    questions.value = Array.isArray(res) ? res : []
+    const res = await questionBankService.getQuestionsPaged(selectedBank.value.id, {
+      page: questionPage.value,
+      pageSize: questionPageSize.value,
+      difficulty: filterDifficulty.value || null,
+      type: filterType.value || null,
+      keyword: questionKeyword.value.trim() || null,
+    })
+    if (token !== questionRequestToken) return
+
+    const items = applyQuestionPaged(res)
+    if (items.length === 0 && questionPage.value > 1 && questionTotalPages.value > 0 && questionPage.value > questionTotalPages.value) {
+      questionPage.value = questionTotalPages.value
+      await fetchQuestions()
+      return
+    }
+    questions.value = items
   } catch (err) {
+    if (token !== questionRequestToken) return
     console.error('Lỗi tải danh sách câu hỏi:', err)
     notify('Không thể tải danh sách câu hỏi của ngân hàng.', true)
   } finally {
-    loadingQuestions.value = false
+    if (token === questionRequestToken) {
+      loadingQuestions.value = false
+    }
   }
 }
 

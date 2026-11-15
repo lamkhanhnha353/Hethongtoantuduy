@@ -92,8 +92,7 @@
     <!-- ─── Results summary ────────────────────────────────────────────────── -->
     <div class="flex items-center justify-between">
       <p class="text-sm text-gray-500">
-        Hiển thị <span class="font-semibold text-orange-700">{{ filteredClasses.length }}</span>
-        / {{ classes.length }} lớp học
+        Tìm thấy <span class="font-semibold text-orange-700">{{ totalCount }}</span> lớp học
       </p>
       <button
         v-if="hasActiveFilters || search"
@@ -110,7 +109,7 @@
 
     <!-- ─── Empty ──────────────────────────────────────────────────────────── -->
     <EmptyState
-      v-else-if="!loading && filteredClasses.length === 0"
+      v-else-if="!loading && classes.length === 0"
       :icon="RectangleGroupIcon"
       message="Không tìm thấy lớp học nào"
       sub="Thử thay đổi từ khóa hoặc bộ lọc"
@@ -122,7 +121,7 @@
       class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
     >
       <ClassCard
-        v-for="cls in filteredClasses"
+        v-for="cls in classes"
         :key="cls.id"
         :cls="cls"
         @click="goToDetail"
@@ -133,11 +132,26 @@
     <!-- ─── List view ──────────────────────────────────────────────────────── -->
     <div v-else class="space-y-2">
       <ClassListItem
-        v-for="cls in filteredClasses"
+        v-for="cls in classes"
         :key="cls.id"
         :cls="cls"
         @click="goToDetail"
         @edit="openEditModal"
+      />
+    </div>
+
+    <!-- ─── Pagination ─────────────────────────────────────────────────────── -->
+    <div v-if="totalCount > 0" class="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+      <PaginationBar
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :page-size-options="pageSizeOptions"
+        :total-count="totalCount"
+        :total-pages="totalPages"
+        :disabled="loading"
+        :bordered="false"
+        item-label="lớp học"
+        @change="loadClasses"
       />
     </div>
 
@@ -153,10 +167,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PlusIcon, FunnelIcon, XMarkIcon, RectangleGroupIcon } from '@heroicons/vue/24/outline'
 
+import PaginationBar  from '@/components/common/PaginationBar.vue'
 import SearchBar      from '@/components/common/SearchBar.vue'
 import ViewToggle     from '@/components/common/ViewToggle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -164,11 +179,17 @@ import EmptyState     from '@/components/common/EmptyState.vue'
 import ClassCard      from '@/components/class/ClassCard.vue'
 import ClassListItem  from '@/components/class/ClassListItem.vue'
 import ClassModal     from '@/components/class/ClassModal.vue'
+import { usePagination } from '@/composables/usePagination'
 
 import classService  from '@/services/class.service'
 import courseService from '@/services/course.service'
 
 const router = useRouter()
+
+const { page, pageSize, totalCount, totalPages, pageSizeOptions, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 12,
+  pageSizeOptions: [12, 24, 48, 96],
+})
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const loading       = ref(false)
@@ -179,6 +200,9 @@ const viewMode      = ref('grid')
 const showFilter    = ref(false)
 const showModal     = ref(false)
 const selectedClass = ref(null)
+
+let searchTimer = null
+let requestToken = 0
 
 function openCreateModal() {
   selectedClass.value = null
@@ -205,60 +229,25 @@ const activeFilterCount = computed(() =>
   [filters.value.courseId, filters.value.status, filters.value.capacity].filter(Boolean).length
 )
 
-const filteredClasses = computed(() => {
-  let list = [...classes.value]
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    resetPage()
+    loadClasses()
+  }, 300)
+})
 
-  // Filter theo Khóa học
-  if (filters.value.courseId) {
-    const selCourseId = Number(filters.value.courseId)
-    const foundCourse = courses.value.find(c => c.id === selCourseId)
-    const levelIds = foundCourse && Array.isArray(foundCourse.courseLevels)
-      ? foundCourse.courseLevels.map(l => l.id)
-      : []
+watch(
+  filters,
+  () => {
+    resetPage()
+    loadClasses()
+  },
+  { deep: true }
+)
 
-    list = list.filter(c => {
-      if (c.courseId && Number(c.courseId) === selCourseId) return true
-      if (c.courseLevelId && levelIds.includes(Number(c.courseLevelId))) return true
-      return false
-    })
-  }
-
-  // Filter theo Search
-  const q = search.value.toLowerCase().trim()
-  if (q) {
-    list = list.filter(c =>
-      c.name?.toLowerCase().includes(q) ||
-      c.code?.toLowerCase().includes(q) ||
-      c.teacherName?.toLowerCase().includes(q) ||
-      c.courseName?.toLowerCase().includes(q) ||
-      c.courseLevelName?.toLowerCase().includes(q) ||
-      c.room?.toLowerCase().includes(q) ||
-      String(c.id).includes(q)
-    )
-  }
-
-  // Filter theo Status
-  if (filters.value.status) {
-    list = list.filter(c => String(c.status || '').toLowerCase() === filters.value.status.toLowerCase())
-  }
-
-  // Filter theo Capacity
-  if (filters.value.capacity === 'available') {
-    list = list.filter(c => !c.maxStudents || c.currentStudents < c.maxStudents)
-  } else if (filters.value.capacity === 'full') {
-    list = list.filter(c => c.maxStudents && (c.currentStudents / c.maxStudents) >= 0.9)
-  } else if (filters.value.capacity === 'low') {
-    list = list.filter(c => !c.maxStudents || (c.currentStudents / c.maxStudents) < 0.5)
-  }
-
-  // Sort
-  switch (filters.value.sort) {
-    case 'name_desc':     list.sort((a, b) => b.name?.localeCompare(a.name, 'vi')); break
-    case 'students_desc': list.sort((a, b) => (b.currentStudents ?? 0) - (a.currentStudents ?? 0)); break
-    case 'date_asc':      list.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); break
-    default:              list.sort((a, b) => a.name?.localeCompare(b.name, 'vi'))
-  }
-  return list
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer)
 })
 
 // ─── Methods ──────────────────────────────────────────────────────────────────
@@ -275,20 +264,41 @@ function goToDetail(cls) {
 
 // ─── Load data ────────────────────────────────────────────────────────────────
 async function loadClasses() {
+  const token = ++requestToken
   loading.value = true
   try {
-    const data = await classService.getAll()
-    const raw = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
-    classes.value = raw.map(c => ({
+    const paged = await classService.getPaged({
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: search.value,
+      courseId: filters.value.courseId || undefined,
+      status: filters.value.status || undefined,
+      capacity: filters.value.capacity || undefined,
+      sort: filters.value.sort || 'name_asc',
+    })
+    if (token !== requestToken) return
+
+    const items = applyPagedResult(paged)
+    if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+      page.value = totalPages.value
+      await loadClasses()
+      return
+    }
+
+    classes.value = items.map(c => ({
       ...c,
       currentStudents: c.activeStudentsCount ?? c.currentStudents ?? 0,
       maxStudents: c.maxCapacity ?? c.maxStudents ?? 0,
     }))
   } catch (err) {
+    if (token !== requestToken) return
     console.error('Lỗi khi tải danh sách lớp học:', err)
     classes.value = []
+    totalCount.value = 0
   } finally {
-    loading.value = false
+    if (token === requestToken) {
+      loading.value = false
+    }
   }
 }
 
