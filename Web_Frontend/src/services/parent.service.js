@@ -10,6 +10,44 @@ class ParentService {
     return (await this.api.get(`/?keyword=${keyword}`)).data;
   }
 
+  // Lấy danh sách phụ huynh có phân trang
+  async getPaged({
+    page = 1,
+    pageSize = 20,
+    keyword = "",
+    isActive = undefined,
+  } = {}) {
+    return (
+      await this.api.get("/paged", {
+        params: {
+          page,
+          pageSize,
+          keyword: keyword?.trim() || undefined,
+          isActive: isActive !== undefined && isActive !== "" ? isActive : undefined,
+        },
+      })
+    ).data;
+  }
+
+  // Lấy danh sách hồ sơ học viên có phân trang
+  async getStudentsPaged({
+    page = 1,
+    pageSize = 20,
+    keyword = "",
+    parentAccountId = undefined,
+  } = {}) {
+    return (
+      await this.api.get("/students/paged", {
+        params: {
+          page,
+          pageSize,
+          keyword: keyword?.trim() || undefined,
+          parentAccountId: parentAccountId || undefined,
+        },
+      })
+    ).data;
+  }
+
   // Lấy danh sách tất cả hồ sơ học viên từ Backend
   async getAllStudents(keyword = "") {
     try {

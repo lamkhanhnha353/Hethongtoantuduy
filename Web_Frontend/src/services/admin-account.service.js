@@ -9,6 +9,26 @@ class AdminAccountService {
     return (await this.api.get("/", { params: { keyword: keyword || undefined } })).data;
   }
 
+  async getPaged({
+    page = 1,
+    pageSize = 20,
+    keyword = "",
+    role = "",
+    isActive = undefined,
+  } = {}) {
+    return (
+      await this.api.get("/paged", {
+        params: {
+          page,
+          pageSize,
+          keyword: keyword?.trim() || undefined,
+          role: role && role !== "ALL" ? role : undefined,
+          isActive: isActive !== undefined && isActive !== "" && isActive !== "ALL" ? isActive : undefined,
+        },
+      })
+    ).data;
+  }
+
   async updateStatus(id, isActive) {
     return (await this.api.put(`/${id}/status`, { isActive })).data;
   }
