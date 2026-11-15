@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
 
+    # Batching settings to optimize LLM requests
+    BATCH_SIZE: int = 5
+    MAX_IMAGES_PER_BATCH: int = 3
+    MAX_CONCURRENT_BATCHES: int = 2
+
     # Storage paths
     STORAGE_DIR: Path = Path("./storage")
     UPLOAD_DIR: Path = Path("./storage/uploads")

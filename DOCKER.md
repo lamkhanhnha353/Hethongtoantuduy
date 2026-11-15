@@ -7,6 +7,7 @@ Tài liệu này hướng dẫn chạy toàn bộ hệ thống bằng Docker Com
 | `web` | `Web_Frontend/Dockerfile` (Node → Nginx) | `8080` | Giao diện Vue 3 |
 | `backend` | `Backend/ToanTuDuy/Dockerfile` | `5114` | ASP.NET Core Web API |
 | `ai-backend` | `AI_Backend/Dockerfile` | `8001` | FastAPI RAG chatbot |
+| `import-worker` | `Backend/import-worker/Dockerfile` | `8000` | FastAPI bóc tách & import câu hỏi |
 | `sqlserver` | `mcr.microsoft.com/mssql/server:2022-latest` | `1433` | Cơ sở dữ liệu |
 | `redis` | `redis:7-alpine` | `6379` | Bộ đếm thông báo chưa đọc |
 | `migrate` | target `migrations` của backend | – | Chạy `dotnet ef database update` |
@@ -30,7 +31,27 @@ Mở `.env` và **đổi tối thiểu** các giá trị sau:
 
 > `.env` đã nằm trong `.gitignore`. Không commit file này.
 
-## 2. Khởi chạy
+## 2. Khởi chạy nhanh (tự động Migrate + Nạp dữ liệu)
+
+Dự án đã có sẵn script chạy 1 lệnh kết hợp bật SQL Server/Redis, chờ healthy, chạy migration, nạp dữ liệu mẫu và khởi chạy toàn bộ stack:
+
+```powershell
+# Windows (PowerShell) - Nạp dữ liệu chuẩn (SeedData.sql)
+.\deploy.ps1
+
+# Hoặc nạp dữ liệu Bogus 1000 dòng/bảng (DataSeed_Bogus_1000.sql)
+.\deploy.ps1 -Seed bogus
+
+# Hoặc xóa sạch volume DB cũ, migrate lại và nạp dữ liệu Bogus
+.\deploy.ps1 -Seed bogus -ResetDb
+```
+
+```bash
+# Linux / macOS / Git Bash
+./deploy.sh --seed demo    # hoặc --seed bogus | --seed none
+```
+
+Hoặc chạy thủ công từng bước:
 
 ```powershell
 # Build và chạy SQL Server, Redis, backend, AI, web
@@ -52,14 +73,19 @@ Truy cập:
 - Web: <http://localhost:8080>
 - API: <http://localhost:5114>
 - AI Swagger: <http://localhost:8001/docs>
+- Import Worker Swagger: <http://localhost:8000/docs>
 - SQL Server: `localhost,1433` (user `sa`, mật khẩu trong `.env`)
 
 ## 3. Dữ liệu demo (tùy chọn)
 
-`Backend/SeedData.sql` sẽ **xóa và tạo lại** dữ liệu nghiệp vụ. Chỉ chạy trên database phát triển:
+`Backend/SeedData.sql` (hoặc `Backend/DataSeed_Bogus_1000.sql`) sẽ **xóa và tạo lại** dữ liệu nghiệp vụ. Chỉ chạy trên database phát triển:
 
 ```powershell
+# Nạp SeedData.sql mặc định
 docker compose --profile tools run --rm seed
+
+# Nạp dữ liệu Bogus ~1000 dòng/bảng
+$env:SEED_FILE="DataSeed_Bogus_1000.sql"; docker compose --profile tools run --rm seed; Remove-Item Env:SEED_FILE
 ```
 
 ## 4. Lệnh thường dùng
