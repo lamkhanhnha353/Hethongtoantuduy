@@ -1,28 +1,28 @@
 <template>
-  <div class="min-h-full space-y-6 bg-gray-50 p-4 sm:p-6 lg:p-8">
+  <div class="min-h-full space-y-6">
     <!-- Header -->
     <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p class="text-sm font-medium text-orange-600">Bảng điều khiển</p>
-        <h1 class="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+        <p class="text-xs font-semibold uppercase tracking-wider text-orange-600">Bảng điều khiển</p>
+        <h1 class="mt-1 text-2xl font-bold tracking-tight text-stone-900">
           Tổng quan hệ thống
         </h1>
-        <p class="mt-1 text-sm text-gray-500">Tình hình hoạt động của trung tâm trong tháng này.</p>
+        <p class="mt-1 text-sm text-stone-500">Tình hình hoạt động của trung tâm trong tháng này.</p>
       </div>
 
       <div class="flex flex-wrap gap-2">
         <RouterLink
           to="/communication/notifications"
-          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+          class="inline-flex h-9 items-center gap-2 rounded-md border border-stone-300 bg-white px-3.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
         >
-          <BellIcon class="h-4 w-4" />
+          <BellIcon class="h-4 w-4 text-stone-600" />
           Gửi thông báo
         </RouterLink>
         <RouterLink
           :to="{ name: 'admin-payroll' }"
-          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+          class="inline-flex h-9 items-center gap-2 rounded-md border border-stone-300 bg-white px-3.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
         >
-          <BanknotesIcon class="h-4 w-4" />
+          <BanknotesIcon class="h-4 w-4 text-stone-600" />
           Chốt lương
         </RouterLink>
       </div>
@@ -33,16 +33,16 @@
       <article
         v-for="kpi in kpis"
         :key="kpi.label"
-        class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        class="rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-stone-400"
       >
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-sm font-medium text-gray-500">{{ kpi.label }}</p>
-            <p class="mt-2 text-2xl font-bold tracking-tight text-gray-900">
+            <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">{{ kpi.label }}</p>
+            <p class="mt-2 text-2xl font-bold tracking-tight text-stone-900 tabular-nums">
               {{ sourceLoading[kpi.source] ? 'Đang tải…' : dashboardErrors[kpi.source] ? '—' : kpi.value }}
             </p>
           </div>
-          <span :class="['flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', kpi.iconClass]">
+          <span :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-stone-200', kpi.iconClass]">
             <component :is="kpi.icon" class="h-5 w-5" />
           </span>
         </div>
@@ -50,44 +50,48 @@
           <span
             v-if="kpi.change"
             :class="[
-              'inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold',
+              'inline-flex items-center gap-1 rounded border px-2 py-0.5 font-semibold tabular-nums',
               kpi.positive === null
-                ? 'bg-gray-100 text-gray-600'
-                : kpi.positive ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700',
+                ? 'border-stone-300 bg-stone-100 text-stone-700'
+                : kpi.positive
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                  : 'border-amber-300 bg-amber-50 text-amber-800',
             ]"
           >
             <ArrowTrendingUpIcon v-if="kpi.positive === true" class="h-3.5 w-3.5" />
             <ArrowTrendingDownIcon v-else-if="kpi.positive === false" class="h-3.5 w-3.5" />
             {{ kpi.change }}
           </span>
-          <span class="text-gray-500">{{ kpi.note }}</span>
+          <span class="text-stone-500">{{ kpi.note }}</span>
         </div>
       </article>
     </section>
 
     <!-- Charts -->
     <section aria-label="Biểu đồ thống kê" class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-      <article class="min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <article class="min-w-0 rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
         <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 class="text-base font-semibold text-gray-900">Doanh thu &amp; chi phí quỹ lương</h2>
-            <p class="mt-1 text-sm text-gray-500">Đơn vị: triệu đồng · 6 tháng gần nhất</p>
+            <h2 class="text-base font-bold text-stone-900">Doanh thu &amp; chi phí quỹ lương</h2>
+            <p class="mt-1 text-sm text-stone-500">Đơn vị: triệu đồng · 6 tháng gần nhất</p>
           </div>
-          <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">Dữ liệu hệ thống</span>
+          <span class="rounded border border-stone-300 bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-700">
+            Dữ liệu hệ thống
+          </span>
         </div>
-        <p v-if="dashboardErrors.revenue || dashboardErrors.payroll" class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p v-if="dashboardErrors.revenue || dashboardErrors.payroll" class="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {{ dashboardErrors.revenue || dashboardErrors.payroll }}
         </p>
-        <div v-if="sourceLoading.revenue || sourceLoading.payroll" class="flex h-64 items-center justify-center text-sm text-gray-500 sm:h-72">
+        <div v-if="sourceLoading.revenue || sourceLoading.payroll" class="flex h-64 items-center justify-center text-sm text-stone-500 sm:h-72">
           Đang tải dữ liệu báo cáo…
         </div>
         <div v-else-if="!dashboardErrors.revenue && !dashboardErrors.payroll && revenueChartData.labels.length" class="h-64 sm:h-72">
           <Bar :data="revenueChartData" :options="barChartOptions" />
         </div>
-        <p v-else-if="!dashboardErrors.revenue && !dashboardErrors.payroll" class="flex h-64 items-center justify-center text-sm text-gray-500 sm:h-72">
+        <p v-else-if="!dashboardErrors.revenue && !dashboardErrors.payroll" class="flex h-64 items-center justify-center text-sm text-stone-500 sm:h-72">
           Chưa có dữ liệu doanh thu hoặc quỹ lương.
         </p>
-        <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-600">
+        <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-stone-600">
           <span class="inline-flex items-center gap-2">
             <span class="h-2.5 w-2.5 rounded-sm bg-orange-500"></span>Doanh thu học phí
           </span>
@@ -97,18 +101,18 @@
         </div>
       </article>
 
-      <article class="min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <article class="min-w-0 rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
         <div class="mb-5">
-          <h2 class="text-base font-semibold text-gray-900">Phân bổ học viên theo lớp</h2>
-          <p class="mt-1 text-sm text-gray-500">Lượt ghi danh theo lớp học đang mở</p>
+          <h2 class="text-base font-bold text-stone-900">Phân bổ học viên theo lớp</h2>
+          <p class="mt-1 text-sm text-stone-500">Lượt ghi danh theo lớp học đang mở</p>
         </div>
-        <p v-if="dashboardErrors.students" class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p v-if="dashboardErrors.students" class="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {{ dashboardErrors.students }}
         </p>
-        <div v-if="sourceLoading.students" class="flex h-56 items-center justify-center text-sm text-gray-500">
+        <div v-if="sourceLoading.students" class="flex h-56 items-center justify-center text-sm text-stone-500">
           Đang tải thống kê lớp học…
         </div>
-        <p v-else-if="!dashboardErrors.students && !classEnrollmentTotal" class="flex h-56 items-center justify-center text-sm text-gray-500">
+        <p v-else-if="!dashboardErrors.students && !classEnrollmentTotal" class="flex h-56 items-center justify-center text-sm text-stone-500">
           Chưa có dữ liệu ghi danh theo lớp.
         </p>
         <div v-else-if="!dashboardErrors.students" class="flex flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-10">
@@ -123,16 +127,16 @@
             >
               <div class="flex items-center gap-2.5">
                 <span :class="['h-3 w-3 rounded-full', classItem.color]"></span>
-                <span class="text-sm text-gray-600">{{ classItem.label }}</span>
+                <span class="text-sm text-stone-700">{{ classItem.label }}</span>
               </div>
-              <div class="text-right">
-                <span class="text-sm font-semibold text-gray-900">{{ classItem.count }}</span>
-                <span class="ml-1 text-xs text-gray-500">HV</span>
+              <div class="text-right tabular-nums">
+                <span class="text-sm font-semibold text-stone-900">{{ classItem.count }}</span>
+                <span class="ml-1 text-xs text-stone-500">HV</span>
               </div>
             </div>
-            <div class="border-t border-gray-100 pt-3 text-sm">
-              <span class="text-gray-500">Tổng lượt ghi danh</span>
-              <span class="float-right font-semibold text-gray-900">{{ classEnrollmentTotal.toLocaleString('vi-VN') }}</span>
+            <div class="border-t border-stone-200 pt-3 text-sm">
+              <span class="text-stone-500">Tổng lượt ghi danh</span>
+              <span class="float-right font-bold text-stone-900 tabular-nums">{{ classEnrollmentTotal.toLocaleString('vi-VN') }}</span>
             </div>
           </div>
         </div>
@@ -142,11 +146,11 @@
     <!-- Widgets -->
     <section aria-label="Hoạt động gần đây" class="grid grid-cols-1 gap-5 xl:grid-cols-2">
       <!-- Payroll widget -->
-      <article class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+      <article class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="flex items-center justify-between gap-3 border-b border-stone-200 bg-stone-50 px-5 py-3.5">
           <div>
-            <h2 class="text-base font-semibold text-gray-900">Phiếu lương tháng này</h2>
-            <p class="mt-1 text-sm text-gray-500">Tối đa 5 giáo viên từ bảng lương hệ thống</p>
+            <h2 class="text-base font-bold text-stone-900">Phiếu lương tháng này</h2>
+            <p class="mt-0.5 text-xs text-stone-500">Tối đa 5 giáo viên từ bảng lương hệ thống</p>
           </div>
           <RouterLink
             :to="{ name: 'admin-payroll' }"
@@ -155,35 +159,35 @@
             Xem tất cả
           </RouterLink>
         </div>
-        <p v-if="dashboardErrors.payroll" class="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p v-if="dashboardErrors.payroll" class="m-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {{ dashboardErrors.payroll }}
         </p>
-        <div v-else-if="sourceLoading.payroll" class="p-8 text-center text-sm text-gray-500">
+        <div v-else-if="sourceLoading.payroll" class="p-8 text-center text-sm text-stone-500">
           Đang tải bảng lương…
         </div>
-        <div v-else-if="!recentPayrolls.length" class="p-8 text-center text-sm text-gray-500">
+        <div v-else-if="!recentPayrolls.length" class="p-8 text-center text-sm text-stone-500">
           Chưa có dữ liệu bảng lương tháng này.
         </div>
         <div v-else class="overflow-x-auto">
           <table class="w-full min-w-[440px] text-left text-sm">
-            <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+            <thead class="border-b-2 border-stone-300 bg-stone-100 text-xs font-bold uppercase tracking-wider text-stone-700">
               <tr>
-                <th scope="col" class="px-5 py-3 font-medium">Giáo viên</th>
-                <th scope="col" class="px-5 py-3 font-medium">Số tiền</th>
-                <th scope="col" class="px-5 py-3 font-medium">Trạng thái</th>
+                <th scope="col" class="px-5 py-3">Giáo viên</th>
+                <th scope="col" class="px-5 py-3">Số tiền</th>
+                <th scope="col" class="px-5 py-3">Trạng thái</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr v-for="payroll in recentPayrolls" :key="payroll.payrollId" class="hover:bg-gray-50/70">
+            <tbody class="divide-y divide-stone-200">
+              <tr v-for="payroll in recentPayrolls" :key="payroll.payrollId" class="transition hover:bg-orange-50/50">
                 <td class="whitespace-nowrap px-5 py-3.5">
-                  <div class="font-medium text-gray-900">{{ payroll.teacherName }}</div>
-                  <div class="mt-0.5 text-xs text-gray-500">{{ payroll.month }}/{{ payroll.year }}</div>
+                  <div class="font-semibold text-stone-900">{{ payroll.teacherName }}</div>
+                  <div class="mt-0.5 text-xs text-stone-500 tabular-nums">{{ payroll.month }}/{{ payroll.year }}</div>
                 </td>
-                <td class="whitespace-nowrap px-5 py-3.5 font-medium text-gray-700">{{ formatCurrency(payroll.finalSalary) }}</td>
+                <td class="whitespace-nowrap px-5 py-3.5 font-semibold text-stone-800 tabular-nums">{{ formatCurrency(payroll.finalSalary) }}</td>
                 <td class="whitespace-nowrap px-5 py-3.5">
                   <span
                     :class="[
-                      'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
+                      'inline-flex rounded border px-2 py-0.5 text-xs font-semibold',
                       payrollStatusClass(payroll.emailStatus),
                     ]"
                   >
@@ -197,40 +201,40 @@
       </article>
 
       <!-- Parent conversations widget -->
-      <article class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+      <article class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="flex items-center justify-between gap-3 border-b border-stone-200 bg-stone-50 px-5 py-3.5">
           <div>
-            <h2 class="text-base font-semibold text-gray-900">Tin nhắn phụ huynh cần phản hồi</h2>
-            <p class="mt-1 text-sm text-gray-500">Cuộc trò chuyện mới nhất trong hệ thống</p>
+            <h2 class="text-base font-bold text-stone-900">Tin nhắn phụ huynh cần phản hồi</h2>
+            <p class="mt-0.5 text-xs text-stone-500">Cuộc trò chuyện mới nhất trong hệ thống</p>
           </div>
-          <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+          <span class="inline-flex items-center gap-1.5 rounded border border-stone-300 bg-white px-2.5 py-0.5 text-xs font-semibold text-stone-700 tabular-nums">
             {{ pendingParentReplyCount }} hội thoại
           </span>
         </div>
-        <p v-if="dashboardErrors.chat" class="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p v-if="dashboardErrors.chat" class="m-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {{ dashboardErrors.chat }}
         </p>
-        <p v-else-if="sourceLoading.chat" class="p-8 text-center text-sm text-gray-500">
+        <p v-else-if="sourceLoading.chat" class="p-8 text-center text-sm text-stone-500">
           Đang tải hội thoại…
         </p>
-        <p v-else-if="!supportMessages.length" class="p-8 text-center text-sm text-gray-500">
+        <p v-else-if="!supportMessages.length" class="p-8 text-center text-sm text-stone-500">
           Hiện không có tin nhắn cuối nào từ phụ huynh cần phản hồi.
         </p>
-        <ul v-else class="divide-y divide-gray-100">
-          <li v-for="message in supportMessages" :key="message.id" class="flex gap-3 px-5 py-4">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-semibold text-orange-700">
+        <ul v-else class="divide-y divide-stone-200">
+          <li v-for="message in supportMessages" :key="message.id" class="flex gap-3 px-5 py-4 transition hover:bg-orange-50/40">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-semibold text-orange-700">
               {{ message.initials }}
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                <p class="text-sm font-semibold text-gray-900">{{ message.name }}</p>
-                <span class="text-xs text-gray-400">{{ message.time }}</span>
+                <p class="text-sm font-semibold text-stone-900">{{ message.name }}</p>
+                <span class="text-xs text-stone-400 tabular-nums">{{ message.time }}</span>
               </div>
-              <p class="mt-1 line-clamp-2 text-sm text-gray-600">{{ message.preview }}</p>
+              <p class="mt-1 line-clamp-2 text-sm text-stone-600">{{ message.preview }}</p>
             </div>
           </li>
         </ul>
-        <div class="border-t border-gray-100 px-5 py-3 text-xs text-gray-500">
+        <div class="border-t border-stone-200 bg-stone-50/60 px-5 py-3 text-xs text-stone-500">
           Nội dung lấy từ tin nhắn cuối cùng do phụ huynh gửi.
         </div>
       </article>
@@ -442,7 +446,7 @@ const kpis = computed(() => [
     note: 'so với tháng trước',
     source: 'payroll',
     icon: markRaw(AcademicCapIcon),
-    iconClass: 'bg-sky-50 text-sky-600',
+    iconClass: 'bg-stone-100 text-stone-700 border border-stone-300',
   },
   {
     label: 'Tổng học viên đang hoạt động',
@@ -452,7 +456,7 @@ const kpis = computed(() => [
     note: 'tuyển mới tháng này',
     source: 'students',
     icon: markRaw(AcademicCapIcon),
-    iconClass: 'bg-violet-50 text-violet-600',
+    iconClass: 'bg-orange-50 text-orange-700 border border-orange-300',
   },
   {
     label: 'Tin nhắn phụ huynh cần phản hồi',
@@ -536,9 +540,9 @@ function payrollStatusLabel(status) {
 
 function payrollStatusClass(status) {
   const normalized = String(status ?? '').toLowerCase()
-  if (normalized === 'sent') return 'bg-green-50 text-green-700'
-  if (normalized === 'failed') return 'bg-red-50 text-red-700'
-  return 'bg-amber-50 text-amber-700'
+  if (normalized === 'sent') return 'border-emerald-300 bg-emerald-50 text-emerald-800'
+  if (normalized === 'failed') return 'border-rose-300 bg-rose-50 text-rose-800'
+  return 'border-amber-300 bg-amber-50 text-amber-800'
 }
 
 function getErrorMessage(error, fallback) {

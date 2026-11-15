@@ -1,23 +1,23 @@
 <template>
-  <header class="flex items-center gap-3 px-4 md:px-6 bg-white border-b border-orange-100 shadow-sm min-h-[64px] z-10">
+  <header class="flex items-center gap-3 px-4 md:px-6 bg-white border-b border-stone-200 shadow-[0_1px_2px_rgba(0,0,0,0.03)] min-h-[64px] z-10">
     <!-- ─── Hamburger ──────────────────────────────────────────────────── -->
     <!-- Desktop: collapse/expand sidebar -->
     <button
-      class="hidden lg:flex items-center justify-center w-9 h-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
+      class="hidden lg:flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-stone-700 hover:bg-stone-100 hover:border-stone-300 transition-colors cursor-pointer"
       @click="$emit('toggleSidebar')" title="Thu gọn / Mở rộng sidebar">
       <Bars3Icon class="w-5 h-5" />
     </button>
 
     <!-- Mobile: open sidebar overlay -->
     <button
-      class="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
+      class="flex lg:hidden items-center justify-center w-9 h-9 rounded-md border border-transparent text-stone-700 hover:bg-stone-100 hover:border-stone-300 transition-colors cursor-pointer"
       @click="$emit('toggleMobileSidebar')" title="Mở menu">
       <Bars3Icon class="w-5 h-5" />
     </button>
 
     <!-- ─── Page title ────────────────────────────────────────────────── -->
     <div class="flex-1 min-w-0">
-      <h1 class="text-base md:text-lg font-semibold text-orange-950 truncate">
+      <h1 class="text-base md:text-lg font-bold text-stone-900 truncate">
         {{ pageTitle }}
       </h1>
     </div>
@@ -25,18 +25,18 @@
     <!-- ─── Right section ────────────────────────────────────────────── -->
     <div class="flex items-center gap-2 md:gap-3">
       <!-- Clock -->
-      <div class="hidden sm:flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1.5">
-        <ClockIcon class="w-4 h-4 text-orange-500" />
-        <span class="text-xs font-mono text-orange-700 tabular-nums">{{ currentTime }}</span>
+      <div class="hidden sm:flex items-center gap-1.5 bg-stone-100 border border-stone-300 rounded-md px-2.5 py-1.5">
+        <ClockIcon class="w-4 h-4 text-orange-600" />
+        <span class="text-xs font-mono font-medium text-stone-800 tabular-nums">{{ currentTime }}</span>
       </div>
 
       <!-- Notification bell -->
       <button
-        class="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-orange-100 text-orange-600 transition-colors cursor-pointer"
+        class="relative flex items-center justify-center w-9 h-9 rounded-md border border-transparent hover:bg-stone-100 hover:border-stone-300 text-stone-700 transition-colors cursor-pointer"
         @click="toggleNotifications" title="Thông báo">
         <BellIcon class="w-5 h-5" />
         <span v-if="unreadCount > 0"
-          class="absolute top-0.5 right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+          class="absolute top-0.5 right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold leading-none tabular-nums">
           {{ unreadCount > 9 ? '9+' : unreadCount }}
         </span>
       </button>
@@ -44,33 +44,33 @@
       <!-- Notification dropdown -->
       <transition name="dropdown">
         <div v-if="showNotifications" ref="notifDropdown"
-          class="absolute top-16 right-16 md:right-24 w-80 bg-white rounded-2xl shadow-xl border border-orange-100 z-50 overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-orange-100">
-            <span class="font-semibold text-orange-900 text-sm">Thông báo</span>
-            <button class="text-xs text-orange-500 hover:text-orange-700 cursor-pointer" @click="markAllRead">
+          class="absolute top-16 right-16 md:right-24 w-80 bg-white rounded-lg shadow-lg border border-stone-300 z-50 overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
+            <span class="font-bold text-stone-900 text-sm">Thông báo</span>
+            <button class="text-xs font-semibold text-orange-600 hover:text-orange-700 cursor-pointer" @click="markAllRead">
               Đánh dấu đã đọc
             </button>
           </div>
-          <div class="max-h-72 overflow-y-auto divide-y divide-orange-50">
+          <div class="max-h-72 overflow-y-auto divide-y divide-stone-200">
             <div v-for="notif in notifications" :key="notif.id" :class="[
-              'flex items-start gap-3 px-4 py-3 hover:bg-orange-50 cursor-pointer transition-colors',
-              !notif.read ? 'bg-orange-50/50' : '',
+              'flex items-start gap-3 px-4 py-3 hover:bg-orange-50/50 cursor-pointer transition-colors',
+              !notif.read ? 'bg-orange-50/40' : '',
             ]">
               <div :class="[
-                'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
+                'w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5',
                 notif.color,
               ]">
                 <component :is="notif.icon" class="w-4 h-4 text-white" />
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-800 leading-snug">{{ notif.message }}</p>
-                <p class="text-[11px] text-gray-400 mt-0.5">{{ notif.time }}</p>
+                <p class="text-xs font-medium text-stone-800 leading-snug">{{ notif.message }}</p>
+                <p class="text-[11px] text-stone-400 mt-0.5 tabular-nums">{{ notif.time }}</p>
               </div>
-              <div v-if="!notif.read" class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0 mt-1.5"></div>
+              <div v-if="!notif.read" class="w-2 h-2 rounded-full bg-orange-600 flex-shrink-0 mt-1.5"></div>
             </div>
           </div>
-          <div class="px-4 py-2 border-t border-orange-100 text-center">
-            <button class="text-xs text-orange-500 hover:text-orange-700 font-medium cursor-pointer">
+          <div class="px-4 py-2 border-t border-stone-200 bg-stone-50 text-center">
+            <button class="text-xs text-orange-600 hover:text-orange-700 font-semibold cursor-pointer">
               Xem tất cả thông báo
             </button>
           </div>
@@ -80,17 +80,17 @@
       <!-- ─── User profile container ───────────────────────────────────── -->
       <div class="relative" ref="userContainerRef">
         <div
-          class="flex items-center bg-orange-50/60 hover:bg-orange-100/70 border border-orange-200/70 rounded-full pl-1.5 pr-1.5 py-1 transition-all shadow-xs">
+          class="flex items-center bg-stone-50 hover:bg-stone-100 border border-stone-300 rounded-md pl-2 pr-1.5 py-1 transition-colors">
           <!-- Clickable Avatar & Name: Navigates to Personal Profile -->
           <button type="button"
-            class="flex items-center gap-2 pr-1.5 rounded-full hover:opacity-90 transition-opacity cursor-pointer text-left focus:outline-none"
+            class="flex items-center gap-2 pr-1.5 hover:opacity-90 transition-opacity cursor-pointer text-left focus:outline-none"
             @click="goToProfile" title="Nhấn để xem và chỉnh sửa thông tin cá nhân">
-            <!-- Avatar image or gradient initials -->
+            <!-- Avatar image or initials -->
             <div class="relative flex-shrink-0">
               <img v-if="userAvatar" :src="userAvatar" :alt="userName"
-                class="w-8 h-8 rounded-full object-cover ring-2 ring-orange-300 shadow-xs" />
+                class="w-8 h-8 rounded-full object-cover ring-1 ring-stone-300" />
               <div v-else
-                class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold shadow-xs ring-2 ring-orange-300/80">
+                class="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-bold ring-1 ring-orange-700">
                 {{ userInitials }}
               </div>
               <!-- Online status dot -->
@@ -100,12 +100,12 @@
             <!-- Name and Role -->
             <div class="hidden md:block text-left min-w-0 pr-1">
               <p
-                class="text-sm font-semibold text-orange-950 leading-tight truncate max-w-[130px] hover:text-orange-600 transition-colors">
+                class="text-sm font-semibold text-stone-900 leading-tight truncate max-w-[130px] hover:text-orange-600 transition-colors">
                 {{ userName }}
               </p>
               <div class="flex items-center gap-1 mt-0.5">
                 <span
-                  class="text-[10px] font-semibold uppercase tracking-wider text-orange-700 bg-orange-100/90 px-1.5 py-0.2 rounded">
+                  class="text-[10px] font-semibold uppercase tracking-wider text-orange-800 bg-orange-50 border border-orange-200 px-1.5 py-0.2 rounded">
                   {{ userRoleLabel }}
                 </span>
               </div>
@@ -114,7 +114,7 @@
 
           <!-- Toggle dropdown menu button -->
           <button type="button"
-            class="w-7 h-7 rounded-full flex items-center justify-center text-orange-500 hover:text-orange-800 hover:bg-orange-200/60 transition-colors cursor-pointer focus:outline-none"
+            class="w-7 h-7 rounded flex items-center justify-center text-stone-600 hover:text-stone-900 hover:bg-stone-200/70 transition-colors cursor-pointer focus:outline-none"
             @click.stop="toggleUserMenu" title="Mở menu tài khoản" aria-label="Mở menu tài khoản">
             <ChevronDownIcon :class="['w-4 h-4 transition-transform duration-200', showUserMenu ? 'rotate-180' : '']" />
           </button>
@@ -123,23 +123,23 @@
         <!-- User dropdown -->
         <transition name="dropdown">
           <div v-if="showUserMenu" ref="userDropdown"
-            class="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-orange-100 z-50 overflow-hidden py-1 divide-y divide-orange-50">
+            class="absolute right-0 top-12 w-64 bg-white rounded-lg shadow-lg border border-stone-300 z-50 overflow-hidden divide-y divide-stone-200">
             <!-- Dropdown Header card -->
             <div
-              class="px-4 py-3 bg-gradient-to-r from-orange-50/80 to-amber-50/40 cursor-pointer hover:bg-orange-50 transition-colors"
+              class="px-4 py-3 bg-stone-50 cursor-pointer hover:bg-orange-50/50 transition-colors"
               @click="goToProfile">
               <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 rounded-full bg-orange-400 text-white flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0 overflow-hidden">
+                  class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 overflow-hidden">
                   <img v-if="userAvatar" :src="userAvatar" :alt="userName" class="w-full h-full object-cover" />
                   <span v-else>{{ userInitials }}</span>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-bold text-orange-950 truncate">{{ userName }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ userEmail || 'Chưa cập nhật email' }}</p>
+                  <p class="text-sm font-bold text-stone-900 truncate">{{ userName }}</p>
+                  <p class="text-xs text-stone-500 truncate">{{ userEmail || 'Chưa cập nhật email' }}</p>
                   <div class="mt-1 flex items-center gap-1.5">
                     <span
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">
+                      class="inline-flex items-center px-1.5 py-0.5 rounded border border-emerald-300 text-[10px] font-semibold bg-emerald-50 text-emerald-800">
                       ● Đang hoạt động
                     </span>
                   </div>
@@ -151,31 +151,31 @@
             <div class="py-1">
               <router-link
                 :to="userRole === 'teacher' ? '/teacher/account/profile' : '/account/profile'"
-                class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-900 transition-colors group"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-800 hover:bg-orange-50/70 hover:text-orange-700 transition-colors group"
                 @click="showUserMenu = false">
                 <div
-                  class="w-7 h-7 rounded-lg bg-orange-100/60 group-hover:bg-orange-200/80 text-orange-600 flex items-center justify-center transition-colors">
+                  class="w-7 h-7 rounded-md bg-orange-50 border border-orange-200 group-hover:bg-orange-100 text-orange-600 flex items-center justify-center transition-colors">
                   <UserCircleIcon class="w-4 h-4" />
                 </div>
                 <div>
-                  <p class="font-medium text-sm">Thông tin cá nhân</p>
-                  <p class="text-[11px] text-gray-400">Xem và cập nhật hồ sơ cá nhân</p>
+                  <p class="font-semibold text-sm">Thông tin cá nhân</p>
+                  <p class="text-[11px] text-stone-400">Xem và cập nhật hồ sơ cá nhân</p>
                 </div>
               </router-link>
             </div>
 
             <!-- Logout -->
-            <div class="py-1 bg-gray-50/50">
+            <div class="py-1 bg-stone-50">
               <button
-                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer group"
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer group"
                 @click="handleLogout">
                 <div
-                  class="w-7 h-7 rounded-lg bg-red-100/70 group-hover:bg-red-200/80 text-red-600 flex items-center justify-center transition-colors">
+                  class="w-7 h-7 rounded-md bg-rose-50 border border-rose-200 group-hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors">
                   <ArrowRightOnRectangleIcon class="w-4 h-4" />
                 </div>
                 <div class="text-left">
-                  <p class="font-medium text-sm">Đăng xuất</p>
-                  <p class="text-[11px] text-red-400">Thoát khỏi phiên làm việc</p>
+                  <p class="font-semibold text-sm">Đăng xuất</p>
+                  <p class="text-[11px] text-rose-500">Thoát khỏi phiên làm việc</p>
                 </div>
               </button>
             </div>
@@ -330,7 +330,7 @@ const notifications = ref([
     message: 'Học viên mới Trần Minh Khoa vừa đăng ký khóa học Toán 10.',
     time: '2 phút trước',
     icon: UserPlusIcon,
-    color: 'bg-green-400',
+    color: 'bg-emerald-500',
     read: false,
   },
   {
@@ -338,7 +338,7 @@ const notifications = ref([
     message: 'Thanh toán học phí tháng 10 của lớp Toán 8A đã hoàn tất.',
     time: '15 phút trước',
     icon: CurrencyDollarIcon,
-    color: 'bg-blue-400',
+    color: 'bg-stone-500',
     read: false,
   },
   {
@@ -346,7 +346,7 @@ const notifications = ref([
     message: 'Giáo viên Lê Thị Hoa xin nghỉ phép ngày 25/10.',
     time: '1 giờ trước',
     icon: ExclamationTriangleIcon,
-    color: 'bg-orange-400',
+    color: 'bg-orange-600',
     read: true,
   },
 ])

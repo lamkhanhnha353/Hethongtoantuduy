@@ -2,9 +2,9 @@
   <div class="space-y-5">
     <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Báo cáo &amp; thống kê</p>
-        <h1 class="mt-1 text-2xl font-bold text-orange-950">Báo cáo doanh thu</h1>
-        <p class="mt-1 text-sm text-gray-500">Theo dõi doanh thu học phí và tình hình thanh toán.</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">Báo cáo &amp; thống kê</p>
+        <h1 class="mt-1 text-2xl font-bold text-stone-900">Báo cáo doanh thu</h1>
+        <p class="mt-1 text-sm text-stone-500">Theo dõi doanh thu học phí và tình hình thanh toán.</p>
       </div>
       <div class="flex flex-wrap gap-2">
         <select v-model="period" aria-label="Khoảng thời gian báo cáo" class="filter-select min-w-40">
@@ -12,104 +12,104 @@
           <option value="6">6 tháng gần nhất</option>
           <option value="12">12 tháng gần nhất</option>
         </select>
-        <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:opacity-60" :disabled="loading || !filteredInvoices.length" @click="exportCsv">
+        <button type="button" class="inline-flex h-9 items-center gap-2 rounded-md border border-orange-700 bg-orange-600 px-3.5 text-sm font-semibold text-white shadow-xs transition hover:bg-orange-700 disabled:opacity-60" :disabled="loading || !filteredInvoices.length" @click="exportCsv">
           <ArrowDownTrayIcon class="h-4 w-4" />
           Xuất CSV
         </button>
       </div>
     </header>
 
-    <div v-if="errorMessage" class="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm text-red-700">{{ errorMessage }}</p>
-      <button type="button" class="shrink-0 text-sm font-semibold text-red-700 underline" @click="loadInvoices">Thử lại</button>
+    <div v-if="errorMessage" class="flex flex-col gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-sm text-rose-700">{{ errorMessage }}</p>
+      <button type="button" class="shrink-0 text-sm font-semibold text-rose-700 underline" @click="loadInvoices">Thử lại</button>
     </div>
 
     <section class="grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="Tổng quan doanh thu">
-      <article v-for="stat in stats" :key="stat.label" class="flex items-center gap-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" :class="stat.bg">
+      <article v-for="stat in stats" :key="stat.label" class="flex items-center gap-3 rounded-lg border border-stone-300 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-stone-200" :class="stat.bg">
           <component :is="stat.icon" class="h-5 w-5" :class="stat.color" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-medium text-gray-500">{{ stat.label }}</p>
-          <p class="mt-1 truncate text-lg font-bold text-gray-900">{{ stat.value }}</p>
-          <p class="mt-0.5 text-xs text-gray-400">{{ stat.caption }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">{{ stat.label }}</p>
+          <p class="mt-1 truncate text-lg font-bold text-stone-900 tabular-nums">{{ stat.value }}</p>
+          <p class="mt-0.5 text-xs text-stone-500">{{ stat.caption }}</p>
         </div>
       </article>
     </section>
 
     <section class="grid grid-cols-1 gap-5 xl:grid-cols-3">
-      <article class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm xl:col-span-2">
-        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-orange-100 pb-4">
+      <article class="rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] xl:col-span-2">
+        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-stone-200 pb-4">
           <div>
-            <h2 class="font-bold text-orange-950">Doanh thu theo tháng</h2>
-            <p class="mt-1 text-xs text-gray-500">Tổng hóa đơn đã thanh toán trong kỳ được chọn</p>
+            <h2 class="font-bold text-stone-900">Doanh thu theo tháng</h2>
+            <p class="mt-1 text-xs text-stone-500">Tổng hóa đơn đã thanh toán trong kỳ được chọn</p>
           </div>
-          <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Đã thanh toán</span>
+          <span class="rounded border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">Đã thanh toán</span>
         </div>
-        <div v-if="loading" class="flex h-56 items-center justify-center text-sm text-gray-500">Đang tải dữ liệu doanh thu...</div>
-        <div v-else-if="!monthlyRevenue.some(item => item.amount > 0)" class="flex h-56 items-center justify-center text-sm text-gray-500">Chưa có doanh thu trong khoảng thời gian này.</div>
+        <div v-if="loading" class="flex h-56 items-center justify-center text-sm text-stone-500">Đang tải dữ liệu doanh thu...</div>
+        <div v-else-if="!monthlyRevenue.some(item => item.amount > 0)" class="flex h-56 items-center justify-center text-sm text-stone-500">Chưa có doanh thu trong khoảng thời gian này.</div>
         <div v-else class="flex h-56 items-end gap-2 pt-6 sm:gap-4">
           <div v-for="item in monthlyRevenue" :key="item.key" class="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
-            <span class="text-[10px] font-semibold text-orange-800 opacity-0 transition group-hover:opacity-100">{{ compactCurrency(item.amount) }}</span>
-            <div class="w-full max-w-12 rounded-t-lg bg-gradient-to-t from-orange-500 to-amber-300 transition hover:from-orange-600" :style="{ height: `${barHeight(item.amount)}%` }" :title="`${item.label}: ${formatCurrency(item.amount)}`"></div>
-            <span class="text-[10px] text-gray-500">{{ item.label }}</span>
+            <span class="text-[10px] font-semibold text-stone-800 tabular-nums opacity-0 transition group-hover:opacity-100">{{ compactCurrency(item.amount) }}</span>
+            <div class="w-full max-w-12 rounded-t bg-orange-500 transition hover:bg-orange-600" :style="{ height: `${barHeight(item.amount)}%` }" :title="`${item.label}: ${formatCurrency(item.amount)}`"></div>
+            <span class="text-[10px] text-stone-500 tabular-nums">{{ item.label }}</span>
           </div>
         </div>
       </article>
 
-      <article class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-        <div class="border-b border-orange-100 pb-4">
-          <h2 class="font-bold text-orange-950">Doanh thu theo lớp</h2>
-          <p class="mt-1 text-xs text-gray-500">Top lớp có doanh thu cao nhất trong kỳ</p>
+      <article class="rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="border-b border-stone-200 pb-4">
+          <h2 class="font-bold text-stone-900">Doanh thu theo lớp</h2>
+          <p class="mt-1 text-xs text-stone-500">Top lớp có doanh thu cao nhất trong kỳ</p>
         </div>
-        <div v-if="!topClasses.length" class="flex h-56 items-center justify-center text-center text-sm text-gray-500">Chưa có dữ liệu để thống kê.</div>
+        <div v-if="!topClasses.length" class="flex h-56 items-center justify-center text-center text-sm text-stone-500">Chưa có dữ liệu để thống kê.</div>
         <div v-else class="space-y-5 pt-5">
           <div v-for="(item, index) in topClasses" :key="item.name">
             <div class="mb-2 flex items-center justify-between gap-3 text-xs">
-              <span class="min-w-0 truncate font-medium text-gray-700"><span class="mr-2 text-orange-400">0{{ index + 1 }}</span>{{ item.name }}</span>
-              <span class="shrink-0 font-semibold text-gray-900">{{ compactCurrency(item.amount) }}</span>
+              <span class="min-w-0 truncate font-medium text-stone-700"><span class="mr-2 font-mono text-stone-400 tabular-nums">0{{ index + 1 }}</span>{{ item.name }}</span>
+              <span class="shrink-0 font-semibold text-stone-900 tabular-nums">{{ compactCurrency(item.amount) }}</span>
             </div>
-            <div class="h-2 overflow-hidden rounded-full bg-orange-50">
-              <div class="h-full rounded-full bg-orange-400" :style="{ width: `${(item.amount / (topClasses[0]?.amount || 1)) * 100}%` }"></div>
+            <div class="h-2 overflow-hidden rounded bg-stone-100">
+              <div class="h-full rounded bg-orange-500" :style="{ width: `${(item.amount / (topClasses[0]?.amount || 1)) * 100}%` }"></div>
             </div>
           </div>
         </div>
       </article>
     </section>
 
-    <section class="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-orange-100 p-4">
+    <section class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 p-4">
         <div>
-          <h2 class="font-bold text-orange-950">Giao dịch đã thanh toán</h2>
-          <p class="mt-1 text-xs text-gray-500">{{ filteredInvoices.length }} hóa đơn trong kỳ báo cáo</p>
+          <h2 class="font-bold text-stone-900">Giao dịch đã thanh toán</h2>
+          <p class="mt-1 text-xs text-stone-500 tabular-nums">{{ filteredInvoices.length }} hóa đơn trong kỳ báo cáo</p>
         </div>
-        <span class="text-xs text-gray-400">Sắp xếp theo ngày thanh toán mới nhất</span>
+        <span class="text-xs text-stone-500">Sắp xếp theo ngày thanh toán mới nhất</span>
       </div>
-      <div v-if="loading" class="flex min-h-40 items-center justify-center text-sm text-gray-500">Đang tải danh sách hóa đơn...</div>
-      <div v-else-if="!filteredInvoices.length" class="flex min-h-40 items-center justify-center text-sm text-gray-500">Không có hóa đơn phù hợp trong kỳ.</div>
+      <div v-if="loading" class="flex min-h-40 items-center justify-center text-sm text-stone-500">Đang tải danh sách hóa đơn...</div>
+      <div v-else-if="!filteredInvoices.length" class="flex min-h-40 items-center justify-center text-sm text-stone-500">Không có hóa đơn phù hợp trong kỳ.</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full min-w-[760px] text-left text-sm">
-          <thead class="bg-orange-50/80 text-xs uppercase tracking-wide text-orange-900">
+          <thead class="border-b-2 border-stone-300 bg-stone-100 text-xs font-bold uppercase tracking-wider text-stone-700">
             <tr>
-              <th class="px-5 py-3.5 font-semibold">Hóa đơn</th>
-              <th class="px-5 py-3.5 font-semibold">Học viên</th>
-              <th class="px-5 py-3.5 font-semibold">Lớp học</th>
-              <th class="px-5 py-3.5 font-semibold">Ngày thanh toán</th>
-              <th class="px-5 py-3.5 text-right font-semibold">Số tiền</th>
+              <th class="px-5 py-3.5">Hóa đơn</th>
+              <th class="px-5 py-3.5">Học viên</th>
+              <th class="px-5 py-3.5">Lớp học</th>
+              <th class="px-5 py-3.5">Ngày thanh toán</th>
+              <th class="px-5 py-3.5 text-right">Số tiền</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="invoice in filteredInvoices.slice(0, 10)" :key="invoice.invoiceId" class="hover:bg-orange-50/40">
-              <td class="px-5 py-3.5 font-semibold text-gray-800">#{{ invoice.invoiceId }}</td>
-              <td class="px-5 py-3.5 text-gray-700">{{ invoice.studentName || '—' }}</td>
-              <td class="px-5 py-3.5 text-gray-600">{{ invoice.className || '—' }}</td>
-              <td class="whitespace-nowrap px-5 py-3.5 text-gray-600">{{ formatDate(invoice.paidAt || invoice.createdAt) }}</td>
-              <td class="whitespace-nowrap px-5 py-3.5 text-right font-semibold text-gray-900">{{ formatCurrency(invoice.amount) }}</td>
+          <tbody class="divide-y divide-stone-200">
+            <tr v-for="invoice in filteredInvoices.slice(0, 10)" :key="invoice.invoiceId" class="transition hover:bg-orange-50/50">
+              <td class="px-5 py-3.5 font-semibold text-stone-900 tabular-nums">#{{ invoice.invoiceId }}</td>
+              <td class="px-5 py-3.5 text-stone-800">{{ invoice.studentName || '—' }}</td>
+              <td class="px-5 py-3.5 text-stone-600">{{ invoice.className || '—' }}</td>
+              <td class="whitespace-nowrap px-5 py-3.5 text-stone-600 tabular-nums">{{ formatDate(invoice.paidAt || invoice.createdAt) }}</td>
+              <td class="whitespace-nowrap px-5 py-3.5 text-right font-semibold text-stone-900 tabular-nums">{{ formatCurrency(invoice.amount) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p v-if="filteredInvoices.length > 10" class="border-t border-orange-50 px-5 py-3 text-xs text-gray-500">Đang hiển thị 10 giao dịch mới nhất. Xuất CSV để xem toàn bộ.</p>
+      <p v-if="filteredInvoices.length > 10" class="border-t border-stone-200 bg-stone-50 px-5 py-3 text-xs text-stone-500">Đang hiển thị 10 giao dịch mới nhất. Xuất CSV để xem toàn bộ.</p>
     </section>
   </div>
 </template>

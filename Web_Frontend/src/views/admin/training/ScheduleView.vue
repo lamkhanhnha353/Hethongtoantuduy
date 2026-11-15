@@ -3,45 +3,45 @@
     <!-- ─── Page header & Top Switcher ────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h1 class="text-xl font-bold text-orange-900">Quản lý Lịch học & Thời khóa biểu</h1>
-        <p class="text-sm text-gray-500 mt-0.5">
+        <h1 class="text-2xl font-bold text-stone-900">Quản lý Lịch học & Thời khóa biểu</h1>
+        <p class="text-sm text-stone-500 mt-0.5">
           Giao diện trực quan phong cách Google Calendar kết hợp ngăn xếp mốc giờ
         </p>
       </div>
 
       <div class="flex items-center gap-2.5 flex-wrap">
         <!-- View mode tabs: Google Calendar vs Table List -->
-        <div class="flex items-center bg-orange-100/70 p-1 rounded-xl text-xs font-semibold">
+        <div class="flex items-center bg-stone-100 border border-stone-300 p-0.5 rounded-md text-xs font-semibold">
           <button
             @click="mainDisplayMode = 'calendar'"
             :class="[
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+              'inline-flex h-8 items-center gap-1.5 px-3 rounded transition-all cursor-pointer',
               mainDisplayMode === 'calendar'
-                ? 'bg-white text-orange-600 font-bold shadow-2xs'
-                : 'text-orange-800 hover:text-orange-950'
+                ? 'bg-orange-600 text-white font-bold shadow-xs'
+                : 'text-stone-700 hover:text-stone-900'
             ]"
           >
-            <CalendarDaysIcon class="w-4 h-4 text-orange-500" />
+            <CalendarDaysIcon class="w-4 h-4" />
             <span>Lịch Google Calendar</span>
           </button>
           <button
             @click="mainDisplayMode = 'table'"
             :class="[
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+              'inline-flex h-8 items-center gap-1.5 px-3 rounded transition-all cursor-pointer',
               mainDisplayMode === 'table'
-                ? 'bg-white text-orange-600 font-bold shadow-2xs'
-                : 'text-orange-800 hover:text-orange-950'
+                ? 'bg-orange-600 text-white font-bold shadow-xs'
+                : 'text-stone-700 hover:text-stone-900'
             ]"
           >
-            <Bars3Icon class="w-4 h-4 text-orange-500" />
+            <Bars3Icon class="w-4 h-4" />
             <span>Bảng danh sách</span>
           </button>
         </div>
 
         <button
           @click="openCreateModal"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600
-                 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex-shrink-0 cursor-pointer"
+          class="inline-flex h-9 items-center gap-2 px-3.5 bg-orange-600 hover:bg-orange-700 border border-orange-700
+                 text-white text-xs font-semibold rounded-md shadow-xs transition-colors flex-shrink-0 cursor-pointer"
         >
           <PlusIcon class="w-4 h-4" />
           <span>Thêm lịch học</span>
@@ -52,15 +52,15 @@
     <!-- ─── Error Alert ───────────────────────────────────────────────────── -->
     <div
       v-if="errorMessage"
-      class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between gap-3 text-sm"
+      class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-md flex items-center justify-between gap-3 text-sm"
     >
       <div class="flex items-center gap-2">
-        <ExclamationCircleIcon class="w-5 h-5 flex-shrink-0 text-red-500" />
+        <ExclamationCircleIcon class="w-5 h-5 flex-shrink-0 text-rose-600" />
         <span>{{ errorMessage }}</span>
       </div>
       <button
         @click="loadAllData"
-        class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
+        class="h-8 px-3 bg-rose-600 hover:bg-rose-700 border border-rose-700 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
       >
         Thử lại
       </button>
@@ -87,15 +87,15 @@
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <div v-else class="space-y-4">
       <!-- Toolbar for Table View -->
-      <div class="bg-white rounded-2xl border border-orange-100 shadow-sm p-4 space-y-3">
+      <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-4 space-y-3">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
           <div class="md:col-span-5">
-            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+            <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wide mb-1.5">
               Lớp học
             </label>
             <select
               v-model="selectedClassId"
-              class="w-full px-3.5 py-2.5 bg-gray-50 border border-orange-200/80 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden cursor-pointer"
+              class="h-9 w-full px-3 bg-stone-50/70 border border-stone-300 rounded-md text-xs font-semibold text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-all outline-none cursor-pointer"
             >
               <option value="all">-- Tất cả các lớp học --</option>
               <option
@@ -109,7 +109,7 @@
           </div>
 
           <div class="md:col-span-4">
-            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+            <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wide mb-1.5">
               Tìm kiếm nhanh
             </label>
             <SearchBar
@@ -119,12 +119,12 @@
           </div>
 
           <div class="md:col-span-3">
-            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+            <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wide mb-1.5">
               Thứ trong tuần
             </label>
             <select
               v-model="tableFilterDay"
-              class="w-full px-3 py-2 bg-gray-50 border border-orange-200/80 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+              class="h-9 w-full px-3 bg-stone-50/70 border border-stone-300 rounded-md text-xs font-semibold text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-all outline-none"
             >
               <option value="">Tất cả các ngày</option>
               <option :value="1">Thứ 2</option>
@@ -140,11 +140,11 @@
       </div>
 
       <!-- Table Card -->
-      <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-orange-50/70 border-b border-orange-100 text-[11px] font-bold text-orange-950 uppercase tracking-wider">
+              <tr class="bg-stone-100 border-b-2 border-stone-300 text-xs font-bold text-stone-700 uppercase tracking-wider">
                 <th class="py-3.5 px-4 w-16 text-center">ID</th>
                 <th class="py-3.5 px-4">Lớp học</th>
                 <th class="py-3.5 px-4 w-32">Thứ trong tuần</th>
@@ -154,15 +154,15 @@
                 <th class="py-3.5 px-4 w-28 text-center">Thao tác</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 text-xs text-gray-700">
+            <tbody class="divide-y divide-stone-200 text-xs text-stone-700">
               <tr
                 v-for="s in filteredTableSchedules"
                 :key="s.id"
-                class="hover:bg-orange-50/40 transition-colors cursor-pointer"
+                class="hover:bg-orange-50/50 transition-colors cursor-pointer"
                 @click="openViewModal(s)"
               >
                 <!-- ID -->
-                <td class="py-3 px-4 text-center font-mono font-bold text-orange-700">
+                <td class="py-3 px-4 text-center font-mono font-bold text-orange-700 tabular-nums">
                   #{{ s.id }}
                 </td>
 
@@ -170,39 +170,39 @@
                 <td class="py-3 px-4">
                   <router-link
                     :to="{ name: 'class-detail', params: { id: s.classId } }"
-                    class="font-bold text-gray-900 hover:text-orange-600 transition-colors inline-block"
+                    class="font-bold text-stone-900 hover:text-orange-600 transition-colors inline-block"
                   >
                     {{ s.className }}
                   </router-link>
-                  <p class="text-[11px] text-gray-400 mt-0.5 font-mono">
+                  <p class="text-[11px] text-stone-500 mt-0.5 font-mono tabular-nums">
                     Mã lớp: ID {{ s.classId }}
                   </p>
                 </td>
 
                 <!-- Day of week badge -->
                 <td class="py-3 px-4">
-                  <span :class="['px-2.5 py-1 text-xs font-bold rounded-lg border inline-block', getDayBadgeClass(s.dayOfWeek)]">
+                  <span :class="['px-2 py-0.5 text-xs font-semibold rounded border inline-block', getDayBadgeClass(s.dayOfWeek)]">
                     {{ formatDayOfWeek(s.dayOfWeek) }}
                   </span>
                 </td>
 
                 <!-- Time range -->
                 <td class="py-3 px-4">
-                  <span class="font-mono font-bold text-gray-800 text-xs">
+                  <span class="font-mono font-bold text-stone-900 text-xs tabular-nums">
                     {{ formatTime(s.startTime) }} - {{ formatTime(s.endTime) }}
                   </span>
                 </td>
 
                 <!-- Room -->
                 <td class="py-3 px-4">
-                  <span v-if="s.room" class="font-medium text-gray-800 bg-gray-100 px-2 py-0.5 rounded text-[11px]">
+                  <span v-if="s.room" class="font-medium text-stone-800 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded text-[11px]">
                     {{ s.room }}
                   </span>
-                  <span v-else class="text-gray-400 italic text-[11px]">Chưa xếp phòng</span>
+                  <span v-else class="text-stone-400 italic text-[11px]">Chưa xếp phòng</span>
                 </td>
 
                 <!-- Created At -->
-                <td class="py-3 px-4 text-gray-500 text-[11px]">
+                <td class="py-3 px-4 text-stone-500 text-[11px] tabular-nums">
                   {{ formatDate(s.createdAt) }}
                 </td>
 
@@ -212,14 +212,14 @@
                     <button
                       @click="openViewModal(s)"
                       title="Xem chi tiết"
-                      class="p-1.5 rounded-lg text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer"
+                      class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-600 hover:text-stone-900 hover:border-stone-400 hover:bg-stone-100 transition-colors cursor-pointer"
                     >
                       <EyeIcon class="w-4 h-4" />
                     </button>
                     <button
                       @click="openEditModal(s)"
                       title="Chỉnh sửa lịch"
-                      class="p-1.5 rounded-lg text-orange-500 hover:text-orange-700 hover:bg-orange-100 transition-colors cursor-pointer"
+                      class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-stone-300 bg-white text-orange-600 hover:text-orange-700 hover:border-orange-300 hover:bg-orange-50 transition-colors cursor-pointer"
                     >
                       <PencilSquareIcon class="w-4 h-4" />
                     </button>
@@ -287,13 +287,13 @@ const activeSchedule = ref(null)
 
 // ─── Day of Week helpers ─────────────────────────────────────────────────────
 const DAYS_OF_WEEK = [
-  { value: 1, label: 'Thứ 2', color: 'border-blue-200 bg-blue-50 text-blue-700' },
-  { value: 2, label: 'Thứ 3', color: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
-  { value: 3, label: 'Thứ 4', color: 'border-amber-200 bg-amber-50 text-amber-700' },
-  { value: 4, label: 'Thứ 5', color: 'border-purple-200 bg-purple-50 text-purple-700' },
-  { value: 5, label: 'Thứ 6', color: 'border-rose-200 bg-rose-50 text-rose-700' },
-  { value: 6, label: 'Thứ 7', color: 'border-cyan-200 bg-cyan-50 text-cyan-700' },
-  { value: 0, label: 'Chủ nhật', color: 'border-red-200 bg-red-50 text-red-700' },
+  { value: 1, label: 'Thứ 2', color: 'border-orange-300 bg-orange-50 text-orange-800' },
+  { value: 2, label: 'Thứ 3', color: 'border-emerald-300 bg-emerald-50 text-emerald-800' },
+  { value: 3, label: 'Thứ 4', color: 'border-amber-300 bg-amber-50 text-amber-800' },
+  { value: 4, label: 'Thứ 5', color: 'border-stone-300 bg-stone-100 text-stone-800' },
+  { value: 5, label: 'Thứ 6', color: 'border-rose-300 bg-rose-50 text-rose-800' },
+  { value: 6, label: 'Thứ 7', color: 'border-teal-300 bg-teal-50 text-teal-800' },
+  { value: 0, label: 'Chủ nhật', color: 'border-rose-300 bg-rose-50 text-rose-800' },
 ]
 
 function formatDayOfWeek(val) {
@@ -303,7 +303,7 @@ function formatDayOfWeek(val) {
 
 function getDayBadgeClass(val) {
   const item = DAYS_OF_WEEK.find(d => d.value === Number(val))
-  return item ? item.color : 'border-gray-200 bg-gray-50 text-gray-700'
+  return item ? item.color : 'border-stone-300 bg-stone-100 text-stone-700'
 }
 
 function formatTime(t) {

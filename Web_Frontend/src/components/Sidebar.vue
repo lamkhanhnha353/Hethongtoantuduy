@@ -3,7 +3,7 @@
   <aside
     :class="[
       'fixed lg:relative inset-y-0 left-0 z-30 flex flex-col',
-      'bg-orange-100 border-r border-orange-200',
+      'bg-orange-100/75 border-r border-stone-300',
       'transition-all duration-300 ease-in-out',
       // Desktop: collapsed or expanded
       collapsed ? 'lg:w-20' : 'lg:w-64',
@@ -13,16 +13,16 @@
   >
     <!-- ─── Logo / Brand ─────────────────────────────────────────────────── -->
     <div
-      class="flex items-center gap-3 px-4 py-4 border-b border-orange-200 min-h-[64px]"
+      class="flex items-center gap-3 px-4 py-4 border-b border-stone-300/80 min-h-[64px]"
     >
       <div
-        class="w-10 h-10 rounded-xl bg-orange-400 flex items-center justify-center flex-shrink-0 shadow"
+        class="w-10 h-10 rounded-lg bg-orange-600 border border-orange-700 flex items-center justify-center flex-shrink-0 shadow-xs"
       >
         <AcademicCapIcon class="w-6 h-6 text-white" />
       </div>
       <transition name="label-fade">
         <div v-if="!collapsed || mobileOpen" class="flex flex-col whitespace-nowrap overflow-hidden">
-          <span class="font-bold text-orange-950 text-base leading-tight">
+          <span class="font-bold text-stone-900 text-base leading-tight">
             {{ isTeacherPortal ? 'EduTeacher' : 'EduAdmin' }}
           </span>
           <span class="text-[10px] text-orange-700 font-semibold tracking-wide">
@@ -33,7 +33,7 @@
 
       <!-- Mobile close button -->
       <button
-        class="ml-auto lg:hidden text-orange-600 hover:text-orange-800 p-1 rounded-lg cursor-pointer"
+        class="ml-auto lg:hidden text-stone-600 hover:text-stone-900 hover:bg-stone-200/70 p-1 rounded-md cursor-pointer"
         @click="$emit('closeMobile')"
       >
         <XMarkIcon class="w-5 h-5" />
@@ -53,11 +53,11 @@
             <button
               @click="navigate"
               :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                'text-sm font-medium transition-all duration-150 cursor-pointer',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-md border',
+                'text-sm font-semibold transition-colors duration-150 cursor-pointer',
                 isActive
-                  ? 'bg-orange-400 text-white shadow-sm'
-                  : 'text-orange-800 hover:bg-orange-200/70 hover:text-orange-900',
+                  ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
+                  : 'border-transparent text-stone-700 hover:bg-orange-200/50 hover:text-stone-900',
                 collapsed && !mobileOpen ? 'justify-center' : '',
               ]"
               :title="collapsed && !mobileOpen ? item.label : ''"
@@ -76,11 +76,11 @@
             <button
               @click="toggleAccordion(item.id)"
               :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                'text-sm font-medium transition-all duration-150 cursor-pointer',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-md border',
+                'text-sm font-semibold transition-colors duration-150 cursor-pointer',
                 isAccordionOpen(item.id)
-                  ? 'bg-orange-200 text-orange-900'
-                  : 'text-orange-800 hover:bg-orange-200/70 hover:text-orange-900',
+                  ? 'bg-orange-200/75 text-stone-900 border-orange-300/80'
+                  : 'border-transparent text-stone-700 hover:bg-orange-200/50 hover:text-stone-900',
                 collapsed && !mobileOpen ? 'justify-center' : '',
               ]"
               :title="collapsed && !mobileOpen ? item.label : ''"
@@ -124,11 +124,11 @@
                     <button
                       @click="navigate"
                       :class="[
-                        'w-full flex items-center gap-2 px-2 py-2 rounded-lg',
-                        'text-xs font-medium transition-all duration-150 cursor-pointer',
+                        'w-full flex items-center gap-2 px-2.5 py-2 rounded-md border',
+                        'text-xs transition-colors duration-150 cursor-pointer',
                         isActive
-                          ? 'bg-orange-300/60 text-orange-900 font-semibold'
-                          : 'text-orange-700 hover:bg-orange-200/60 hover:text-orange-900',
+                          ? 'bg-white text-orange-700 font-semibold border-orange-300 shadow-2xs'
+                          : 'border-transparent font-medium text-stone-700 hover:bg-orange-200/50 hover:text-stone-900',
                       ]"
                     >
                       <component :is="child.icon" class="w-4 h-4 flex-shrink-0" />
@@ -144,12 +144,12 @@
     </nav>
 
     <!-- ─── Logout button ────────────────────────────────────────────────── -->
-    <div class="px-2 pb-4 border-t border-orange-200 pt-3">
+    <div class="px-2 pb-4 border-t border-stone-300/80 pt-3">
       <button
         :class="[
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-          'text-sm font-medium text-orange-700 cursor-pointer',
-          'hover:bg-red-100 hover:text-red-600 transition-all duration-150',
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-transparent',
+          'text-sm font-semibold text-rose-700 cursor-pointer',
+          'hover:bg-rose-50 hover:border-rose-300 hover:text-rose-800 transition-colors duration-150',
           collapsed && !mobileOpen ? 'justify-center' : '',
         ]"
         :title="collapsed && !mobileOpen ? 'Đăng xuất' : ''"

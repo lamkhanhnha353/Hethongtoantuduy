@@ -1,15 +1,15 @@
 <template>
   <!-- List / Grid toggle buttons -->
-  <div class="flex items-center gap-1 bg-orange-100 rounded-xl p-1">
+  <div class="flex items-center gap-1 bg-stone-100 border border-stone-300 rounded-md p-0.5">
     <button
       v-for="mode in modes"
       :key="mode.value"
       @click="$emit('update:modelValue', mode.value)"
       :class="[
-        'flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150',
+        'flex items-center justify-center w-8 h-8 rounded transition-colors duration-150',
         modelValue === mode.value
-          ? 'bg-orange-400 text-white shadow-sm'
-          : 'text-orange-500 hover:bg-orange-200',
+          ? 'bg-orange-600 text-white shadow-xs'
+          : 'text-stone-600 hover:bg-stone-200/70 hover:text-stone-900',
       ]"
       :title="mode.label"
     >

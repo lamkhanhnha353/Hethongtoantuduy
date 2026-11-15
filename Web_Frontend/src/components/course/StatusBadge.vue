@@ -2,7 +2,7 @@
   <!-- Status badge chip -->
   <span
     :class="[
-      'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0',
+      'inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded border flex-shrink-0',
       cfg.class,
     ]"
   >
@@ -19,13 +19,13 @@ const props = defineProps({
 })
 
 const MAP = {
-  active:   { label: 'Đang mở',    class: 'bg-green-100 text-green-700',   dot: 'bg-green-500' },
-  inactive: { label: 'Tạm dừng',   class: 'bg-gray-100 text-gray-500',     dot: 'bg-gray-400' },
-  draft:    { label: 'Nháp',        class: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-500' },
-  full:     { label: 'Đã đầy',      class: 'bg-red-100 text-red-600',       dot: 'bg-red-500' },
-  upcoming: { label: 'Sắp mở',     class: 'bg-blue-100 text-blue-600',     dot: 'bg-blue-500' },
+  active:   { label: 'Đang mở',    class: 'bg-emerald-50 text-emerald-800 border-emerald-300', dot: 'bg-emerald-600' },
+  inactive: { label: 'Tạm dừng',   class: 'bg-stone-100 text-stone-700 border-stone-300',     dot: 'bg-stone-400' },
+  draft:    { label: 'Nháp',        class: 'bg-amber-50 text-amber-800 border-amber-300',       dot: 'bg-amber-500' },
+  full:     { label: 'Đã đầy',      class: 'bg-rose-50 text-rose-800 border-rose-300',         dot: 'bg-rose-600' },
+  upcoming: { label: 'Sắp mở',     class: 'bg-orange-50 text-orange-800 border-orange-300',    dot: 'bg-orange-600' },
 }
-const FALLBACK = { label: 'Không rõ', class: 'bg-orange-100 text-orange-600', dot: 'bg-orange-400' }
+const FALLBACK = { label: 'Không rõ', class: 'bg-stone-100 text-stone-700 border-stone-300', dot: 'bg-stone-400' }
 
 const cfg = computed(() => {
   const key = String(props.status ?? '').toLowerCase()

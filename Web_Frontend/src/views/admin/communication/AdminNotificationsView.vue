@@ -2,9 +2,9 @@
   <section class="space-y-5">
     <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Giao tiếp &amp; CSKH</p>
-        <h1 class="mt-1 text-2xl font-bold text-orange-950">Quản lý thông báo</h1>
-        <p class="mt-1 text-sm text-gray-500">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">Giao tiếp &amp; CSKH</p>
+        <h1 class="mt-1 text-2xl font-bold text-stone-900">Quản lý thông báo</h1>
+        <p class="mt-1 text-sm text-stone-500">
           Tạo thông báo cho phụ huynh, giáo viên và theo dõi trạng thái gửi trong hệ thống.
         </p>
       </div>
@@ -12,15 +12,15 @@
         <button
           type="button"
           :disabled="loading"
-          class="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-white px-4 py-2.5 text-sm font-semibold text-orange-700 shadow-sm transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex h-9 items-center gap-2 rounded-md border border-stone-300 bg-white px-3.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
           @click="loadHistory"
         >
-          <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': loading }" />
+          <ArrowPathIcon class="h-4 w-4 text-stone-600" :class="{ 'animate-spin': loading }" />
           Làm mới
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
+          class="inline-flex h-9 items-center gap-2 rounded-md border border-orange-700 bg-orange-600 px-3.5 text-sm font-semibold text-white shadow-xs transition hover:bg-orange-700"
           @click="showCompose = true"
         >
           <PlusIcon class="h-4 w-4" />
@@ -33,14 +33,14 @@
       <article
         v-for="stat in stats"
         :key="stat.label"
-        class="flex items-center gap-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm"
+        class="flex items-center gap-3 rounded-lg border border-stone-300 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
       >
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" :class="stat.background">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-stone-200" :class="stat.background">
           <component :is="stat.icon" class="h-5 w-5" :class="stat.color" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-medium text-gray-500">{{ stat.label }}</p>
-          <p class="mt-1 truncate text-xl font-bold text-gray-900">{{ stat.value }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">{{ stat.label }}</p>
+          <p class="mt-1 truncate text-xl font-bold text-stone-900 tabular-nums">{{ stat.value }}</p>
         </div>
       </article>
     </section>
@@ -48,35 +48,35 @@
     <p
       v-if="successMessage"
       role="status"
-      class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+      class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
     >
       {{ successMessage }}
     </p>
 
-    <section class="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
-      <div class="flex flex-col gap-3 border-b border-orange-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <section class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div class="flex flex-col gap-3 border-b border-stone-200 p-4 sm:flex-row sm:items-center sm:justify-between">
         <form class="flex w-full gap-2 sm:max-w-lg" @submit.prevent="searchHistory">
           <label class="relative min-w-0 flex-1">
             <span class="sr-only">Tìm thông báo</span>
-            <MagnifyingGlassIcon class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <MagnifyingGlassIcon class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
             <input
               v-model="keyword"
               type="search"
               maxlength="100"
               placeholder="Tìm theo tiêu đề hoặc nội dung..."
-              class="w-full rounded-xl border border-orange-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+              class="h-9 w-full rounded-md border border-stone-300 bg-stone-50/70 pl-9 pr-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
             />
           </label>
           <button
             type="submit"
             :disabled="loading"
-            class="rounded-xl bg-orange-100 px-4 py-2.5 text-sm font-semibold text-orange-800 transition hover:bg-orange-200 disabled:opacity-60"
+            class="h-9 rounded-md border border-stone-300 bg-white px-3.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:opacity-60"
           >
             Tìm kiếm
           </button>
         </form>
 
-        <label class="flex items-center gap-2 text-sm text-gray-600">
+        <label class="flex items-center gap-2 text-sm text-stone-600">
           <span>Loại</span>
           <select
             v-model="typeFilter"
@@ -92,86 +92,86 @@
 
       <div
         v-if="errorMessage"
-        class="m-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+        class="m-4 flex flex-col gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <p class="text-sm text-red-700">{{ errorMessage }}</p>
-        <button type="button" class="shrink-0 text-sm font-semibold text-red-700 underline" @click="loadHistory">
+        <p class="text-sm text-rose-700">{{ errorMessage }}</p>
+        <button type="button" class="shrink-0 text-sm font-semibold text-rose-700 underline" @click="loadHistory">
           Thử lại
         </button>
       </div>
 
-      <div v-if="loading" class="flex min-h-56 items-center justify-center gap-3 text-sm text-orange-700">
-        <ArrowPathIcon class="h-5 w-5 animate-spin" />
+      <div v-if="loading" class="flex min-h-56 items-center justify-center gap-3 text-sm text-stone-600">
+        <ArrowPathIcon class="h-5 w-5 animate-spin text-orange-600" />
         Đang tải lịch sử thông báo...
       </div>
       <div
         v-else-if="!errorMessage && items.length === 0"
         class="flex min-h-56 flex-col items-center justify-center px-4 text-center"
       >
-        <BellAlertIcon class="h-10 w-10 text-orange-300" />
-        <p class="mt-3 font-semibold text-gray-700">Chưa có thông báo phù hợp</p>
-        <p class="mt-1 text-sm text-gray-500">Tạo thông báo mới hoặc thử thay đổi bộ lọc tìm kiếm.</p>
+        <BellAlertIcon class="h-10 w-10 text-stone-400" />
+        <p class="mt-3 font-semibold text-stone-800">Chưa có thông báo phù hợp</p>
+        <p class="mt-1 text-sm text-stone-500">Tạo thông báo mới hoặc thử thay đổi bộ lọc tìm kiếm.</p>
       </div>
 
       <template v-else-if="!errorMessage">
-        <div class="border-b border-orange-50 px-4 py-3 text-xs text-gray-500">
+        <div class="border-b border-stone-200 bg-stone-50/70 px-4 py-2.5 text-xs text-stone-600">
           Hiển thị
-          <span class="font-semibold text-orange-700">{{ items.length }}</span>
-          thông báo · Tổng cộng {{ total }} thông báo
+          <span class="font-semibold text-stone-900 tabular-nums">{{ items.length }}</span>
+          thông báo · Tổng cộng <span class="font-semibold text-stone-900 tabular-nums">{{ total }}</span> thông báo
         </div>
         <div class="overflow-x-auto">
           <table class="w-full min-w-[900px] text-left text-sm">
-            <thead class="bg-orange-50/80 text-xs uppercase tracking-wide text-orange-900">
+            <thead class="border-b-2 border-stone-300 bg-stone-100 text-xs font-bold uppercase tracking-wider text-stone-700">
               <tr>
-                <th scope="col" class="px-5 py-3.5 font-semibold">Thông báo</th>
-                <th scope="col" class="px-5 py-3.5 font-semibold">Đối tượng</th>
-                <th scope="col" class="px-5 py-3.5 font-semibold">Ngày tạo</th>
-                <th scope="col" class="px-5 py-3.5 font-semibold">Trạng thái</th>
-                <th scope="col" class="px-5 py-3.5 text-right font-semibold">Đã đọc</th>
+                <th scope="col" class="px-5 py-3.5">Thông báo</th>
+                <th scope="col" class="px-5 py-3.5">Đối tượng</th>
+                <th scope="col" class="px-5 py-3.5">Ngày tạo</th>
+                <th scope="col" class="px-5 py-3.5">Trạng thái</th>
+                <th scope="col" class="px-5 py-3.5 text-right">Đã đọc</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr v-for="item in items" :key="item.id" class="transition hover:bg-orange-50/40">
+            <tbody class="divide-y divide-stone-200">
+              <tr v-for="item in items" :key="item.id" class="transition hover:bg-orange-50/50">
                 <td class="max-w-[420px] px-5 py-4">
                   <div class="flex items-start gap-3">
-                    <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                    <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-orange-200 bg-orange-50 text-orange-600">
                       <BellAlertIcon class="h-4 w-4" />
                     </span>
                     <div class="min-w-0">
-                      <p class="truncate font-semibold text-gray-900">{{ item.title }}</p>
-                      <p class="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">{{ item.body || 'Không có nội dung chi tiết.' }}</p>
-                      <span class="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                      <p class="truncate font-semibold text-stone-900">{{ item.title }}</p>
+                      <p class="mt-1 line-clamp-2 text-xs leading-5 text-stone-500">{{ item.body || 'Không có nội dung chi tiết.' }}</p>
+                      <span class="mt-1 inline-flex rounded border border-stone-300 bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-700">
                         {{ typeLabel(item.type) }}
                       </span>
                     </div>
                   </div>
                 </td>
-                <td class="px-5 py-4 text-gray-700">{{ item.recipientGroup }}</td>
-                <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ formatDate(item.createdAt) }}</td>
+                <td class="px-5 py-4 text-stone-700">{{ item.recipientGroup }}</td>
+                <td class="whitespace-nowrap px-5 py-4 text-stone-600 tabular-nums">{{ formatDate(item.createdAt) }}</td>
                 <td class="px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold"
                     :class="statusClass(item.deliveryStatus)"
                   >
                     <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(item.deliveryStatus)"></span>
                     {{ statusLabel(item.deliveryStatus) }}
                   </span>
-                  <p class="mt-1 text-xs text-gray-500">{{ item.recipientCount }} người nhận</p>
+                  <p class="mt-1 text-xs text-stone-500 tabular-nums">{{ item.recipientCount }} người nhận</p>
                 </td>
-                <td class="whitespace-nowrap px-5 py-4 text-right text-gray-700">
+                <td class="whitespace-nowrap px-5 py-4 text-right font-medium text-stone-800 tabular-nums">
                   {{ item.readCount }} / {{ item.recipientCount }}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="flex items-center justify-between border-t border-orange-50 px-4 py-3">
-          <p class="text-xs text-gray-500">Trang {{ page }} / {{ pageCount }}</p>
+        <div class="flex items-center justify-between border-t border-stone-200 bg-stone-50 px-4 py-3">
+          <p class="text-xs text-stone-600 tabular-nums">Trang {{ page }} / {{ pageCount }}</p>
           <div class="flex gap-2">
             <button
               type="button"
               :disabled="page <= 1 || loading"
-              class="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              class="h-8 rounded-md border border-stone-300 bg-white px-3 text-xs font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
               @click="changePage(page - 1)"
             >
               Trước
@@ -179,7 +179,7 @@
             <button
               type="button"
               :disabled="page >= pageCount || loading"
-              class="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              class="h-8 rounded-md border border-stone-300 bg-white px-3 text-xs font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
               @click="changePage(page + 1)"
             >
               Sau
@@ -191,35 +191,39 @@
 
     <div
       v-if="showCompose"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/50 p-4"
       @click.self="closeCompose"
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="notification-compose-title"
-        class="w-full max-w-xl space-y-4 rounded-3xl border border-orange-100 bg-white p-6 shadow-xl"
+        class="w-full max-w-xl overflow-hidden rounded-lg border border-stone-300 bg-white shadow-xl"
       >
-        <header class="flex items-start justify-between border-b border-orange-100 pb-3">
+        <header class="flex items-start justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
           <div>
-            <h2 id="notification-compose-title" class="text-lg font-bold text-orange-950">Soạn thông báo mới</h2>
-            <p class="mt-1 text-xs text-gray-500">Thông báo sẽ được xếp hàng và gửi qua hộp thư trong ứng dụng.</p>
+            <h2 id="notification-compose-title" class="text-lg font-bold text-stone-900">Soạn thông báo mới</h2>
+            <p class="mt-0.5 text-xs text-stone-500">Thông báo sẽ được xếp hàng và gửi qua hộp thư trong ứng dụng.</p>
           </div>
           <button
             type="button"
             aria-label="Đóng"
             :disabled="submitting"
-            class="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+            class="rounded-md p-1.5 text-stone-400 transition hover:bg-stone-200/70 hover:text-stone-700 disabled:opacity-50"
             @click="closeCompose"
           >
             ✕
           </button>
         </header>
 
-        <form class="space-y-4" @submit.prevent="submitNotification">
+        <form class="space-y-4 p-6" @submit.prevent="submitNotification">
           <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-gray-700">Đối tượng nhận</span>
-            <select v-model="form.recipientGroup" required class="filter-select">
+            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Đối tượng nhận</span>
+            <select
+              v-model="form.recipientGroup"
+              required
+              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
+            >
               <option value="PARENT">Tất cả phụ huynh</option>
               <option value="TEACHER">Tất cả giáo viên</option>
               <option value="PARENT_AND_TEACHER">Phụ huynh và giáo viên</option>
@@ -227,45 +231,49 @@
           </label>
 
           <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-gray-700">Loại thông báo</span>
-            <select v-model="form.type" required class="filter-select">
+            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Loại thông báo</span>
+            <select
+              v-model="form.type"
+              required
+              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
+            >
               <option value="ANNOUNCEMENT">Thông báo chung</option>
               <option value="SYSTEM">Hệ thống</option>
             </select>
           </label>
 
           <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-gray-700">Tiêu đề</span>
+            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Tiêu đề</span>
             <input
               v-model.trim="form.title"
               required
               maxlength="200"
               type="text"
               placeholder="Nhập tiêu đề thông báo"
-              class="w-full rounded-xl border border-orange-200 px-3 py-2.5 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
             />
           </label>
 
           <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-gray-700">Nội dung</span>
+            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Nội dung</span>
             <textarea
               v-model.trim="form.body"
               maxlength="2000"
               rows="5"
               placeholder="Nhập nội dung gửi đến người nhận..."
-              class="w-full resize-y rounded-xl border border-orange-200 px-3 py-2.5 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+              class="w-full resize-y rounded-md border border-stone-300 bg-stone-50/70 px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
             ></textarea>
           </label>
 
-          <p v-if="composeError" role="alert" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p v-if="composeError" role="alert" class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {{ composeError }}
           </p>
 
-          <footer class="flex justify-end gap-2 border-t border-orange-100 pt-4">
+          <footer class="flex justify-end gap-2 border-t border-stone-200 pt-4">
             <button
               type="button"
               :disabled="submitting"
-              class="rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+              class="h-9 rounded-md border border-stone-300 bg-white px-4 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:opacity-50"
               @click="closeCompose"
             >
               Hủy
@@ -273,7 +281,7 @@
             <button
               type="submit"
               :disabled="submitting || !form.title.trim()"
-              class="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex h-9 items-center gap-2 rounded-md border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <PaperAirplaneIcon class="h-4 w-4" />
               {{ submitting ? 'Đang gửi...' : 'Đưa vào hàng đợi' }}
@@ -342,15 +350,15 @@ const stats = computed(() => [
     label: "Lượt nhận",
     value: summary.value.deliveredCount,
     icon: UsersIcon,
-    background: "bg-blue-100",
-    color: "text-blue-600",
+    background: "bg-stone-100",
+    color: "text-stone-700",
   },
   {
     label: "Đã đọc",
     value: summary.value.readCount,
     icon: CheckCircleIcon,
-    background: "bg-green-100",
-    color: "text-green-600",
+    background: "bg-emerald-100",
+    color: "text-emerald-700",
   },
 ]);
 
@@ -452,18 +460,18 @@ function statusLabel(status) {
 }
 
 function statusClass(status) {
-  if (status === 2 || status === 4) return "bg-green-100 text-green-800";
-  if (status === 3) return "bg-red-100 text-red-800";
-  if (status === 1) return "bg-blue-100 text-blue-800";
-  return "bg-amber-100 text-amber-800";
+  if (status === 2 || status === 4) return "border-emerald-300 bg-emerald-50 text-emerald-800";
+  if (status === 3) return "border-rose-300 bg-rose-50 text-rose-800";
+  if (status === 1) return "border-amber-300 bg-amber-50 text-amber-800";
+  return "border-stone-300 bg-stone-100 text-stone-700";
 }
 
 function statusDotClass(status) {
-  if (status === 2 || status === 4) return "bg-green-500";
-  if (status === 3) return "bg-red-500";
-  if (status === 1) return "bg-blue-500";
-  if (status === 0) return "bg-amber-500";
-  return "bg-gray-400";
+  if (status === 2 || status === 4) return "bg-emerald-500";
+  if (status === 3) return "bg-rose-500";
+  if (status === 1) return "bg-amber-500";
+  if (status === 0) return "bg-stone-500";
+  return "bg-stone-400";
 }
 
 function formatDate(value) {

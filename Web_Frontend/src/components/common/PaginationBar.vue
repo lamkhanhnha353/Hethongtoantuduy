@@ -2,23 +2,23 @@
   <div
     v-if="showWhenEmpty || totalCount > 0"
     :class="[
-      'flex flex-wrap items-center justify-between gap-3 select-none',
+      'flex flex-wrap items-center justify-between gap-3 select-none tabular-nums',
       compact ? 'px-3 py-2.5 text-xs' : 'px-4 py-3 text-sm',
-      bordered ? 'border-t border-slate-100 bg-slate-50/60' : '',
+      bordered ? 'border-t border-stone-200 bg-stone-50' : '',
     ]"
   >
     <!-- Range Summary -->
-    <div class="text-slate-500">
+    <div class="text-stone-500">
       <template v-if="totalCount > 0">
         <template v-if="compact">
-          <span class="font-semibold text-slate-700">{{ rangeStart }}–{{ rangeEnd }}</span>
+          <span class="font-semibold text-stone-800">{{ rangeStart }}–{{ rangeEnd }}</span>
           <span> / {{ totalCount }} {{ itemLabel }}</span>
         </template>
         <template v-else>
           Hiển thị
-          <span class="font-semibold text-slate-700">{{ rangeStart }}</span>–<span class="font-semibold text-slate-700">{{ rangeEnd }}</span>
+          <span class="font-semibold text-stone-800">{{ rangeStart }}</span>–<span class="font-semibold text-stone-800">{{ rangeEnd }}</span>
           trong tổng
-          <span class="font-semibold text-slate-800">{{ totalCount }}</span>
+          <span class="font-semibold text-stone-900">{{ totalCount }}</span>
           {{ itemLabel }}
         </template>
       </template>
@@ -35,7 +35,7 @@
           :value="pageSize"
           :disabled="disabled"
           aria-label="Số dòng mỗi trang"
-          class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-2xs transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+          class="h-8 rounded-md border border-stone-300 bg-white px-2.5 text-xs font-medium text-stone-800 transition focus:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           @change="handlePageSizeChange"
         >
           <option v-for="size in normalizedPageSizeOptions" :key="size" :value="size">
@@ -48,7 +48,7 @@
       <button
         type="button"
         :disabled="disabled || page <= 1"
-        class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white font-medium text-slate-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600"
+        class="inline-flex items-center gap-1 rounded-md border border-stone-300 bg-white font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-stone-300 disabled:hover:bg-white"
         :class="compact ? 'px-2 py-1 text-xs' : 'px-2.5 py-1.5 text-xs'"
         @click="goToPage(page - 1)"
       >
@@ -60,7 +60,7 @@
       <template v-for="(token, idx) in pageTokens" :key="`${token}-${idx}`">
         <span
           v-if="token === '...'"
-          class="px-1.5 text-xs font-medium text-slate-400"
+          class="px-1.5 text-xs font-medium text-stone-400"
         >
           ...
         </span>
@@ -68,12 +68,12 @@
           v-else
           type="button"
           :disabled="disabled"
-          class="min-w-7 rounded-lg border text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+          class="min-w-7 rounded-md border text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
           :class="[
             compact ? 'px-2 py-1' : 'px-2.5 py-1.5',
             token === page
-              ? 'border-orange-500 bg-orange-500 text-white shadow-xs'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600',
+              ? 'border-orange-700 bg-orange-600 text-white shadow-xs'
+              : 'border-stone-300 bg-white text-stone-700 hover:border-stone-400 hover:bg-stone-100 hover:text-stone-900',
           ]"
           @click="goToPage(token)"
         >
@@ -85,7 +85,7 @@
       <button
         type="button"
         :disabled="disabled || page >= effectiveTotalPages"
-        class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white font-medium text-slate-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600"
+        class="inline-flex items-center gap-1 rounded-md border border-stone-300 bg-white font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-stone-300 disabled:hover:bg-white"
         :class="compact ? 'px-2 py-1 text-xs' : 'px-2.5 py-1.5 text-xs'"
         @click="goToPage(page + 1)"
       >

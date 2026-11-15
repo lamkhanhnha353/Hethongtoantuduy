@@ -430,8 +430,8 @@ async function sendBatchEmails() {
         <el-table-column label="Thưởng / Phạt" min-width="165" align="right">
           <template #default="{ row }">
             <span class="adjustment-values">
-              <span class="bonus">+{{ formatCurrency(row.totalBonus) }}</span>
-              <span class="penalty">−{{ formatCurrency(row.totalPenalty) }}</span>
+              <span :class="Number(row.totalBonus) > 0 ? 'bonus' : 'muted-zero'">+{{ formatCurrency(row.totalBonus) }}</span>
+              <span :class="Number(row.totalPenalty) > 0 ? 'penalty' : 'muted-zero'">−{{ formatCurrency(row.totalPenalty) }}</span>
             </span>
           </template>
         </el-table-column>
@@ -599,44 +599,46 @@ async function sendBatchEmails() {
 </template>
 
 <style scoped>
-.payroll-page { display: grid; gap: 22px; max-width: 1500px; margin: 0 auto; padding-bottom: 36px; color: #1f2937; }
+.payroll-page { display: grid; gap: 22px; max-width: 1500px; margin: 0 auto; padding-bottom: 36px; color: #1c1917; font-variant-numeric: tabular-nums; }
 .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 .eyebrow { margin: 0 0 5px; color: #ea580c; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-h1 { margin: 0; color: #431407; font-size: clamp(24px, 3vw, 32px); font-weight: 800; letter-spacing: -.03em; }
-.page-description { margin: 7px 0 0; color: #6b7280; font-size: 14px; }
+h1 { margin: 0; color: #1c1917; font-size: clamp(24px, 3vw, 32px); font-weight: 800; letter-spacing: -.03em; }
+.page-description { margin: 7px 0 0; color: #78716c; font-size: 14px; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.table-card { overflow: hidden; border: 1px solid #ffedd5; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgb(124 45 18 / 5%); }
-.table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #fff7ed; background: #fffaf5; }
+.table-card { overflow: hidden; border: 1px solid #d6d3d1; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #e7e5e4; background: #fafaf9; }
 .toolbar-search { max-width: 340px; width: 100%; }
 .toolbar-select { width: 210px; }
-.table-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 13px 18px; border-top: 1px solid #fff7ed; color: #6b7280; font-size: 12px; }
-.table-footer strong { color: #9a3412; }
+.table-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 13px 18px; border-top: 1px solid #e7e5e4; background: #fafaf9; color: #57534e; font-size: 12px; font-variant-numeric: tabular-nums; }
+.table-footer strong { color: #1c1917; }
 .teacher-cell { display: flex; align-items: center; gap: 10px; }
 .teacher-cell strong, .teacher-cell small { display: block; }
-.teacher-cell strong { color: #292524; font-size: 13px; }
-.teacher-cell small { margin-top: 3px; color: #9ca3af; font-size: 11px; }
-.teacher-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 12px; background: #fff7ed; color: #c2410c; font-weight: 800; }
-.session-count { display: inline-grid; min-width: 30px; height: 30px; place-items: center; border-radius: 10px; background: #fff7ed; color: #c2410c; font-weight: 800; }
-.adjustment-values { display: grid; gap: 3px; font-size: 12px; }
-.bonus { color: #15803d; }
-.penalty { color: #dc2626; }
-.net-pay { color: #9a3412; }
+.teacher-cell strong { color: #1c1917; font-size: 13px; }
+.teacher-cell small { margin-top: 3px; color: #78716c; font-size: 11px; }
+.teacher-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 9999px; border: 1px solid #fed7aa; background: #ffedd5; color: #c2410c; font-weight: 800; }
+.session-count { display: inline-grid; min-width: 28px; height: 28px; padding: 0 6px; place-items: center; border-radius: 4px; border: 1px solid #fed7aa; background: #fff7ed; color: #c2410c; font-weight: 700; font-variant-numeric: tabular-nums; }
+.adjustment-values { display: grid; gap: 3px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bonus { color: #15803d; font-weight: 600; }
+.penalty { color: #be123c; font-weight: 600; }
+.muted-zero { color: #a8a29e; font-weight: 400; }
+.net-pay { color: #9a3412; font-variant-numeric: tabular-nums; }
 .row-actions { display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
-.more-actions-button { color: #57534e; border-color: #e7e5e4; }
+.more-actions-button { color: #292524; border-color: #d6d3d1; }
 .more-actions-button:hover,
-.more-actions-button:focus { color: #c2410c; border-color: #fdba74; background: #fff7ed; }
+.more-actions-button:focus { color: #1c1917; border-color: #a8a29e; background: #f5f5f4; }
 .dropdown-caret { margin-left: 5px; color: #78716c; font-size: 12px; }
 .dialog-content { min-height: 120px; }
-.detail-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding: 12px 15px; border-radius: 12px; background: #fff7ed; color: #7c2d12; font-size: 13px; }
-.detail-summary strong { font-size: 17px; }
-.adjustments-heading { margin: 22px 0 10px; color: #431407; font-size: 15px; }
+.detail-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding: 12px 15px; border-radius: 8px; border: 1px solid #e7e5e4; background: #fafaf9; color: #1c1917; font-size: 13px; font-variant-numeric: tabular-nums; }
+.detail-summary strong { font-size: 17px; color: #ea580c; }
+.adjustments-heading { margin: 22px 0 10px; color: #1c1917; font-size: 15px; }
 .form-hint { margin: -4px 0 0; color: #78716c; font-size: 12px; }
 .preview-frame { min-height: 60vh; }
-.preview-frame iframe { width: 100%; height: 68vh; border: 1px solid #e5e7eb; border-radius: 10px; background: white; }
+.preview-frame iframe { width: 100%; height: 68vh; border: 1px solid #d6d3d1; border-radius: 8px; background: white; }
 .full-width { width: 100%; }
-:deep(.el-table th.el-table__cell) { background: #fff7ed; color: #7c2d12; font-size: 12px; }
-:deep(.el-table .cell) { line-height: 1.45; }
-.help-icon { margin-left: 3px; color: #9a3412; cursor: help; }
+:deep(.el-table th.el-table__cell) { background: #f5f5f4; color: #44403c; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid #d6d3d1; }
+:deep(.el-table .cell) { line-height: 1.45; font-variant-numeric: tabular-nums; }
+:deep(.el-table tr:hover > td.el-table__cell) { background-color: #fff7ed !important; }
+.help-icon { margin-left: 3px; color: #c2410c; cursor: help; }
 @media (max-width: 640px) {
   .payroll-page { gap: 16px; }
   .header-actions { width: 100%; }

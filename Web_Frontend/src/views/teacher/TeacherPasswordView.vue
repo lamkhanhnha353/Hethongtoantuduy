@@ -1,28 +1,28 @@
 <template>
-  <div class="mx-auto max-w-5xl space-y-7 pb-8">
+  <div class="mx-auto max-w-5xl space-y-6 pb-8">
     <!-- ─── Header ────────────────────────────────────────────────────────── -->
-    <header class="flex flex-col gap-3 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header class="flex flex-col gap-3 border-b border-stone-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">Tài khoản giáo viên</p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900">Bảo mật tài khoản</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600">Tài khoản giáo viên</p>
+        <h1 class="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">Bảo mật tài khoản</h1>
+        <p class="mt-1.5 max-w-2xl text-xs sm:text-sm leading-6 text-stone-500">
           Quản lý mật khẩu đăng nhập định kỳ để đảm bảo an toàn cho tài khoản giảng dạy của bạn.
         </p>
       </div>
       <router-link
         to="/teacher/account/profile"
-        class="inline-flex w-fit items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50 transition-colors"
+        class="inline-flex w-fit items-center gap-2 h-9 rounded-md border border-stone-300 bg-white px-3.5 text-xs font-semibold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors"
       >
-        <ArrowLeftIcon class="w-4 h-4 text-gray-500" />
+        <ArrowLeftIcon class="w-4 h-4 text-stone-500" />
         Quay lại Hồ sơ cá nhân
       </router-link>
     </header>
 
     <!-- ─── Change Password Section Card ─────────────────────────────────── -->
-    <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-100 px-6 py-5 sm:px-8">
-        <h2 class="text-lg font-semibold text-gray-900">Đổi mật khẩu đăng nhập</h2>
-        <p class="mt-1 text-sm text-gray-500">
+    <section class="rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div class="border-b border-stone-200 bg-stone-50 px-6 py-4 sm:px-8">
+        <h2 class="text-base font-bold text-stone-900">Đổi mật khẩu đăng nhập</h2>
+        <p class="mt-0.5 text-xs sm:text-sm text-stone-500">
           Mật khẩu mới phải có ít nhất 6 ký tự. Nên kết hợp chữ hoa, chữ thường và chữ số để tăng tính bảo mật.
         </p>
       </div>
@@ -30,7 +30,7 @@
       <form class="space-y-5 px-6 py-6 sm:px-8" @submit.prevent="changePassword">
         <div class="grid gap-5 md:grid-cols-2 max-w-3xl">
           <div class="md:col-span-2">
-            <label for="currentPassword" class="mb-2 block text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
+            <label for="currentPassword" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Mật khẩu hiện tại</label>
             <input
               id="currentPassword"
               v-model="passwordForm.currentPassword"
@@ -39,11 +39,11 @@
               type="password"
               autocomplete="current-password"
               placeholder="••••••••"
-              class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm text-stone-900 outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             />
           </div>
           <div>
-            <label for="newPassword" class="mb-2 block text-sm font-medium text-gray-700">Mật khẩu mới</label>
+            <label for="newPassword" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Mật khẩu mới</label>
             <input
               id="newPassword"
               v-model="passwordForm.newPassword"
@@ -53,11 +53,11 @@
               type="password"
               autocomplete="new-password"
               placeholder="••••••••"
-              class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm text-stone-900 outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             />
           </div>
           <div>
-            <label for="confirmNewPassword" class="mb-2 block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
+            <label for="confirmNewPassword" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Xác nhận mật khẩu mới</label>
             <input
               id="confirmNewPassword"
               v-model="passwordForm.confirmNewPassword"
@@ -67,7 +67,7 @@
               type="password"
               autocomplete="new-password"
               placeholder="••••••••"
-              class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm text-stone-900 outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             />
           </div>
         </div>
@@ -75,30 +75,30 @@
         <p
           v-if="passwordMessage"
           role="status"
-          class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 max-w-3xl"
+          class="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 max-w-3xl"
         >
           {{ passwordMessage }}
         </p>
         <p
           v-if="passwordError"
           role="alert"
-          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 max-w-3xl"
+          class="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800 max-w-3xl"
         >
           {{ passwordError }}
         </p>
 
-        <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-5">
+        <div class="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-5">
           <button
             type="submit"
             :disabled="isChangingPassword"
-            class="rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer inline-flex items-center gap-2"
+            class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 active:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer inline-flex items-center gap-2"
           >
             <span>{{ isChangingPassword ? 'Đang cập nhật...' : 'Lưu mật khẩu mới' }}</span>
           </button>
           <button
             type="button"
             :disabled="isChangingPassword"
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            class="h-9 rounded-md border border-stone-300 bg-white px-4 text-xs sm:text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             @click="resetForm"
           >
             Làm lại

@@ -5,22 +5,22 @@
 
     <template v-else-if="course">
       <!-- ─── Breadcrumb ───────────────────────────────────────────────── -->
-      <nav class="flex items-center gap-2 text-sm text-gray-400">
+      <nav class="flex items-center gap-2 text-sm text-stone-500">
         <router-link to="/training/courses" class="hover:text-orange-600 transition-colors flex items-center gap-1 font-medium">
           <HomeIcon class="w-4 h-4" />
           Danh mục Khóa học
         </router-link>
-        <ChevronRightIcon class="w-4 h-4" />
-        <span class="text-orange-800 font-semibold truncate">{{ course.name }}</span>
+        <ChevronRightIcon class="w-4 h-4 text-stone-400" />
+        <span class="text-stone-900 font-semibold truncate">{{ course.name }}</span>
       </nav>
 
       <!-- ─── Course info card ─────────────────────────────────────────── -->
-      <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
-        <div class="h-2 w-full bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500" />
+      <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="h-1.5 w-full bg-orange-600" />
         <div class="p-6">
           <div class="flex flex-col lg:flex-row lg:items-start gap-6">
             <!-- Course Image / Avatar -->
-            <div class="w-full sm:w-44 h-40 rounded-2xl overflow-hidden bg-orange-50 flex-shrink-0 border border-orange-200 shadow-inner">
+            <div class="w-full sm:w-44 h-40 rounded-md overflow-hidden bg-stone-100 flex-shrink-0 border border-stone-300">
               <img
                 v-if="course.imageUrl && !imageError"
                 :src="course.imageUrl"
@@ -28,56 +28,56 @@
                 class="w-full h-full object-cover"
                 @error="imageError = true"
               />
-              <div v-else class="w-full h-full flex flex-col items-center justify-center bg-orange-100 text-orange-600">
-                <BookOpenIcon class="w-12 h-12 text-orange-400 mb-1" />
+              <div v-else class="w-full h-full flex flex-col items-center justify-center bg-orange-50 text-orange-700">
+                <BookOpenIcon class="w-12 h-12 text-orange-500 mb-1" />
                 <span class="font-bold text-xs uppercase">{{ course.code }}</span>
               </div>
             </div>
 
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="text-xs font-mono font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-200">
+                <span class="text-xs font-mono font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded border border-orange-300 tabular-nums">
                   {{ course.code ?? `#${course.id}` }}
                 </span>
                 <StatusBadge :status="course.status" />
-                <span v-if="course.minAge || course.maxAge" class="text-xs text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200 font-medium">
+                <span v-if="course.minAge || course.maxAge" class="text-xs text-stone-700 bg-stone-100 px-2 py-0.5 rounded border border-stone-300 font-medium tabular-nums">
                   Độ tuổi: {{ course.minAge ?? '?' }} - {{ course.maxAge ?? '?' }} tuổi
                 </span>
               </div>
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-orange-950 mb-3 leading-tight">
+              <h1 class="text-2xl sm:text-3xl font-bold text-stone-900 mb-3 leading-tight">
                 {{ course.name }}
               </h1>
-              <p v-if="course.description" class="text-sm text-gray-600 mb-5 leading-relaxed max-w-3xl">
+              <p v-if="course.description" class="text-sm text-stone-600 mb-5 leading-relaxed max-w-3xl">
                 {{ course.description }}
               </p>
 
               <!-- Stats row -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-600 border-t border-orange-100 pt-4">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-stone-600 border-t border-stone-200 pt-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-                    <AcademicCapIcon class="w-5 h-5 text-orange-500" />
+                  <div class="w-10 h-10 rounded-md border border-orange-200 bg-orange-50 flex items-center justify-center flex-shrink-0">
+                    <AcademicCapIcon class="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <p class="font-bold text-gray-800 leading-none text-base">{{ levels.length }}</p>
-                    <p class="text-[11px] text-gray-500 mt-1">Cấp độ đào tạo</p>
+                    <p class="font-bold text-stone-900 leading-none text-base tabular-nums">{{ levels.length }}</p>
+                    <p class="text-[11px] text-stone-500 mt-1">Cấp độ đào tạo</p>
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <UserGroupIcon class="w-5 h-5 text-blue-500" />
+                  <div class="w-10 h-10 rounded-md border border-stone-200 bg-stone-100 flex items-center justify-center flex-shrink-0">
+                    <UserGroupIcon class="w-5 h-5 text-stone-700" />
                   </div>
                   <div>
-                    <p class="font-bold text-gray-800 leading-none text-base">{{ totalClassStudents }}</p>
-                    <p class="text-[11px] text-gray-500 mt-1">Học viên đang học</p>
+                    <p class="font-bold text-stone-900 leading-none text-base tabular-nums">{{ totalClassStudents }}</p>
+                    <p class="text-[11px] text-stone-500 mt-1">Học viên đang học</p>
                   </div>
                 </div>
                 <div v-if="feeDisplay" class="flex items-center gap-3 sm:col-span-2">
-                  <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <CurrencyDollarIcon class="w-5 h-5 text-green-600" />
+                  <div class="w-10 h-10 rounded-md border border-emerald-200 bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                    <CurrencyDollarIcon class="w-5 h-5 text-emerald-700" />
                   </div>
                   <div>
-                    <p class="font-bold text-gray-800 leading-none text-base text-green-700">{{ feeDisplay }}</p>
-                    <p class="text-[11px] text-gray-500 mt-1">Học phí theo cấp độ</p>
+                    <p class="font-bold text-emerald-700 leading-none text-base tabular-nums">{{ feeDisplay }}</p>
+                    <p class="text-[11px] text-stone-500 mt-1">Học phí theo cấp độ</p>
                   </div>
                 </div>
               </div>
@@ -87,9 +87,9 @@
             <div class="flex items-center gap-2 flex-shrink-0 self-start">
               <button
                 @click="openEditCourseModal"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-xl transition-colors cursor-pointer"
+                class="inline-flex h-9 items-center gap-1.5 px-3.5 text-xs font-semibold text-stone-800 bg-white hover:bg-stone-100 border border-stone-300 hover:border-stone-400 rounded-md transition-colors cursor-pointer"
               >
-                <PencilIcon class="w-3.5 h-3.5" />
+                <PencilIcon class="w-3.5 h-3.5 text-stone-600" />
                 Chỉnh sửa khóa học
               </button>
             </div>
@@ -98,14 +98,14 @@
       </div>
 
       <!-- ─── Course Levels (Cấp độ khóa học) ────────────────────────── -->
-      <div v-if="levels.length > 0" class="bg-white rounded-2xl border border-orange-100 shadow-sm p-6 space-y-4">
+      <div v-if="levels.length > 0" class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-6 space-y-4">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-lg font-bold text-orange-950 flex items-center gap-2">
-              <AcademicCapIcon class="w-5 h-5 text-orange-500" />
+            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+              <AcademicCapIcon class="w-5 h-5 text-orange-600" />
               Lộ trình Cấp độ (Course Levels)
             </h2>
-            <p class="text-xs text-gray-500 mt-0.5">Khóa học gồm {{ levels.length }} cấp độ giảng dạy liên tiếp</p>
+            <p class="text-xs text-stone-500 mt-0.5 tabular-nums">Khóa học gồm {{ levels.length }} cấp độ giảng dạy liên tiếp</p>
           </div>
         </div>
 
@@ -115,32 +115,32 @@
             :key="lv.id"
             @click="selectLevelAndScroll(lv.id)"
             :class="[
-              'p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3',
+              'p-4 rounded-md border transition-all cursor-pointer flex flex-col justify-between gap-3',
               selectedLevel === lv.id
-                ? 'border-orange-400 bg-orange-50/60 shadow-sm ring-1 ring-orange-300'
-                : 'border-orange-100 bg-white hover:border-orange-300 hover:shadow-sm'
+                ? 'border-orange-600 bg-orange-50/50 ring-2 ring-orange-500/20'
+                : 'border-stone-300 bg-white hover:border-stone-400'
             ]"
           >
             <div>
               <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800">
+                <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded border border-orange-300 bg-orange-50 text-orange-800">
                   {{ lv.code ?? `L${idx + 1}` }}
                 </span>
                 <StatusBadge :status="lv.status" />
               </div>
-              <h3 class="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
+              <h3 class="font-bold text-stone-900 text-sm leading-snug line-clamp-2">
                 {{ lv.name }}
               </h3>
-              <p v-if="lv.description" class="text-xs text-gray-500 line-clamp-2 mt-1">
+              <p v-if="lv.description" class="text-xs text-stone-500 line-clamp-2 mt-1">
                 {{ lv.description }}
               </p>
             </div>
 
-            <div class="pt-3 border-t border-orange-100 flex items-center justify-between text-xs">
-              <span class="font-bold text-orange-600 text-sm">
+            <div class="pt-3 border-t border-stone-200 flex items-center justify-between text-xs">
+              <span class="font-bold text-orange-600 text-sm tabular-nums">
                 {{ formatFee(lv.fee) }}
               </span>
-              <span class="text-gray-500 font-medium">
+              <span class="text-stone-600 font-medium tabular-nums">
                 {{ lv.totalSessions ?? 0 }} buổi học
               </span>
             </div>
@@ -149,19 +149,19 @@
       </div>
 
       <!-- ─── Classes section ──────────────────────────────────────────── -->
-      <div id="classes-section" class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-orange-100">
+      <div id="classes-section" class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="px-6 py-4 border-b border-stone-200 bg-stone-50">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 class="font-bold text-orange-900 text-base">Danh sách Lớp học trực thuộc</h2>
-              <p class="text-xs text-gray-500 mt-0.5">
+              <h2 class="font-bold text-stone-900 text-base">Danh sách Lớp học trực thuộc</h2>
+              <p class="text-xs text-stone-500 mt-0.5 tabular-nums">
                 Tìm thấy {{ totalCount }} lớp
-                <template v-if="selectedLevel"> · Đang lọc theo cấp độ: <span class="font-semibold text-orange-600">{{ selectedLevelName }}</span></template>
+                <template v-if="selectedLevel"> · Đang lọc theo cấp độ: <span class="font-semibold text-orange-700">{{ selectedLevelName }}</span></template>
               </p>
             </div>
             <button
               @click="openCreateClassModal"
-              class="inline-flex items-center gap-2 px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-xl transition-colors flex-shrink-0 shadow-sm cursor-pointer"
+              class="inline-flex h-9 items-center gap-1.5 px-3.5 bg-orange-600 hover:bg-orange-700 border border-orange-700 text-white text-xs font-semibold rounded-md transition-colors flex-shrink-0 shadow-xs cursor-pointer"
             >
               <PlusIcon class="w-3.5 h-3.5" />
               Mở lớp mới
@@ -172,14 +172,14 @@
         <div class="p-5 space-y-4">
           <!-- Level tabs -->
           <div v-if="levels.length > 0" class="flex flex-wrap gap-2 items-center">
-            <span class="text-xs text-gray-400 font-medium mr-1">Lọc cấp độ:</span>
+            <span class="text-xs text-stone-500 font-semibold uppercase tracking-wide mr-1">Lọc cấp độ:</span>
             <button
               @click="selectedLevel = null"
               :class="[
-                'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
+                'h-8 px-3 rounded-md text-xs font-semibold border transition-all tabular-nums',
                 selectedLevel === null
-                  ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                  : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50',
+                  ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
+                  : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-100 hover:border-stone-400',
               ]"
             >
               Tất cả{{ courseTotalClasses !== null ? ` (${courseTotalClasses})` : '' }}
@@ -189,10 +189,10 @@
               :key="lv.id"
               @click="selectedLevel = lv.id"
               :class="[
-                'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
+                'h-8 px-3 rounded-md text-xs font-semibold border transition-all',
                 selectedLevel === lv.id
-                  ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                  : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50',
+                  ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
+                  : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-100 hover:border-stone-400',
               ]"
             >
               {{ lv.name }}
@@ -206,10 +206,10 @@
             <button
               @click="showClassFilter = !showClassFilter"
               :class="[
-                'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all flex-shrink-0',
+                'inline-flex h-9 items-center gap-2 px-3.5 rounded-md text-sm font-semibold border transition-all flex-shrink-0',
                 showClassFilter || classFilters.status
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
+                  ? 'bg-orange-600 text-white border-orange-700'
+                  : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-100 hover:border-stone-400',
               ]"
             >
               <FunnelIcon class="w-4 h-4" />
@@ -220,9 +220,9 @@
 
           <!-- Class filter panel -->
           <transition name="slide-down">
-            <div v-if="showClassFilter" class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
+            <div v-if="showClassFilter" class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-stone-50 rounded-md border border-stone-300">
               <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái lớp</label>
+                <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Trạng thái lớp</label>
                 <select v-model="classFilters.status" class="filter-select">
                   <option value="">Tất cả</option>
                   <option value="active">Đang mở (ACTIVE)</option>
@@ -232,7 +232,7 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1.5">Sắp xếp</label>
+                <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Sắp xếp</label>
                 <select v-model="classFilters.sort" class="filter-select">
                   <option value="name_asc">Tên A → Z</option>
                   <option value="students_desc">Nhiều học viên nhất</option>
@@ -240,7 +240,7 @@
                 </select>
               </div>
               <div class="flex items-end">
-                <button @click="resetClassFilters" class="text-xs text-gray-500 hover:text-orange-500 px-3 py-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-orange-200">
+                <button @click="resetClassFilters" class="h-9 text-xs font-semibold text-stone-600 hover:text-stone-900 px-3 rounded-md border border-transparent hover:bg-white hover:border-stone-300 transition-colors">
                   Đặt lại bộ lọc
                 </button>
               </div>
@@ -293,7 +293,7 @@
             :disabled="loadingClasses"
             :bordered="false"
             item-label="lớp học"
-            class="border-t border-orange-100 px-0 pt-4"
+            class="border-t border-stone-200 px-0 pt-4"
             @change="loadClasses"
           />
         </div>
@@ -320,10 +320,10 @@
     </template>
 
     <!-- ─── Error / not found ──────────────────────────────────────────── -->
-    <div v-else class="flex flex-col items-center justify-center py-20 gap-3 bg-white rounded-2xl border border-orange-100">
-      <ExclamationCircleIcon class="w-12 h-12 text-red-400" />
-      <p class="text-gray-700 font-bold text-lg">Không tìm thấy khóa học</p>
-      <p class="text-gray-400 text-sm">Khóa học không tồn tại hoặc máy chủ backend không phản hồi.</p>
+    <div v-else class="flex flex-col items-center justify-center py-20 gap-3 bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <ExclamationCircleIcon class="w-12 h-12 text-rose-500" />
+      <p class="text-stone-900 font-bold text-lg">Không tìm thấy khóa học</p>
+      <p class="text-stone-500 text-sm">Khóa học không tồn tại hoặc máy chủ backend không phản hồi.</p>
       <router-link to="/training/courses" class="mt-2 text-sm text-orange-600 hover:text-orange-700 underline font-semibold">
         ← Quay lại danh mục khóa học
       </router-link>
