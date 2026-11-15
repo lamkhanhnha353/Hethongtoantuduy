@@ -28,6 +28,30 @@ public sealed class PayrollsController(
         return Ok(payrolls);
     }
 
+    /// <summary>Returns paginated monthly payroll summaries for all teachers.</summary>
+    [HttpGet("admin/summary/paged")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType<PagedResult<PayslipDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<PayslipDto>>> GetMonthlySummaryPaged(
+        [FromQuery, Range(1, 12)] int month,
+        [FromQuery, Range(1, 9998)] int year,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+        [FromQuery] string? keyword = null,
+        [FromQuery] string? emailStatus = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await payrollService.GetMonthlyPayrollsPagedAsync(
+            month,
+            year,
+            page,
+            pageSize,
+            keyword,
+            emailStatus,
+            cancellationToken);
+        return Ok(result);
+    }
+
     /// <summary>Sets the salary rate paid to a teacher for each eligible session.</summary>
     [HttpPut("teachers/{teacherId:int}/base-rate")]
     [Authorize(Roles = "Admin")]

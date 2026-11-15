@@ -25,10 +25,32 @@ namespace ToanTuDuy.Controllers
             return Ok(await _service.GetAllParentsAsync(keyword));
         }
 
+        [HttpGet("paged")]
+        [ProducesResponseType(typeof(PagedResult<ParentResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<ParentResponseDto>>> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] bool? isActive = null)
+        {
+            return Ok(await _service.GetPagedParentsAsync(page, pageSize, keyword, isActive));
+        }
+
         [HttpGet("students")]
         public async Task<IActionResult> GetAllStudents([FromQuery] string? keyword)
         {
             return Ok(await _service.GetAllStudentsAsync(keyword));
+        }
+
+        [HttpGet("students/paged")]
+        [ProducesResponseType(typeof(PagedResult<StudentResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<StudentResponseDto>>> GetStudentsPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] int? parentAccountId = null)
+        {
+            return Ok(await _service.GetPagedStudentsAsync(page, pageSize, keyword, parentAccountId));
         }
 
         [HttpGet("{id:int}")]

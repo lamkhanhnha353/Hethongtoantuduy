@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ToanTuDuy.DTOs;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
 
@@ -38,6 +39,24 @@ namespace ToanTuDuy.Controllers
         {
             var invoices = await _invoiceService.GetAllForAdminAsync();
             return Ok(invoices);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("/api/admin/invoices/paged")]
+        public async Task<IActionResult> GetPagedForAdmin(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] string? status = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _invoiceService.GetPagedForAdminAsync(
+                page,
+                pageSize,
+                keyword,
+                status,
+                cancellationToken);
+            return Ok(result);
         }
     }
 }

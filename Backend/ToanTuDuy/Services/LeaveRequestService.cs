@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 using ToanTuDuy.Services.Notifications;
 
@@ -138,25 +140,42 @@ namespace ToanTuDuy.Services
 
         public async Task<IEnumerable<LeaveRequestResponse>> GetPendingRequestsAsync(int teacherAccountId)
         {
-            return await _context.LeaveRequests
-                .Include(lr => lr.Student)
-                .Include(lr => lr.Lesson)
+            return await BuildPendingRequestsQuery(teacherAccountId)
+                .ToListAsync();
+        }
+
+        public async Task<PagedResult<LeaveRequestResponse>> GetPagedPendingRequestsAsync(
+            int teacherAccountId,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            return await BuildPendingRequestsQuery(teacherAccountId)
+                .ToPagedResultAsync(page, pageSize, cancellationToken: cancellationToken);
+        }
+
+        private IQueryable<LeaveRequestResponse> BuildPendingRequestsQuery(int teacherAccountId)
+        {
+            return _context.LeaveRequests
+                .AsNoTracking()
                 .Where(lr => lr.Status == "PENDING"
                     && lr.Lesson.Class.Teacher != null
                     && lr.Lesson.Class.Teacher.AccountId == teacherAccountId)
+                .OrderBy(lr => lr.Lesson.LessonDate)
+                .ThenByDescending(lr => lr.CreatedAt)
+                .ThenByDescending(lr => lr.Id)
                 .Select(lr => new LeaveRequestResponse
                 {
                     Id = lr.Id,
                     StudentId = lr.StudentId,
-                    StudentName = lr.Student.FullName, // Giả sử StudentProfile có FullName
+                    StudentName = lr.Student.FullName,
                     LessonId = lr.LessonId,
                     LessonTitle = lr.Lesson.Title ?? "Buổi học",
                     LessonDate = lr.Lesson.LessonDate,
                     Reason = lr.Reason,
                     Status = lr.Status,
                     CreatedAt = lr.CreatedAt
-                })
-                .ToListAsync();
+                });
         }
 
         public async Task<bool> ProcessLeaveRequestAsync(int teacherAccountId, int requestId, bool isApproved)
