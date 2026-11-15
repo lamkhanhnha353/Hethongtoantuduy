@@ -489,6 +489,19 @@
                 </div>
               </div>
             </div>
+
+            <p
+              v-else-if="bankQuestionsError"
+              class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-700"
+            >
+              {{ bankQuestionsError }}
+            </p>
+            <p
+              v-else-if="createModalBankId"
+              class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800"
+            >
+              Ngân hàng này chưa có câu hỏi được hỗ trợ để giao trên ứng dụng.
+            </p>
           </div>
 
           <p
@@ -1212,6 +1225,7 @@ const isSubmittingCreate = ref(false)
 const createModalBankId = ref(null)
 const modalBankQuestions = ref([])
 const loadingModalQuestions = ref(false)
+const bankQuestionsError = ref('')
 const supportedPracticeQuestionTypes = new Set([
   'MULTIPLE_CHOICE',
   'TRUE_FALSE',
@@ -1248,6 +1262,8 @@ async function openCreateModal() {
     allQuestionBanks.value = Array.isArray(banks) ? banks : []
   } catch (err) {
     console.error('Lỗi tải ngân hàng câu hỏi:', err)
+    notify('Không tải được ngân hàng câu hỏi. Vui lòng kiểm tra kết nối rồi thử lại.', 'error')
+    return
   }
 
   const now = new Date()
@@ -1271,6 +1287,7 @@ async function openCreateModal() {
 }
 
 async function loadBankQuestionsForModal() {
+  bankQuestionsError.value = ''
   if (!createModalBankId.value) {
     modalBankQuestions.value = []
     return
@@ -1281,6 +1298,10 @@ async function loadBankQuestionsForModal() {
     modalBankQuestions.value = Array.isArray(res) ? res : []
   } catch (err) {
     console.error('Lỗi tải câu hỏi ngân hàng:', err)
+    modalBankQuestions.value = []
+    bankQuestionsError.value = err?.response?.data?.message
+      || err?.response?.data?.title
+      || 'Không thể tải câu hỏi từ ngân hàng này. Vui lòng thử lại.'
   } finally {
     loadingModalQuestions.value = false
   }
@@ -1396,23 +1417,12 @@ async function submitCreateAssignment() {
     notify(`${timeLimitCheck.message} (phút)`, 'error')
     return
   }
-  const maxAttemptCheck = validateNumberRange(createForm.maxAttempt, {
-    label: 'Số lần làm tối đa',
-    required: true,
-    integer: true,
-    min: 1,
-    max: 10,
-  })
-  if (!maxAttemptCheck.valid) {
-    notify(maxAttemptCheck.message, 'error')
-    return
-  }
   if (createForm.selectedQuestions.length === 0) {
     notify('Vui lòng chọn ít nhất một câu hỏi cho bài kiểm tra!', 'error')
     return
   }
-  if (createForm.selectedQuestions.length === 0) {
-    notify('Vui lòng chọn ít nhất một câu hỏi để giao!', 'error')
+  if (createForm.assignAllStudentsInClass && classStudents.value.length === 0) {
+    notify('Lớp học hiện chưa có học sinh đang hoạt động để nhận bài.', 'error')
     return
   }
   if (!createForm.assignAllStudentsInClass && createForm.specificStudentIds.length === 0) {
@@ -1439,8 +1449,14 @@ async function submitCreateAssignment() {
       specificStudentIds: createForm.assignAllStudentsInClass ? null : createForm.specificStudentIds,
     }
 
-    await assignmentService.create(payload)
-    notify('Tạo bài kiểm tra đính kèm buổi học thành công!')
+    const createdAssignment = await assignmentService.create(payload)
+    const assignedStudentsCount = Number(createdAssignment?.assignedStudentsCount) || 0
+    notify(
+      assignedStudentsCount > 0
+        ? `Đã tạo đề và giao bài cho ${assignedStudentsCount} học sinh.`
+        : 'Đã tạo đề nhưng chưa có học sinh nhận bài. Hãy mở “Giao học sinh” để kiểm tra lớp và danh sách học sinh.',
+      assignedStudentsCount > 0 ? 'success' : 'error',
+    )
     showCreateModal.value = false
     await reloadLessonAssignments()
   } catch (err) {
