@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -45,29 +46,117 @@ namespace ToanTuDuy.Services
             };
         }
 
+        private static IQueryable<ClassResponse> ProjectClassResponses(IQueryable<Classes> query)
+        {
+            return query.Select(c => new ClassResponse
+            {
+                Id = c.Id,
+                CourseLevelId = c.CourseLevelId,
+                TeacherId = c.TeacherId,
+                Name = c.Name,
+                MaxCapacity = c.MaxCapacity,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                Status = c.Status,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                CourseLevelName = c.CourseLevel != null ? c.CourseLevel.Name : "",
+                TeacherName = c.Teacher != null ? c.Teacher.FullName : null,
+                CourseId = c.CourseLevel != null ? c.CourseLevel.CourseId : null,
+                CourseName = c.CourseLevel != null && c.CourseLevel.Course != null ? c.CourseLevel.Course.Name : null,
+                ActiveStudentsCount = c.ClassStudents.Count(cs => cs.Status == "ACTIVE")
+            });
+        }
+
         public async Task<IEnumerable<ClassResponse>> GetAllClassesAsync()
         {
-            var classes = await _context.Classes
-                .Include(c => c.CourseLevel)
-                    .ThenInclude(cl => cl.Course)
-                .Include(c => c.Teacher) // Join với bảng giáo viên
-                .Include(c => c.ClassStudents) // Include để lấy dữ liệu tính slot
+            return await ProjectClassResponses(_context.Classes.AsNoTracking())
                 .ToListAsync();
+        }
 
-            return classes.Select(MapToResponse);
+        public async Task<PagedResult<ClassResponse>> GetPagedClassesAsync(
+            int page = 1,
+            int pageSize = 12,
+            string? keyword = null,
+            int? courseId = null,
+            int? courseLevelId = null,
+            int? teacherId = null,
+            string? status = null,
+            string? capacity = null,
+            string? sort = null)
+        {
+            var query = _context.Classes.AsNoTracking().AsQueryable();
+
+            if (courseId.HasValue && courseId.Value > 0)
+            {
+                query = query.Where(c => c.CourseLevel != null && c.CourseLevel.CourseId == courseId.Value);
+            }
+
+            if (courseLevelId.HasValue && courseLevelId.Value > 0)
+            {
+                query = query.Where(c => c.CourseLevelId == courseLevelId.Value);
+            }
+
+            if (teacherId.HasValue && teacherId.Value > 0)
+            {
+                query = query.Where(c => c.TeacherId == teacherId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var normalizedStatus = status.Trim().ToUpperInvariant();
+                query = query.Where(c => c.Status.ToUpper() == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim();
+                var hasNumericId = int.TryParse(kw, out var parsedId);
+                query = query.Where(c =>
+                    (hasNumericId && c.Id == parsedId) ||
+                    EF.Functions.Like(c.Name, $"%{kw}%") ||
+                    (c.Teacher != null && EF.Functions.Like(c.Teacher.FullName, $"%{kw}%")) ||
+                    (c.CourseLevel != null && EF.Functions.Like(c.CourseLevel.Name, $"%{kw}%")) ||
+                    (c.CourseLevel != null && c.CourseLevel.Course != null &&
+                        EF.Functions.Like(c.CourseLevel.Course.Name, $"%{kw}%")));
+            }
+
+            if (!string.IsNullOrWhiteSpace(capacity))
+            {
+                var normalizedCap = capacity.Trim().ToLowerInvariant();
+                query = normalizedCap switch
+                {
+                    "available" => query.Where(c =>
+                        c.MaxCapacity <= 0 || c.ClassStudents.Count(cs => cs.Status == "ACTIVE") < c.MaxCapacity),
+                    "full" => query.Where(c =>
+                        c.MaxCapacity > 0 && c.ClassStudents.Count(cs => cs.Status == "ACTIVE") * 10 >= c.MaxCapacity * 9),
+                    "low" => query.Where(c =>
+                        c.MaxCapacity <= 0 || c.ClassStudents.Count(cs => cs.Status == "ACTIVE") * 2 < c.MaxCapacity),
+                    _ => query
+                };
+            }
+
+            var projected = ProjectClassResponses(query);
+
+            projected = (sort?.Trim().ToLowerInvariant()) switch
+            {
+                "name_desc" => projected.OrderByDescending(c => c.Name).ThenByDescending(c => c.Id),
+                "students_desc" => projected.OrderByDescending(c => c.ActiveStudentsCount).ThenBy(c => c.Id),
+                "date_asc" => projected.OrderBy(c => c.StartDate).ThenBy(c => c.Id),
+                "newest" => projected.OrderByDescending(c => c.Id),
+                _ => projected.OrderBy(c => c.Name).ThenBy(c => c.Id),
+            };
+
+            return await projected.ToPagedResultAsync(page, pageSize, defaultPageSize: 12);
         }
 
         public async Task<IEnumerable<ClassResponse>> GetClassesByCourseLevelIdAsync(int courseLevelId)
         {
-            var classes = await _context.Classes
-                .Include(c => c.CourseLevel)
-                    .ThenInclude(cl => cl.Course)
-                .Include(c => c.Teacher)
-                .Include(c => c.ClassStudents) // Include để lấy dữ liệu tính slot
-                .Where(c => c.CourseLevelId == courseLevelId)
+            return await ProjectClassResponses(
+                _context.Classes
+                    .AsNoTracking()
+                    .Where(c => c.CourseLevelId == courseLevelId))
                 .ToListAsync();
-
-            return classes.Select(MapToResponse);
         }
 
         public async Task<ClassResponse> GetClassByIdAsync(int id)
@@ -141,31 +230,63 @@ namespace ToanTuDuy.Services
         // --- Quản lý danh sách học viên trong lớp ---
         public async Task<IEnumerable<ClassStudentResponse>> GetStudentsByClassIdAsync(int classId)
         {
-            var classStudents = await _context.ClassStudents
-                .Include(cs => cs.Student)
-                    .ThenInclude(s => s.Parent)
-                        .ThenInclude(p => p.Account)
-                .Where(cs => cs.ClassId == classId)
-                .OrderByDescending(cs => cs.JoinedAt)
-                .ToListAsync();
+            return await BuildClassStudentsQuery(classId, keyword: null).ToListAsync();
+        }
 
-            return classStudents.Select(cs => new ClassStudentResponse
+        public async Task<PagedResult<ClassStudentResponse>> GetPagedStudentsByClassIdAsync(
+            int classId,
+            int page = 1,
+            int pageSize = PaginationDefaults.DefaultPageSize,
+            string? keyword = null)
+        {
+            return await BuildClassStudentsQuery(classId, keyword)
+                .ToPagedResultAsync(page, pageSize);
+        }
+
+        private IQueryable<ClassStudentResponse> BuildClassStudentsQuery(int classId, string? keyword)
+        {
+            var query = _context.ClassStudents
+                .AsNoTracking()
+                .Where(cs => cs.ClassId == classId);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
-                Id = cs.Id,
-                StudentId = cs.StudentId,
-                StudentName = cs.Student != null ? cs.Student.FullName : "",
-                Avatar = cs.Student?.Avatar,
-                TotalPoints = cs.Student?.TotalPoints ?? 0,
-                Stars = cs.Student?.Stars ?? 0,
-                StreakDays = cs.Student?.StreakDays ?? 0,
-                ParentId = cs.Student?.ParentId,
-                ParentName = cs.Student?.Parent != null ? cs.Student.Parent.FullName : null,
-                ParentPhone = cs.Student?.Parent?.Account?.PhoneNumber,
-                ParentEmail = cs.Student?.Parent?.Account?.Email,
-                Status = cs.Status,
-                JoinedAt = cs.JoinedAt,
-                InvoiceId = cs.InvoiceId
-            });
+                var kw = keyword.Trim();
+                var hasNumericId = int.TryParse(kw, out var parsedId);
+                query = query.Where(cs =>
+                    (hasNumericId && cs.StudentId == parsedId) ||
+                    (cs.Student != null && EF.Functions.Like(cs.Student.FullName, $"%{kw}%")) ||
+                    (cs.Student != null && cs.Student.Parent != null &&
+                        EF.Functions.Like(cs.Student.Parent.FullName, $"%{kw}%")) ||
+                    (cs.Student != null && cs.Student.Parent != null && cs.Student.Parent.Account != null &&
+                        cs.Student.Parent.Account.PhoneNumber != null &&
+                        EF.Functions.Like(cs.Student.Parent.Account.PhoneNumber, $"%{kw}%")));
+            }
+
+            return query
+                .OrderByDescending(cs => cs.JoinedAt)
+                .ThenByDescending(cs => cs.Id)
+                .Select(cs => new ClassStudentResponse
+                {
+                    Id = cs.Id,
+                    StudentId = cs.StudentId,
+                    StudentName = cs.Student != null ? cs.Student.FullName : "",
+                    Avatar = cs.Student != null ? cs.Student.Avatar : null,
+                    TotalPoints = cs.Student != null ? cs.Student.TotalPoints : 0,
+                    Stars = cs.Student != null ? cs.Student.Stars : 0,
+                    StreakDays = cs.Student != null ? cs.Student.StreakDays : 0,
+                    ParentId = cs.Student != null ? (int?)cs.Student.ParentId : null,
+                    ParentName = cs.Student != null && cs.Student.Parent != null ? cs.Student.Parent.FullName : null,
+                    ParentPhone = cs.Student != null && cs.Student.Parent != null && cs.Student.Parent.Account != null
+                        ? cs.Student.Parent.Account.PhoneNumber
+                        : null,
+                    ParentEmail = cs.Student != null && cs.Student.Parent != null && cs.Student.Parent.Account != null
+                        ? cs.Student.Parent.Account.Email
+                        : null,
+                    Status = cs.Status,
+                    JoinedAt = cs.JoinedAt,
+                    InvoiceId = cs.InvoiceId
+                });
         }
 
         public async Task<ClassStudentResponse> AddStudentToClassAsync(int classId, int studentId)

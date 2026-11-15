@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -22,10 +24,24 @@ namespace ToanTuDuy.Services
 
         public async Task<IEnumerable<QuestionBankResponse>> GetAllBanksAsync(int? courseId = null, string? keyword = null)
         {
-            var query = _context.QuestionBanks
-                .Include(b => b.Course)
-                .Include(b => b.Questions)
-                .AsQueryable();
+            return await BuildBankQuery(courseId, keyword)
+                .ToListAsync();
+        }
+
+        public async Task<PagedResult<QuestionBankResponse>> GetPagedBanksAsync(
+            int page,
+            int pageSize,
+            int? courseId = null,
+            string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await BuildBankQuery(courseId, keyword)
+                .ToPagedResultAsync(page, pageSize, cancellationToken: cancellationToken);
+        }
+
+        private IQueryable<QuestionBankResponse> BuildBankQuery(int? courseId, string? keyword)
+        {
+            var query = _context.QuestionBanks.AsNoTracking();
 
             if (courseId.HasValue)
             {
@@ -38,7 +54,7 @@ namespace ToanTuDuy.Services
                 query = query.Where(b => b.Name.ToLower().Contains(kw) || (b.Description != null && b.Description.ToLower().Contains(kw)));
             }
 
-            return await query
+            return query
                 .OrderByDescending(b => b.Id)
                 .Select(b => new QuestionBankResponse
                 {
@@ -48,8 +64,7 @@ namespace ToanTuDuy.Services
                     Name = b.Name,
                     Description = b.Description,
                     TotalQuestions = b.Questions.Count
-                })
-                .ToListAsync();
+                });
         }
 
         public async Task<QuestionBankDetailResponse?> GetBankByIdAsync(int id)
@@ -165,40 +180,78 @@ namespace ToanTuDuy.Services
 
         public async Task<IEnumerable<QuestionResponse>> GetQuestionsByBankAsync(int bankId, string? difficulty = null, string? type = null)
         {
-            var bank = await _context.QuestionBanks.FindAsync(bankId);
-            if (bank == null)
+            var query = await BuildQuestionsQueryAsync(bankId, difficulty, type, keyword: null);
+            return await query.ToListAsync();
+        }
+
+        public async Task<PagedResult<QuestionResponse>> GetPagedQuestionsByBankAsync(
+            int bankId,
+            int page,
+            int pageSize,
+            string? difficulty = null,
+            string? type = null,
+            string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            var query = await BuildQuestionsQueryAsync(bankId, difficulty, type, keyword, cancellationToken);
+            return await query.ToPagedResultAsync(page, pageSize, cancellationToken: cancellationToken);
+        }
+
+        private async Task<IQueryable<QuestionResponse>> BuildQuestionsQueryAsync(
+            int bankId,
+            string? difficulty,
+            string? type,
+            string? keyword,
+            CancellationToken cancellationToken = default)
+        {
+            var bankName = await _context.QuestionBanks
+                .AsNoTracking()
+                .Where(b => b.Id == bankId)
+                .Select(b => b.Name)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (bankName == null)
             {
                 throw ApiException.NotFound($"Không tìm thấy ngân hàng câu hỏi với ID {bankId}.");
             }
 
             var query = _context.Questions
-                .Where(q => q.BankId == bankId)
-                .AsQueryable();
+                .AsNoTracking()
+                .Where(q => q.BankId == bankId);
 
             if (!string.IsNullOrWhiteSpace(difficulty))
             {
-                query = query.Where(q => q.Difficulty.ToUpper() == difficulty.Trim().ToUpper());
+                var normalizedDifficulty = difficulty.Trim().ToUpper();
+                query = query.Where(q => q.Difficulty.ToUpper() == normalizedDifficulty);
             }
 
             if (!string.IsNullOrWhiteSpace(type))
             {
-                query = query.Where(q => q.Type.ToUpper() == type.Trim().ToUpper());
+                var normalizedType = type.Trim().ToUpper();
+                query = query.Where(q => q.Type.ToUpper() == normalizedType);
             }
 
-            return await query
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                query = query.Where(q =>
+                    q.Content.ToLower().Contains(kw) ||
+                    (q.Answer != null && q.Answer.ToLower().Contains(kw)));
+            }
+
+            return query
                 .OrderBy(q => q.Id)
                 .Select(q => new QuestionResponse
                 {
                     Id = q.Id,
                     BankId = q.BankId,
-                    BankName = bank.Name,
+                    BankName = bankName,
                     Type = q.Type,
                     Content = q.Content,
                     ImageUrl = q.ImageUrl,
                     Difficulty = q.Difficulty,
                     Answer = q.Answer
-                })
-                .ToListAsync();
+                });
         }
 
         public async Task<QuestionResponse?> GetQuestionByIdAsync(int id)

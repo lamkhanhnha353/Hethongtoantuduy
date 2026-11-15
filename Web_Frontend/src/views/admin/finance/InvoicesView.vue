@@ -74,7 +74,7 @@
         <ArrowPathIcon class="h-5 w-5 animate-spin" />
         Đang tải danh sách hóa đơn...
       </div>
-      <div v-else-if="!errorMessage && filteredInvoices.length === 0" class="flex min-h-56 flex-col items-center justify-center px-4 text-center">
+      <div v-else-if="!errorMessage && invoices.length === 0" class="flex min-h-56 flex-col items-center justify-center px-4 text-center">
         <DocumentTextIcon class="h-10 w-10 text-orange-300" />
         <p class="mt-3 font-semibold text-gray-700">Không tìm thấy hóa đơn phù hợp</p>
         <p class="mt-1 text-sm text-gray-500">Thử đổi từ khóa hoặc trạng thái lọc.</p>
@@ -82,7 +82,7 @@
 
       <template v-else-if="!errorMessage">
         <div class="border-b border-orange-50 px-4 py-3 text-xs text-gray-500">
-          Hiển thị <span class="font-semibold text-orange-700">{{ filteredInvoices.length }}</span> / {{ invoices.length }} hóa đơn
+          Tìm thấy <span class="font-semibold text-orange-700">{{ totalCount.toLocaleString('vi-VN') }}</span> hóa đơn phù hợp
         </div>
         <div class="overflow-x-auto">
           <table class="w-full min-w-[900px] text-left text-sm">
@@ -98,7 +98,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr v-for="invoice in filteredInvoices" :key="invoice.invoiceId" class="transition hover:bg-orange-50/40">
+              <tr v-for="invoice in invoices" :key="invoice.invoiceId" class="transition hover:bg-orange-50/40">
                 <td class="px-5 py-4">
                   <p class="font-semibold text-gray-900">#{{ invoice.invoiceId }}</p>
                   <p class="mt-1 font-mono text-xs text-gray-400">{{ invoice.txnRef || '—' }}</p>
@@ -134,6 +134,15 @@
             </tbody>
           </table>
         </div>
+        <PaginationBar
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :total-count="totalCount"
+          :total-pages="totalPages"
+          :disabled="loading"
+          item-label="hóa đơn"
+          @change="loadInvoices"
+        />
       </template>
     </section>
 
@@ -233,7 +242,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   ArrowPathIcon,
   BanknotesIcon,
@@ -245,7 +254,13 @@ import {
   ReceiptPercentIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
+import PaginationBar from '@/components/common/PaginationBar.vue'
+import { usePagination } from '@/composables/usePagination'
 import adminInvoiceService from '@/services/admin-invoice.service'
+
+const { page, pageSize, totalCount, totalPages, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 20,
+})
 
 const invoices = ref([])
 const loading = ref(false)
@@ -253,50 +268,73 @@ const errorMessage = ref('')
 const search = ref('')
 const statusFilter = ref('ALL')
 const selectedInvoice = ref(null)
-
-const filteredInvoices = computed(() => {
-  const keyword = search.value.trim().toLocaleLowerCase('vi')
-  return invoices.value.filter((invoice) => {
-    const matchesStatus = statusFilter.value === 'ALL' || invoice.status === statusFilter.value
-    const searchableText = [
-      invoice.invoiceId,
-      invoice.txnRef,
-      invoice.parentName,
-      invoice.parentEmail,
-      invoice.parentPhone,
-      invoice.studentName,
-      invoice.className,
-      invoice.courseLevelName,
-    ].join(' ').toLocaleLowerCase('vi')
-    return matchesStatus && (!keyword || searchableText.includes(keyword))
-  })
+const statsSummary = ref({
+  totalAllCount: 0,
+  paidCount: 0,
+  pendingCount: 0,
+  paidTotalAmount: 0,
 })
 
-const stats = computed(() => {
-  const paidInvoices = invoices.value.filter((invoice) => invoice.status === 'PAID')
-  const pendingCount = invoices.value.filter((invoice) => invoice.status === 'PENDING').length
-  const paidTotal = paidInvoices.reduce((total, invoice) => total + (Number(invoice.amount) || 0), 0)
-  return [
-    { label: 'Tổng hóa đơn', value: invoices.value.length.toLocaleString('vi-VN'), icon: DocumentTextIcon, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
-    { label: 'Đã thanh toán', value: paidInvoices.length.toLocaleString('vi-VN'), icon: CheckCircleIcon, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-    { label: 'Chờ thanh toán', value: pendingCount.toLocaleString('vi-VN'), icon: ClockIcon, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-    { label: 'Doanh thu đã thu', value: formatCurrency(paidTotal), icon: BanknotesIcon, iconBg: 'bg-sky-100', iconColor: 'text-sky-600' },
-  ]
+let searchTimer = null
+let requestToken = 0
+
+const stats = computed(() => [
+  { label: 'Tổng hóa đơn', value: statsSummary.value.totalAllCount.toLocaleString('vi-VN'), icon: DocumentTextIcon, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+  { label: 'Đã thanh toán', value: statsSummary.value.paidCount.toLocaleString('vi-VN'), icon: CheckCircleIcon, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+  { label: 'Chờ thanh toán', value: statsSummary.value.pendingCount.toLocaleString('vi-VN'), icon: ClockIcon, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+  { label: 'Doanh thu đã thu', value: formatCurrency(statsSummary.value.paidTotalAmount), icon: BanknotesIcon, iconBg: 'bg-sky-100', iconColor: 'text-sky-600' },
+])
+
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    resetPage()
+    loadInvoices()
+  }, 300)
+})
+
+watch(statusFilter, () => {
+  resetPage()
+  loadInvoices()
+})
+
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer)
 })
 
 async function loadInvoices() {
+  const token = ++requestToken
   loading.value = true
   errorMessage.value = ''
   try {
-    const response = await adminInvoiceService.getAll()
-    if (!Array.isArray(response)) {
-      throw new Error('Dữ liệu hóa đơn trả về không hợp lệ.')
+    const response = await adminInvoiceService.getPaged({
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: search.value,
+      status: statusFilter.value,
+    })
+    if (token !== requestToken) return
+
+    const items = applyPagedResult(response)
+    if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+      page.value = totalPages.value
+      await loadInvoices()
+      return
     }
-    invoices.value = response
+    invoices.value = items
+    statsSummary.value = {
+      totalAllCount: Number(response?.totalAllCount ?? response?.totalCount ?? items.length),
+      paidCount: Number(response?.paidCount ?? 0),
+      pendingCount: Number(response?.pendingCount ?? 0),
+      paidTotalAmount: Number(response?.paidTotalAmount ?? 0),
+    }
   } catch (error) {
+    if (token !== requestToken) return
     errorMessage.value = error.response?.data?.message || error.message || 'Không thể tải danh sách hóa đơn.'
   } finally {
-    loading.value = false
+    if (token === requestToken) {
+      loading.value = false
+    }
   }
 }
 

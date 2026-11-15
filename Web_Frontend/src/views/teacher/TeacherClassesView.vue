@@ -64,7 +64,7 @@
     <!-- ─── Summary ──────────────────────────────────────────────────────── -->
     <div class="flex items-center justify-between text-xs text-gray-500">
       <span>
-        Hiển thị <strong class="text-orange-950">{{ filteredClasses.length }}</strong> / {{ classesList.length }} lớp học được phân công
+        Tìm thấy <strong class="text-orange-950">{{ totalCount }}</strong> / {{ classesList.length }} lớp học được phân công
       </span>
       <span v-if="search || statusFilter !== 'all'" class="text-orange-600 font-medium">
         Đang lọc kết quả
@@ -79,7 +79,7 @@
 
     <!-- ─── Empty State ──────────────────────────────────────────────────── -->
     <div
-      v-else-if="filteredClasses.length === 0"
+      v-else-if="displayedClasses.length === 0"
       class="bg-white rounded-3xl border border-orange-100 p-12 text-center shadow-sm"
     >
       <EmptyState
@@ -95,7 +95,7 @@
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
     >
       <div
-        v-for="cls in filteredClasses"
+        v-for="cls in displayedClasses"
         :key="cls.id"
         class="bg-white rounded-3xl border border-orange-100 p-5 shadow-sm hover:shadow-md hover:border-orange-300 transition-all flex flex-col justify-between group"
       >
@@ -194,7 +194,7 @@
     <!-- ─── List View ────────────────────────────────────────────────────── -->
     <div v-else class="space-y-3">
       <div
-        v-for="cls in filteredClasses"
+        v-for="cls in displayedClasses"
         :key="cls.id"
         class="bg-white rounded-3xl border border-orange-100 p-4 sm:p-5 shadow-sm hover:border-orange-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
@@ -245,11 +245,24 @@
         </div>
       </div>
     </div>
+
+    <div v-if="totalCount > 0" class="overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-sm">
+      <PaginationBar
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :page-size-options="pageSizeOptions"
+        :total-count="totalCount"
+        :total-pages="totalPages"
+        :disabled="isLoading"
+        :bordered="false"
+        item-label="lớp học"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import classService from '@/services/class.service'
 import classScheduleService from '@/services/classSchedule.service'
 import lessonService from '@/services/lesson.service'
@@ -262,21 +275,39 @@ import {
   ArrowPathIcon,
   ChevronRightIcon,
 } from '@heroicons/vue/24/outline'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import ViewToggle from '@/components/common/ViewToggle.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { usePagination } from '@/composables/usePagination'
 
 const { profile, fetchProfile } = useUserState()
+const { page, pageSize, totalCount, totalPages, pageSizeOptions, applyClientList, resetPage } = usePagination({
+  initialPageSize: 9,
+  pageSizeOptions: [9, 18, 36, 72],
+})
 
 const search = ref('')
 const statusFilter = ref('all')
 const viewMode = ref('grid')
 const isLoading = ref(false)
 const classesList = ref([])
+const enrichmentById = reactive({})
 
 onMounted(async () => {
   await loadAssignedClasses()
 })
+
+function normalizeClassStatus(rawStatusValue) {
+  const rawStatus = (rawStatusValue || '').toUpperCase()
+  if (rawStatus === 'UPCOMING' || rawStatus === 'DRAFT' || rawStatus === 'PLANNING') {
+    return { statusNormalized: 'upcoming', statusLabel: 'Sắp khai giảng' }
+  }
+  if (rawStatus === 'COMPLETED' || rawStatus === 'CLOSED' || rawStatus === 'FINISHED') {
+    return { statusNormalized: 'completed', statusLabel: 'Đã kết thúc' }
+  }
+  return { statusNormalized: 'active', statusLabel: 'Đang giảng dạy' }
+}
 
 async function loadAssignedClasses() {
   isLoading.value = true
@@ -306,70 +337,10 @@ async function loadAssignedClasses() {
     const assigned = await classService.getAssignedClasses(userProfile, teacherProfileId)
     const rawList = Array.isArray(assigned) ? assigned : []
 
-    // Enrich each class with schedules and lesson progress
-    const enriched = await Promise.all(
-      rawList.map(async (c) => {
-        let scheduleSummary = ''
-        let completedLessons = 0
-        let totalLessons = 24
-
-        // 1. Fetch class recurring schedule
-        try {
-          const schedules = await classScheduleService.getByClass(c.id)
-          const schList = Array.isArray(schedules) ? schedules : []
-          if (schList.length > 0) {
-            const dayNames = schList
-              .map(s => formatDayOfWeek(s.dayOfWeek))
-              .filter((v, i, a) => a.indexOf(v) === i)
-            const timeSlot = formatTimeRange(schList[0].startTime, schList[0].endTime)
-            const room = schList.find(s => s.room)?.room || c.room || ''
-            scheduleSummary = `${dayNames.join(' & ')} (${timeSlot})`
-            if (room && !c.room) c.room = room
-          }
-        } catch {
-          // ignore schedule error
-        }
-
-        // 2. Fetch lessons to compute progress
-        try {
-          const lessonsData = await lessonService.getByClass(c.id)
-          const lessonList = Array.isArray(lessonsData) ? lessonsData : (lessonsData.items || [])
-          if (lessonList.length > 0) {
-            totalLessons = lessonList.length
-            completedLessons = lessonList.filter(l => l.status === 'COMPLETED').length
-          }
-        } catch {
-          // ignore lessons error
-        }
-
-        // Status normalization
-        const rawStatus = (c.status || '').toUpperCase()
-        let statusNormalized = 'active'
-        let statusLabel = 'Đang giảng dạy'
-
-        if (rawStatus === 'UPCOMING' || rawStatus === 'DRAFT' || rawStatus === 'PLANNING') {
-          statusNormalized = 'upcoming'
-          statusLabel = 'Sắp khai giảng'
-        } else if (rawStatus === 'COMPLETED' || rawStatus === 'CLOSED' || rawStatus === 'FINISHED') {
-          statusNormalized = 'completed'
-          statusLabel = 'Đã kết thúc'
-        }
-
-        const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
-
-        return {
-          ...c,
-          scheduleSummary,
-          completedLessons,
-          totalLessons,
-          progressPercent,
-          statusNormalized,
-          statusLabel,
-        }
-      })
-    )
-
-    classesList.value = enriched
+    classesList.value = rawList.map((c) => ({
+      ...c,
+      ...normalizeClassStatus(c.status),
+    }))
   } catch (err) {
     console.error('Lỗi khi tải danh sách lớp học:', err)
   } finally {
@@ -392,6 +363,85 @@ const filteredClasses = computed(() => {
     return matchSearch && matchStatus
   })
 })
+
+const pagedRawClasses = computed(() => applyClientList(filteredClasses.value))
+
+const displayedClasses = computed(() =>
+  pagedRawClasses.value.map((cls) => {
+    const cached = enrichmentById[cls.id]
+    if (!cached) {
+      return {
+        ...cls,
+        scheduleSummary: '',
+        completedLessons: 0,
+        totalLessons: 24,
+        progressPercent: 0,
+      }
+    }
+    return {
+      ...cls,
+      ...cached,
+      room: cached.room || cls.room,
+    }
+  })
+)
+
+watch([search, statusFilter], () => {
+  resetPage()
+})
+
+watch(
+  pagedRawClasses,
+  async (currentSlice) => {
+    const pending = currentSlice.filter((c) => !enrichmentById[c.id])
+    if (pending.length === 0) return
+
+    await Promise.all(
+      pending.map(async (c) => {
+        let scheduleSummary = ''
+        let completedLessons = 0
+        let totalLessons = 24
+        let roomOverride = ''
+
+        try {
+          const schedules = await classScheduleService.getByClass(c.id)
+          const schList = Array.isArray(schedules) ? schedules : []
+          if (schList.length > 0) {
+            const dayNames = schList
+              .map(s => formatDayOfWeek(s.dayOfWeek))
+              .filter((v, i, a) => a.indexOf(v) === i)
+            const timeSlot = formatTimeRange(schList[0].startTime, schList[0].endTime)
+            roomOverride = schList.find(s => s.room)?.room || ''
+            scheduleSummary = `${dayNames.join(' & ')} (${timeSlot})`
+          }
+        } catch {
+          // ignore schedule error
+        }
+
+        try {
+          const lessonsData = await lessonService.getByClass(c.id)
+          const lessonList = Array.isArray(lessonsData) ? lessonsData : (lessonsData.items || [])
+          if (lessonList.length > 0) {
+            totalLessons = lessonList.length
+            completedLessons = lessonList.filter(l => l.status === 'COMPLETED').length
+          }
+        } catch {
+          // ignore lessons error
+        }
+
+        const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+        enrichmentById[c.id] = {
+          scheduleSummary,
+          completedLessons,
+          totalLessons,
+          progressPercent,
+          room: roomOverride,
+        }
+      })
+    )
+  },
+  { immediate: true }
+)
 
 function formatDayOfWeek(dow) {
   const map = {

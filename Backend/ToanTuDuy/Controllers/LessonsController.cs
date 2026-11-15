@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Extensions;
@@ -23,6 +24,25 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll()
         {
             var result = await _lessonService.GetAllLessonsAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] int? classId = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _lessonService.GetPagedLessonsAsync(
+                page,
+                pageSize,
+                classId,
+                status,
+                keyword,
+                cancellationToken);
             return Ok(result);
         }
 

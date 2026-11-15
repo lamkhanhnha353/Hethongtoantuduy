@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services;
@@ -28,6 +29,7 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
                 TeacherEmail = teacher.Email ?? teacher.Account.Email
             })
             .OrderBy(teacher => teacher.FullName)
+            .ThenBy(teacher => teacher.Id)
             .ToListAsync(cancellationToken);
 
         var teacherIds = teachers.Select(teacher => teacher.Id).ToArray();
@@ -118,6 +120,38 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
         return resultItems
             .Select(item => ToPayslipDto(item.Summary, item.Name, item.Email, item.Rate))
             .ToList();
+    }
+
+    public async Task<PagedResult<PayslipDto>> GetMonthlyPayrollsPagedAsync(
+        int month,
+        int year,
+        int page,
+        int pageSize,
+        string? keyword = null,
+        string? emailStatus = null,
+        CancellationToken cancellationToken = default)
+    {
+        var allPayrolls = await GetMonthlyPayrollsAsync(month, year, cancellationToken);
+        IEnumerable<PayslipDto> filtered = allPayrolls;
+
+        if (!string.IsNullOrWhiteSpace(emailStatus) &&
+            !emailStatus.Trim().Equals("ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalizedStatus = emailStatus.Trim();
+            filtered = filtered.Where(item =>
+                string.Equals(item.EmailStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.Trim();
+            filtered = filtered.Where(item =>
+                item.TeacherName.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(item.TeacherEmail) &&
+                 item.TeacherEmail.Contains(kw, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        return filtered.ToPagedResult(page, pageSize);
     }
 
     public async Task<PayslipDetailDto> GetTeacherPayslipDetailAsync(

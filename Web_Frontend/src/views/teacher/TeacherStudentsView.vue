@@ -29,7 +29,7 @@
           type="button"
           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           @click="exportCsv"
-          :disabled="students.length === 0"
+          :disabled="!selectedClassId || totalCount === 0"
         >
           <ArrowDownTrayIcon class="w-4 h-4" />
           <span>Xuất danh sách (CSV)</span>
@@ -94,7 +94,7 @@
 
       <div class="flex items-center gap-3 flex-wrap">
         <div class="bg-white/80 px-3 py-1.5 rounded-xl border border-orange-200 text-orange-950 font-bold text-xs">
-          Sĩ số: <span class="text-emerald-700 text-sm">{{ filteredStudents.length }}</span> / {{ currentClass.maxCapacity || 20 }} học sinh
+          Sĩ số: <span class="text-emerald-700 text-sm">{{ currentClass.activeStudentsCount ?? totalCount }}</span> / {{ currentClass.maxCapacity || 20 }} học sinh
         </div>
 
         <router-link
@@ -129,7 +129,7 @@
       </div>
 
       <!-- Empty Students -->
-      <div v-else-if="filteredStudents.length === 0" class="p-12 text-center">
+      <div v-else-if="students.length === 0" class="p-12 text-center">
         <EmptyState
           :icon="UserGroupIcon"
           message="Không tìm thấy học sinh nào"
@@ -154,13 +154,13 @@
           </thead>
           <tbody class="divide-y divide-orange-50">
             <tr
-              v-for="(st, index) in filteredStudents"
+              v-for="(st, index) in students"
               :key="st.studentId || st.id"
               class="hover:bg-orange-50/30 transition-colors"
             >
               <!-- Index -->
               <td class="py-3.5 px-4 text-center text-gray-400 font-mono font-medium">
-                {{ index + 1 }}
+                {{ (page - 1) * pageSize + index + 1 }}
               </td>
 
               <!-- Student Name & Avatar -->
@@ -277,11 +277,16 @@
         </table>
       </div>
 
-      <!-- Table Footer -->
-      <div class="p-4 bg-gray-50/60 border-t border-orange-100 flex items-center justify-between text-xs text-gray-500">
-        <span>Tổng cộng: <strong class="text-gray-900">{{ filteredStudents.length }}</strong> học sinh</span>
-        <span v-if="search" class="text-orange-600 font-medium">Đang lọc theo kết quả tìm kiếm</span>
-      </div>
+      <!-- Table Pagination Footer -->
+      <PaginationBar
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total-count="totalCount"
+        :total-pages="totalPages"
+        :disabled="isLoadingStudents"
+        item-label="học sinh"
+        @change="loadStudentsByClass"
+      />
     </div>
 
     <!-- ─── Modal: Student Attendance History ──────────────────────────── -->
@@ -407,7 +412,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import classService from '@/services/class.service'
 import teacherService from '@/services/teacher.service'
@@ -426,17 +431,38 @@ import {
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { usePagination } from '@/composables/usePagination'
 
 const route = useRoute()
 const { fetchProfile } = useUserState()
+const { page, pageSize, totalCount, totalPages, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 20,
+})
 
 const search = ref('')
 const selectedClassId = ref(null)
 const myClasses = ref([])
 const students = ref([])
 const isLoadingStudents = ref(false)
+
+let searchTimer = null
+let requestToken = 0
+
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (!selectedClassId.value) return
+    resetPage()
+    loadStudentsByClass()
+  }, 300)
+})
+
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer)
+})
 
 // Modal history states
 const showHistoryModal = ref(false)
@@ -492,36 +518,42 @@ async function loadClasses() {
 
 async function loadStudentsByClass() {
   if (!selectedClassId.value) return
+  const token = ++requestToken
   isLoadingStudents.value = true
-  students.value = []
   try {
-    const data = await classService.getStudents(selectedClassId.value)
-    students.value = Array.isArray(data) ? data : (data.items || [])
+    const data = await classService.getStudentsPaged(selectedClassId.value, {
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: search.value,
+    })
+    if (token !== requestToken) return
+
+    const items = applyPagedResult(data)
+    if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+      page.value = totalPages.value
+      await loadStudentsByClass()
+      return
+    }
+    students.value = items
   } catch (err) {
+    if (token !== requestToken) return
     console.error('Lỗi khi tải học sinh của lớp:', err)
+    students.value = []
+    totalCount.value = 0
   } finally {
-    isLoadingStudents.value = false
+    if (token === requestToken) {
+      isLoadingStudents.value = false
+    }
   }
 }
 
 async function onClassChange() {
+  resetPage()
   await loadStudentsByClass()
 }
 
 const currentClass = computed(() => {
   return myClasses.value.find(c => c.id === selectedClassId.value) || null
-})
-
-const filteredStudents = computed(() => {
-  if (!search.value.trim()) return students.value
-  const q = search.value.toLowerCase().trim()
-  return students.value.filter(s => {
-    const name = (s.studentName || '').toLowerCase()
-    const code = String(s.studentId)
-    const parent = (s.parentName || '').toLowerCase()
-    const phone = s.parentPhone || ''
-    return name.includes(q) || code.includes(q) || parent.includes(q) || phone.includes(q)
-  })
 })
 
 // ─── Modal History Action ────────────────────────────────────────────────────
@@ -544,12 +576,23 @@ async function openStudentHistory(student) {
 }
 
 // ─── Export CSV ──────────────────────────────────────────────────────────────
-function exportCsv() {
-  if (students.value.length === 0) return
+async function exportCsv() {
+  if (!selectedClassId.value) return
+  let allStudents = students.value
+  if (totalCount.value > students.value.length || search.value.trim()) {
+    try {
+      const fullData = await classService.getStudents(selectedClassId.value)
+      allStudents = Array.isArray(fullData) ? fullData : (fullData?.items || students.value)
+    } catch (err) {
+      console.warn('Không thể tải đầy đủ danh sách để xuất CSV, xuất theo trang hiện tại:', err)
+    }
+  }
+  if (allStudents.length === 0) return
+
   const className = currentClass.value?.name || 'LopHoc'
   const headers = ['STT', 'Mã HS', 'Họ và tên', 'Họ tên Phụ huynh', 'SĐT Phụ huynh', 'Email Phụ huynh', 'Trạng thái', 'Điểm rèn luyện', 'Số sao']
 
-  const rows = students.value.map((s, idx) => [
+  const rows = allStudents.map((s, idx) => [
     idx + 1,
     `HS-${String(s.studentId).padStart(4, '0')}`,
     `"${(s.studentName || '').replace(/"/g, '""')}"`,

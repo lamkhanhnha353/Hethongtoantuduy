@@ -29,11 +29,11 @@
                     <tr v-else-if="errorMessage">
                         <td colspan="4" class="px-6 py-8 text-center text-red-600">{{ errorMessage }}</td>
                     </tr>
-                    <tr v-else-if="filteredParents.length === 0">
+                    <tr v-else-if="parents.length === 0">
                         <td colspan="4" class="px-6 py-8 text-center text-gray-500">Không tìm thấy tài khoản phụ huynh
                             nào.</td>
                     </tr>
-                    <tr v-for="parent in filteredParents" :key="parent.id" class="hover:bg-orange-50/50 transition-colors">
+                    <tr v-for="parent in parents" :key="parent.id" class="hover:bg-orange-50/50 transition-colors">
                         <!-- Tên Phụ huynh & Trạng thái -->
                         <td class="px-6 py-4 align-top">
                             <div class="font-semibold text-gray-900 text-base">{{ parent.fullName }}</div>
@@ -91,6 +91,15 @@
                     </tr>
                 </tbody>
             </table>
+            <PaginationBar
+                v-model:page="page"
+                v-model:page-size="pageSize"
+                :total-count="totalCount"
+                :total-pages="totalPages"
+                :disabled="isLoading"
+                item-label="phụ huynh"
+                @change="fetchParents"
+            />
         </div>
 
         <!-- Modal Form Sửa Phụ Huynh -->
@@ -130,10 +139,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onBeforeUnmount, onMounted, watch } from 'vue'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
+import { usePagination } from '@/composables/usePagination'
 import parentService from '@/services/parent.service'
 import { PIN_REGEX, validateTextLength } from '@/utils/validation.helper'
+
+const { page, pageSize, totalCount, totalPages, applyPagedResult, resetPage } = usePagination({
+    initialPageSize: 20,
+})
 
 const parents = ref([])
 const keyword = ref('')
@@ -143,31 +158,47 @@ const errorMessage = ref('')
 
 const form = ref({ id: null, fullName: '', pin: '' })
 
-const filteredParents = computed(() => {
-    const query = keyword.value.toLowerCase().trim()
-    if (!query) return parents.value
+let searchTimer = null
+let requestToken = 0
 
-    return parents.value.filter(parent =>
-        [
-            parent.id,
-            parent.fullName,
-            parent.phone,
-            parent.email,
-            ...(parent.students ?? []).map(student => student.fullName)
-        ].some(value => String(value ?? '').toLowerCase().includes(query))
-    )
+watch(keyword, () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+        resetPage()
+        fetchParents()
+    }, 300)
+})
+
+onBeforeUnmount(() => {
+    if (searchTimer) clearTimeout(searchTimer)
 })
 
 async function fetchParents() {
+    const token = ++requestToken
     isLoading.value = true
     errorMessage.value = ''
     try {
-        const res = await parentService.getAll()
-        parents.value = Array.isArray(res) ? res : (res.items ?? res.data ?? [])
+        const res = await parentService.getPaged({
+            page: page.value,
+            pageSize: pageSize.value,
+            keyword: keyword.value,
+        })
+        if (token !== requestToken) return
+
+        const items = applyPagedResult(res)
+        if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+            page.value = totalPages.value
+            await fetchParents()
+            return
+        }
+        parents.value = items
     } catch (error) {
+        if (token !== requestToken) return
         errorMessage.value = error.response?.data?.message || 'Không thể tải danh sách phụ huynh.'
     } finally {
-        isLoading.value = false
+        if (token === requestToken) {
+            isLoading.value = false
+        }
     }
 }
 

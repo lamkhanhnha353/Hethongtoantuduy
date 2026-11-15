@@ -155,7 +155,7 @@
             <div>
               <h2 class="font-bold text-orange-900 text-base">Danh sách Lớp học trực thuộc</h2>
               <p class="text-xs text-gray-500 mt-0.5">
-                Hiển thị {{ filteredClasses.length }} lớp
+                Tìm thấy {{ totalCount }} lớp
                 <template v-if="selectedLevel"> · Đang lọc theo cấp độ: <span class="font-semibold text-orange-600">{{ selectedLevelName }}</span></template>
               </p>
             </div>
@@ -182,7 +182,7 @@
                   : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50',
               ]"
             >
-              Tất cả ({{ classes.length }})
+              Tất cả{{ courseTotalClasses !== null ? ` (${courseTotalClasses})` : '' }}
             </button>
             <button
               v-for="lv in levels"
@@ -252,7 +252,7 @@
 
           <!-- Empty classes -->
           <EmptyState
-            v-else-if="!loadingClasses && filteredClasses.length === 0"
+            v-else-if="!loadingClasses && classes.length === 0"
             :icon="RectangleGroupIcon"
             message="Không tìm thấy lớp học nào"
             sub="Hãy mở lớp mới cho cấp độ hoặc khóa học này"
@@ -264,7 +264,7 @@
             class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
           >
             <ClassCard
-              v-for="cls in filteredClasses"
+              v-for="cls in classes"
               :key="cls.id"
               :cls="cls"
               @click="goToClass"
@@ -275,13 +275,27 @@
           <!-- Classes List -->
           <div v-else class="space-y-2">
             <ClassListItem
-              v-for="cls in filteredClasses"
+              v-for="cls in classes"
               :key="cls.id"
               :cls="cls"
               @click="goToClass"
               @edit="openEditClassModal"
             />
           </div>
+
+          <!-- Classes Pagination -->
+          <PaginationBar
+            v-model:page="page"
+            v-model:page-size="pageSize"
+            :page-size-options="pageSizeOptions"
+            :total-count="totalCount"
+            :total-pages="totalPages"
+            :disabled="loadingClasses"
+            :bordered="false"
+            item-label="lớp học"
+            class="border-t border-orange-100 px-0 pt-4"
+            @change="loadClasses"
+          />
         </div>
       </div>
 
@@ -318,7 +332,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   HomeIcon, ChevronRightIcon, BookOpenIcon, AcademicCapIcon, UserGroupIcon,
@@ -326,6 +340,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/vue/24/outline'
 
+import PaginationBar  from '@/components/common/PaginationBar.vue'
 import SearchBar      from '@/components/common/SearchBar.vue'
 import ViewToggle     from '@/components/common/ViewToggle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -335,6 +350,7 @@ import ClassCard      from '@/components/class/ClassCard.vue'
 import ClassListItem  from '@/components/class/ClassListItem.vue'
 import CourseModal    from '@/components/course/CourseModal.vue'
 import ClassModal     from '@/components/class/ClassModal.vue'
+import { usePagination } from '@/composables/usePagination'
 
 import courseService      from '@/services/course.service'
 import courseLevelService from '@/services/courseLevel.service'
@@ -343,19 +359,28 @@ import classService       from '@/services/class.service'
 const route  = useRoute()
 const router = useRouter()
 
+const { page, pageSize, totalCount, totalPages, pageSizeOptions, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 12,
+  pageSizeOptions: [12, 24, 48, 96],
+})
+
 // ─── State ────────────────────────────────────────────────────────────────────
-const loadingCourse  = ref(false)
-const loadingClasses = ref(false)
-const imageError     = ref(false)
-const course         = ref(null)
-const levels         = ref([])
-const classes        = ref([])
+const loadingCourse      = ref(false)
+const loadingClasses     = ref(false)
+const imageError         = ref(false)
+const course             = ref(null)
+const levels             = ref([])
+const classes            = ref([])
+const courseTotalClasses = ref(null)
 
 const selectedLevel   = ref(null)
 const classSearch     = ref('')
 const classViewMode   = ref('grid')
 const showClassFilter = ref(false)
 const classFilters    = ref({ status: '', sort: 'name_asc' })
+
+let classSearchTimer = null
+let classesRequestToken = 0
 
 // Modals
 const showCourseModal = ref(false)
@@ -405,40 +430,24 @@ const feeDisplay = computed(() => {
   return `${formatFee(min)} - ${formatFee(max)}`
 })
 
-const filteredClasses = computed(() => {
-  let list = [...classes.value]
+watch(classSearch, () => {
+  if (classSearchTimer) clearTimeout(classSearchTimer)
+  classSearchTimer = setTimeout(() => {
+    resetPage()
+    loadClasses()
+  }, 300)
+})
 
-  // Level tab filter
-  if (selectedLevel.value !== null) {
-    list = list.filter(c => c.levelId === selectedLevel.value || c.courseLevelId === selectedLevel.value)
+watch(
+  [selectedLevel, () => classFilters.value.status, () => classFilters.value.sort],
+  () => {
+    resetPage()
+    loadClasses()
   }
+)
 
-  // Text search
-  const q = classSearch.value.toLowerCase().trim()
-  if (q) {
-    list = list.filter(c =>
-      c.name?.toLowerCase().includes(q) ||
-      c.code?.toLowerCase().includes(q) ||
-      c.teacherName?.toLowerCase().includes(q) ||
-      c.courseLevelName?.toLowerCase().includes(q) ||
-      String(c.id).includes(q)
-    )
-  }
-
-  // Status filter
-  if (classFilters.value.status) {
-    const targetStatus = classFilters.value.status.toLowerCase()
-    list = list.filter(c => String(c.status || '').toLowerCase() === targetStatus)
-  }
-
-  // Sort
-  switch (classFilters.value.sort) {
-    case 'students_desc': list.sort((a, b) => (b.currentStudents ?? 0) - (a.currentStudents ?? 0)); break
-    case 'date_asc':      list.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); break
-    default:              list.sort((a, b) => a.name?.localeCompare(b.name, 'vi'))
-  }
-
-  return list
+onBeforeUnmount(() => {
+  if (classSearchTimer) clearTimeout(classSearchTimer)
 })
 
 // ─── Normalizer ───────────────────────────────────────────────────────────────
@@ -512,37 +521,46 @@ async function loadLevels() {
 }
 
 async function loadClasses() {
+  const token = ++classesRequestToken
   loadingClasses.value = true
   try {
-    if (levels.value.length > 0) {
-      const results = await Promise.allSettled(
-        levels.value.map(lv => classService.getByCourseLevel(lv.id))
-      )
-      const allClasses = results
-        .filter(r => r.status === 'fulfilled' && Array.isArray(r.value))
-        .flatMap(r => r.value)
+    const paged = await classService.getPaged({
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: classSearch.value,
+      courseId: route.params.id,
+      courseLevelId: selectedLevel.value || undefined,
+      status: classFilters.value.status || undefined,
+      sort: classFilters.value.sort || 'name_asc',
+    })
+    if (token !== classesRequestToken) return
 
-      classes.value = allClasses.map(cls => ({
-        ...cls,
-        currentStudents: cls.activeStudentsCount ?? cls.currentStudents ?? 0,
-        maxStudents: cls.maxCapacity ?? cls.maxStudents ?? 0,
-        levelId: cls.courseLevelId ?? cls.levelId,
-      }))
-    } else {
-      const data = await classService.getAll()
-      const rawClasses = Array.isArray(data) ? data : (data.items ?? data.data ?? [])
-      classes.value = rawClasses.map(cls => ({
-        ...cls,
-        currentStudents: cls.activeStudentsCount ?? cls.currentStudents ?? 0,
-        maxStudents: cls.maxCapacity ?? cls.maxStudents ?? 0,
-        levelId: cls.courseLevelId ?? cls.levelId,
-      }))
+    const items = applyPagedResult(paged)
+    if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+      page.value = totalPages.value
+      await loadClasses()
+      return
     }
+
+    if (selectedLevel.value === null && !classSearch.value.trim() && !classFilters.value.status) {
+      courseTotalClasses.value = totalCount.value
+    }
+
+    classes.value = items.map(cls => ({
+      ...cls,
+      currentStudents: cls.activeStudentsCount ?? cls.currentStudents ?? 0,
+      maxStudents: cls.maxCapacity ?? cls.maxStudents ?? 0,
+      levelId: cls.courseLevelId ?? cls.levelId,
+    }))
   } catch (err) {
+    if (token !== classesRequestToken) return
     console.error('Không tải được danh sách lớp học:', err)
     classes.value = []
+    totalCount.value = 0
   } finally {
-    loadingClasses.value = false
+    if (token === classesRequestToken) {
+      loadingClasses.value = false
+    }
   }
 }
 

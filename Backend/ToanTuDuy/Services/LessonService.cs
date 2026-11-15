@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -22,45 +24,73 @@ namespace ToanTuDuy.Services
 
         public async Task<IEnumerable<LessonResponse>> GetAllLessonsAsync()
         {
-            return await _context.Lessons
-                .Include(l => l.Class)
-                .OrderByDescending(l => l.LessonDate)
-                .Select(l => new LessonResponse
-                {
-                    Id = l.Id,
-                    ClassId = l.ClassId,
-                    ClassName = l.Class.Name,
-                    LessonDate = l.LessonDate,
-                    StartTime = l.StartTime,
-                    EndTime = l.EndTime,
-                    Status = l.Status,
-                    IsImportan = l.IsImportan,
-                    AttendancesCount = l.Attendances.Count,
-                    LeaveRequestsCount = l.LeaveRequests.Count
-                })
+            return await BuildLessonQuery(classId: null, status: null, keyword: null, ascendingByDate: false)
                 .ToListAsync();
+        }
+
+        public async Task<PagedResult<LessonResponse>> GetPagedLessonsAsync(
+            int page,
+            int pageSize,
+            int? classId = null,
+            string? status = null,
+            string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await BuildLessonQuery(classId, status, keyword, ascendingByDate: false)
+                .ToPagedResultAsync(page, pageSize, cancellationToken: cancellationToken);
         }
 
         public async Task<IEnumerable<LessonResponse>> GetLessonsByClassIdAsync(int classId)
         {
-            return await _context.Lessons
-                .Include(l => l.Class)
-                .Where(l => l.ClassId == classId)
-                .OrderBy(l => l.LessonDate)
-                .Select(l => new LessonResponse
-                {
-                    Id = l.Id,
-                    ClassId = l.ClassId,
-                    ClassName = l.Class.Name,
-                    LessonDate = l.LessonDate,
-                    StartTime = l.StartTime,
-                    EndTime = l.EndTime,
-                    Status = l.Status,
-                    IsImportan = l.IsImportan,
-                    AttendancesCount = l.Attendances.Count,
-                    LeaveRequestsCount = l.LeaveRequests.Count
-                })
+            return await BuildLessonQuery(classId, status: null, keyword: null, ascendingByDate: true)
                 .ToListAsync();
+        }
+
+        private IQueryable<LessonResponse> BuildLessonQuery(
+            int? classId,
+            string? status,
+            string? keyword,
+            bool ascendingByDate)
+        {
+            var query = _context.Lessons.AsNoTracking();
+
+            if (classId.HasValue)
+            {
+                query = query.Where(l => l.ClassId == classId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) &&
+                !status.Trim().Equals("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                var normalizedStatus = status.Trim().ToUpperInvariant();
+                query = query.Where(l => l.Status == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                query = query.Where(l =>
+                    l.Class.Name.ToLower().Contains(kw) ||
+                    (l.Title != null && l.Title.ToLower().Contains(kw)));
+            }
+
+            var ordered = ascendingByDate
+                ? query.OrderBy(l => l.LessonDate).ThenBy(l => l.StartTime).ThenBy(l => l.Id)
+                : query.OrderByDescending(l => l.LessonDate).ThenByDescending(l => l.StartTime).ThenByDescending(l => l.Id);
+
+            return ordered.Select(l => new LessonResponse
+            {
+                Id = l.Id,
+                ClassId = l.ClassId,
+                ClassName = l.Class.Name,
+                LessonDate = l.LessonDate,
+                StartTime = l.StartTime,
+                EndTime = l.EndTime,
+                Status = l.Status,
+                IsImportan = l.IsImportan,
+                AttendancesCount = l.Attendances.Count,
+                LeaveRequestsCount = l.LeaveRequests.Count
+            });
         }
 
         public async Task<LessonResponse?> GetLessonByIdAsync(int id)

@@ -13,9 +13,20 @@
             </button>
         </div>
 
-        <!-- Search Bar -->
-        <div class="w-full max-w-md">
-            <SearchBar v-model="keyword" placeholder="Tìm tên, SĐT hoặc email giáo viên..." />
+        <!-- Search Bar & Filter -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="w-full max-w-md">
+                <SearchBar v-model="keyword" placeholder="Tìm tên, SĐT hoặc email giáo viên..." />
+            </div>
+            <select
+                v-model="statusFilter"
+                aria-label="Lọc trạng thái giáo viên"
+                class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+            >
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="true">Hoạt động</option>
+                <option value="false">Đã khóa</option>
+            </select>
         </div>
 
         <!-- Data Table -->
@@ -37,11 +48,11 @@
                     <tr v-else-if="errorMessage">
                         <td colspan="5" class="px-6 py-8 text-center text-red-600">{{ errorMessage }}</td>
                     </tr>
-                    <tr v-else-if="filteredTeachers.length === 0">
+                    <tr v-else-if="teachers.length === 0">
                         <td colspan="5" class="px-6 py-8 text-center text-gray-500">Không tìm thấy dữ liệu giáo viên.
                         </td>
                     </tr>
-                    <tr v-for="teacher in filteredTeachers" :key="teacher.id" class="hover:bg-orange-50/50 transition-colors">
+                    <tr v-for="teacher in teachers" :key="teacher.id" class="hover:bg-orange-50/50 transition-colors">
                         <td class="px-6 py-4 font-semibold text-gray-900">{{ teacher.fullName }}</td>
                         <td class="px-6 py-4">
                             <div class="font-mono text-gray-800 font-medium">{{ teacher.phone || 'Chưa cập nhật' }}
@@ -77,6 +88,15 @@
                     </tr>
                 </tbody>
             </table>
+            <PaginationBar
+                v-model:page="page"
+                v-model:page-size="pageSize"
+                :total-count="totalCount"
+                :total-pages="totalPages"
+                :disabled="isLoading"
+                item-label="giáo viên"
+                @change="fetchTeachers"
+            />
         </div>
 
         <!-- Modal Form Giáo Viên -->
@@ -138,8 +158,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onBeforeUnmount, onMounted, watch } from 'vue'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
+import { usePagination } from '@/composables/usePagination'
 import teacherService from '@/services/teacher.service'
 import {
     validateEmail,
@@ -147,8 +169,13 @@ import {
     validateTextLength,
 } from '@/utils/validation.helper'
 
+const { page, pageSize, totalCount, totalPages, applyPagedResult, resetPage } = usePagination({
+    initialPageSize: 20,
+})
+
 const teachers = ref([])
 const keyword = ref('')
+const statusFilter = ref('ALL')
 const isLoading = ref(false)
 const showModal = ref(false)
 const isCreating = ref(false)
@@ -158,26 +185,54 @@ const errorMessage = ref('')
 const emptyForm = () => ({ id: null, fullName: '', phone: '', email: '', specialize: '', password: '' })
 const form = ref(emptyForm())
 
-const filteredTeachers = computed(() => {
-    const query = keyword.value.toLowerCase().trim()
-    if (!query) return teachers.value
+let searchTimer = null
+let requestToken = 0
 
-    return teachers.value.filter(teacher =>
-        [teacher.id, teacher.fullName, teacher.phone, teacher.email, teacher.specialize]
-            .some(value => String(value ?? '').toLowerCase().includes(query))
-    )
+watch(keyword, () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+        resetPage()
+        fetchTeachers()
+    }, 300)
+})
+
+watch(statusFilter, () => {
+    resetPage()
+    fetchTeachers()
+})
+
+onBeforeUnmount(() => {
+    if (searchTimer) clearTimeout(searchTimer)
 })
 
 async function fetchTeachers() {
+    const token = ++requestToken
     isLoading.value = true
     errorMessage.value = ''
     try {
-        const res = await teacherService.getAll()
-        teachers.value = Array.isArray(res) ? res : (res.items ?? res.data ?? [])
+        const isActiveParam = statusFilter.value === 'ALL' ? undefined : statusFilter.value === 'true'
+        const res = await teacherService.getPaged({
+            page: page.value,
+            pageSize: pageSize.value,
+            keyword: keyword.value,
+            isActive: isActiveParam,
+        })
+        if (token !== requestToken) return
+
+        const items = applyPagedResult(res)
+        if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+            page.value = totalPages.value
+            await fetchTeachers()
+            return
+        }
+        teachers.value = items
     } catch (error) {
+        if (token !== requestToken) return
         errorMessage.value = error.response?.data?.message || 'Không thể tải danh sách giáo viên.'
     } finally {
-        isLoading.value = false
+        if (token === requestToken) {
+            isLoading.value = false
+        }
     }
 }
 

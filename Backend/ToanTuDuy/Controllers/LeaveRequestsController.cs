@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Extensions;
@@ -42,6 +43,22 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetPending()
         {
             var result = await _leaveRequestService.GetPendingRequestsAsync(User.GetAccountId());
+            return Ok(result);
+        }
+
+        // Giáo viên xem các đơn xin vắng có phân trang.
+        [HttpGet("pending/paged")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> GetPendingPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _leaveRequestService.GetPagedPendingRequestsAsync(
+                User.GetAccountId(),
+                page,
+                pageSize,
+                cancellationToken);
             return Ok(result);
         }
 
