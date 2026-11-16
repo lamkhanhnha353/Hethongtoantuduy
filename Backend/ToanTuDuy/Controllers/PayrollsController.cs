@@ -5,6 +5,7 @@ using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Email;
 
 namespace ToanTuDuy.Controllers;
 
@@ -13,7 +14,8 @@ namespace ToanTuDuy.Controllers;
 [Authorize]
 public sealed class PayrollsController(
     IPayrollService payrollService,
-    IPayslipMailService payslipMailService) : ControllerBase
+    IPayslipMailService payslipMailService,
+    IEmailDeliveryService emailDeliveryService) : ControllerBase
 {
     /// <summary>Returns and refreshes monthly payroll summaries for all teachers.</summary>
     [HttpGet("admin/summary")]
@@ -140,6 +142,11 @@ public sealed class PayrollsController(
         int id,
         CancellationToken cancellationToken)
     {
+        if (!emailDeliveryService.IsConfigured(out var reason))
+        {
+            throw ApiException.BadRequest(reason!);
+        }
+
         var queued = await payslipMailService.QueueSingleEmailAsync(id, cancellationToken);
         return Accepted(new
         {
@@ -160,6 +167,11 @@ public sealed class PayrollsController(
         [FromQuery, Range(1, 9998)] int year,
         CancellationToken cancellationToken)
     {
+        if (!emailDeliveryService.IsConfigured(out var reason))
+        {
+            throw ApiException.BadRequest(reason!);
+        }
+
         var result = await payslipMailService.QueueBatchEmailsAsync(month, year, cancellationToken);
         return Accepted(new QueueBatchEmailsResponse(result.QueuedCount, result.SkippedCount));
     }

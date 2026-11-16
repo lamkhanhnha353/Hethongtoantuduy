@@ -26,7 +26,7 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
             {
                 teacher.Id,
                 teacher.FullName,
-                TeacherEmail = teacher.Email ?? teacher.Account.Email
+                TeacherEmail = !string.IsNullOrWhiteSpace(teacher.Email) ? teacher.Email : teacher.Account.Email
             })
             .OrderBy(teacher => teacher.FullName)
             .ThenBy(teacher => teacher.Id)
@@ -169,7 +169,12 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
         var teacher = await context.TeacherProfiles
             .AsNoTracking()
             .Where(item => item.Id == teacherId)
-            .Select(item => new { item.Id, item.FullName, TeacherEmail = item.Email ?? item.Account.Email })
+            .Select(item => new
+            {
+                item.Id,
+                item.FullName,
+                TeacherEmail = !string.IsNullOrWhiteSpace(item.Email) ? item.Email : item.Account.Email
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (teacher is null)

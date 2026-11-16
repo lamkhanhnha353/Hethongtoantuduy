@@ -1,12 +1,11 @@
 using System.Text.Encodings.Web;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Resend;
 using ToanTuDuy.Data;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
-using ToanTuDuy.Options;
+using ToanTuDuy.Services.Email;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services;
 
@@ -14,8 +13,8 @@ public sealed class PayslipMailService(
     ApplicationDbContext context,
     IPayrollService payrollService,
     PayslipEmailQueue queue,
-    IResend resend,
-    IOptions<EmailVerificationSettings> emailSettings,
+    IEmailDeliveryService emailDeliveryService,
+    INotificationService notificationService,
     ILogger<PayslipMailService> logger) : IPayslipMailService
 {
     private const string TemplateFileName = "Payslip.html";
@@ -178,18 +177,16 @@ public sealed class PayslipMailService(
         {
             try
             {
-                var message = new EmailMessage
-                {
-                    From = emailSettings.Value.FromEmail,
-                    Subject = $"Nhắc kiểm tra bảng lương tháng {month:D2}/{year} — Toán Tư Duy",
-                    TextBody =
+                await emailDeliveryService.SendAsync(
+                    new EmailDeliveryMessage(
+                        admin.Email!,
+                        $"Nhắc kiểm tra bảng lương tháng {month:D2}/{year} — Toán Tư Duy",
                         $"Đây là lời nhắc kiểm tra bảng lương giáo viên tháng {month:D2}/{year}. " +
                         "Vui lòng đăng nhập hệ thống, mở mục Quản lý tài chính > Bảng lương giáo viên " +
                         "và rà soát các khoản lương, thưởng, phạt trước khi hệ thống gửi phiếu lương " +
-                        "tới giáo viên vào 08:00 ngày mai."
-                };
-                message.To.Add(admin.Email!);
-                await resend.EmailSendAsync(message);
+                        "tới giáo viên vào 08:00 ngày mai.",
+                        null),
+                    cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -226,13 +223,18 @@ public sealed class PayslipMailService(
         var payroll = await GetPayrollOrThrowAsync(payrollId, cancellationToken);
         try
         {
+            if (!emailDeliveryService.IsConfigured(out var configReason))
+            {
+                throw new InvalidOperationException(configReason ?? "Chưa cấu hình dịch vụ gửi email.");
+            }
+
             var teacher = await context.TeacherProfiles
                 .AsNoTracking()
                 .Where(profile => profile.Id == payroll.TeacherId)
                 .Select(profile => new
                 {
                     profile.FullName,
-                    Email = profile.Email ?? profile.Account.Email
+                    Email = !string.IsNullOrWhiteSpace(profile.Email) ? profile.Email : profile.Account.Email
                 })
                 .SingleAsync(cancellationToken);
 
@@ -242,22 +244,40 @@ public sealed class PayslipMailService(
             }
 
             var html = await GeneratePayslipHtmlAsync(payrollId, cancellationToken);
-            var message = new EmailMessage
-            {
-                From = emailSettings.Value.FromEmail,
-                Subject = $"Phiếu lương tháng {payroll.Month:D2}/{payroll.Year} — Toán Tư Duy",
-                HtmlBody = html,
-                TextBody =
+            await emailDeliveryService.SendAsync(
+                new EmailDeliveryMessage(
+                    teacher.Email,
+                    $"Phiếu lương tháng {payroll.Month:D2}/{payroll.Year} — Toán Tư Duy",
                     $"Xin chào {teacher.FullName}, lương tháng {payroll.Month:D2}/{payroll.Year} " +
-                    $"của bạn là {FormatCurrency(payroll.FinalSalary)}."
-            };
-            message.To.Add(teacher.Email);
-            await resend.EmailSendAsync(message);
+                    $"của bạn là {FormatCurrency(payroll.FinalSalary)}.",
+                    html),
+                cancellationToken);
 
             payroll.EmailStatus = "Sent";
             payroll.EmailSentAt = DateTime.UtcNow;
             payroll.EmailErrorMessage = null;
             await context.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await notificationService.PublishAsync(
+                    new NotificationMessage(
+                        NotificationTypes.System,
+                        $"Phiếu lương tháng {payroll.Month:D2}/{payroll.Year}",
+                        $"Bảng lương tháng {payroll.Month:D2}/{payroll.Year} (thực nhận {FormatCurrency(payroll.FinalSalary)}) đã được gửi tới email cá nhân {teacher.Email.Trim()}.",
+                        $"PAYSLIP:{payroll.Id}:{DateTime.UtcNow:yyyyMMddHHmmssfff}"),
+                    AudienceSpec.Teacher(payroll.TeacherId),
+                    cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception notifyEx)
+            {
+                logger.LogWarning(notifyEx, "Đã gửi email phiếu lương {PayrollId} nhưng không tạo được thông báo trên giao diện.", payrollId);
+            }
+
             logger.LogInformation("Đã gửi phiếu lương {PayrollId} tới giáo viên {TeacherId}.", payrollId, payroll.TeacherId);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

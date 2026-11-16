@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Resend;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
+using ToanTuDuy.Services.Email;
 
 namespace ToanTuDuy.Services
 {
@@ -20,18 +20,18 @@ namespace ToanTuDuy.Services
     public class PasswordResetService : IPasswordResetService
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IResend _resend;
+        private readonly IEmailDeliveryService _emailDeliveryService;
         private readonly PasswordResetSettings _settings;
         private readonly ILogger<PasswordResetService> _logger;
 
         public PasswordResetService(
             UserManager<ApplicationUser> userManager,
-            IResend resend,
+            IEmailDeliveryService emailDeliveryService,
             IOptions<PasswordResetSettings> settings,
             ILogger<PasswordResetService> logger)
         {
             _userManager = userManager;
-            _resend = resend;
+            _emailDeliveryService = emailDeliveryService;
             _settings = settings.Value;
             _logger = logger;
         }
@@ -196,22 +196,18 @@ namespace ToanTuDuy.Services
         {
             try
             {
-                var message = new EmailMessage
-                {
-                    From = _settings.FromEmail,
-                    Subject = "Mật khẩu tạm của bạn — Hệ thống Toán Tư Duy",
-                    TextBody = BuildTextBody(tempPassword),
-                    HtmlBody = BuildHtmlBody(tempPassword),
-                };
-                message.To.Add(email);
-
-                await _resend.EmailSendAsync(message);
+                await _emailDeliveryService.SendAsync(new EmailDeliveryMessage(
+                    email,
+                    "Mật khẩu tạm của bạn — Hệ thống Toán Tư Duy",
+                    BuildTextBody(tempPassword),
+                    BuildHtmlBody(tempPassword),
+                    _settings.FromEmail));
                 _logger.LogInformation("Đã gửi mật khẩu tạm tới {Email}.", email);
             }
             catch (Exception ex)
             {
                 // Không làm hỏng luồng chính vì lỗi gửi mail (giống EmailVerificationService).
-                _logger.LogWarning(ex, "Không gửi được email mật khẩu tạm tới {Email} qua Resend.", email);
+                _logger.LogWarning(ex, "Không gửi được email mật khẩu tạm tới {Email}.", email);
                 if (throwOnFailure)
                 {
                     throw new ApiException(
