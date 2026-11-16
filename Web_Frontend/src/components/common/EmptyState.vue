@@ -1,10 +1,10 @@
 <template>
   <div class="flex items-center justify-center py-16 flex-col gap-3">
-    <div class="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
-      <component :is="icon" class="w-8 h-8 text-orange-300" />
+    <div class="w-14 h-14 rounded-lg bg-stone-100 border border-stone-300 flex items-center justify-center">
+      <component :is="icon" class="w-7 h-7 text-stone-400" />
     </div>
-    <p class="text-sm font-medium text-gray-500">{{ message }}</p>
-    <p v-if="sub" class="text-xs text-gray-400">{{ sub }}</p>
+    <p class="text-sm font-semibold text-stone-700">{{ message }}</p>
+    <p v-if="sub" class="text-xs text-stone-400">{{ sub }}</p>
   </div>
 </template>
 

@@ -15,13 +15,16 @@ namespace ToanTuDuy.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IBusinessNotificationEmailService _businessEmailService;
 
         public EnrollmentService(
             ApplicationDbContext context,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IBusinessNotificationEmailService businessEmailService)
         {
             _context = context;
             _notificationService = notificationService;
+            _businessEmailService = businessEmailService;
         }
 
         public async Task<IEnumerable<EnrollmentRegistrationResponse>> GetCourseLevelRegistrationsAsync(
@@ -182,6 +185,34 @@ namespace ToanTuDuy.Services
                 AudienceSpec.Union(
                     AudienceSpec.AllAdmins(),
                     AudienceSpec.ClassTeacher(classInfo.Id)));
+
+            var details = new List<(string Label, string Value)>
+            {
+                ("Học sinh", student.FullName),
+                ("Lớp học", classInfo.Name),
+                ("Ngày khai giảng", $"{classInfo.StartDate:dd/MM/yyyy}"),
+                ("Mã hóa đơn", $"#{invoice.Id}"),
+                ("Học phí", $"{invoice.Amount:N0} VNĐ")
+            };
+
+            if (classInfo.TeacherId.HasValue)
+            {
+                await _businessEmailService.SendToTeacherAsync(
+                    classInfo.TeacherId.Value,
+                    new BusinessEmailPayload(
+                        $"Đăng ký lớp học mới: {classInfo.Name} — Toán Tư Duy",
+                        title,
+                        body,
+                        details));
+            }
+
+            await _businessEmailService.SendToStudentParentAsync(
+                student.Id,
+                new BusinessEmailPayload(
+                    $"Xác nhận đăng ký lớp {classInfo.Name} — Toán Tư Duy",
+                    "Đăng ký giữ chỗ lớp học thành công",
+                    $"Hệ thống đã ghi nhận yêu cầu đăng ký cho học sinh {student.FullName} vào lớp {classInfo.Name}. Vui lòng hoàn tất thanh toán để chính thức kích hoạt chỗ học.",
+                    details));
         }
     }
 }

@@ -57,7 +57,7 @@ BEGIN TRY
 --   Admin chính:      User = Admin123   / Password = Demo123@   (Email: admin123@toantuduy.edu.vn)
 --   Admin dự phòng:   User = 0901000000 / Password = Admin@Test123!
 --   Teacher chính:    User = Teacher123 / Password = Demo123@   (Email: teacher123@toantuduy.edu.vn)
---   Teacher dự phòng: User = 0902000001 / Password = Teacher@Test123!
+--   Teacher dự phòng: User =    / Password = Teacher@Test123!
 --   Parent:           User = 0903000001 .. 0903000032 / Password = Parent@Test123!
 SET IDENTITY_INSERT [dbo].[ACCOUNT] ON;
 INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_active, created_at, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount) VALUES

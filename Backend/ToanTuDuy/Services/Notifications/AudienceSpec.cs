@@ -28,6 +28,8 @@ namespace ToanTuDuy.Services.Notifications
     {
         public List<AudienceTarget> Targets { get; set; } = new();
 
+        public bool SendEmail { get; set; }
+
         public bool IsEmpty => Targets.Count == 0;
 
         public static AudienceSpec AllAdmins() => new()
@@ -83,6 +85,7 @@ namespace ToanTuDuy.Services.Notifications
         public static AudienceSpec Union(params AudienceSpec[] specs) => new()
         {
             Targets = specs.SelectMany(spec => spec.Targets).ToList(),
+            SendEmail = specs.Any(spec => spec.SendEmail),
         };
     }
 

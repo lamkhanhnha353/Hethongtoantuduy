@@ -145,6 +145,10 @@ const router = createRouter({
           component: TeacherChatView,
           meta: { title: "Chat với phụ huynh" },
         },
+        {
+          path: "notifications",
+          redirect: "/teacher/communication/notices?tab=inbox",
+        },
 
         // Tài khoản của tôi
         {
@@ -247,6 +251,10 @@ const router = createRouter({
           path: "communication/notifications",
           component: AdminNotificationsView,
           meta: { title: "Quản lý Thông báo" },
+        },
+        {
+          path: "notifications",
+          redirect: "/communication/notifications?tab=inbox",
         },
 
         // Reports

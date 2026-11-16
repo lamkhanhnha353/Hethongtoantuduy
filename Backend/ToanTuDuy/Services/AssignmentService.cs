@@ -9,16 +9,21 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class AssignmentService : IAssignmentService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public AssignmentService(ApplicationDbContext context)
+        public AssignmentService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<AssignmentDetailResponse> CreateAssignmentAsync(CreateAssignmentRequest request)
@@ -653,6 +658,24 @@ namespace ToanTuDuy.Services
                 throw ApiException.BadRequest("Bài tập này đã được nộp.");
             }
 
+            if (studentAssignment.Assignment.Lesson != null)
+            {
+                var studentName = string.IsNullOrWhiteSpace(studentAssignment.Student?.FullName)
+                    ? "Học sinh"
+                    : studentAssignment.Student.FullName.Trim();
+                var assignmentTitle = string.IsNullOrWhiteSpace(studentAssignment.Assignment.Title)
+                    ? "Bài tập"
+                    : studentAssignment.Assignment.Title.Trim();
+
+                await _notificationService.PublishAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Academic,
+                        "Học sinh đã nộp bài tập",
+                        $"{studentName} vừa hoàn thành bài tập \"{assignmentTitle}\" (tạm tính {score:0.##} điểm).",
+                        $"ASSIGNMENT:{assignmentId}:SUBMITTED:{studentId}"),
+                    AudienceSpec.ClassTeacher(studentAssignment.Assignment.Lesson.ClassId));
+            }
+
             return new StudentPracticeSubmissionResponseDto
             {
                 AssignmentId = assignmentId,
@@ -678,6 +701,7 @@ namespace ToanTuDuy.Services
             }
 
             return await _context.StudentAssignments
+                .Include(studentAssignment => studentAssignment.Student)
                 .Include(studentAssignment => studentAssignment.Assignment)
                     .ThenInclude(assignment => assignment.Lesson)
                 .Include(studentAssignment => studentAssignment.Assignment)
@@ -889,6 +913,7 @@ namespace ToanTuDuy.Services
         {
             var sa = await _context.StudentAssignments
                 .Include(s => s.Student)
+                .Include(s => s.Assignment)
                 .FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId);
 
             if (sa == null) return null;
@@ -902,6 +927,13 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            if (sa.Status == "GRADED" || request.Score.HasValue)
+            {
+                await _notificationService.PublishAsync(
+                    BuildGradedNotificationMessage(sa),
+                    AudienceSpec.StudentParent(sa.StudentId));
+            }
 
             return new StudentAssignmentResponse
             {
@@ -923,8 +955,12 @@ namespace ToanTuDuy.Services
 
             var studentIds = grades.Select(g => g.StudentId).ToList();
             var list = await _context.StudentAssignments
+                .Include(s => s.Student)
+                .Include(s => s.Assignment)
                 .Where(s => s.AssignmentId == assignmentId && studentIds.Contains(s.StudentId))
                 .ToListAsync();
+
+            var gradedItems = new List<StudentAssignment>();
 
             foreach (var sa in list)
             {
@@ -951,11 +987,50 @@ namespace ToanTuDuy.Services
                     {
                         sa.CompletedAt = DateTime.UtcNow;
                     }
+
+                    if (sa.Status == "GRADED" || gradeInfo.Score.HasValue)
+                    {
+                        gradedItems.Add(sa);
+                    }
                 }
             }
 
             await _context.SaveChangesAsync();
+
+            if (gradedItems.Count > 0)
+            {
+                foreach (var sa in gradedItems)
+                {
+                    await _notificationService.EnqueueAsync(
+                        BuildGradedNotificationMessage(sa),
+                        AudienceSpec.StudentParent(sa.StudentId));
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
             return true;
+        }
+
+        private static NotificationMessage BuildGradedNotificationMessage(StudentAssignment sa)
+        {
+            var assignmentTitle = string.IsNullOrWhiteSpace(sa.Assignment?.Title)
+                ? "Bài tập"
+                : sa.Assignment.Title.Trim();
+            var studentName = string.IsNullOrWhiteSpace(sa.Student?.FullName)
+                ? "học sinh"
+                : sa.Student.FullName.Trim();
+            var scoreText = sa.Score.HasValue ? $"{sa.Score.Value:0.##} điểm" : "Đã chấm";
+            var feedbackSuffix = string.IsNullOrWhiteSpace(sa.TeacherFeedback)
+                ? string.Empty
+                : $" — Nhận xét: {sa.TeacherFeedback.Trim()}";
+            var refId = $"ASSIGNMENT:{sa.AssignmentId}:GRADED:{sa.StudentId}:{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+
+            return new NotificationMessage(
+                NotificationTypes.Academic,
+                "Bài tập đã được chấm điểm",
+                $"Bài tập \"{assignmentTitle}\" của {studentName} đã có kết quả: {scoreText}{feedbackSuffix}.",
+                refId);
         }
 
         public async Task<StudentSubmissionDetailResponse?> GetStudentSubmissionAsync(int assignmentId, int studentId)

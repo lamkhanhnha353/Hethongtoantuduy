@@ -7,16 +7,24 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class ClassService : IClassService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
+        private readonly IBusinessNotificationEmailService _businessEmailService;
 
-        public ClassService(ApplicationDbContext context)
+        public ClassService(
+            ApplicationDbContext context,
+            INotificationService notificationService,
+            IBusinessNotificationEmailService businessEmailService)
         {
             _context = context;
+            _notificationService = notificationService;
+            _businessEmailService = businessEmailService;
         }
 
         // Hàm hỗ trợ map dữ liệu để tránh lặp code
@@ -192,6 +200,11 @@ namespace ToanTuDuy.Services
             _context.Classes.Add(newClass);
             await _context.SaveChangesAsync();
 
+            if (newClass.TeacherId.HasValue)
+            {
+                await NotifyTeacherAllocatedAsync(newClass.Id, newClass.TeacherId.Value);
+            }
+
             return await GetClassByIdAsync(newClass.Id);
         }
 
@@ -199,6 +212,8 @@ namespace ToanTuDuy.Services
         {
             var c = await _context.Classes.FindAsync(id);
             if (c == null) return false;
+
+            var previousTeacherId = c.TeacherId;
 
             c.CourseLevelId = request.CourseLevelId;
             c.TeacherId = request.TeacherId;
@@ -210,6 +225,12 @@ namespace ToanTuDuy.Services
             c.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            if (c.TeacherId.HasValue && c.TeacherId != previousTeacherId)
+            {
+                await NotifyTeacherAllocatedAsync(c.Id, c.TeacherId.Value);
+            }
+
             return true;
         }
 
@@ -338,6 +359,8 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
+            await NotifyStudentAllocatedAsync(classItem, student);
+
             return new ClassStudentResponse
             {
                 Id = existing.Id,
@@ -366,6 +389,118 @@ namespace ToanTuDuy.Services
             _context.ClassStudents.Remove(existing);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        private async Task NotifyTeacherAllocatedAsync(int classId, int teacherId)
+        {
+            var classInfo = await _context.Classes
+                .AsNoTracking()
+                .Where(c => c.Id == classId)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.StartDate,
+                    c.MaxCapacity,
+                    CourseLevelName = c.CourseLevel != null ? c.CourseLevel.Name : null,
+                    Schedules = c.ClassSchedules
+                        .OrderBy(s => s.DayOfWeek)
+                        .ThenBy(s => s.StartTime)
+                        .Select(s => new { s.DayOfWeek, s.StartTime, s.EndTime, s.Room })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (classInfo == null)
+            {
+                return;
+            }
+
+            const string title = "Bạn được phân bổ lớp học mới";
+            var body = $"Bạn đã được phân công giảng dạy lớp {classInfo.Name} (khai giảng {classInfo.StartDate:dd/MM/yyyy}).";
+            var refId = $"CLASS:{classId}:TEACHER_ALLOC:{teacherId}:{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(NotificationTypes.Enrollment, title, body, refId),
+                AudienceSpec.Teacher(teacherId));
+
+            var scheduleSummary = classInfo.Schedules.Count == 0
+                ? "Chưa thiết lập lịch cố định"
+                : string.Join("; ", classInfo.Schedules.Select(s =>
+                {
+                    var dayLabel = s.DayOfWeek == 0 ? "Chủ nhật" : $"Thứ {s.DayOfWeek + 1}";
+                    var roomPart = string.IsNullOrWhiteSpace(s.Room) ? string.Empty : $" - Phòng {s.Room}";
+                    return $"{dayLabel} ({s.StartTime:hh\\:mm}-{s.EndTime:hh\\:mm}{roomPart})";
+                }));
+
+            var details = new List<(string Label, string Value)>
+            {
+                ("Lớp học", classInfo.Name),
+                ("Cấp độ / Khóa học", classInfo.CourseLevelName ?? "—"),
+                ("Ngày khai giảng", $"{classInfo.StartDate:dd/MM/yyyy}"),
+                ("Sĩ số tối đa", $"{classInfo.MaxCapacity} học viên"),
+                ("Lịch học dự kiến", scheduleSummary)
+            };
+
+            await _businessEmailService.SendToTeacherAsync(
+                teacherId,
+                new BusinessEmailPayload(
+                    $"Phân bổ lớp học mới: {classInfo.Name} — Toán Tư Duy",
+                    title,
+                    body,
+                    details));
+        }
+
+        private async Task NotifyStudentAllocatedAsync(Classes classItem, StudentProfile student)
+        {
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+            const string parentTitle = "Học sinh đã được phân bổ lớp học";
+            var parentBody = $"Học sinh {student.FullName} đã được xếp vào lớp {classItem.Name} (khai giảng {classItem.StartDate:dd/MM/yyyy}).";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.Enrollment,
+                    parentTitle,
+                    parentBody,
+                    $"CLASS:{classItem.Id}:STUDENT_ALLOC:{student.Id}:{timestamp}"),
+                AudienceSpec.StudentParent(student.Id));
+
+            var details = new List<(string Label, string Value)>
+            {
+                ("Học sinh", student.FullName),
+                ("Lớp học", classItem.Name),
+                ("Ngày khai giảng", $"{classItem.StartDate:dd/MM/yyyy}")
+            };
+
+            await _businessEmailService.SendToStudentParentAsync(
+                student.Id,
+                new BusinessEmailPayload(
+                    $"Thông báo phân bổ lớp học {classItem.Name} — Toán Tư Duy",
+                    parentTitle,
+                    parentBody,
+                    details));
+
+            if (classItem.TeacherId.HasValue)
+            {
+                const string teacherTitle = "Lớp có học sinh mới được phân bổ";
+                var teacherBody = $"Học sinh {student.FullName} vừa được phân bổ vào lớp {classItem.Name}.";
+
+                await _notificationService.PublishAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Enrollment,
+                        teacherTitle,
+                        teacherBody,
+                        $"CLASS:{classItem.Id}:TEACHER_STUDENT_ALLOC:{student.Id}:{timestamp}"),
+                    AudienceSpec.Teacher(classItem.TeacherId.Value));
+
+                await _businessEmailService.SendToTeacherAsync(
+                    classItem.TeacherId.Value,
+                    new BusinessEmailPayload(
+                        $"Học sinh mới vào lớp {classItem.Name} — Toán Tư Duy",
+                        teacherTitle,
+                        teacherBody,
+                        details));
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ namespace ToanTuDuy.Services
         public const string Academic = "ACADEMIC";
         public const string Attendance = "ATTENDANCE";
         public const string Announcement = "ANNOUNCEMENT";
+        public const string Special = "SPECIAL";
         public const string LeaveRequest = "LEAVE_REQUEST";
         public const string Enrollment = "ENROLLMENT";
         public const string Payment = "PAYMENT";

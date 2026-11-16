@@ -3,13 +3,13 @@
     <!-- ─── Page header ───────────────────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h1 class="text-xl font-bold text-orange-900">Danh sách Lớp học</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Tất cả lớp học đang hoạt động trong hệ thống</p>
+        <h1 class="text-2xl font-bold text-stone-900">Danh sách Lớp học</h1>
+        <p class="text-sm text-stone-500 mt-0.5">Tất cả lớp học đang hoạt động trong hệ thống</p>
       </div>
       <button
         @click="openCreateModal"
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600
-               text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex-shrink-0 cursor-pointer"
+        class="inline-flex h-9 items-center gap-2 px-3.5 bg-orange-600 hover:bg-orange-700 border border-orange-700
+               text-white text-sm font-semibold rounded-md shadow-xs transition-colors flex-shrink-0 cursor-pointer"
       >
         <PlusIcon class="w-4 h-4" />
         Mở lớp mới
@@ -17,22 +17,22 @@
     </div>
 
     <!-- ─── Toolbar ────────────────────────────────────────────────────────── -->
-    <div class="bg-white rounded-2xl border border-orange-100 shadow-sm p-4 space-y-3">
+    <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-4 space-y-3">
       <div class="flex flex-col sm:flex-row gap-3">
         <SearchBar v-model="search" placeholder="Tìm theo mã, tên lớp, giáo viên, khóa học..." />
         <button
           @click="showFilter = !showFilter"
           :class="[
-            'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all flex-shrink-0',
+            'inline-flex h-9 items-center gap-2 px-3.5 rounded-md text-sm font-semibold border transition-all flex-shrink-0',
             showFilter || hasActiveFilters
-              ? 'bg-orange-400 text-white border-orange-400'
-              : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
+              ? 'bg-orange-600 text-white border-orange-700'
+              : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-100 hover:border-stone-400',
           ]"
         >
           <FunnelIcon class="w-4 h-4" />
           Bộ lọc
           <span v-if="hasActiveFilters"
-            class="bg-white text-orange-500 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+            class="bg-white text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums flex items-center justify-center">
             {{ activeFilterCount }}
           </span>
         </button>
@@ -41,10 +41,10 @@
 
       <!-- Filter panel -->
       <transition name="slide-down">
-        <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 border-t border-orange-100">
+        <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-stone-200">
           <!-- Filter theo Khóa học (Đồng bộ Backend) -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Khóa học</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Khóa học</label>
             <select v-model="filters.courseId" class="filter-select">
               <option value="">Tất cả khóa học</option>
               <option v-for="c in courses" :key="c.id" :value="c.id">
@@ -53,7 +53,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Trạng thái</label>
             <select v-model="filters.status" class="filter-select">
               <option value="">Tất cả</option>
               <option value="active">Đang mở</option>
@@ -63,7 +63,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Sĩ số</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Sĩ số</label>
             <select v-model="filters.capacity" class="filter-select">
               <option value="">Tất cả</option>
               <option value="available">Còn chỗ trống</option>
@@ -72,7 +72,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Sắp xếp</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Sắp xếp</label>
             <select v-model="filters.sort" class="filter-select">
               <option value="name_asc">Tên A → Z</option>
               <option value="name_desc">Tên Z → A</option>
@@ -81,7 +81,7 @@
             </select>
           </div>
           <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-2">
-            <button @click="resetFilters" class="text-xs text-gray-500 hover:text-orange-500 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors">
+            <button @click="resetFilters" class="text-xs font-semibold text-stone-600 hover:text-stone-900 px-3 py-1.5 rounded-md border border-transparent hover:border-stone-300 hover:bg-stone-100 transition-colors">
               Đặt lại
             </button>
           </div>
@@ -91,13 +91,13 @@
 
     <!-- ─── Results summary ────────────────────────────────────────────────── -->
     <div class="flex items-center justify-between">
-      <p class="text-sm text-gray-500">
-        Tìm thấy <span class="font-semibold text-orange-700">{{ totalCount }}</span> lớp học
+      <p class="text-sm text-stone-500">
+        Tìm thấy <span class="font-semibold text-stone-900 tabular-nums">{{ totalCount }}</span> lớp học
       </p>
       <button
         v-if="hasActiveFilters || search"
         @click="clearAll"
-        class="text-xs text-orange-500 hover:text-orange-700 flex items-center gap-1"
+        class="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-semibold"
       >
         <XMarkIcon class="w-3.5 h-3.5" />
         Xóa bộ lọc
@@ -141,7 +141,7 @@
     </div>
 
     <!-- ─── Pagination ─────────────────────────────────────────────────────── -->
-    <div v-if="totalCount > 0" class="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+    <div v-if="totalCount > 0" class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <PaginationBar
         v-model:page="page"
         v-model:page-size="pageSize"
