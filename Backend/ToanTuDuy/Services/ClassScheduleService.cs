@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
@@ -164,10 +165,7 @@ namespace ToanTuDuy.Services
                 .Distinct()
                 .ToHashSetAsync();
 
-            var syllabus = string.IsNullOrWhiteSpace(targetClass.CourseLevel.Syllabus)
-                ? new List<Dictionary<string, string>>()
-                : System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(
-                    targetClass.CourseLevel.Syllabus) ?? new List<Dictionary<string, string>>();
+            var syllabus = ParseSyllabus(targetClass.CourseLevel.Syllabus);
 
             var fixedLessons = targetClass.Lessons
                 .Where(lesson =>
@@ -196,10 +194,7 @@ namespace ToanTuDuy.Services
                     }
 
                     var sessionIndex = completedSessionCount + expectedLessons.Count;
-                    var title = sessionIndex < syllabus.Count &&
-                                syllabus[sessionIndex].TryGetValue("title", out var syllabusTitle)
-                        ? syllabusTitle
-                        : $"Buổi học {sessionIndex + 1}";
+                    var title = ResolveSyllabusTitle(syllabus, sessionIndex);
 
                     expectedLessons.Add(new Lesson
                     {
@@ -342,6 +337,52 @@ namespace ToanTuDuy.Services
                 }
             }
 
+        }
+
+        private static List<Dictionary<string, JsonElement>> ParseSyllabus(string? syllabusJson)
+        {
+            if (string.IsNullOrWhiteSpace(syllabusJson))
+            {
+                return new List<Dictionary<string, JsonElement>>();
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(syllabusJson)
+                    ?? new List<Dictionary<string, JsonElement>>();
+            }
+            catch (JsonException)
+            {
+                return new List<Dictionary<string, JsonElement>>();
+            }
+        }
+
+        private static string ResolveSyllabusTitle(List<Dictionary<string, JsonElement>> syllabus, int sessionIndex)
+        {
+            if (sessionIndex >= 0 && sessionIndex < syllabus.Count)
+            {
+                var sessionData = syllabus[sessionIndex];
+                var titleEntry = sessionData.FirstOrDefault(
+                    kvp => string.Equals(kvp.Key, "title", StringComparison.OrdinalIgnoreCase));
+
+                if (!string.IsNullOrEmpty(titleEntry.Key))
+                {
+                    var element = titleEntry.Value;
+                    var rawTitle = element.ValueKind switch
+                    {
+                        JsonValueKind.String => element.GetString(),
+                        JsonValueKind.Null or JsonValueKind.Undefined => null,
+                        _ => element.ToString()
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(rawTitle))
+                    {
+                        return rawTitle.Trim();
+                    }
+                }
+            }
+
+            return $"Buổi học {sessionIndex + 1}";
         }
     }
 }
