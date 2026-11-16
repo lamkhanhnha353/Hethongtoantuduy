@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CourseLevelsController : ControllerBase
     {
         private readonly ICourseLevelService _courseLevelService;
@@ -35,6 +37,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CourseLevelRequest request)
         {
             try
@@ -49,6 +52,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] CourseLevelRequest request)
         {
             var success = await _courseLevelService.UpdateLevelAsync(id, request);
@@ -58,6 +62,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try

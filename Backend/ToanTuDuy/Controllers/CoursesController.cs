@@ -13,6 +13,7 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CoursesController : ControllerBase
     {
         private readonly ICourseService _courseService;
@@ -59,6 +60,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CourseRequest request)
         {
             try
@@ -73,6 +75,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] CourseRequest request)
         {
             var success = await _courseService.UpdateCourseAsync(id, request);
@@ -82,6 +85,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
