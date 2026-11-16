@@ -102,13 +102,18 @@
               <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
                 Giáo viên phụ trách
               </label>
+              <SearchBar
+                v-model="teacherSearch"
+                placeholder="Tìm nhanh giáo viên (tên, SĐT, email)..."
+                class="mb-2"
+              />
               <select
                 v-model="form.teacherId"
                 class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
               >
                 <option :value="null">-- Chưa phân công --</option>
                 <option
-                  v-for="teacher in teachers"
+                  v-for="teacher in filteredTeachers"
                   :key="teacher.id"
                   :value="teacher.id"
                 >
@@ -236,6 +241,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/vue/24/outline'
 
+import SearchBar from '@/components/common/SearchBar.vue'
 import classService from '@/services/class.service'
 import courseService from '@/services/course.service'
 import teacherService from '@/services/teacher.service'
@@ -264,6 +270,22 @@ const loadingLevels = ref(false)
 
 const groupedCourses = ref([])
 const teachers = ref([])
+const teacherSearch = ref('')
+
+const filteredTeachers = computed(() => {
+  const q = teacherSearch.value.trim().toLowerCase()
+  if (!q) return teachers.value
+  return teachers.value.filter(t => {
+    if (form.value.teacherId != null && t.id === form.value.teacherId) return true
+    return (
+      (t.fullName || '').toLowerCase().includes(q) ||
+      (t.phone || '').toLowerCase().includes(q) ||
+      (t.email || '').toLowerCase().includes(q) ||
+      (t.specialize || '').toLowerCase().includes(q) ||
+      String(t.id).includes(q)
+    )
+  })
+})
 
 const form = ref({
   courseLevelId: '',
@@ -318,6 +340,7 @@ async function loadDependencies() {
 function initForm() {
   errorMessage.value = ''
   successMessage.value = ''
+  teacherSearch.value = ''
 
   if (props.cls) {
     form.value = {

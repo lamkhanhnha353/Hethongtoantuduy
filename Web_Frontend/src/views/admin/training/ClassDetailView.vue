@@ -573,13 +573,21 @@
                   </span>
                 </div>
 
-                <div v-if="lessons.length > (level?.totalSessions || 0)" class="text-rose-700 font-bold flex items-center gap-1">
-                  <ExclamationCircleIcon class="w-4 h-4" />
-                  <span>Vượt quá {{ lessons.length - level.totalSessions }} buổi!</span>
-                </div>
-                <div v-else-if="lessons.length === (level?.totalSessions || 0)" class="text-emerald-700 font-bold flex items-center gap-1">
-                  <CheckCircleIcon class="w-4 h-4" />
-                  <span>Đã khớp đủ số lượng buổi học</span>
+                <div class="flex items-center gap-3 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+                  <div class="w-full sm:w-56">
+                    <SearchBar
+                      v-model="searchLesson"
+                      placeholder="Tìm buổi học theo ngày, trạng thái..."
+                    />
+                  </div>
+                  <div v-if="lessons.length > (level?.totalSessions || 0)" class="text-rose-700 font-bold flex items-center gap-1">
+                    <ExclamationCircleIcon class="w-4 h-4" />
+                    <span>Vượt quá {{ lessons.length - level.totalSessions }} buổi!</span>
+                  </div>
+                  <div v-else-if="lessons.length === (level?.totalSessions || 0)" class="text-emerald-700 font-bold flex items-center gap-1">
+                    <CheckCircleIcon class="w-4 h-4" />
+                    <span>Đã khớp đủ số lượng buổi học</span>
+                  </div>
                 </div>
               </div>
 
@@ -594,10 +602,15 @@
                 sub="Bấm nút 'Đồng bộ & Tính ngày kết thúc' để tự động tạo danh sách buổi học theo số buổi của khóa học"
               />
 
+              <!-- Filtered empty -->
+              <div v-else-if="filteredLessons.length === 0" class="text-center py-10 text-xs text-stone-500">
+                Không tìm thấy buổi học nào phù hợp với từ khóa "{{ searchLesson }}".
+              </div>
+
               <!-- Lessons List -->
               <div v-else class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
                 <div
-                  v-for="(l, idx) in sortedLessons"
+                  v-for="(l, idx) in filteredLessons"
                   :key="l.id"
                   class="p-3.5 rounded-md border border-stone-300 bg-white hover:border-stone-400 transition-all flex items-center justify-between gap-3"
                 >
@@ -1010,6 +1023,12 @@
                 Chọn giáo viên phụ trách giảng dạy cho lớp học này (danh sách được lấy từ <code class="font-mono text-orange-700">teacher.service</code>):
               </p>
 
+              <!-- Thanh tìm kiếm giáo viên -->
+              <SearchBar
+                v-model="teacherSearchQuery"
+                placeholder="Tìm kiếm giáo viên theo tên, SĐT, email hoặc chuyên môn..."
+              />
+
               <div v-if="loadingTeachers" class="py-6 text-center text-xs text-stone-400">
                 <LoadingSpinner label="Đang tải danh sách giáo viên từ teacher.service..." />
               </div>
@@ -1017,6 +1036,7 @@
               <div v-else class="space-y-2">
                 <!-- Option: Không phân công -->
                 <div
+                  v-if="!teacherSearchQuery.trim()"
                   @click="selectedTeacherId = null"
                   :class="[
                     'p-3 rounded-md border flex items-center justify-between cursor-pointer transition-all',
@@ -1044,7 +1064,7 @@
 
                 <!-- Teacher options from teacher.service -->
                 <div
-                  v-for="t in availableTeachers"
+                  v-for="t in filteredAvailableTeachers"
                   :key="t.id"
                   @click="selectedTeacherId = t.id"
                   :class="[
@@ -1062,6 +1082,7 @@
                       <div class="font-bold text-stone-900 text-xs truncate">{{ t.fullName }}</div>
                       <div class="text-[11px] text-stone-500 truncate tabular-nums">
                         {{ t.phone || t.email || `Mã GV: GV-${t.id}` }}
+                        <span v-if="t.specialize" class="text-orange-700 font-medium"> · {{ t.specialize }}</span>
                       </div>
                     </div>
                   </div>
@@ -1071,6 +1092,13 @@
                     :checked="selectedTeacherId === t.id"
                     class="text-orange-600 focus:ring-orange-500"
                   />
+                </div>
+
+                <div
+                  v-if="filteredAvailableTeachers.length === 0"
+                  class="py-6 text-center text-xs text-stone-500 border border-dashed border-stone-300 rounded-md"
+                >
+                  Không tìm thấy giáo viên nào khớp với từ khóa "{{ teacherSearchQuery }}".
                 </div>
               </div>
             </div>
@@ -1155,6 +1183,7 @@ import {
 import PaginationBar  from '@/components/common/PaginationBar.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import EmptyState     from '@/components/common/EmptyState.vue'
+import SearchBar      from '@/components/common/SearchBar.vue'
 import StatusBadge    from '@/components/course/StatusBadge.vue'
 import ClassModal     from '@/components/class/ClassModal.vue'
 import ScheduleModal  from '@/components/schedule/ScheduleModal.vue'
@@ -1242,6 +1271,8 @@ const availableTeachers      = ref([])
 const loadingTeachers        = ref(false)
 const selectedTeacherId      = ref(null)
 const isAssigningTeacher     = ref(false)
+const teacherSearchQuery     = ref('')
+const searchLesson           = ref('')
 
 // ─── Days of Week Constants ───────────────────────────────────────────────────
 const DAYS_OF_WEEK = [
@@ -1302,6 +1333,34 @@ const sortedSchedules = computed(() => {
 const sortedLessons = computed(() => {
   const list = [...lessons.value]
   return list.sort((a, b) => new Date(a.lessonDate) - new Date(b.lessonDate))
+})
+
+const filteredLessons = computed(() => {
+  const q = searchLesson.value.trim().toLowerCase()
+  if (!q) return sortedLessons.value
+  return sortedLessons.value.filter((l, index) => {
+    const dateStr = formatDate(l.lessonDate).toLowerCase()
+    const statusLabel = getLessonStatusBadge(l.status).label.toLowerCase()
+    return (
+      dateStr.includes(q) ||
+      statusLabel.includes(q) ||
+      (l.title || '').toLowerCase().includes(q) ||
+      `#${index + 1}`.includes(q)
+    )
+  })
+})
+
+const filteredAvailableTeachers = computed(() => {
+  const q = teacherSearchQuery.value.trim().toLowerCase()
+  if (!q) return availableTeachers.value
+  return availableTeachers.value.filter(t =>
+    (t.fullName || '').toLowerCase().includes(q) ||
+    (t.phone || '').toLowerCase().includes(q) ||
+    (t.email || '').toLowerCase().includes(q) ||
+    (t.specialize || '').toLowerCase().includes(q) ||
+    `gv-${t.id}`.includes(q) ||
+    String(t.id).includes(q)
+  )
 })
 
 // Students Computed
@@ -1560,6 +1619,7 @@ async function confirmRemoveStudent(st) {
 
 // ─── Modal Actions: Assign Teacher (teacher.service) ──────────────────────────
 async function openAssignTeacherModal() {
+  teacherSearchQuery.value = ''
   selectedTeacherId.value = cls.value?.teacherId ?? null
   showAssignTeacherModal.value = true
   if (availableTeachers.value.length === 0) {

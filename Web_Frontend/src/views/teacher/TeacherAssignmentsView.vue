@@ -683,9 +683,19 @@
             </div>
 
             <div v-else class="space-y-2">
-              <div class="max-h-36 overflow-y-auto space-y-1 bg-white p-2 rounded-md border border-stone-300">
+              <SearchBar
+                v-model="additionalStudentSearch"
+                placeholder="Tìm kiếm học sinh theo tên hoặc mã..."
+              />
+              <div
+                v-if="filteredUnassignedClassStudents.length === 0"
+                class="text-[11px] text-stone-500 bg-white p-3 rounded-md border border-stone-200 text-center"
+              >
+                Không tìm thấy học sinh phù hợp với "{{ additionalStudentSearch }}".
+              </div>
+              <div v-else class="max-h-36 overflow-y-auto space-y-1 bg-white p-2 rounded-md border border-stone-300">
                 <div
-                  v-for="st in unassignedClassStudents"
+                  v-for="st in filteredUnassignedClassStudents"
                   :key="st.id || st.studentId"
                   class="flex items-center gap-2 py-1 px-2 hover:bg-stone-50 rounded-md cursor-pointer"
                   @click="toggleAdditionalStudent(st.id || st.studentId)"
@@ -1489,6 +1499,7 @@ const activeAssignment = ref(null)
 const activeAssignmentDetail = ref(null)
 const loadingAssignmentDetail = ref(false)
 const additionalStudentIds = ref([])
+const additionalStudentSearch = ref('')
 const isAssigningAdditional = ref(false)
 
 const unassignedClassStudents = computed(() => {
@@ -1497,9 +1508,20 @@ const unassignedClassStudents = computed(() => {
   return classStudents.value.filter(s => !assignedSet.has(s.id || s.studentId))
 })
 
+const filteredUnassignedClassStudents = computed(() => {
+  const q = additionalStudentSearch.value.trim().toLowerCase()
+  if (!q) return unassignedClassStudents.value
+  return unassignedClassStudents.value.filter(st =>
+    (st.fullName || st.studentName || '').toLowerCase().includes(q) ||
+    (st.studentCode || '').toLowerCase().includes(q) ||
+    String(st.id || st.studentId || '').includes(q)
+  )
+})
+
 async function openManageStudentsModal(item) {
   activeAssignment.value = item
   additionalStudentIds.value = []
+  additionalStudentSearch.value = ''
   showManageStudentsModal.value = true
   await loadAssignmentDetail(item.id)
 }

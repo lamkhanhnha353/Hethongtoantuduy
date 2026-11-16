@@ -190,6 +190,11 @@
             <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
               Lớp học <span class="text-rose-600">*</span>
             </label>
+            <SearchBar
+              v-model="classSearch"
+              placeholder="Tìm nhanh lớp học theo tên hoặc mã lớp..."
+              class="mb-2"
+            />
             <select
               v-model.number="form.classId"
               required
@@ -197,7 +202,7 @@
             >
               <option value="" disabled>-- Chọn lớp học --</option>
               <option
-                v-for="c in classes"
+                v-for="c in filteredClasses"
                 :key="c.id"
                 :value="c.id"
               >
@@ -324,6 +329,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/vue/24/outline'
 
+import SearchBar from '@/components/common/SearchBar.vue'
 import classScheduleService from '@/services/classSchedule.service'
 import { validateTextLength } from '@/utils/validation.helper'
 
@@ -342,6 +348,7 @@ const saving = ref(false)
 const deleting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const classSearch = ref('')
 
 const form = ref({
   id: null,
@@ -350,6 +357,20 @@ const form = ref({
   startTime: '17:30',
   endTime: '19:00',
   room: '',
+})
+
+const filteredClasses = computed(() => {
+  const q = classSearch.value.trim().toLowerCase()
+  if (!q) return props.classes
+  return props.classes.filter(c => {
+    if (form.value.classId && Number(c.id) === Number(form.value.classId)) return true
+    return (
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.code || '').toLowerCase().includes(q) ||
+      (c.teacherName || '').toLowerCase().includes(q) ||
+      String(c.id).includes(q)
+    )
+  })
 })
 
 // ─── Day of week maps ────────────────────────────────────────────────────────
@@ -394,6 +415,7 @@ watch(
   () => {
     errorMessage.value = ''
     successMessage.value = ''
+    classSearch.value = ''
     mode.value = props.initialMode
 
     if (props.schedule) {
