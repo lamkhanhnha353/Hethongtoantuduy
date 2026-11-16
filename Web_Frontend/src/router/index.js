@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import authService from "@/services/auth.service";
 import Layout from "@/layouts/Layout.vue";
-import PlaceholderView from "@/views/PlaceholderView.vue";
 
 // Authentication
 import LoginView from "@/views/LoginView.vue";
@@ -229,17 +228,6 @@ const router = createRouter({
           meta: { title: "Lịch học & Thời khóa biểu" },
         },
 
-        // Learning
-        {
-          path: "learning/questions",
-          component: PlaceholderView,
-          meta: { title: "Ngân hàng câu hỏi" },
-        },
-        {
-          path: "learning/gamification",
-          component: PlaceholderView,
-          meta: { title: "Gamification" },
-        },
 
         // Finance
         {
