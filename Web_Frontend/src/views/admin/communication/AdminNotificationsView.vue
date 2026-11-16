@@ -10,6 +10,7 @@
       </div>
       <div class="flex gap-2">
         <button
+          v-if="activeTab === 'manage'"
           type="button"
           :disabled="loading"
           class="inline-flex h-9 items-center gap-2 rounded-md border border-stone-300 bg-white px-3.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -29,6 +30,39 @@
       </div>
     </header>
 
+    <div class="inline-flex items-center rounded-md border border-stone-300 bg-stone-100 p-1 text-xs font-semibold tabular-nums">
+      <button
+        type="button"
+        :class="[
+          'h-8 rounded px-3.5 transition-colors cursor-pointer',
+          activeTab === 'manage' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
+        ]"
+        @click="switchTab('manage')"
+      >
+        Quản lý &amp; gửi thông báo
+      </button>
+      <button
+        type="button"
+        :class="[
+          'inline-flex h-8 items-center gap-1.5 rounded px-3.5 transition-colors cursor-pointer',
+          activeTab === 'inbox' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
+        ]"
+        @click="switchTab('inbox')"
+      >
+        <span>Thông báo của tôi</span>
+        <span
+          v-if="unreadCount > 0"
+          :class="[
+            'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none',
+            activeTab === 'inbox' ? 'bg-white text-orange-700' : 'bg-orange-600 text-white',
+          ]"
+        >
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </button>
+    </div>
+
+    <template v-if="activeTab === 'manage'">
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Thống kê thông báo">
       <article
         v-for="stat in stats"
@@ -48,7 +82,12 @@
     <p
       v-if="successMessage"
       role="status"
-      class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+      :class="[
+        'rounded-lg border px-4 py-3 text-sm',
+        statusBannerIsWarning
+          ? 'border-amber-300 bg-amber-50 text-amber-900'
+          : 'border-emerald-300 bg-emerald-50 text-emerald-800',
+      ]"
     >
       {{ successMessage }}
     </p>
@@ -84,6 +123,7 @@
             @change="searchHistory"
           >
             <option value="">Tất cả loại</option>
+            <option value="SPECIAL">Thông báo đặc biệt</option>
             <option value="ANNOUNCEMENT">Thông báo chung</option>
             <option value="SYSTEM">Hệ thống</option>
           </select>
@@ -140,7 +180,10 @@
                     <div class="min-w-0">
                       <p class="truncate font-semibold text-stone-900">{{ item.title }}</p>
                       <p class="mt-1 line-clamp-2 text-xs leading-5 text-stone-500">{{ item.body || 'Không có nội dung chi tiết.' }}</p>
-                      <span class="mt-1 inline-flex rounded border border-stone-300 bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-700">
+                      <span
+                        class="mt-1 inline-flex rounded border px-2 py-0.5 text-[10px] font-semibold"
+                        :class="item.type === 'SPECIAL' ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-stone-300 bg-stone-100 text-stone-700'"
+                      >
                         {{ typeLabel(item.type) }}
                       </span>
                     </div>
@@ -188,6 +231,9 @@
         </div>
       </template>
     </section>
+    </template>
+
+    <NotificationInboxPanel v-else />
 
     <div
       v-if="showCompose"
@@ -238,8 +284,22 @@
               class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
             >
               <option value="ANNOUNCEMENT">Thông báo chung</option>
+              <option value="SPECIAL">Thông báo đặc biệt (giao diện &amp; email cá nhân)</option>
               <option value="SYSTEM">Hệ thống</option>
             </select>
+          </label>
+
+          <label class="flex items-start gap-2.5 rounded-md border border-stone-200 bg-stone-50/70 px-3 py-2.5 cursor-pointer">
+            <input
+              v-model="form.sendEmail"
+              type="checkbox"
+              :disabled="form.type === 'SPECIAL'"
+              class="mt-0.5 h-4 w-4 rounded border-stone-300 accent-orange-600 disabled:cursor-not-allowed"
+            />
+            <span class="text-xs leading-relaxed text-stone-700">
+              <strong class="block text-stone-900">Gửi đồng thời ra email cá nhân người nhận</strong>
+              Tự động bật đối với <em>Thông báo đặc biệt</em>; gửi kèm email cá nhân của phụ huynh / giáo viên (nếu đã có email).
+            </span>
           </label>
 
           <label class="block">
@@ -294,7 +354,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
   ArrowPathIcon,
   BellAlertIcon,
@@ -307,7 +368,32 @@ import {
   UsersIcon,
 } from "@heroicons/vue/24/outline";
 import adminNotificationService from "@/services/admin-notification.service";
+import { useNotificationState } from "@/services/notification-state";
+import NotificationInboxPanel from "@/components/notification/NotificationInboxPanel.vue";
 import { validateTextLength } from "@/utils/validation.helper";
+
+const route = useRoute();
+const router = useRouter();
+const { unreadCount } = useNotificationState();
+
+const activeTab = ref(route.query.tab === "inbox" || route.query.id ? "inbox" : "manage");
+
+function switchTab(tab) {
+  activeTab.value = tab;
+  const nextQuery = tab === "inbox" ? { tab: "inbox" } : {};
+  router.replace({ query: nextQuery });
+}
+
+watch(
+  () => [route.query.tab, route.query.id],
+  ([tab, id]) => {
+    if (tab === "inbox" || id) {
+      activeTab.value = "inbox";
+    } else if (tab === "manage") {
+      activeTab.value = "manage";
+    }
+  }
+);
 
 const pageSize = 20;
 const page = ref(1);
@@ -321,6 +407,7 @@ const loading = ref(false);
 const submitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const statusBannerIsWarning = ref(false);
 const showCompose = ref(false);
 const composeError = ref("");
 const form = ref({
@@ -328,7 +415,17 @@ const form = ref({
   type: "ANNOUNCEMENT",
   title: "",
   body: "",
+  sendEmail: false,
 });
+
+watch(
+  () => form.value.type,
+  (nextType) => {
+    if (nextType === "SPECIAL") {
+      form.value.sendEmail = true;
+    }
+  }
+);
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 const stats = computed(() => [
@@ -425,10 +522,12 @@ async function submitNotification() {
       ...form.value,
       title: form.value.title.trim(),
       body: form.value.body.trim() || null,
+      sendEmail: form.value.type === "SPECIAL" || Boolean(form.value.sendEmail),
     });
+    statusBannerIsWarning.value = result.emailConfigured === false;
     successMessage.value = result.message || "Thông báo đã được đưa vào hàng đợi gửi.";
     showCompose.value = false;
-    form.value = { recipientGroup: "PARENT", type: "ANNOUNCEMENT", title: "", body: "" };
+    form.value = { recipientGroup: "PARENT", type: "ANNOUNCEMENT", title: "", body: "", sendEmail: false };
     page.value = 1;
     appliedKeyword.value = "";
     keyword.value = "";
@@ -448,6 +547,7 @@ function closeCompose() {
 }
 
 function typeLabel(type) {
+  if (type === "SPECIAL") return "Thông báo đặc biệt";
   return type === "ANNOUNCEMENT" ? "Thông báo chung" : type === "SYSTEM" ? "Hệ thống" : type || "Khác";
 }
 

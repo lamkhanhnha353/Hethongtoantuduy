@@ -168,6 +168,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
+import { useNotificationState } from '@/services/notification-state'
 import {
   AcademicCapIcon,
   XMarkIcon,
@@ -251,8 +252,12 @@ function onLeave(el) {
   el.style.height = '0'
 }
 
+const { disconnectRealtime, resetNotificationState } = useNotificationState()
+
 // ─── Logout ──────────────────────────────────────────────────────────────────
-function handleLogout() {
+async function handleLogout() {
+  await disconnectRealtime()
+  resetNotificationState()
   authService.logout()
   router.replace({ name: 'login' })
 }

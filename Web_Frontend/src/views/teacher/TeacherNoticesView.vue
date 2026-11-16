@@ -25,7 +25,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="inline-flex items-center bg-stone-100 border border-stone-300 p-1 rounded-md text-xs font-semibold tabular-nums">
           <button
-            @click="activeTab = 'sent'"
+            @click="switchTab('sent')"
             :class="[
               'h-7 px-3 rounded transition-colors cursor-pointer',
               activeTab === 'sent' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
@@ -34,7 +34,7 @@
             Lịch sử đã gửi ({{ sentList.length }})
           </button>
           <button
-            @click="activeTab = 'center'"
+            @click="switchTab('center')"
             :class="[
               'h-7 px-3 rounded transition-colors cursor-pointer',
               activeTab === 'center' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
@@ -42,13 +42,35 @@
           >
             Thông báo trung tâm
           </button>
+          <button
+            @click="switchTab('inbox')"
+            :class="[
+              'inline-flex items-center gap-1.5 h-7 px-3 rounded transition-colors cursor-pointer',
+              activeTab === 'inbox' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
+            ]"
+          >
+            <span>Thông báo của tôi</span>
+            <span
+              v-if="unreadCount > 0"
+              :class="[
+                'inline-flex min-w-4 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
+                activeTab === 'inbox' ? 'bg-white text-orange-700' : 'bg-orange-600 text-white',
+              ]"
+            >
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+          </button>
         </div>
 
-        <SearchBar v-model="search" placeholder="Tìm kiếm thông báo..." class="max-w-xs" />
+        <SearchBar v-if="activeTab !== 'inbox'" v-model="search" placeholder="Tìm kiếm thông báo..." class="max-w-xs" />
       </div>
     </div>
 
+    <!-- ─── Personal Notification Inbox ──────────────────────────────────── -->
+    <NotificationInboxPanel v-if="activeTab === 'inbox'" />
+
     <!-- ─── Sent Notices List ────────────────────────────────────────────── -->
+    <template v-else>
     <div v-if="filteredList.length === 0" class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-12 text-center">
       <EmptyState
         :icon="EnvelopeIcon"
@@ -97,6 +119,7 @@
         </div>
       </div>
     </div>
+    </template>
 
     <!-- ─── Compose Modal ────────────────────────────────────────────────── -->
     <div
@@ -188,7 +211,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   PaperAirplaneIcon,
   EnvelopeIcon,
@@ -197,9 +221,32 @@ import {
 } from '@heroicons/vue/24/outline'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import NotificationInboxPanel from '@/components/notification/NotificationInboxPanel.vue'
+import { useNotificationState } from '@/services/notification-state'
 import { validateTextLength } from '@/utils/validation.helper'
 
-const activeTab = ref('sent')
+const route = useRoute()
+const router = useRouter()
+const { unreadCount } = useNotificationState()
+
+const activeTab = ref(route.query.tab === 'inbox' || route.query.id ? 'inbox' : 'sent')
+
+function switchTab(tab) {
+  activeTab.value = tab
+  const nextQuery = tab === 'inbox' ? { tab: 'inbox' } : {}
+  router.replace({ query: nextQuery })
+}
+
+watch(
+  () => [route.query.tab, route.query.id],
+  ([tab, id]) => {
+    if (tab === 'inbox' || id) {
+      activeTab.value = 'inbox'
+    } else if (tab === 'sent' || tab === 'center') {
+      activeTab.value = tab
+    }
+  }
+)
 const search = ref('')
 const showComposeModal = ref(false)
 
