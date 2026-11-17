@@ -1,12 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useCallback, useState, type ComponentProps } from 'react';
 import {
   Alert,
-  AppState,
   Modal,
-  Platform,
   Pressable,
   Text,
   TouchableOpacity,
@@ -83,62 +81,7 @@ export function ChatAttachmentPicker({
   disabled: boolean;
   onSelect: (attachment: ChatAttachment) => Promise<void>;
 }) {
-  const handledUrisRef = useRef(new Set<string>());
-  const recoveringRef = useRef(false);
-  const pickerInFlightRef = useRef(false);
   const [sheetVisible, setSheetVisible] = useState(false);
-
-  const sendPickedAsset = useCallback(async (asset: PickedAsset) => {
-    if (handledUrisRef.current.has(asset.uri)) return;
-    handledUrisRef.current.add(asset.uri);
-    await onSelect(toChatAttachment(asset, 'image/jpeg'));
-  }, [onSelect]);
-
-  const recoverImagePickerResult = useCallback(async () => {
-    if (Platform.OS !== 'android' || recoveringRef.current || pickerInFlightRef.current) {
-      return false;
-    }
-
-    recoveringRef.current = true;
-    let result:
-      | ImagePicker.ImagePickerResult
-      | ImagePicker.ImagePickerErrorResult
-      | null;
-    try {
-      result = await ImagePicker.getPendingResultAsync();
-    } catch (error) {
-      Alert.alert('Không thể khôi phục ảnh', toApiError(error).message);
-      return true;
-    } finally {
-      recoveringRef.current = false;
-    }
-
-    if (!result) return false;
-    if ('code' in result) {
-      Alert.alert('Không thể khôi phục ảnh', result.message);
-      return true;
-    }
-    if (result.canceled || !result.assets[0]) return false;
-
-    try {
-      await sendPickedAsset(result.assets[0]);
-    } catch (error) {
-      Alert.alert('Không gửi được ảnh', toApiError(error).message);
-    }
-    return true;
-  }, [sendPickedAsset]);
-
-  useEffect(() => {
-    void recoverImagePickerResult();
-
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        void recoverImagePickerResult();
-      }
-    });
-
-    return () => subscription.remove();
-  }, [recoverImagePickerResult]);
 
   const chooseFromLibrary = useCallback(async () => {
     let permission: ImagePicker.MediaLibraryPermissionResponse;
@@ -153,36 +96,20 @@ export function ChatAttachmentPicker({
       return;
     }
 
-    handledUrisRef.current.clear();
-    pickerInFlightRef.current = true;
-    let result: ImagePicker.ImagePickerResult;
     try {
-      result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        quality: 0.85,
-        ...(Platform.OS === 'ios'
-          ? { preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible }
-          : {}),
+        quality: 0.7,
+        exif: false,
       });
-    } catch (error) {
-      pickerInFlightRef.current = false;
-      const recovered = await recoverImagePickerResult();
-      if (!recovered) {
-        Alert.alert('Không mở được thư viện ảnh', toApiError(error).message);
-      }
-      return;
-    }
 
-    try {
-      if (!result.canceled && result.assets[0]) {
-        await sendPickedAsset(result.assets[0]);
+      if (!result.canceled && result.assets?.[0]) {
+        await onSelect(toChatAttachment(result.assets[0], 'image/jpeg'));
       }
     } catch (error) {
-      Alert.alert('Không gửi được ảnh', toApiError(error).message);
-    } finally {
-      pickerInFlightRef.current = false;
+      Alert.alert('Không mở được thư viện ảnh', toApiError(error).message);
     }
-  }, [recoverImagePickerResult, sendPickedAsset]);
+  }, [onSelect]);
 
   const takePhoto = useCallback(async () => {
     let permission: ImagePicker.CameraPermissionResponse;
@@ -197,44 +124,25 @@ export function ChatAttachmentPicker({
       return;
     }
 
-    handledUrisRef.current.clear();
-    pickerInFlightRef.current = true;
-    let result: ImagePicker.ImagePickerResult;
     try {
-      result = await ImagePicker.launchCameraAsync({
+      const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        quality: 0.7,
+        quality: 0.6,
         allowsEditing: true,
-        ...(Platform.OS === 'ios'
-          ? {
-              preferredAssetRepresentationMode:
-                ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-            }
-          : {}),
+        aspect: [4, 3],
+        exif: false,
       });
-    } catch (error) {
-      pickerInFlightRef.current = false;
-      const recovered = await recoverImagePickerResult();
-      if (!recovered) {
-        Alert.alert('Không mở được máy ảnh', toApiError(error).message);
-      }
-      return;
-    }
 
-    try {
-      if (!result.canceled && result.assets[0]) {
-        await sendPickedAsset(result.assets[0]);
+      if (!result.canceled && result.assets?.[0]) {
+        await onSelect(toChatAttachment(result.assets[0], 'image/jpeg'));
       }
     } catch (error) {
-      Alert.alert('Không gửi được ảnh', toApiError(error).message);
-    } finally {
-      pickerInFlightRef.current = false;
+      Alert.alert('Không thể chụp ảnh', toApiError(error).message);
     }
-  }, [recoverImagePickerResult, sendPickedAsset]);
+  }, [onSelect]);
 
   const chooseDocument = useCallback(async () => {
     try {
-      handledUrisRef.current.clear();
       const result = await DocumentPicker.getDocumentAsync({
         type: [
           'application/pdf',

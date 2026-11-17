@@ -25,7 +25,7 @@ export function ChatMessageItem({
   const textParts = (item.content ?? '').split(/(https?:\/\/[^\s<>()]+)/gi);
 
   function showMessageActions() {
-    if (item.pending) return;
+    if (!isMine || item.pending) return;
     Alert.alert('Xóa tin nhắn', 'Bạn có chắc chắn muốn xóa tin nhắn này không?', [
       { text: 'Hủy', style: 'cancel' },
       {

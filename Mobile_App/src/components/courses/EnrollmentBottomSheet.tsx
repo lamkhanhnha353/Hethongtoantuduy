@@ -86,7 +86,9 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm, onP
         if (studentRes.ok && studentText) studentData = JSON.parse(studentText);
         
         // 2. Lấy danh sách lớp học
-        const classRes = await fetch(`${API_URL}/api/classes/course-level/${course.id}`);
+        const classRes = await fetch(`${API_URL}/api/classes/course-level/${course.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const classText = await classRes.text();
         let classData = [];
         if (classRes.ok && classText) classData = JSON.parse(classText);
@@ -346,10 +348,6 @@ export function EnrollmentBottomSheet({ visible, onClose, course, onConfirm, onP
               ) : classes.map((cls) => {
                 const isSelected = selectedClass === cls.id;
                 const isReservedForSelectedStudent = selectedEnrollment?.classId === cls.id;
-                
-                // --- SỬA LỖI MAPPING SỐ SLOT TRỐNG TẠI ĐÂY ---
-               // Lấy trực tiếp con số đếm từ Backend
-               // Lấy trực tiếp con số đếm từ Backend
                 const activeStudentsCount = cls.activeStudentsCount ?? 0;
 
                 // Tính số lượng Slot còn trống

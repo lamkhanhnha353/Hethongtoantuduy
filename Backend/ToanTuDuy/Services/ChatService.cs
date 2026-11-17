@@ -155,8 +155,16 @@ namespace ToanTuDuy.Services
             int accountId, string role, int conversationId, int messageId,
             CancellationToken cancellationToken = default)
         {
+            var actor = await ResolveActorAsync(accountId, role, cancellationToken);
             var message = await GetAccessibleMessageAsync(
                 accountId, role, conversationId, messageId, cancellationToken);
+
+            if (!string.Equals(message.SenderType, actor.Role, StringComparison.OrdinalIgnoreCase) ||
+                message.SenderId != actor.ProfileId)
+            {
+                throw ApiException.Forbidden("Bạn chỉ có thể thu hồi tin nhắn của chính mình.");
+            }
+
             var conversation = await _context.Conversations
                 .FirstAsync(item => item.Id == conversationId, cancellationToken);
             var otherAccountId = await GetOtherParticipantAccountIdAsync(

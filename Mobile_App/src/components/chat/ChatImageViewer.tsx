@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { File, Paths } from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library/legacy';
+import * as MediaLibrary from 'expo-media-library';
 import { useState } from 'react';
 import {
   Alert,
+  Linking,
   Modal,
   Pressable,
   Text,
@@ -47,9 +48,21 @@ export function ChatImageViewer({
 
     setSavingImage(true);
     try {
-      const permission = await MediaLibrary.requestPermissionsAsync(true, ['photo']);
+      let permission: MediaLibrary.PermissionResponse;
+      try {
+        permission = await MediaLibrary.getPermissionsAsync(false, ['photo']);
+        if (!permission.granted) {
+          permission = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+        }
+      } catch {
+        permission = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+      }
+
       if (!permission.granted) {
-        Alert.alert('Cần quyền truy cập', 'Cho phép ứng dụng lưu ảnh vào thư viện thiết bị.');
+        Alert.alert(
+          'Cần quyền truy cập',
+          'Vui lòng cấp quyền truy cập thư viện để lưu ảnh về thiết bị.',
+        );
         return;
       }
 
@@ -59,13 +72,32 @@ export function ChatImageViewer({
         imageUrl,
         new File(Paths.cache, filename),
       );
-      await MediaLibrary.createAssetAsync(downloadedFile.uri);
+      const localUri = downloadedFile.uri;
+      if (typeof MediaLibrary.saveToLibraryAsync === 'function') {
+        await MediaLibrary.saveToLibraryAsync(localUri);
+      } else {
+        await MediaLibrary.createAssetAsync(localUri);
+      }
       Alert.alert('Đã lưu ảnh', 'Ảnh đã được lưu vào thư viện thiết bị.');
     } catch (error) {
-      Alert.alert(
-        'Không thể lưu ảnh',
-        error instanceof Error ? error.message : 'Vui lòng thử lại sau.',
-      );
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Expo Go') || message.includes('development build')) {
+        Alert.alert(
+          'Giới hạn trên Expo Go',
+          'Do chính sách bảo mật của Android, ứng dụng Expo Go không được phép lưu trực tiếp vào Thư viện ảnh. Bạn có muốn mở ảnh trong trình duyệt để tải về máy không?',
+          [
+            { text: 'Đóng', style: 'cancel' },
+            {
+              text: 'Mở trình duyệt',
+              onPress: () => {
+                if (imageUrl) void Linking.openURL(imageUrl);
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert('Không thể lưu ảnh', message || 'Vui lòng thử lại sau.');
+      }
     } finally {
       setSavingImage(false);
     }

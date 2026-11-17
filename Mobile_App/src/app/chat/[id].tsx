@@ -275,9 +275,24 @@ export default function ChatRoomScreen() {
         disposed ||
         AppState.currentState !== 'active' ||
         !connection ||
-        connection.state !== HubConnectionState.Disconnected ||
         startPromise
       ) {
+        return;
+      }
+
+      if (connection.state === HubConnectionState.Connected) {
+        if (!disposed) setHubConnected(true);
+        return;
+      }
+
+      if (
+        connection.state === HubConnectionState.Connecting ||
+        connection.state === HubConnectionState.Reconnecting
+      ) {
+        return;
+      }
+
+      if (connection.state !== HubConnectionState.Disconnected) {
         return;
       }
 
@@ -324,7 +339,18 @@ export default function ChatRoomScreen() {
         }
       });
       connection.onreconnected(() => {
-        if (!disposed) setHubConnected(true);
+        if (!disposed) {
+          setHubConnected(true);
+          // Tự động đồng bộ tin nhắn mới nhất bị lỡ trong lúc mất kết nối
+          chatService
+            .getMessages(conversationId, 1)
+            .then(({ data }) => {
+              if (!disposed && Array.isArray(data?.data)) {
+                setMessages((current) => data.data.reduce(mergeMessage, current));
+              }
+            })
+            .catch(() => {});
+        }
       });
       connection.onreconnecting(() => {
         if (!disposed) setHubConnected(false);
@@ -339,7 +365,6 @@ export default function ChatRoomScreen() {
     createConnection();
     const appStateSubscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') void startConnection();
-      else setHubConnected(false);
     });
 
     return () => {
