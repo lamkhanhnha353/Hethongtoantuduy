@@ -1,0 +1,32 @@
+KHÓA HỌC: FingerMath
+CẤP ĐỘ: 1
+CHỦ ĐỀ: Cộng trừ cơ bản và tính nhẩm
+
+Câu 1: 2 + 3 = ?
+A. 4
+B. 5
+C. 6
+D. 7
+Đáp án giáo viên: B. 5
+
+Câu 2: 8 - 3 = ?
+A. 4
+B. 5
+C. 6
+D. 3
+Đáp án giáo viên: B. 5
+
+Câu 3: Tính nhẩm theo nhịp: 1, +2, +3. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 6
+
+Câu 4: Điền số còn thiếu: 4 + ___ = 9.
+Đáp án giáo viên: 5
+
+Câu 5: Nhận định sau đúng hay sai: 3 + 4 = 8.
+Đáp án giáo viên: Sai. Vì 3 + 4 = 7.
+
+Câu 6: Nhận định sau đúng hay sai: 6 - 2 = 4.
+Đáp án giáo viên: Đúng.
+
+Câu 7: Tính nhẩm theo nhịp: 5, -2, +1. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 4

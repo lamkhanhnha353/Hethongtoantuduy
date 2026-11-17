@@ -1,4 +1,5 @@
 export type UserRole = 'Parent' | 'Teacher';
+export type AuthRole = UserRole | 'Admin';
 
 export type LoginRequestDto = {
   phone: string;
@@ -14,8 +15,10 @@ export type RegisterRequestDto = {
 export type AuthResponseDto = {
   accessToken: string;
   refreshToken: string;
-  role: UserRole;
+  role: AuthRole;
   profileId: number;
+  email?: string | null;
+  fullName?: string | null;
 };
 export type ChangePasswordRequestDto = {
   currentPassword: string;

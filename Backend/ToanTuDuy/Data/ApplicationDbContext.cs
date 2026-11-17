@@ -14,12 +14,13 @@ namespace ToanTuDuy.Data
         }
 
         // --- User DbSets ---
+        public DbSet<AdminProfile> AdminProfiles { get; set; }
         public DbSet<ParentProfile> ParentProfiles { get; set; }
         public DbSet<StudentProfile> StudentProfiles { get; set; }
         public DbSet<TeacherProfile> TeacherProfiles { get; set; }
-        // ✅ THÊM MỚI
         public DbSet<Notification> Notifications { get; set; }
-        // ✅ THÊM MỚI
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<UserInbox> UserInboxes { get; set; }
         public DbSet<NotificationSetting> NotificationSettings { get; set; }
 
         // Token xác minh email qua liên kết (magic link)
@@ -33,7 +34,10 @@ namespace ToanTuDuy.Data
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
         public DbSet<ClassStudent> ClassStudents { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
-        // ✅ THÊM MỚI
+        public DbSet<TeacherSalaryConfig> TeacherSalaryConfigs { get; set; }
+        public DbSet<SalaryAdjustment> SalaryAdjustments { get; set; }
+        public DbSet<PayrollSummary> PayrollSummaries { get; set; }
+        // THÊM MỚI
         public DbSet<QuestionBank> QuestionBanks { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
@@ -46,18 +50,22 @@ namespace ToanTuDuy.Data
         public DbSet<Badge> Badges { get; set; }
         public DbSet<StudentBadge> StudentBadges { get; set; }
 
+        // THÊM MỚI CHO MODULE CHAT (HUMAN & AI)
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Message> Messages { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Bắt buộc gọi base method của IdentityDbContext
             base.OnModelCreating(modelBuilder);
 
-            // ✅ ĐÃ XÓA: decimal config cho Course.Fee (Fee chuyển sang CourseLevel)
-            // ✅ THÊM MỚI: decimal config cho CourseLevel.Fee
+            //  ĐÃ XÓA: decimal config cho Course.Fee (Fee chuyển sang CourseLevel)
+            //  THÊM MỚI: decimal config cho CourseLevel.Fee
             modelBuilder.Entity<CourseLevel>()
                 .Property(c => c.Fee)
                 .HasColumnType("decimal(10,2)");
 
-            // ✅ ĐỔI KIỂU: Invoice.Amount nay là int, không cần decimal config
+            //  ĐỔI KIỂU: Invoice.Amount nay là int, không cần decimal config
             // (đã xóa config decimal cho Invoice.Amount)
 
             // 1. Ánh xạ Identity User về bảng ACCOUNT
@@ -69,8 +77,8 @@ namespace ToanTuDuy.Data
                 entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             });
 
-            // 2. ✅ ĐÃ XÓA: ClassStudent composite key config (nay có Id riêng)
-            // ✅ ĐÃ XÓA: StudentBadge composite key config (nay có Id riêng)
+            // 2.: ClassStudent composite key config (nay có Id riêng)
+            //  StudentBadge composite key config (nay có Id riêng)
 
             // 3. Cấu hình 1-1 Relationship cho các Profiles (Mỗi AccountId là Unique)
             modelBuilder.Entity<ParentProfile>()
@@ -81,10 +89,102 @@ namespace ToanTuDuy.Data
                 .HasIndex(t => t.AccountId)
                 .IsUnique();
 
+            modelBuilder.Entity<AdminProfile>()
+                .HasIndex(a => a.AccountId)
+                .IsUnique();
+
             // Tra cứu token theo hash khi nhận link xác minh — hash phải là duy nhất.
             modelBuilder.Entity<EmailVerificationToken>()
                 .HasIndex(t => t.TokenHash)
                 .IsUnique();
+
+            modelBuilder.Entity<TeacherSalaryConfig>()
+                .HasIndex(config => config.TeacherId)
+                .IsUnique();
+
+            modelBuilder.Entity<PayrollSummary>()
+                .HasIndex(payroll => new { payroll.TeacherId, payroll.Month, payroll.Year })
+                .IsUnique();
+
+            modelBuilder.Entity<SalaryAdjustment>()
+                .HasIndex(adjustment => new { adjustment.TeacherId, adjustment.AppliedDate });
+
+
+            // MODULE THANH TOÁN (PAYOS) - CẤU HÌNH INVOICE & CLASS_STUDENT
+
+            // Ràng buộc mã đơn hàng VNPay không bao giờ trùng
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => i.TxnRef)
+                .IsUnique();
+
+            // Ràng buộc mã giao dịch Unique (bỏ qua hóa đơn chưa trả tiền/tiền mặt)
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => i.TransactionId)
+                .IsUnique()
+                .HasFilter("[transaction_id] IS NOT NULL");
+
+            // Đảm bảo 1 Hóa đơn chỉ khớp đúng 1 chỗ ngồi
+            modelBuilder.Entity<ClassStudent>()
+                .HasIndex(cs => cs.InvoiceId)
+                .IsUnique()
+                .HasFilter("[invoice_id] IS NOT NULL");
+
+            // Chống đăng ký trùng: 1 bé không thể có 2 ghế ACTIVE/PENDING trong cùng 1 lớp
+            modelBuilder.Entity<ClassStudent>()
+                .HasIndex(cs => new { cs.ClassId, cs.StudentId })
+                .IsUnique()
+                .HasFilter("[status] IN ('ACTIVE', 'PENDING')");
+
+            // Cấu hình quan hệ 1-1 tường minh giữa Invoice và ClassStudent
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.ClassStudent)
+                .WithOne(cs => cs.Invoice)
+                .HasForeignKey<ClassStudent>(cs => cs.InvoiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Thông báo: nội dung dùng chung, mỗi tài khoản có một bản ghi hộp thư riêng.
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasIndex(notification => new { notification.Type, notification.CreatedAt });
+            });
+
+            modelBuilder.Entity<OutboxMessage>(entity =>
+            {
+                entity.HasIndex(message => new { message.Status, message.AvailableAt });
+                entity.HasIndex(message => message.NotificationId).IsUnique();
+                entity.HasOne(message => message.Notification)
+                    .WithMany()
+                    .HasForeignKey(message => message.NotificationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<UserInbox>(entity =>
+            {
+                entity.HasIndex(inbox => new { inbox.AccountId, inbox.IsRead, inbox.CreatedAt });
+                entity.HasIndex(inbox => new { inbox.AccountId, inbox.Type, inbox.CreatedAt });
+                entity.HasIndex(inbox => new { inbox.NotificationId, inbox.AccountId }).IsUnique();
+                entity.HasIndex(inbox => new { inbox.AccountId, inbox.Type, inbox.RefId })
+                    .IsUnique()
+                    .HasFilter("[ref_id] IS NOT NULL");
+                entity.HasOne(inbox => inbox.Notification)
+                    .WithMany(notification => notification.Inboxes)
+                    .HasForeignKey(inbox => inbox.NotificationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(inbox => inbox.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NotificationSetting>(entity =>
+            {
+                entity.HasIndex(setting => new { setting.AccountId, setting.Type }).IsUnique();
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(setting => setting.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             // 4. Giải quyết triệt để lỗi vòng lặp xóa chuỗi (Multiple Cascade Paths)
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()
@@ -95,6 +195,51 @@ namespace ToanTuDuy.Data
             {
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }
+
+
+            // 5. MODULE CHAT (HUMAN & AI SIGNALR) - CẤU HÌNH CONVERSATION & MESSAGE
+            // LƯU Ý: Phải đặt dưới vòng lặp cascadeFKs để bảng Message giữ được quyền Cascade Delete
+
+            modelBuilder.Entity<Conversation>(entity =>
+            {
+                // Ràng buộc không cho xóa Parent/Teacher thì làm mất lịch sử chat
+                entity.HasOne(x => x.Parent)
+                    .WithMany()
+                    .HasForeignKey(x => x.ParentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Teacher)
+                    .WithMany()
+                    .HasForeignKey(x => x.TeacherId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Unique Index 1: Tránh trùng phòng chat HUMAN (1 Phụ huynh + 1 Giáo viên = 1 Phòng)
+                entity.HasIndex(x => new { x.ParentId, x.TeacherId })
+                    .IsUnique()
+                    .HasFilter("[chat_type] = 'HUMAN' AND [teacher_id] IS NOT NULL");
+
+                // Unique Index 2: Tránh trùng phòng chat AI (1 Phụ huynh = 1 Phòng AI)
+                entity.HasIndex(x => x.ParentId)
+                    .IsUnique()
+                    .HasFilter("[chat_type] = 'AI'");
+
+                // Index list hội thoại để load danh sách chat siêu tốc
+                entity.HasIndex(x => new { x.ParentId, x.LastMessageAt });
+                entity.HasIndex(x => new { x.TeacherId, x.LastMessageAt });
+            });
+
+            modelBuilder.Entity<Message>(entity =>
+            {
+                // Khi xóa phòng chat thì toàn bộ tin nhắn bên trong bị xóa theo
+                entity.HasOne(x => x.Conversation)
+                    .WithMany(c => c.Messages)
+                    .HasForeignKey(x => x.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Đánh index để tăng tốc độ load tin nhắn theo thời gian
+                entity.HasIndex(x => new { x.ConversationId, x.CreatedAt });
+            });
+
         }
     }
 }

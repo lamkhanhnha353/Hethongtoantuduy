@@ -14,13 +14,18 @@ export async function login(payload: LoginRequestDto): Promise<AuthResponseDto> 
   return data;
 }
 
+export async function googleLogin(idToken: string): Promise<AuthResponseDto> {
+  const { data } = await apiClient.post<AuthResponseDto>('/api/auth/google-login', { idToken });
+  return data;
+}
+
 export async function register(payload: RegisterRequestDto): Promise<AuthResponseDto> {
   const { data } = await apiClient.post<AuthResponseDto>('/api/auth/register', payload);
   return data;
 }
 
 export async function changePassword(
-  payload: ChangePasswordRequestDto,
+payload: ChangePasswordRequestDto,
 ): Promise<ChangePasswordResponseDto> {
   const { data } = await apiClient.post<ChangePasswordResponseDto>(
     '/api/auth/change-password',

@@ -41,7 +41,9 @@ namespace ToanTuDuy.Services.Storage
         }
 
         private Cloudinary Client =>
-            _cloudinary ?? throw new ApiException(503, "Chức năng tải ảnh chưa được cấu hình trên máy chủ.");
+            _cloudinary ?? throw new ApiException(
+                503,
+                "Chức năng tải ảnh chưa được cấu hình trên máy chủ. Hãy cấu hình Cloudinary:CloudName, Cloudinary:ApiKey và Cloudinary:ApiSecret.");
 
         public async Task<string> UploadAsync(
             Stream content,
@@ -75,16 +77,29 @@ namespace ToanTuDuy.Services.Storage
             var publicId = ExtractPublicId(imageUrl);
             if (string.IsNullOrEmpty(publicId))
             {
+                _logger.LogWarning("Không thể xác định public_id để xóa avatar Cloudinary từ URL: {Url}", imageUrl);
                 return;
             }
 
-            var result = await Client.DestroyAsync(new DeletionParams(publicId));
+            var result = await Client.DestroyAsync(new DeletionParams(publicId)
+            {
+                Invalidate = true,
+            });
 
             if (result.Error is not null)
             {
-                _logger.LogWarning("Cloudinary xóa ảnh lỗi ({PublicId}): {Message}",
-                    publicId, result.Error.Message);
+                throw new InvalidOperationException(
+                    $"Cloudinary không xóa được ảnh {publicId}: {result.Error.Message}");
             }
+
+            if (!string.Equals(result.Result, "ok", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(result.Result, "not found", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Cloudinary trả về trạng thái xóa không thành công cho ảnh {publicId}: {result.Result ?? "không rõ"}.");
+            }
+
+            _logger.LogInformation("Đã xóa avatar cũ khỏi Cloudinary: {PublicId}", publicId);
         }
 
         /// <summary>

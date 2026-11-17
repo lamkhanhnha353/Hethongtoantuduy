@@ -7,14 +7,17 @@ namespace ToanTuDuy.Services
     {
         // CRUD Phụ huynh
         Task<IEnumerable<ParentResponseDto>> GetAllParentsAsync(string? keyword = null);
+        Task<PagedResult<ParentResponseDto>> GetPagedParentsAsync(int page = 1, int pageSize = PaginationDefaults.DefaultPageSize, string? keyword = null, bool? isActive = null);
         Task<ParentResponseDto?> GetParentByIdAsync(int id);
         Task<ParentResponseDto> CreateParentAsync(CreateParentDto dto);
         Task<bool> UpdateParentAsync(int id, UpdateParentDto dto);
+        Task<bool> UpdateParentStatusAsync(int id, bool isActive);
         Task<bool> UpdateParentEmailAsync(int id, string email);
         Task<bool> DeleteParentAsync(int id);
 
         // CRUD Học sinh
         Task<IEnumerable<StudentResponseDto>> GetAllStudentsAsync(string? keyword = null, int? parentAccountId = null);
+        Task<PagedResult<StudentResponseDto>> GetPagedStudentsAsync(int page = 1, int pageSize = PaginationDefaults.DefaultPageSize, string? keyword = null, int? parentAccountId = null);
         Task<StudentResponseDto?> GetStudentByIdAsync(int id);
         Task<StudentResponseDto> CreateStudentAsync(CreateStudentDto dto);
         Task<bool> UpdateStudentAsync(int id, UpdateStudentDto dto);

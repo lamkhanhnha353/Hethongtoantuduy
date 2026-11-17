@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Resend;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
+using ToanTuDuy.Services.Email;
 
 namespace ToanTuDuy.Services
 {
@@ -20,18 +20,18 @@ namespace ToanTuDuy.Services
     public class PasswordResetService : IPasswordResetService
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IResend _resend;
+        private readonly IEmailDeliveryService _emailDeliveryService;
         private readonly PasswordResetSettings _settings;
         private readonly ILogger<PasswordResetService> _logger;
 
         public PasswordResetService(
             UserManager<ApplicationUser> userManager,
-            IResend resend,
+            IEmailDeliveryService emailDeliveryService,
             IOptions<PasswordResetSettings> settings,
             ILogger<PasswordResetService> logger)
         {
             _userManager = userManager;
-            _resend = resend;
+            _emailDeliveryService = emailDeliveryService;
             _settings = settings.Value;
             _logger = logger;
         }
@@ -104,6 +104,57 @@ namespace ToanTuDuy.Services
             };
         }
 
+        public async Task<ForgotPasswordResponse> ResetPasswordForAdminAsync(int accountId)
+        {
+            var user = await _userManager.FindByIdAsync(accountId.ToString());
+            if (user == null)
+            {
+                throw ApiException.NotFound("Không tìm thấy tài khoản.");
+            }
+
+            if (user.Role != "Teacher" && user.Role != "Parent")
+            {
+                throw ApiException.BadRequest("Chỉ hỗ trợ đặt lại mật khẩu cho tài khoản Giáo viên hoặc Phụ huynh.");
+            }
+
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                throw ApiException.BadRequest("Tài khoản chưa có email để nhận mật khẩu tạm.");
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                throw ApiException.BadRequest("Email tài khoản chưa được xác minh; không thể gửi mật khẩu tạm.");
+            }
+
+            var tempPassword = GenerateTempPassword(_settings.TempPasswordLength);
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, tempPassword);
+
+            if (!resetResult.Succeeded)
+            {
+                var errors = string.Join("; ", resetResult.Errors.Select(error => error.Description));
+                throw ApiException.BadRequest($"Không thể đặt lại mật khẩu: {errors}");
+            }
+
+            user.RefreshToken = null;
+            user.PasswordResetSentAt = DateTime.UtcNow;
+
+            var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+            if (!stampResult.Succeeded)
+            {
+                var errors = string.Join("; ", stampResult.Errors.Select(error => error.Description));
+                throw ApiException.BadRequest($"Không thể thu hồi phiên đăng nhập: {errors}");
+            }
+
+            await SendEmailAsync(user.Email, tempPassword, throwOnFailure: true);
+
+            return new ForgotPasswordResponse
+            {
+                Message = "Đã đặt lại mật khẩu và gửi mật khẩu tạm đến email đã xác minh của tài khoản."
+            };
+        }
+
         private static string GenerateTempPassword(int length)
         {
             // Bỏ chữ dễ nhầm (I, O, l, 0, 1) để người dùng gõ lại cho đúng.
@@ -141,26 +192,28 @@ namespace ToanTuDuy.Services
             return new string(chars);
         }
 
-        private async Task SendEmailAsync(string email, string tempPassword)
+        private async Task SendEmailAsync(string email, string tempPassword, bool throwOnFailure = false)
         {
             try
             {
-                var message = new EmailMessage
-                {
-                    From = _settings.FromEmail,
-                    Subject = "Mật khẩu tạm của bạn — Hệ thống Toán Tư Duy",
-                    TextBody = BuildTextBody(tempPassword),
-                    HtmlBody = BuildHtmlBody(tempPassword),
-                };
-                message.To.Add(email);
-
-                await _resend.EmailSendAsync(message);
+                await _emailDeliveryService.SendAsync(new EmailDeliveryMessage(
+                    email,
+                    "Mật khẩu tạm của bạn — Hệ thống Toán Tư Duy",
+                    BuildTextBody(tempPassword),
+                    BuildHtmlBody(tempPassword),
+                    _settings.FromEmail));
                 _logger.LogInformation("Đã gửi mật khẩu tạm tới {Email}.", email);
             }
             catch (Exception ex)
             {
                 // Không làm hỏng luồng chính vì lỗi gửi mail (giống EmailVerificationService).
-                _logger.LogWarning(ex, "Không gửi được email mật khẩu tạm tới {Email} qua Resend.", email);
+                _logger.LogWarning(ex, "Không gửi được email mật khẩu tạm tới {Email}.", email);
+                if (throwOnFailure)
+                {
+                    throw new ApiException(
+                        502,
+                        "Mật khẩu đã được đặt lại nhưng không gửi được email. Vui lòng thử lại thao tác hoặc liên hệ quản trị hệ thống.");
+                }
             }
         }
 

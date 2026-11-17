@@ -3,14 +3,17 @@
     "name": "Mobile_App",
     "slug": "Mobile_App",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobileapp",
+    "scheme": "toantuduy",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.beckham205.Mobile_App",
+      "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -18,7 +21,13 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.beckham205.Mobile_App"
+      "package": "com.beckham205.Mobile_App",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -39,8 +48,24 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Ứng dụng cần quyền truy cập thư viện ảnh để chọn ảnh đại diện cho bé.",
+          "photosPermission": "Ứng dụng cần quyền truy cập thư viện ảnh để chọn ảnh đại diện hoặc gửi ảnh trong tin nhắn.",
+          "cameraPermission": "Ứng dụng cần quyền sử dụng máy ảnh để chụp và gửi ảnh trong tin nhắn.",
           "microphonePermission": false
+        }
+      ],
+      "expo-web-browser",
+      "expo-video",
+      "expo-asset",
+      "expo-audio",
+      "expo-image",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Ứng dụng cần quyền lưu ảnh đã tải từ cuộc trò chuyện.",
+          "savePhotosPermission": "Ứng dụng cần quyền lưu ảnh đã tải từ cuộc trò chuyện.",
+          "granularPermissions": [
+            "photo"
+          ]
         }
       ]
     ],
@@ -53,6 +78,12 @@
       "eas": {
         "projectId": "05845a13-8f40-4f3b-946e-e4bd1011ce00"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/05845a13-8f40-4f3b-946e-e4bd1011ce00"
     }
   }
 }

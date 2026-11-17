@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-orange-50 overflow-hidden">
+  <div class="flex h-screen bg-stone-50 overflow-hidden">
     <!-- Mobile overlay -->
     <transition name="fade">
       <div

@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import { AlertBanner } from '@/components/AlertBanner';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { ProfileSubpageHeader } from '@/components/profile/ProfileSubpageHeader';
 import { useChangePasswordMutation } from '@/hooks/useAuthMutations';
 import { toApiError } from '@/services/apiError';
 import { validateChangePassword, type ChangePasswordFieldErrors } from '@/validations';
@@ -83,26 +84,16 @@ export default function ScreenChangePassword() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top', 'bottom']}>
+      <ProfileSubpageHeader title="Đổi mật khẩu" onBack={() => router.back()} />
       <KeyboardAwareScrollView
         className="flex-1"
-        contentContainerClassName="flex-grow px-6 py-8"
+        contentContainerClassName="flex-grow px-6 py-6"
         enableOnAndroid
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
-          accessibilityLabel="Quay lại trang cá nhân"
-          accessibilityRole="button"
-          className="mb-6 self-start"
-          hitSlop={8}
-          onPress={() => router.back()}
-        >
-          <Text className="text-sm font-semibold text-sky-700">← Quay lại</Text>
-        </TouchableOpacity>
-
         <View className="mb-6">
-          <Text className="text-3xl font-bold text-slate-900">Đổi mật khẩu</Text>
-          <Text className="mt-2 text-sm leading-5 text-slate-600">
+          <Text className="text-sm leading-5 text-slate-600">
             Nhập mật khẩu hiện tại để xác minh, sau đó đặt mật khẩu mới cho tài khoản.
           </Text>
         </View>

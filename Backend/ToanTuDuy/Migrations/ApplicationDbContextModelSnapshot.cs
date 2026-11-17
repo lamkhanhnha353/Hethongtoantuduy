@@ -155,6 +155,40 @@ namespace ToanTuDuy.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int")
+                        .HasColumnName("account_id");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("avatar");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("full_name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
+                    b.ToTable("ADMIN_PROFILE");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.ApplicationUser", b =>
                 {
                     b.Property<int>("Id")
@@ -208,6 +242,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("password_reset_sent_at");
 
+                    b.Property<string>("PendingEmail")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("pending_email");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("phone");
@@ -256,13 +294,13 @@ namespace ToanTuDuy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClassId")
-                        .HasColumnType("int")
-                        .HasColumnName("class_id");
-
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("datetime2")
                         .HasColumnName("deadline");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("int")
+                        .HasColumnName("lesson_id");
 
                     b.Property<int?>("MaxAttempt")
                         .HasColumnType("int")
@@ -292,7 +330,7 @@ namespace ToanTuDuy.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClassId");
+                    b.HasIndex("LessonId");
 
                     b.ToTable("ASSIGNMENT");
                 });
@@ -426,11 +464,16 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("class_id");
 
+                    b.Property<int?>("InvoiceId")
+                        .HasColumnType("int")
+                        .HasColumnName("invoice_id");
+
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("joined_at");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
@@ -440,9 +483,15 @@ namespace ToanTuDuy.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClassId");
+                    b.HasIndex("InvoiceId")
+                        .IsUnique()
+                        .HasFilter("[invoice_id] IS NOT NULL");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("ClassId", "StudentId")
+                        .IsUnique()
+                        .HasFilter("[status] IN ('ACTIVE', 'PENDING')");
 
                     b.ToTable("CLASS_STUDENT");
                 });
@@ -503,6 +552,59 @@ namespace ToanTuDuy.Migrations
                     b.ToTable("CLASSES");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.Conversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChatType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("chat_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("LastMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("last_message");
+
+                    b.Property<DateTime>("LastMessageAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("last_message_at");
+
+                    b.Property<int>("ParentId")
+                        .HasColumnType("int")
+                        .HasColumnName("parent_id");
+
+                    b.Property<int?>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId")
+                        .IsUnique()
+                        .HasFilter("[chat_type] = 'AI'");
+
+                    b.HasIndex("ParentId", "LastMessageAt");
+
+                    b.HasIndex("ParentId", "TeacherId")
+                        .IsUnique()
+                        .HasFilter("[chat_type] = 'HUMAN' AND [teacher_id] IS NOT NULL");
+
+                    b.HasIndex("TeacherId", "LastMessageAt");
+
+                    b.ToTable("CONVERSATION");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.Course", b =>
                 {
                     b.Property<int>("Id")
@@ -511,6 +613,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnName("id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Benefits")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("benefits");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -524,6 +630,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
+
+                    b.Property<string>("FacilityImages")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("facility_images");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)")
@@ -542,6 +652,14 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
+                    b.Property<double>("Rating")
+                        .HasColumnType("float")
+                        .HasColumnName("rating");
+
+                    b.Property<int>("Reviews")
+                        .HasColumnType("int")
+                        .HasColumnName("reviews");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -550,6 +668,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
+
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("video_url");
 
                     b.HasKey("Id");
 
@@ -578,6 +700,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Faqs")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("faqs");
+
                     b.Property<decimal>("Fee")
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("fee");
@@ -595,6 +721,10 @@ namespace ToanTuDuy.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
+
+                    b.Property<string>("Syllabus")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("syllabus");
 
                     b.Property<int>("TotalSessions")
                         .HasColumnType("int")
@@ -671,13 +801,25 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("amount");
 
+                    b.Property<string>("CheckoutUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("checkout_url");
+
                     b.Property<int>("ClassId")
                         .HasColumnType("int")
                         .HasColumnName("class_id");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("expired_at");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("paid_at");
 
                     b.Property<int>("ParentId")
                         .HasColumnType("int")
@@ -686,6 +828,10 @@ namespace ToanTuDuy.Migrations
                     b.Property<string>("PaymentMethod")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("payment_method");
+
+                    b.Property<string>("QrCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("qr_code");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -697,8 +843,14 @@ namespace ToanTuDuy.Migrations
                         .HasColumnName("student_id");
 
                     b.Property<string>("TransactionId")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("transaction_id");
+
+                    b.Property<string>("TxnRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("txn_ref");
 
                     b.HasKey("Id");
 
@@ -707,6 +859,13 @@ namespace ToanTuDuy.Migrations
                     b.HasIndex("ParentId");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("TransactionId")
+                        .IsUnique()
+                        .HasFilter("[transaction_id] IS NOT NULL");
+
+                    b.HasIndex("TxnRef")
+                        .IsUnique();
 
                     b.ToTable("INVOICE");
                 });
@@ -784,6 +943,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("title");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClassId");
@@ -791,7 +954,7 @@ namespace ToanTuDuy.Migrations
                     b.ToTable("LESSON");
                 });
 
-            modelBuilder.Entity("ToanTuDuy.Models.Notification", b =>
+            modelBuilder.Entity("ToanTuDuy.Models.Message", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -800,9 +963,17 @@ namespace ToanTuDuy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Body")
+                    b.Property<string>("AttachmentUrl")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("body");
+                        .HasColumnName("attachment_url");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("content");
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int")
+                        .HasColumnName("conversation_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
@@ -812,56 +983,161 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_read");
 
-                    b.Property<int>("ParentId")
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("message_type");
+
+                    b.Property<int?>("SenderId")
                         .HasColumnType("int")
-                        .HasColumnName("parent_id");
+                        .HasColumnName("sender_id");
+
+                    b.Property<string>("SenderType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("sender_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "CreatedAt");
+
+                    b.ToTable("MESSAGE");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Notification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<int?>("CreatedByAccountId")
+                        .HasColumnType("int")
+                        .HasColumnName("created_by_account_id");
 
                     b.Property<string>("RefId")
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("ref_id");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
                         .HasColumnName("title");
 
                     b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
                         .HasColumnName("type");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("Type", "CreatedAt");
 
                     b.ToTable("NOTIFICATION");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.NotificationSetting", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int")
+                        .HasColumnName("account_id");
 
                     b.Property<bool>("Enabled")
                         .HasColumnType("bit")
                         .HasColumnName("enabled");
 
-                    b.Property<int>("ParentId")
-                        .HasColumnType("int")
-                        .HasColumnName("parent_id");
-
                     b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
                         .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("AccountId", "Type")
+                        .IsUnique();
 
                     b.ToTable("NOTIFICATION_SETTING");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.OutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("AudienceSpec")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("audience_spec");
+
+                    b.Property<DateTimeOffset>("AvailableAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("available_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<long>("NotificationId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("notification_id");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("processed_at");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationId")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "AvailableAt");
+
+                    b.ToTable("OUTBOX");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.ParentProfile", b =>
@@ -901,6 +1177,70 @@ namespace ToanTuDuy.Migrations
                         .IsUnique();
 
                     b.ToTable("PARENT_PROFILE");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.PayrollSummary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BaseSalary")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("base_salary");
+
+                    b.Property<string>("EmailErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("email_error_message");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("email_sent_at");
+
+                    b.Property<string>("EmailStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("email_status");
+
+                    b.Property<decimal>("FinalSalary")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("final_salary");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("month");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.Property<decimal>("TotalBonus")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_bonus");
+
+                    b.Property<decimal>("TotalPenalty")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_penalty");
+
+                    b.Property<int>("TotalValidSessions")
+                        .HasColumnType("int")
+                        .HasColumnName("total_valid_sessions");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("year");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId", "Month", "Year")
+                        .IsUnique();
+
+                    b.ToTable("PAYROLL_SUMMARY");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Question", b =>
@@ -1008,6 +1348,46 @@ namespace ToanTuDuy.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("QUESTION_BANK");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.SalaryAdjustment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateOnly>("AppliedDate")
+                        .HasColumnType("date")
+                        .HasColumnName("applied_date");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId", "AppliedDate");
+
+                    b.ToTable("SALARY_ADJUSTMENT");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.StudentAssignment", b =>
@@ -1149,6 +1529,10 @@ namespace ToanTuDuy.Migrations
                         .HasColumnType("int")
                         .HasColumnName("account_id");
 
+                    b.Property<string>("Avatar")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("avatar");
+
                     b.Property<string>("CreatedAt")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("created_at");
@@ -1172,6 +1556,87 @@ namespace ToanTuDuy.Migrations
                         .IsUnique();
 
                     b.ToTable("TEACHER_PROFILE");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.TeacherSalaryConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BaseRatePerSession")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("base_rate_per_session");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int")
+                        .HasColumnName("teacher_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId")
+                        .IsUnique();
+
+                    b.ToTable("TEACHER_SALARY_CONFIG");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.UserInbox", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_read");
+
+                    b.Property<long>("NotificationId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("notification_id");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("RefId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)")
+                        .HasColumnName("ref_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationId", "AccountId")
+                        .IsUnique();
+
+                    b.HasIndex("AccountId", "IsRead", "CreatedAt");
+
+                    b.HasIndex("AccountId", "Type", "CreatedAt");
+
+                    b.HasIndex("AccountId", "Type", "RefId")
+                        .IsUnique()
+                        .HasFilter("[ref_id] IS NOT NULL");
+
+                    b.ToTable("USER_INBOX");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -1225,15 +1690,26 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ToanTuDuy.Models.Assignment", b =>
+            modelBuilder.Entity("ToanTuDuy.Models.AdminProfile", b =>
                 {
-                    b.HasOne("ToanTuDuy.Models.Classes", "Class")
-                        .WithMany("Assignments")
-                        .HasForeignKey("ClassId")
+                    b.HasOne("ToanTuDuy.Models.ApplicationUser", "Account")
+                        .WithOne("AdminProfile")
+                        .HasForeignKey("ToanTuDuy.Models.AdminProfile", "AccountId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Class");
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Assignment", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.Lesson", "Lesson")
+                        .WithMany("Assignments")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Attendance", b =>
@@ -1274,6 +1750,11 @@ namespace ToanTuDuy.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ToanTuDuy.Models.Invoice", "Invoice")
+                        .WithOne("ClassStudent")
+                        .HasForeignKey("ToanTuDuy.Models.ClassStudent", "InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ToanTuDuy.Models.StudentProfile", "Student")
                         .WithMany("ClassStudents")
                         .HasForeignKey("StudentId")
@@ -1281,6 +1762,8 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Class");
+
+                    b.Navigation("Invoice");
 
                     b.Navigation("Student");
                 });
@@ -1298,6 +1781,24 @@ namespace ToanTuDuy.Migrations
                         .HasForeignKey("TeacherId");
 
                     b.Navigation("CourseLevel");
+
+                    b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Conversation", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.ParentProfile", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
 
                     b.Navigation("Teacher");
                 });
@@ -1381,26 +1882,35 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Class");
                 });
 
-            modelBuilder.Entity("ToanTuDuy.Models.Notification", b =>
+            modelBuilder.Entity("ToanTuDuy.Models.Message", b =>
                 {
-                    b.HasOne("ToanTuDuy.Models.ParentProfile", "Parent")
-                        .WithMany("Notifications")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("ToanTuDuy.Models.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Parent");
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.NotificationSetting", b =>
                 {
-                    b.HasOne("ToanTuDuy.Models.ParentProfile", "Parent")
-                        .WithMany("NotificationSettings")
-                        .HasForeignKey("ParentId")
+                    b.HasOne("ToanTuDuy.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.OutboxMessage", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.Notification", "Notification")
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Parent");
+                    b.Navigation("Notification");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.ParentProfile", b =>
@@ -1412,6 +1922,17 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.PayrollSummary", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Question", b =>
@@ -1453,6 +1974,17 @@ namespace ToanTuDuy.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.SalaryAdjustment", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.StudentAssignment", b =>
@@ -1515,8 +2047,38 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.TeacherSalaryConfig", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.TeacherProfile", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.UserInbox", b =>
+                {
+                    b.HasOne("ToanTuDuy.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ToanTuDuy.Models.Notification", "Notification")
+                        .WithMany("Inboxes")
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Notification");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("AdminProfile");
+
                     b.Navigation("ParentProfile")
                         .IsRequired();
 
@@ -1538,8 +2100,6 @@ namespace ToanTuDuy.Migrations
 
             modelBuilder.Entity("ToanTuDuy.Models.Classes", b =>
                 {
-                    b.Navigation("Assignments");
-
                     b.Navigation("ClassSchedules");
 
                     b.Navigation("ClassStudents");
@@ -1547,6 +2107,11 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Invoices");
 
                     b.Navigation("Lessons");
+                });
+
+            modelBuilder.Entity("ToanTuDuy.Models.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("ToanTuDuy.Models.Course", b =>
@@ -1561,20 +2126,28 @@ namespace ToanTuDuy.Migrations
                     b.Navigation("Classes");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.Invoice", b =>
+                {
+                    b.Navigation("ClassStudent");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.Lesson", b =>
                 {
+                    b.Navigation("Assignments");
+
                     b.Navigation("Attendances");
 
                     b.Navigation("LeaveRequests");
                 });
 
+            modelBuilder.Entity("ToanTuDuy.Models.Notification", b =>
+                {
+                    b.Navigation("Inboxes");
+                });
+
             modelBuilder.Entity("ToanTuDuy.Models.ParentProfile", b =>
                 {
                     b.Navigation("Invoices");
-
-                    b.Navigation("NotificationSettings");
-
-                    b.Navigation("Notifications");
 
                     b.Navigation("StudentProfiles");
                 });

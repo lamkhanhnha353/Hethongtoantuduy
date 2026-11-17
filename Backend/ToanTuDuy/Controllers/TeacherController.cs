@@ -8,6 +8,7 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    
     public class TeachersController : ControllerBase
     {
         private readonly ITeacherService _teacherService;
@@ -23,6 +24,17 @@ namespace ToanTuDuy.Controllers
             return Ok(await _teacherService.GetAllAsync(keyword));
         }
 
+        [HttpGet("paged")]
+        [ProducesResponseType(typeof(PagedResult<TeacherResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<TeacherResponseDto>>> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] bool? isActive = null)
+        {
+            return Ok(await _teacherService.GetPagedAsync(page, pageSize, keyword, isActive));
+        }
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -32,6 +44,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        // [AllowAnonymous]
         public async Task<IActionResult> Create([FromBody] CreateTeacherDto dto)
         {
             try
@@ -51,6 +64,15 @@ namespace ToanTuDuy.Controllers
             var success = await _teacherService.UpdateAsync(id, dto);
             if (!success) return NotFound(new { message = "Cập nhật thất bại." });
             return Ok(new { message = "Cập nhật thông tin giáo viên thành công." });
+        }
+
+        [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTeacherStatusDto dto)
+        {
+            var success = await _teacherService.UpdateStatusAsync(id, dto.IsActive!.Value);
+            if (!success) return NotFound(new { message = "Không tìm thấy giáo viên." });
+            return Ok(new { message = "Cập nhật trạng thái giáo viên thành công.", dto.IsActive });
         }
 
         [HttpDelete("{id:int}")]

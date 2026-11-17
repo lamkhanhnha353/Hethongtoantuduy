@@ -1,4 +1,5 @@
 @ToanTuDuy_HostAddress = http://localhost:5114
+@parentToken = PASTE_PARENT_ACCESS_TOKEN
 
 ### Đăng ký tài khoản Parent
 POST {{ToanTuDuy_HostAddress}}/api/auth/register
@@ -30,4 +31,75 @@ Content-Type: application/json
 {
   "phone": "0987654321",
   "password": "Password123!"
+}
+
+### Tạo notification test (cần token Parent, chỉ chạy ở Development)
+POST {{ToanTuDuy_HostAddress}}/api/notifications/test
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{
+  "title": "Thông báo test",
+  "body": "Nội dung test",
+  "type": "SYSTEM"
+}
+### Đăng nhập bằng Google (thay bằng ID token lấy từ Google Identity Services)
+POST {{ToanTuDuy_HostAddress}}/api/auth/google-login
+Content-Type: application/json
+
+{
+  "idToken": "GOOGLE_ID_TOKEN"
+}
+
+### Lương tháng (Admin)
+GET {{ToanTuDuy_HostAddress}}/api/payrolls/admin/summary?month=11&year=2026
+Authorization: Bearer {{adminToken}}
+
+### Chi tiết lương giáo viên
+GET {{ToanTuDuy_HostAddress}}/api/payrolls/detail?teacherId=1&month=11&year=2026
+Authorization: Bearer {{teacherToken}}
+
+### Cấu hình lương cơ bản theo buổi (Admin)
+PUT {{ToanTuDuy_HostAddress}}/api/payrolls/teachers/1/base-rate
+Authorization: ******
+Content-Type: application/json
+
+{
+  "baseRatePerSession": 250000
+}
+
+### Thêm khoản thưởng
+POST {{ToanTuDuy_HostAddress}}/api/payrolls/adjustments
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "teacherId": 1,
+  "type": "Bonus",
+  "amount": 500000,
+  "reason": "Thưởng hoàn thành kế hoạch tháng",
+  "appliedDate": "2026-11-30"
+}
+
+### Xem trước email phiếu lương (Admin)
+GET {{ToanTuDuy_HostAddress}}/api/payrolls/1/preview-email
+Authorization: Bearer {{adminToken}}
+
+### Gửi email phiếu lương nền (Admin)
+POST {{ToanTuDuy_HostAddress}}/api/payrolls/1/send-email
+Authorization: Bearer {{adminToken}}
+
+### Gửi email phiếu lương hàng loạt (Admin)
+POST {{ToanTuDuy_HostAddress}}/api/payrolls/send-batch-emails?month=11&year=2026
+Authorization: Bearer {{adminToken}}
+
+### Tạo notification test (cần token Parent, chỉ chạy ở Development)
+POST {{ToanTuDuy_HostAddress}}/api/notifications/test
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{
+  "title": "Thông báo test",
+  "body": "Nội dung test",
+  "type": "SYSTEM"
 }

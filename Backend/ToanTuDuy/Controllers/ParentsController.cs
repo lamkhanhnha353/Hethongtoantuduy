@@ -8,6 +8,8 @@ namespace ToanTuDuy.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [AllowAnonymous] // Bỏ qua kiểm tra Token
+
     public class ParentsController : ControllerBase
     {
         private readonly IParentStudentService _service;
@@ -21,6 +23,34 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? keyword)
         {
             return Ok(await _service.GetAllParentsAsync(keyword));
+        }
+
+        [HttpGet("paged")]
+        [ProducesResponseType(typeof(PagedResult<ParentResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<ParentResponseDto>>> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] bool? isActive = null)
+        {
+            return Ok(await _service.GetPagedParentsAsync(page, pageSize, keyword, isActive));
+        }
+
+        [HttpGet("students")]
+        public async Task<IActionResult> GetAllStudents([FromQuery] string? keyword)
+        {
+            return Ok(await _service.GetAllStudentsAsync(keyword));
+        }
+
+        [HttpGet("students/paged")]
+        [ProducesResponseType(typeof(PagedResult<StudentResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<StudentResponseDto>>> GetStudentsPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] int? parentAccountId = null)
+        {
+            return Ok(await _service.GetPagedStudentsAsync(page, pageSize, keyword, parentAccountId));
         }
 
         [HttpGet("{id:int}")]
@@ -51,6 +81,15 @@ namespace ToanTuDuy.Controllers
             var success = await _service.UpdateParentAsync(id, dto);
             if (!success) return NotFound(new { message = "Cập nhật thất bại." });
             return Ok(new { message = "Cập nhật thông tin phụ huynh thành công." });
+        }
+
+        [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateParentStatusDto dto)
+        {
+            var success = await _service.UpdateParentStatusAsync(id, dto.IsActive!.Value);
+            if (!success) return NotFound(new { message = "Không tìm thấy phụ huynh." });
+            return Ok(new { message = "Cập nhật trạng thái phụ huynh thành công.", dto.IsActive });
         }
 
         [HttpPut("{id:int}/email")]

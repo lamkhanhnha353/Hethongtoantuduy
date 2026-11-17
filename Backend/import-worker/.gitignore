@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/images/*
+!storage/images/.gitkeep
+.DS_Store
+Thumbs.db

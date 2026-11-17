@@ -3,21 +3,25 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
+using StackExchange.Redis;
 using System.Security.Claims;
 using System.Text;
 using ToanTuDuy.Data;
+using ToanTuDuy.Hubs;
 using ToanTuDuy.Middleware;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Email;
+using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Services.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddSignalR(); // Chat
 builder.Services.AddOpenApi();
-
 // Global exception handling: map mọi exception về envelope { code, message, details? }
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -62,15 +66,84 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimTypes.NameIdentifier,
             ClockSkew = TimeSpan.Zero,
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = messageContext =>
+            {
+                // SignalR sends JWT in the query string when WebSocket headers are unavailable.
+                var accessToken = messageContext.Request.Query["access_token"];
+                var path = messageContext.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    (path.StartsWithSegments("/chathub") ||
+                     path.StartsWithSegments("/hubs/notifications")))
+                {
+                    messageContext.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = async validationContext =>
+            {
+                var accountId = validationContext.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+                var tokenSecurityStamp = validationContext.Principal?
+                    .FindFirstValue(AuthService.SecurityStampClaimType);
+
+                if (!int.TryParse(accountId, out var parsedAccountId) ||
+                    string.IsNullOrWhiteSpace(tokenSecurityStamp))
+                {
+                    validationContext.Fail("Phiên đăng nhập không hợp lệ.");
+                    return;
+                }
+
+                var dbContext = validationContext.HttpContext.RequestServices
+                    .GetRequiredService<ApplicationDbContext>();
+                var account = await dbContext.Users
+                    .AsNoTracking()
+                    .Where(user => user.Id == parsedAccountId)
+                    .Select(user => new { user.IsActive, user.SecurityStamp })
+                    .FirstOrDefaultAsync(validationContext.HttpContext.RequestAborted);
+
+                if (account == null ||
+                    !account.IsActive ||
+                    !string.Equals(
+                        account.SecurityStamp,
+                        tokenSecurityStamp,
+                        StringComparison.Ordinal))
+                {
+                    validationContext.Fail("Phiên đăng nhập đã bị thu hồi hoặc tài khoản đã bị khóa.");
+                }
+            }
+        };
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    // Tạm cho phép test API thao tác lịch/duyệt đơn không cần Admin trong Development.
+    options.AddPolicy("AdminOrDevelopmentTesting", policy =>
+        policy.RequireAssertion(context =>
+            builder.Environment.IsDevelopment() ||
+            context.User.IsInRole("Admin")));
+});
 
 // Setup CORS for browser clients (Expo web, web frontend)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(origin => true) // Thay AllowAnyOrigin bằng dòng này
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials()); // BẮT BUỘC PHẢI CÓ DÒNG NÀY CHO SIGNALR
+});
+
+// Redis: cache unread count + SignalR backplane khi cần scale-out
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+{
+    var connectionString = builder.Configuration["Redis:ConnectionString"]
+        ?? "localhost:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000";
+    var options = ConfigurationOptions.Parse(connectionString);
+    options.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.Connect(options);
 });
 
 // Register Custom Services (Dependency Injection)
@@ -82,14 +155,40 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICourseLevelService, CourseLevelService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassScheduleService, ClassScheduleService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IAdminReportService, AdminReportService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IPayslipMailService, PayslipMailService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IParentStudentService, ParentStudentService>();
+builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IChatService, ChatService>();    // chat
+builder.Services.AddScoped<INotificationAudienceResolver, NotificationAudienceResolver>();
+builder.Services.AddScoped<IBusinessNotificationEmailService, BusinessNotificationEmailService>();
+builder.Services.AddScoped<IUnreadCountStore, RedisUnreadCountStore>();
+builder.Services.AddHostedService<NotificationFanoutWorker>();
+builder.Services.AddHostedService<ToanTuDuy.Services.BackgroundJobs.UpcomingLessonReminderService>();
 
-// Gửi email xác minh tài khoản qua Resend
+// builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
+builder.Services.AddSingleton<PayslipEmailQueue>();
+builder.Services.AddHostedService<PayslipEmailWorker>();
+builder.Services.AddHostedService<MonthlyPayslipEmailScheduler>();
+
+// Gửi email thống nhất qua SMTP hoặc Resend
 builder.Services.AddResend(options =>
 {
     options.ApiToken = builder.Configuration["Resend:ApiToken"] ?? string.Empty;
 });
+builder.Services.Configure<SmtpSettings>(
+    builder.Configuration.GetSection(SmtpSettings.SectionName));
+builder.Services.AddSingleton<IEmailDeliveryService, EmailDeliveryService>();
 builder.Services.Configure<EmailVerificationSettings>(
     builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
@@ -105,8 +204,40 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 // Lưu ảnh trên Cloudinary (DB chỉ giữ URL trả về)
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
+builder.Services.AddSingleton<IChatAttachmentStorage, CloudinaryChatAttachmentStorage>();
+builder.Services.AddSingleton<ICourseMediaStorage, CloudinaryCourseMediaStorage>();
+
+// Seeder sinh dữ liệu mẫu quy mô lớn (Bogus)
+builder.Services.AddScoped<BogusDataSeeder>();
 
 var app = builder.Build();
+
+// Hỗ trợ chạy Seeder bằng CLI: dotnet run --seed-bogus [rowsPerTable] hoặc dotnet run --seed-bogus-sql [rowsPerTable]
+if (args.Contains("--seed-bogus") || args.Contains("--seed-bogus-sql"))
+{
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<BogusDataSeeder>();
+    int count = 1000;
+    for (int i = 0; i < args.Length; i++)
+    {
+        if ((args[i] == "--seed-bogus" || args[i] == "--seed-bogus-sql") && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsedCount))
+        {
+            count = parsedCount;
+            break;
+        }
+    }
+
+    if (args.Contains("--seed-bogus-sql"))
+    {
+        string sqlPath = Path.Combine(Directory.GetCurrentDirectory(), $"DataSeed_Bogus_{count}.sql");
+        await seeder.GenerateSqlScriptAsync(sqlPath, count);
+    }
+    else
+    {
+        await seeder.SeedAsync(count);
+    }
+    return;
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -120,5 +251,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub"); // Chat
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

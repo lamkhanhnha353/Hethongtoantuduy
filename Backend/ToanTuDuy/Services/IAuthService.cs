@@ -7,6 +7,7 @@ namespace ToanTuDuy.Services
     {
         Task<AuthResponse> RegisterAsync(RegisterRequest request);
         Task<AuthResponse> LoginAsync(LoginRequest request);
+        Task<AuthResponse> GoogleLoginAsync(GoogleLoginDto request);
         Task<ChangePasswordResponse> ChangePasswordAsync(int accountId, ChangePasswordRequest request);
     }
 }

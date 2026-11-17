@@ -27,15 +27,11 @@ export function PrimaryButton({
         isPrimary ? 'bg-sky-600' : 'border border-slate-300 bg-white'
       } ${isInactive ? 'opacity-50' : ''}`}
       disabled={isInactive}
-      onPress={onPress}
-    >
+      onPress={onPress} >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? '#ffffff' : '#0f172a'} />
-      ) : (
+        <ActivityIndicator color={isPrimary ? '#ffffff' : '#0f172a'} />) : (
         <Text
-          className={`text-base font-semibold ${isPrimary ? 'text-white' : 'text-slate-800'}`}
-        >
-          {label}
+          className={`text-base font-semibold ${isPrimary ? 'text-white' : 'text-slate-800'}`}>{label}
         </Text>
       )}
     </TouchableOpacity>

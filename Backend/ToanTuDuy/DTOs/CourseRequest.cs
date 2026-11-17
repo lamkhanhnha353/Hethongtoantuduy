@@ -18,5 +18,9 @@ namespace ToanTuDuy.DTOs
 
         [Required]
         public string Status { get; set; }
+
+        public string? VideoUrl { get; set; }
+        public List<string>? Benefits { get; set; }
+        public List<string>? FacilityImages { get; set; }
     }
 }

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phiếu lương tháng {{PAYROLL_PERIOD}}</title>
+  <style>
+    body { margin: 0; padding: 24px; background: #f4f6f8; color: #1f2937; font: 14px Arial, sans-serif; }
+    main { max-width: 760px; margin: auto; padding: 32px; background: #fff; border-radius: 12px; }
+    h1 { margin: 0 0 8px; color: #c2410c; font-size: 24px; }
+    h2 { margin: 28px 0 12px; font-size: 16px; }
+    p { color: #4b5563; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+    th { background: #fff7ed; color: #9a3412; }
+    .total { display: flex; justify-content: space-between; margin-top: 24px; padding: 18px; border-radius: 8px; background: #fff7ed; font-size: 18px; font-weight: bold; }
+    .muted { color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Phiếu lương giáo viên</h1>
+    <p>Xin chào <strong>{{TEACHER_NAME}}</strong>, dưới đây là chi tiết lương tháng <strong>{{PAYROLL_PERIOD}}</strong>.</p>
+    <p class="muted">Email: {{TEACHER_EMAIL}}</p>
+
+    <h2>Các buổi học đủ điều kiện</h2>
+    <table>
+      <thead><tr><th>Ngày học</th><th>Nội dung</th><th>Trạng thái</th></tr></thead>
+      <tbody>{{SESSION_ROWS}}</tbody>
+    </table>
+    <p>Số buổi hợp lệ: <strong>{{SESSION_COUNT}}</strong> · Đơn giá: <strong>{{BASE_RATE}}</strong></p>
+
+    <h2>Khoản thưởng / phạt</h2>
+    <table>
+      <thead><tr><th>Ngày áp dụng</th><th>Loại</th><th>Lý do</th><th>Số tiền</th></tr></thead>
+      <tbody>{{ADJUSTMENT_ROWS}}</tbody>
+    </table>
+
+    <table style="margin-top:20px">
+      <tbody>
+        <tr><td>Lương cơ bản</td><td style="text-align:right">{{BASE_SALARY}}</td></tr>
+        <tr><td>Thưởng</td><td style="text-align:right">{{TOTAL_BONUS}}</td></tr>
+        <tr><td>Khoản phạt</td><td style="text-align:right">−{{TOTAL_PENALTY}}</td></tr>
+      </tbody>
+    </table>
+    <div class="total"><span>Tổng thực nhận</span><span>{{FINAL_SALARY}}</span></div>
+    <p class="muted">Đây là phiếu lương điện tử do hệ thống Toán Tư Duy tạo tự động.</p>
+  </main>
+</body>
+</html>

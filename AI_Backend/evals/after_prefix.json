@@ -1,0 +1,140 @@
+{
+  "metrics": {
+    "total": 10,
+    "hit_at_1": 0.9,
+    "hit_at_k": 1.0,
+    "mrr_at_k": 0.9333333333333333
+  },
+  "results": [
+    {
+      "id": "warranty-duration",
+      "query": "Sản phẩm được bảo hành bao lâu?",
+      "expected_doc_ids": [
+        "doc_001"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "doc_001",
+        "mind_001",
+        "mind_005"
+      ]
+    },
+    {
+      "id": "warranty-return-window",
+      "query": "Thời hạn đổi trả khi sản phẩm bị lỗi từ nhà sản xuất là bao nhiêu ngày?",
+      "expected_doc_ids": [
+        "doc_001"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "doc_001",
+        "mind_001",
+        "mind_005"
+      ]
+    },
+    {
+      "id": "warranty-official",
+      "query": "Chính sách bảo hành chính hãng kéo dài mấy tháng?",
+      "expected_doc_ids": [
+        "doc_001"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "doc_001",
+        "mind_005",
+        "mind_001"
+      ]
+    },
+    {
+      "id": "mind-definition",
+      "query": "Hệ thống quản lý tư duy là gì?",
+      "expected_doc_ids": [
+        "mind_001"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "mind_001",
+        "mind_005",
+        "doc_001"
+      ]
+    },
+    {
+      "id": "mind-cognitive-load",
+      "query": "Làm thế nào để giảm tải nhận thức và biến ý tưởng thành hành động cụ thể?",
+      "expected_doc_ids": [
+        "mind_001"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "mind_001",
+        "doc_001",
+        "mind_005"
+      ]
+    },
+    {
+      "id": "mind-methodology",
+      "query": "Phương pháp luận cấu trúc hóa thông tin, ý tưởng và quyết định cá nhân?",
+      "expected_doc_ids": [
+        "mind_001"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "mind_001",
+        "mind_005",
+        "doc_001"
+      ]
+    },
+    {
+      "id": "cross-pollination",
+      "query": "Cross-pollination trong hệ thống có vai trò gì?",
+      "expected_doc_ids": [
+        "mind_005"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "mind_005",
+        "mind_001",
+        "doc_001"
+      ]
+    },
+    {
+      "id": "knowledge-connection",
+      "query": "Làm sao kết nối các mảnh ghép thông tin từ nhiều lĩnh vực khác nhau?",
+      "expected_doc_ids": [
+        "mind_005"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "mind_005",
+        "mind_001",
+        "doc_001"
+      ]
+    },
+    {
+      "id": "creative-environment",
+      "query": "Hệ thống tạo ra môi trường kích thích tư duy sáng tạo như thế nào?",
+      "expected_doc_ids": [
+        "mind_005"
+      ],
+      "rank": 1,
+      "retrieved_doc_ids": [
+        "mind_005",
+        "mind_001",
+        "doc_001"
+      ]
+    },
+    {
+      "id": "breakthrough-solutions",
+      "query": "Làm thế nào để hình thành góc nhìn mới và giải pháp đột phá?",
+      "expected_doc_ids": [
+        "mind_005"
+      ],
+      "rank": 3,
+      "retrieved_doc_ids": [
+        "mind_001",
+        "doc_001",
+        "mind_005"
+      ]
+    }
+  ]
+}

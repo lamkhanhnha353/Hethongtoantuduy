@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Resend;
 using ToanTuDuy.Data;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
+using ToanTuDuy.Services.Email;
 
 namespace ToanTuDuy.Services
 {
@@ -20,20 +20,20 @@ namespace ToanTuDuy.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IResend _resend;
+        private readonly IEmailDeliveryService _emailDeliveryService;
         private readonly EmailVerificationSettings _settings;
         private readonly ILogger<EmailVerificationService> _logger;
 
         public EmailVerificationService(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IResend resend,
+            IEmailDeliveryService emailDeliveryService,
             IOptions<EmailVerificationSettings> settings,
             ILogger<EmailVerificationService> logger)
         {
             _context = context;
             _userManager = userManager;
-            _resend = resend;
+            _emailDeliveryService = emailDeliveryService;
             _settings = settings.Value;
             _logger = logger;
         }
@@ -72,16 +72,12 @@ namespace ToanTuDuy.Services
 
             try
             {
-                var message = new EmailMessage
-                {
-                    From = _settings.FromEmail,
-                    Subject = "Xác minh email của bạn — Hệ thống Toán Tư Duy",
-                    TextBody = BuildTextBody(link),
-                    HtmlBody = BuildHtmlBody(link),
-                };
-                message.To.Add(email);
-
-                await _resend.EmailSendAsync(message);
+                await _emailDeliveryService.SendAsync(new EmailDeliveryMessage(
+                    email,
+                    "Xác minh email của bạn — Hệ thống Toán Tư Duy",
+                    BuildTextBody(link),
+                    BuildHtmlBody(link),
+                    _settings.FromEmail));
                 // In link ra console để dev test được ngay khi không mở inbox.
                 _logger.LogInformation("Đã gửi email xác minh tới {Email}. Link xác minh: {Link}", email, link);
             }
@@ -90,7 +86,7 @@ namespace ToanTuDuy.Services
                 // Không được làm hỏng luồng chính vì lỗi gửi mail — link vẫn in ra để test.
                 _logger.LogWarning(
                     ex,
-                    "Không gửi được email xác minh tới {Email} qua Resend. Link xác minh (dùng để test): {Link}",
+                    "Không gửi được email xác minh tới {Email}. Link xác minh (dùng để test): {Link}",
                     email,
                     link);
             }
@@ -124,12 +120,23 @@ namespace ToanTuDuy.Services
             }
 
             var user = await _userManager.FindByIdAsync(token.AccountId.ToString());
-            if (user == null
-                || string.IsNullOrEmpty(user.Email)
-                || !string.Equals(user.Email, token.EmailAtIssue, StringComparison.OrdinalIgnoreCase))
+            var isCurrentEmail = string.Equals(
+                user?.Email, token.EmailAtIssue, StringComparison.OrdinalIgnoreCase);
+            var isPendingEmail = string.Equals(
+                user?.PendingEmail, token.EmailAtIssue, StringComparison.OrdinalIgnoreCase);
+            if (user == null || (!isCurrentEmail && !isPendingEmail))
             {
                 // Email đã bị thay đổi sau khi cấp link — link cũ không còn giá trị.
                 return new VerifyEmailResult(VerifyEmailStatus.EmailChanged, null);
+            }
+
+            if (isPendingEmail)
+            {
+                var existingUser = await _userManager.FindByEmailAsync(token.EmailAtIssue);
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    return new VerifyEmailResult(VerifyEmailStatus.EmailChanged, null);
+                }
             }
 
             var now = DateTime.UtcNow;
@@ -142,6 +149,18 @@ namespace ToanTuDuy.Services
             if (claimed == 0)
             {
                 return new VerifyEmailResult(VerifyEmailStatus.AlreadyUsed, null);
+            }
+
+            if (isPendingEmail)
+            {
+                var setEmailResult = await _userManager.SetEmailAsync(user, token.EmailAtIssue);
+                if (!setEmailResult.Succeeded)
+                {
+                    var errors = string.Join("; ", setEmailResult.Errors.Select(e => e.Description));
+                    throw ApiException.BadRequest($"Không thể cập nhật email đã xác minh: {errors}");
+                }
+
+                user.PendingEmail = null;
             }
 
             user.EmailConfirmed = true;

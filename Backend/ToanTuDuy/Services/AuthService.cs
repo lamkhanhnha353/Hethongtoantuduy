@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Google.Apis.Auth;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,26 +15,32 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class AuthService : IAuthService
     {
+        public const string SecurityStampClaimType = "security_stamp";
+
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IEmailVerificationService _verificationService;
+        private readonly INotificationService _notificationService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
             IConfiguration configuration,
-            IEmailVerificationService verificationService)
+            IEmailVerificationService verificationService,
+            INotificationService notificationService)
         {
             _userManager = userManager;
             _context = context;
             _configuration = configuration;
             _verificationService = verificationService;
+            _notificationService = notificationService;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -48,9 +55,11 @@ namespace ToanTuDuy.Services
             // 2. Setup user, dùng Phone làm UserName
             var user = new ApplicationUser
             {
-                UserName = request.Phone, 
+                UserName = request.Phone,
                 PhoneNumber = request.Phone,
-                Role = request.Role 
+                Role = request.Role,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             };
 
             // 3. Khởi tạo Transaction
@@ -121,10 +130,23 @@ namespace ToanTuDuy.Services
                 user.RefreshToken = refreshToken;
                 await _userManager.UpdateAsync(user);
 
-                // 6. Hoàn tất chuỗi hành động và Commit Db
+                // 6. Xếp thông báo vào outbox trong cùng transaction với tài khoản.
+                await _notificationService.EnqueueAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Account,
+                        request.Role == "Parent" ? "Phụ huynh mới đăng ký" : "Giáo viên mới đăng ký",
+                        $"{request.FullName} vừa tạo tài khoản {(request.Role == "Parent" ? "phụ huynh" : "giáo viên")}.",
+                        $"ACCOUNT:{user.Id}:REGISTERED",
+                        user.Id),
+                    AudienceSpec.AllAdmins());
+
+                // 7. Lưu thay đổi còn đang tracked (notification + outbox) rồi mới Commit.
+                await _context.SaveChangesAsync();
+
+                // 8. Hoàn tất chuỗi hành động và Commit Db
                 await transaction.CommitAsync();
 
-                // 7. Gửi email xác minh sau khi commit — service tự nuốt lỗi gửi,
+                // 9. Gửi email xác minh sau khi commit — service tự nuốt lỗi gửi,
                 //    không bao giờ rollback được việc đăng ký vì lỗi gửi mail.
                 if (verificationRawToken != null && verificationEmail != null)
                 {
@@ -151,11 +173,37 @@ namespace ToanTuDuy.Services
         {
             // Dùng request.Phone làm UserName để map với hệ thống Identity
             var user = await _userManager.FindByNameAsync(request.Phone);
-            
-            // CheckPasswordAsync sẽ tự động lấy Password gửi lên, Hash và so sánh với HashDB
-            if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
+
+            // Hash placeholder/corrupt trong dữ liệu seed có thể làm Identity ném FormatException.
+            bool passwordIsValid;
+            try
+            {
+                passwordIsValid = user != null
+                    && await _userManager.CheckPasswordAsync(user, request.Password);
+            }
+            catch (FormatException)
             {
                 throw new UnauthorizedAccessException("Số điện thoại hoặc mật khẩu không chính xác.");
+            }
+
+            if (!passwordIsValid)
+            {
+                throw new UnauthorizedAccessException("Số điện thoại hoặc mật khẩu không chính xác.");
+            }
+
+            // if (!user.IsActive)
+            // {
+            //     throw new UnauthorizedAccessException("Tài khoản đã bị khóa.");
+            // }
+
+            if (string.IsNullOrWhiteSpace(user.SecurityStamp))
+            {
+                var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+                if (!stampResult.Succeeded)
+                {
+                    var errors = string.Join("; ", stampResult.Errors.Select(error => error.Description));
+                    throw new InvalidOperationException($"Không thể khởi tạo phiên đăng nhập: {errors}");
+                }
             }
 
             var accessToken = GenerateJwtToken(user);
@@ -187,6 +235,47 @@ namespace ToanTuDuy.Services
             };
         }
 
+        public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginDto request)
+        {
+            var googleSettings = _configuration.GetSection("Google");
+            var clientIds = new[] { googleSettings["ClientId"] }
+                .Concat(googleSettings.GetSection("AdditionalClientIds").Get<string[]>() ?? Array.Empty<string>())
+                .Where(clientId => !string.IsNullOrWhiteSpace(clientId))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+            if (clientIds.Length == 0)
+                throw new ApiException(
+                    StatusCodes.Status503ServiceUnavailable,
+                    "Đăng nhập Google hiện chưa được cấu hình.");
+
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(
+                    request.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings { Audience = clientIds });
+            }
+            catch (Exception exception) when (
+                exception is InvalidJwtException or ArgumentException)
+            {
+                throw new UnauthorizedAccessException("Google ID token không hợp lệ.");
+            }
+
+            if (!payload.EmailVerified || string.IsNullOrWhiteSpace(payload.Email))
+                throw new UnauthorizedAccessException("Tài khoản Google chưa xác minh địa chỉ email.");
+
+            var user = await _userManager.FindByEmailAsync(payload.Email);
+            if (user is null)
+                throw new UnauthorizedAccessException(
+                    "Tài khoản chưa tồn tại trong hệ thống. Vui lòng liên hệ quản trị viên.");
+
+            if (!user.IsActive)
+                throw new UnauthorizedAccessException("Tài khoản đã bị khóa.");
+
+            return await CreateGoogleAuthResponseAsync(user, payload.Email, payload.Name);
+        }
+
         public async Task<ChangePasswordResponse> ChangePasswordAsync(int accountId, ChangePasswordRequest request)
         {
             var user = await _userManager.FindByIdAsync(accountId.ToString());
@@ -216,6 +305,60 @@ namespace ToanTuDuy.Services
             };
         }
 
+        private async Task<AuthResponse> CreateGoogleAuthResponseAsync(
+            ApplicationUser user,
+            string email,
+            string? googleName)
+        {
+            if (string.IsNullOrWhiteSpace(user.SecurityStamp))
+            {
+                EnsureIdentitySucceeded(
+                    await _userManager.UpdateSecurityStampAsync(user),
+                    "Không thể khởi tạo phiên đăng nhập Google.");
+            }
+
+            user.RefreshToken = GenerateRefreshToken();
+            EnsureIdentitySucceeded(
+                await _userManager.UpdateAsync(user),
+                "Không thể tạo phiên đăng nhập Google.");
+
+            var profileId = user.Role switch
+            {
+                "Parent" => await _context.ParentProfiles
+                    .Where(profile => profile.AccountId == user.Id)
+                    .Select(profile => profile.Id)
+                    .FirstOrDefaultAsync(),
+                "Teacher" => await _context.TeacherProfiles
+                    .Where(profile => profile.AccountId == user.Id)
+                    .Select(profile => profile.Id)
+                    .FirstOrDefaultAsync(),
+                "Admin" => await _context.AdminProfiles
+                    .Where(profile => profile.AccountId == user.Id)
+                    .Select(profile => profile.Id)
+                    .FirstOrDefaultAsync(),
+                _ => 0
+            };
+
+            return new AuthResponse
+            {
+                AccessToken = GenerateJwtToken(user),
+                RefreshToken = user.RefreshToken,
+                Role = user.Role,
+                ProfileId = profileId,
+                Email = email,
+                FullName = string.IsNullOrWhiteSpace(googleName) ? email.Split('@')[0] : googleName
+            };
+        }
+
+        private static void EnsureIdentitySucceeded(IdentityResult result, string message)
+        {
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(error => error.Description));
+                throw new InvalidOperationException($"{message} {errors}");
+            }
+        }
+
         private string GenerateJwtToken(ApplicationUser user)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
@@ -227,7 +370,8 @@ namespace ToanTuDuy.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? ""),
-                new Claim(ClaimTypes.Role, user.Role ?? "")
+                new Claim(ClaimTypes.Role, user.Role ?? ""),
+                new Claim(SecurityStampClaimType, user.SecurityStamp ?? "")
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

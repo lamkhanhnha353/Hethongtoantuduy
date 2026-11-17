@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ToanTuDuy.DTOs
 {
     public class TeacherResponseDto
@@ -7,6 +9,7 @@ namespace ToanTuDuy.DTOs
         public string FullName { get; set; } = string.Empty;
         public string? Email { get; set; }
         public string Phone { get; set; } = string.Empty;
+        public string? Specialize { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -22,5 +25,12 @@ namespace ToanTuDuy.DTOs
     {
         public string FullName { get; set; } = string.Empty;
         public string? Email { get; set; }
+        public string? Specialize { get; set; }
+    }
+
+    public class UpdateTeacherStatusDto
+    {
+        [Required]
+        public bool? IsActive { get; set; }
     }
 }
