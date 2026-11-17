@@ -7,6 +7,7 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class InvoiceController : ControllerBase
     {
         private readonly IInvoiceService _invoiceService;

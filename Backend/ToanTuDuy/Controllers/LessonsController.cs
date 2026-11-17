@@ -10,6 +10,7 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LessonsController : ControllerBase
     {
         private readonly ILessonService _lessonService;
@@ -45,6 +46,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Create([FromBody] LessonRequest request)
         {
             try
@@ -59,6 +61,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Update(int id, [FromBody] LessonRequest request)
         {
             try
@@ -77,6 +80,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Delete(int id)
         {
             try

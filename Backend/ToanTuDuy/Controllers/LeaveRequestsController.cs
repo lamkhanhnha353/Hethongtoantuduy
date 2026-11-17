@@ -10,6 +10,7 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LeaveRequestsController : ControllerBase
     {
         private readonly ILeaveRequestService _leaveRequestService;

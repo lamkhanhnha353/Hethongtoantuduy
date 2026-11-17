@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ namespace ToanTuDuy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ClassesController : ControllerBase
     {
         private readonly IClassService _classService;
@@ -38,6 +40,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] ClassRequest request)
         {
             try
@@ -52,6 +55,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] ClassRequest request)
         {
             var success = await _classService.UpdateClassAsync(id, request);
@@ -60,6 +64,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -83,6 +88,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpPost("{id}/students")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddStudent(int id, [FromBody] AddClassStudentRequest request)
         {
             try
@@ -97,6 +103,7 @@ namespace ToanTuDuy.Controllers
         }
 
         [HttpDelete("{id}/students/{studentId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RemoveStudent(int id, int studentId)
         {
             var success = await _classService.RemoveStudentFromClassAsync(id, studentId);
