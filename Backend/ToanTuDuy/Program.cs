@@ -188,7 +188,7 @@ builder.Services.AddResend(options =>
 });
 builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection(SmtpSettings.SectionName));
-builder.Services.AddSingleton<IEmailDeliveryService, EmailDeliveryService>();
+builder.Services.AddScoped<IEmailDeliveryService, EmailDeliveryService>();
 builder.Services.Configure<EmailVerificationSettings>(
     builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
@@ -255,3 +255,5 @@ app.MapHub<ChatHub>("/chathub"); // Chat
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
+
+public partial class Program { }
