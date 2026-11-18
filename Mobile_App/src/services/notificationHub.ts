@@ -58,7 +58,7 @@ class NotificationHubService {
               },
             })
             .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-            .configureLogging(LogLevel.Information)
+            .configureLogging(LogLevel.None)
             .build();
 
           this.connection.on('ReceiveNotification', (notification: RealtimeNotificationDto) => {
@@ -66,19 +66,19 @@ class NotificationHubService {
               try {
                 callback(notification);
               } catch (err) {
-                console.error('[SignalR] Error in notification callback:', err);
+                console.warn('[SignalR] Error in notification callback:', err);
               }
             });
           });
 
           this.connection.onclose((error) => {
             if (error) {
-              console.warn('[SignalR] Connection closed with error:', error);
+              console.warn('[SignalR] Connection closed:', error.message ?? error);
             }
           });
 
           this.connection.onreconnecting((error) => {
-            console.warn('[SignalR] Reconnecting...', error);
+            console.warn('[SignalR] Reconnecting...', error?.message ?? '');
           });
 
           this.connection.onreconnected((connectionId) => {
@@ -91,7 +91,7 @@ class NotificationHubService {
           console.log('[SignalR] Connected successfully. ConnectionId:', this.connection.connectionId);
         }
       } catch (error) {
-        console.error('[SignalR] Connection Error:', error);
+        console.warn('[SignalR] Connection warning:', error);
       } finally {
         this.pendingStart = null;
       }
@@ -119,7 +119,7 @@ class NotificationHubService {
           console.log('[SignalR] Disconnected.');
         }
       } catch (error) {
-        console.error('[SignalR] Error stopping connection:', error);
+        console.warn('[SignalR] Warning stopping connection:', error);
       } finally {
         this.connection = null;
       }

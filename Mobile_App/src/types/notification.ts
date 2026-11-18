@@ -1,4 +1,14 @@
-export type NotificationType = 'SYSTEM' | 'TUITION' | 'ACADEMIC' | 'ATTENDANCE' | 'ANNOUNCEMENT';
+export type NotificationType =
+  | 'SYSTEM'
+  | 'TUITION'
+  | 'ACADEMIC'
+  | 'ATTENDANCE'
+  | 'ANNOUNCEMENT'
+  | 'SPECIAL'
+  | 'LEAVE_REQUEST'
+  | 'ENROLLMENT'
+  | 'PAYMENT'
+  | 'ACCOUNT';
 
 export type RealtimeNotificationDto = {
   id: number;
@@ -41,20 +51,39 @@ export type MarkAllNotificationsReadResponse = {
   updated: number;
 };
 
+export type NotificationSettingDto = {
+  type: string;
+  enabled: boolean;
+};
+
+export type UpdateNotificationSettingsRequestDto = {
+  settings: NotificationSettingDto[];
+};
+
 export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   SYSTEM: 'Hệ thống',
   TUITION: 'Học phí',
   ACADEMIC: 'Học tập',
   ATTENDANCE: 'Điểm danh',
   ANNOUNCEMENT: 'Thông báo chung',
+  SPECIAL: 'Đặc biệt',
+  LEAVE_REQUEST: 'Đơn xin nghỉ',
+  ENROLLMENT: 'Ghi danh & Xếp lớp',
+  PAYMENT: 'Thanh toán',
+  ACCOUNT: 'Tài khoản',
 };
 
 export const NOTIFICATION_TYPE_ICONS: Record<string, string> = {
   SYSTEM: 'bell',
-  TUITION: 'file-text',
+  TUITION: 'credit-card',
   ACADEMIC: 'book-open',
   ATTENDANCE: 'calendar',
-  ANNOUNCEMENT: 'megaphone',
+  ANNOUNCEMENT: 'volume-2',
+  SPECIAL: 'alert-circle',
+  LEAVE_REQUEST: 'file-text',
+  ENROLLMENT: 'user-check',
+  PAYMENT: 'check-circle',
+  ACCOUNT: 'shield',
 };
 
 export const NOTIFICATION_TYPE_COLORS: Record<string, { bg: string; icon: string }> = {
@@ -63,6 +92,11 @@ export const NOTIFICATION_TYPE_COLORS: Record<string, { bg: string; icon: string
   ACADEMIC: { bg: 'bg-indigo-100', icon: '#4338ca' },
   ATTENDANCE: { bg: 'bg-rose-100', icon: '#e11d48' },
   ANNOUNCEMENT: { bg: 'bg-sky-100', icon: '#0284c7' },
+  SPECIAL: { bg: 'bg-red-100', icon: '#dc2626' },
+  LEAVE_REQUEST: { bg: 'bg-orange-100', icon: '#ea580c' },
+  ENROLLMENT: { bg: 'bg-emerald-100', icon: '#059669' },
+  PAYMENT: { bg: 'bg-emerald-100', icon: '#059669' },
+  ACCOUNT: { bg: 'bg-violet-100', icon: '#7c3aed' },
 };
 
 export function getNotificationTypeLabel(type?: string | null): string {

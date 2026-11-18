@@ -1,10 +1,13 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useNotificationUnreadCountQuery } from '@/hooks/useNotifications';
+import { useSession } from '@/hooks/useSession';
 
 export default function TabsLayout() {
-  const { data: unreadCountData } = useNotificationUnreadCountQuery();
-  const unreadCount = unreadCountData?.unreadCount ?? 0;
+  const { session } = useSession();
+  const isParent = session?.role === 'Parent';
+  const { data: unreadCountData } = useNotificationUnreadCountQuery(isParent);
+  const unreadCount = isParent ? (unreadCountData?.unreadCount ?? 0) : 0;
 
   return (
     <Tabs

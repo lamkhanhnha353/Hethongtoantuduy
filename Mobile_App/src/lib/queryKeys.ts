@@ -8,6 +8,8 @@ export const notificationListRootQueryKey = ['notifications', 'list'] as const;
 
 export const notificationUnreadCountQueryKey = ['notifications', 'unreadCount'] as const;
 
+export const notificationSettingsQueryKey = ['notifications', 'settings'] as const;
+
 export function notificationListQueryKey(filters: {
   unreadOnly: boolean;
   type: NotificationType | null;
@@ -37,6 +39,7 @@ export function studentPracticeAssignmentsQueryKey(studentId: number) {
   return ['studentPracticeAssignments', studentId] as const;
 }
 
-export function studentPracticeAssignmentQueryKey(studentId: number, assignmentId: number) {
-  return ['studentPracticeAssignments', studentId, assignmentId] as const;
-}
+export const studentPracticeAssignmentQueryKey = (studentId: number, assignmentId: number) =>
+  ['studentPracticeAssignments', studentId, assignmentId] as const;
+
+export const chatConversationsQueryKey = ['chat', 'conversations'] as const;

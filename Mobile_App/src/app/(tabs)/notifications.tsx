@@ -3,15 +3,19 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 import { AlertBanner } from '@/components/AlertBanner';
 import { EmptyState } from '@/components/EmptyState';
@@ -26,7 +30,12 @@ import {
 } from '@/hooks/useNotifications';
 import { useSession } from '@/hooks/useSession';
 import { toApiError } from '@/services/apiError';
-import type { NotificationResponseDto, NotificationType } from '@/types/notification';
+import {
+  getNotificationTypeLabel,
+  getNotificationTypeStyle,
+  type NotificationResponseDto,
+  type NotificationType,
+} from '@/types/notification';
 
 type NotificationFilterValue = 'ALL' | 'UNREAD' | NotificationType;
 
@@ -34,11 +43,30 @@ const FILTERS: { value: NotificationFilterValue; label: string }[] = [
   { value: 'ALL', label: 'Tất cả' },
   { value: 'UNREAD', label: 'Chưa đọc' },
   { value: 'TUITION', label: 'Học phí' },
-  { value: 'ATTENDANCE', label: 'Điểm danh' },
+  { value: 'ENROLLMENT', label: 'Ghi danh' },
   { value: 'ACADEMIC', label: 'Học tập' },
-  { value: 'SYSTEM', label: 'Hệ thống' },
+  { value: 'ATTENDANCE', label: 'Điểm danh' },
+  { value: 'SPECIAL', label: 'Đặc biệt' },
+  { value: 'ACCOUNT', label: 'Tài khoản' },
   { value: 'ANNOUNCEMENT', label: 'Chung' },
+  { value: 'SYSTEM', label: 'Hệ thống' },
 ];
+
+function extractStudentIdFromAssignmentRef(refId?: string | null): number | null {
+  if (!refId || !refId.startsWith('ASSIGNMENT:')) {
+    return null;
+  }
+
+  // Format: ASSIGNMENT:{assignmentId}:{ACTION}:{studentId}[:{timestamp}]
+  const parts = refId.split(':');
+  const rawStudentId = parts[3];
+  if (!rawStudentId) {
+    return null;
+  }
+
+  const parsed = Number(rawStudentId);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
 
 export default function NotificationsScreen() {
   const { session, isHydrated } = useSession();
@@ -72,6 +100,8 @@ function ParentNotifications() {
   const router = useRouter();
   const [filter, setFilter] = useState<NotificationFilterValue>('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedNotification, setSelectedNotification] =
+    useState<NotificationResponseDto | null>(null);
 
   const filters = useMemo<NotificationFilters>(
     () => ({
@@ -92,15 +122,13 @@ function ParentNotifications() {
   useFocusEffect(
     useCallback(() => {
       void refetchNotifications();
-      void refetchUnreadCount();
-    }, [refetchNotifications, refetchUnreadCount]),
+    }, [refetchNotifications]),
   );
 
   useNotificationRealtime(
     useCallback(() => {
       void refetchNotifications();
-      void refetchUnreadCount();
-    }, [refetchNotifications, refetchUnreadCount]),
+    }, [refetchNotifications]),
   );
 
   const notifications = useMemo(
@@ -167,25 +195,53 @@ function ParentNotifications() {
       const type = notification.type?.toUpperCase() ?? '';
       const refId = notification.refId ?? '';
 
-      if (type === 'TUITION' || refId.startsWith('INVOICE:')) {
+      if (type === 'TUITION' || type === 'PAYMENT' || refId.startsWith('INVOICE:')) {
         router.push('/invoices');
         return;
       }
 
-      if (type === 'ATTENDANCE' && refId.startsWith('LEAVE_REQUEST:')) {
+      if (
+        type === 'LEAVE_REQUEST' ||
+        (type === 'ATTENDANCE' && refId.startsWith('LEAVE_REQUEST:'))
+      ) {
         router.push('/leave-requests');
         return;
       }
 
       if (
-        (type === 'ATTENDANCE' && refId.startsWith('LESSON:')) ||
-        type === 'ACADEMIC'
+        type === 'ENROLLMENT' ||
+        refId.startsWith('ENROLLMENT:') ||
+        refId.startsWith('CLASS:')
       ) {
         router.push('/(tabs)/schedule');
+        return;
       }
+
+      if (
+        (type === 'ATTENDANCE' && refId.startsWith('LESSON:')) ||
+        (type === 'SPECIAL' && refId.startsWith('LESSON:'))
+      ) {
+        router.push('/(tabs)/schedule');
+        return;
+      }
+
+      if (type === 'ACCOUNT' && refId.startsWith('STUDENT:')) {
+        router.push('/students');
+        return;
+      }
+
+      // Thông báo Học tập (bài tập mới / nộp bài / chấm điểm + nhận xét) và Thông báo chung/hệ thống
+      // mở hộp thoại chi tiết để đọc trọn nội dung và chuyển thẳng sang Không gian học tập của bé.
+      setSelectedNotification(notification);
     },
     [markReadMutation, router],
   );
+
+  const selectedAcademicStudentId = useMemo(() => {
+    if (!selectedNotification) return null;
+    if (selectedNotification.type?.toUpperCase() !== 'ACADEMIC') return null;
+    return extractStudentIdFromAssignmentRef(selectedNotification.refId);
+  }, [selectedNotification]);
 
   const emptyTitle =
     filter === 'UNREAD'
@@ -195,7 +251,7 @@ function ParentNotifications() {
         : 'Không có thông báo phù hợp';
   const emptyDescription =
     filter === 'ALL'
-      ? 'Thông báo về học phí, điểm danh và học tập sẽ xuất hiện tại đây.'
+      ? 'Thông báo về học phí, đăng ký khóa học, bài tập và lịch học sẽ xuất hiện tại đây.'
       : 'Thử chọn bộ lọc khác để xem thông báo.';
 
   return (
@@ -331,6 +387,109 @@ function ParentNotifications() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={selectedNotification !== null}
+        onRequestClose={() => setSelectedNotification(null)}
+      >
+        <Pressable
+          className="flex-1 items-center justify-center bg-slate-900/50 px-5"
+          onPress={() => setSelectedNotification(null)}
+        >
+          <Pressable
+            className="w-full rounded-3xl bg-white p-5"
+            onPress={(event) => event.stopPropagation()}
+          >
+            {selectedNotification ? (
+              <>
+                <View className="flex-row items-center justify-between">
+                  <View
+                    className={`rounded-full px-3 py-1 ${
+                      getNotificationTypeStyle(selectedNotification.type).bg
+                    }`}
+                  >
+                    <Text
+                      className="text-[11px] font-bold"
+                      style={{
+                        color: getNotificationTypeStyle(selectedNotification.type).icon,
+                      }}
+                    >
+                      {getNotificationTypeLabel(selectedNotification.type)}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    className="h-8 w-8 items-center justify-center rounded-full bg-slate-100"
+                    onPress={() => setSelectedNotification(null)}
+                  >
+                    <Feather color="#64748b" name="x" size={16} />
+                  </TouchableOpacity>
+                </View>
+
+                <Text className="mt-3 text-base font-bold text-slate-900">
+                  {selectedNotification.title}
+                </Text>
+
+                {selectedNotification.createdAt ? (
+                  <Text className="mt-1 text-[11px] text-slate-400">
+                    {Number.isNaN(new Date(selectedNotification.createdAt).getTime())
+                      ? ''
+                      : format(
+                          new Date(selectedNotification.createdAt),
+                          "HH:mm 'ngày' dd/MM/yyyy",
+                          { locale: vi },
+                        )}
+                  </Text>
+                ) : null}
+
+                <ScrollView className="mt-3 max-h-72" showsVerticalScrollIndicator={false}>
+                  <Text className="text-[14px] leading-6 text-slate-600">
+                    {selectedNotification.body || 'Không có nội dung chi tiết.'}
+                  </Text>
+                </ScrollView>
+
+                <View className="mt-5 gap-2.5">
+                  {selectedAcademicStudentId ? (
+                    <TouchableOpacity
+                      className="flex-row items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3"
+                      onPress={() => {
+                        const targetStudentId = selectedAcademicStudentId;
+                        setSelectedNotification(null);
+                        router.push({
+                          pathname: '/students/space',
+                          params: { id: String(targetStudentId) },
+                        });
+                      }}
+                    >
+                      <Feather color="#ffffff" name="book-open" size={16} />
+                      <Text className="text-sm font-bold text-white">
+                        Mở không gian học tập của bé
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+
+                  <TouchableOpacity
+                    className={`items-center rounded-xl py-3 ${
+                      selectedAcademicStudentId ? 'bg-slate-100' : 'bg-sky-600'
+                    }`}
+                    onPress={() => setSelectedNotification(null)}
+                  >
+                    <Text
+                      className={`text-sm font-bold ${
+                        selectedAcademicStudentId ? 'text-slate-700' : 'text-white'
+                      }`}
+                    >
+                      {selectedAcademicStudentId ? 'Đóng' : 'Đã hiểu'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

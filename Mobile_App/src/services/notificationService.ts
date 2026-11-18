@@ -3,7 +3,9 @@ import type {
   MarkAllNotificationsReadResponse,
   NotificationListParams,
   NotificationListResponseDto,
+  NotificationSettingDto,
   NotificationUnreadCountResponseDto,
+  UpdateNotificationSettingsRequestDto,
 } from '@/types/notification';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -39,4 +41,19 @@ export async function markAllNotificationsRead(): Promise<MarkAllNotificationsRe
   );
 
   return data;
+}
+
+export async function getNotificationSettings(): Promise<NotificationSettingDto[]> {
+  const { data } = await apiClient.get<NotificationSettingDto[]>('/api/notifications/settings');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function updateNotificationSettings(
+  request: UpdateNotificationSettingsRequestDto,
+): Promise<NotificationSettingDto[]> {
+  const { data } = await apiClient.put<NotificationSettingDto[]>(
+    '/api/notifications/settings',
+    request,
+  );
+  return Array.isArray(data) ? data : [];
 }

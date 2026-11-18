@@ -5,17 +5,21 @@ import {
 import {
   notificationListQueryKey,
   notificationListRootQueryKey,
+  notificationSettingsQueryKey,
   notificationsRootQueryKey,
   notificationUnreadCountQueryKey,
 } from '@/lib/queryKeys';
 import {
   getNotifications,
+  getNotificationSettings,
   getUnreadCount,
   markAllNotificationsRead,
   markNotificationRead,
+  updateNotificationSettings,
 } from '@/services/notificationService';
 import type {
   NotificationListResponseDto,
+  NotificationSettingDto,
   NotificationType,
   NotificationUnreadCountResponseDto,
 } from '@/types/notification';
@@ -206,6 +210,60 @@ export function useMarkAllNotificationsReadMutation() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: notificationsRootQueryKey });
+    },
+  });
+}
+
+export function useNotificationSettingsQuery(enabled = true) {
+  return useQuery<NotificationSettingDto[]>({
+    queryKey: notificationSettingsQueryKey,
+    queryFn: getNotificationSettings,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateNotificationSettingsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    NotificationSettingDto[],
+    unknown,
+    NotificationSettingDto[],
+    { previous: NotificationSettingDto[] | undefined }
+  >({
+    mutationFn: (settings) => updateNotificationSettings({ settings }),
+    onMutate: async (updates) => {
+      await queryClient.cancelQueries({ queryKey: notificationSettingsQueryKey });
+      const previous = queryClient.getQueryData<NotificationSettingDto[]>(
+        notificationSettingsQueryKey,
+      );
+
+      queryClient.setQueryData<NotificationSettingDto[]>(
+        notificationSettingsQueryKey,
+        (old = []) => {
+          const map = new Map(
+            old.map((item) => [item.type.toUpperCase(), item.enabled]),
+          );
+          updates.forEach((item) => {
+            map.set(item.type.toUpperCase(), item.enabled);
+          });
+          return Array.from(map.entries()).map(([type, enabled]) => ({
+            type,
+            enabled,
+          }));
+        },
+      );
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(notificationSettingsQueryKey, context.previous);
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(notificationSettingsQueryKey, data);
     },
   });
 }

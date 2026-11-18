@@ -1,20 +1,12 @@
 import { useCallback, useState } from 'react';
 import { Animated, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import { useNotificationRealtime } from '@/hooks/useNotificationRealtime';
 import { useNotificationUnreadCountQuery } from '@/hooks/useNotifications';
 import { useSession } from '@/hooks/useSession';
-import {
-  notificationsRootQueryKey,
-  notificationUnreadCountQueryKey,
-} from '@/lib/queryKeys';
-import type {
-  NotificationUnreadCountResponseDto,
-  RealtimeNotificationDto,
-} from '@/types/notification';
+import type { RealtimeNotificationDto } from '@/types/notification';
 
 type NotificationBellProps = {
   className?: string;
@@ -30,7 +22,6 @@ export function NotificationBell({
   badgeBgColor = 'bg-rose-500',
 }: NotificationBellProps = {}) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { session } = useSession();
   const isParent = session?.role === 'Parent';
   const { data, refetch } = useNotificationUnreadCountQuery(isParent);
@@ -47,24 +38,13 @@ export function NotificationBell({
     ]).start();
   }, [scaleAnim]);
 
-  // Lắng nghe thông báo realtime từ SignalR
+  // Lắng nghe thông báo realtime từ SignalR để rung chuông
+  // (Cache unread count và danh sách đã được cập nhật tập trung tại RealtimeNotificationBanner)
   const handleNewNotification = useCallback(
     (_notification: RealtimeNotificationDto) => {
-      // 1. Hiệu ứng rung chuông
       triggerRing();
-
-      // 2. Tăng ngay số lượng chưa đọc trong cache (optimistic update)
-      queryClient.setQueryData<NotificationUnreadCountResponseDto>(
-        notificationUnreadCountQueryKey,
-        (old) => ({
-          unreadCount: (old?.unreadCount ?? 0) + 1,
-        }),
-      );
-
-      // 3. Đồng bộ lại toàn bộ dữ liệu thông báo từ server
-      void queryClient.invalidateQueries({ queryKey: notificationsRootQueryKey });
     },
-    [queryClient, triggerRing],
+    [triggerRing],
   );
 
   useNotificationRealtime(handleNewNotification, {
