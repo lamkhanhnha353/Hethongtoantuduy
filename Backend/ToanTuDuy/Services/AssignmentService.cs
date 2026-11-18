@@ -150,6 +150,8 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
+            await NotifyStudentsAssignedAsync(assignment, studentsToAssign, lesson.Class?.Name);
+
             var result = await GetAssignmentByIdAsync(assignment.Id);
             return result!;
         }
@@ -250,6 +252,8 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await NotifyStudentsAssignedAsync(newAssignment, studentsToAssign, targetLesson.Class?.Name);
 
             var result = await GetAssignmentByIdAsync(newAssignment.Id);
             return result!;
@@ -438,6 +442,7 @@ namespace ToanTuDuy.Services
         {
             var assignment = await _context.Assignments
                 .Include(a => a.Lesson)
+                    .ThenInclude(l => l.Class)
                 .FirstOrDefaultAsync(a => a.Id == assignmentId);
 
             if (assignment == null)
@@ -475,6 +480,11 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+
+            if (newStudentIds.Count > 0)
+            {
+                await NotifyStudentsAssignedAsync(assignment, newStudentIds, assignment.Lesson?.Class?.Name);
+            }
 
             var result = await GetAssignmentByIdAsync(assignmentId);
             return result!;
@@ -658,22 +668,40 @@ namespace ToanTuDuy.Services
                 throw ApiException.BadRequest("Bài tập này đã được nộp.");
             }
 
-            if (studentAssignment.Assignment.Lesson != null)
-            {
-                var studentName = string.IsNullOrWhiteSpace(studentAssignment.Student?.FullName)
-                    ? "Học sinh"
-                    : studentAssignment.Student.FullName.Trim();
-                var assignmentTitle = string.IsNullOrWhiteSpace(studentAssignment.Assignment.Title)
-                    ? "Bài tập"
-                    : studentAssignment.Assignment.Title.Trim();
+            var totalPoints = questions.Sum(question => question.PointValue);
+            var studentName = string.IsNullOrWhiteSpace(studentAssignment.Student?.FullName)
+                ? "Học sinh"
+                : studentAssignment.Student.FullName.Trim();
+            var assignmentTitle = string.IsNullOrWhiteSpace(studentAssignment.Assignment.Title)
+                ? "Bài tập"
+                : studentAssignment.Assignment.Title.Trim();
 
-                await _notificationService.PublishAsync(
+            try
+            {
+                if (studentAssignment.Assignment.Lesson != null)
+                {
+                    await _notificationService.EnqueueAsync(
+                        new NotificationMessage(
+                            NotificationTypes.Academic,
+                            "Học sinh đã nộp bài tập",
+                            $"{studentName} vừa hoàn thành bài tập \"{assignmentTitle}\" (tạm tính {score:0.##}/{totalPoints:0.##} điểm).",
+                            $"ASSIGNMENT:{assignmentId}:SUBMITTED:{studentId}"),
+                        AudienceSpec.ClassTeacher(studentAssignment.Assignment.Lesson.ClassId));
+                }
+
+                await _notificationService.EnqueueAsync(
                     new NotificationMessage(
                         NotificationTypes.Academic,
-                        "Học sinh đã nộp bài tập",
-                        $"{studentName} vừa hoàn thành bài tập \"{assignmentTitle}\" (tạm tính {score:0.##} điểm).",
-                        $"ASSIGNMENT:{assignmentId}:SUBMITTED:{studentId}"),
-                    AudienceSpec.ClassTeacher(studentAssignment.Assignment.Lesson.ClassId));
+                        "Bé đã hoàn thành bài tập",
+                        $"Bé {studentName} vừa nộp bài tập \"{assignmentTitle}\" và đạt {score:0.##}/{totalPoints:0.##} điểm ({correctCount}/{questions.Count} câu đúng).",
+                        $"ASSIGNMENT:{assignmentId}:PARENT_SUBMITTED:{studentId}"),
+                    AudienceSpec.StudentParent(studentId));
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AssignmentService] Không thể gửi thông báo nộp bài tập #{assignmentId}: {ex.Message}");
             }
 
             return new StudentPracticeSubmissionResponseDto
@@ -681,7 +709,7 @@ namespace ToanTuDuy.Services
                 AssignmentId = assignmentId,
                 Status = "SUBMITTED",
                 Score = score,
-                TotalPoints = questions.Sum(question => question.PointValue),
+                TotalPoints = totalPoints,
                 CorrectCount = correctCount,
                 TotalQuestions = questions.Count,
                 SubmittedAt = now
@@ -1010,6 +1038,60 @@ namespace ToanTuDuy.Services
             }
 
             return true;
+        }
+
+        private async Task NotifyStudentsAssignedAsync(
+            Assignment assignment,
+            IEnumerable<int> studentIds,
+            string? className)
+        {
+            var distinctStudentIds = studentIds.Distinct().ToList();
+            if (distinctStudentIds.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var studentNames = await _context.StudentProfiles
+                    .AsNoTracking()
+                    .Where(student => distinctStudentIds.Contains(student.Id))
+                    .Select(student => new { student.Id, student.FullName })
+                    .ToDictionaryAsync(student => student.Id, student => student.FullName);
+
+                var assignmentTitle = string.IsNullOrWhiteSpace(assignment.Title)
+                    ? "Bài tập mới"
+                    : assignment.Title.Trim();
+                var classSuffix = string.IsNullOrWhiteSpace(className)
+                    ? string.Empty
+                    : $" (lớp {className.Trim()})";
+
+                var deadlineDisplay = assignment.Deadline.Kind == DateTimeKind.Utc
+                    ? assignment.Deadline.AddHours(7)
+                    : assignment.Deadline;
+                var deadlineText = deadlineDisplay.ToString("HH:mm dd/MM/yyyy");
+
+                foreach (var studentId in distinctStudentIds)
+                {
+                    var studentName = studentNames.TryGetValue(studentId, out var name) && !string.IsNullOrWhiteSpace(name)
+                        ? name.Trim()
+                        : "học sinh";
+
+                    await _notificationService.EnqueueAsync(
+                        new NotificationMessage(
+                            NotificationTypes.Academic,
+                            "Bài tập mới từ giáo viên",
+                            $"Bé {studentName} có bài tập mới \"{assignmentTitle}\"{classSuffix}. Hạn nộp: {deadlineText}.",
+                            $"ASSIGNMENT:{assignment.Id}:ASSIGNED:{studentId}"),
+                        AudienceSpec.StudentParent(studentId));
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AssignmentService] Không thể gửi thông báo giao bài tập #{assignment.Id}: {ex.Message}");
+            }
         }
 
         private static NotificationMessage BuildGradedNotificationMessage(StudentAssignment sa)
