@@ -262,14 +262,12 @@
           </button>
         </header>
 
-        <form class="space-y-4 p-6" @submit.prevent="submitNotification">
+        <form class="space-y-4 p-6" novalidate @submit.prevent="submitNotification">
           <label class="block">
-            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Đối tượng nhận</span>
-            <select
-              v-model="form.recipientGroup"
-              required
-              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
-            >
+            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Đối tượng
+              nhận</span>
+            <select v-model="form.recipientGroup"
+              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20">
               <option value="PARENT">Tất cả phụ huynh</option>
               <option value="TEACHER">Tất cả giáo viên</option>
               <option value="PARENT_AND_TEACHER">Phụ huynh và giáo viên</option>
@@ -277,72 +275,55 @@
           </label>
 
           <label class="block">
-            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Loại thông báo</span>
-            <select
-              v-model="form.type"
-              required
-              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
-            >
+            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Loại thông
+              báo</span>
+            <select v-model="form.type"
+              class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20">
               <option value="ANNOUNCEMENT">Thông báo chung</option>
-              <option value="SPECIAL">Thông báo đặc biệt (giao diện &amp; email cá nhân)</option>
+              <option value="SPECIAL">Thông báo đặc biệt (giao diện & email cá nhân)</option>
               <option value="SYSTEM">Hệ thống</option>
             </select>
           </label>
 
-          <label class="flex items-start gap-2.5 rounded-md border border-stone-200 bg-stone-50/70 px-3 py-2.5 cursor-pointer">
-            <input
-              v-model="form.sendEmail"
-              type="checkbox"
-              :disabled="form.type === 'SPECIAL'"
-              class="mt-0.5 h-4 w-4 rounded border-stone-300 accent-orange-600 disabled:cursor-not-allowed"
-            />
+          <label
+            class="flex items-start gap-2.5 rounded-md border border-stone-200 bg-stone-50/70 px-3 py-2.5 cursor-pointer">
+            <input v-model="form.sendEmail" type="checkbox" :disabled="form.type === 'SPECIAL'"
+              class="mt-0.5 h-4 w-4 rounded border-stone-300 accent-orange-600 disabled:cursor-not-allowed" />
             <span class="text-xs leading-relaxed text-stone-700">
               <strong class="block text-stone-900">Gửi đồng thời ra email cá nhân người nhận</strong>
-              Tự động bật đối với <em>Thông báo đặc biệt</em>; gửi kèm email cá nhân của phụ huynh / giáo viên (nếu đã có email).
+              Tự động bật đối với <em>Thông báo đặc biệt</em>; gửi kèm email cá nhân của phụ huynh / giáo viên (nếu đã
+              có email).
             </span>
           </label>
 
           <label class="block">
             <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Tiêu đề</span>
-            <input
-              v-model.trim="form.title"
-              required
-              maxlength="200"
-              type="text"
-              placeholder="Nhập tiêu đề thông báo"
+            <input v-model.trim="form.title" maxlength="200" type="text" placeholder="Nhập tiêu đề thông báo"
               class="h-10 w-full rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
-            />
+              @input="composeError = ''" />
           </label>
 
           <label class="block">
             <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Nội dung</span>
-            <textarea
-              v-model.trim="form.body"
-              maxlength="2000"
-              rows="5"
+            <textarea v-model.trim="form.body" maxlength="2000" rows="5"
               placeholder="Nhập nội dung gửi đến người nhận..."
               class="w-full resize-y rounded-md border border-stone-300 bg-stone-50/70 px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-orange-600 focus:bg-white focus:ring-2 focus:ring-orange-500/20"
-            ></textarea>
+              @input="composeError = ''"></textarea>
           </label>
 
-          <p v-if="composeError" role="alert" class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <p v-if="composeError" role="alert"
+            class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {{ composeError }}
           </p>
 
           <footer class="flex justify-end gap-2 border-t border-stone-200 pt-4">
-            <button
-              type="button"
-              :disabled="submitting"
+            <button type="button" :disabled="submitting"
               class="h-9 rounded-md border border-stone-300 bg-white px-4 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-100 disabled:opacity-50"
-              @click="closeCompose"
-            >
+              @click="closeCompose">
               Hủy
             </button>
-            <button
-              type="submit"
-              :disabled="submitting || !form.title.trim()"
-              class="inline-flex h-9 items-center gap-2 rounded-md border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            <button type="submit" :disabled="submitting"
+              class="inline-flex h-9 items-center gap-2 rounded-md border border-orange-700 bg-orange-600 px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60">
               <PaperAirplaneIcon class="h-4 w-4" />
               {{ submitting ? 'Đang gửi...' : 'Đưa vào hàng đợi' }}
             </button>
@@ -496,7 +477,15 @@ function changePage(nextPage) {
 }
 
 async function submitNotification() {
-  const titleCheck = validateTextLength(form.value.title, {
+  const title = form.value.title.trim();
+  const body = form.value.body.trim();
+
+  if (!title && !body) {
+    composeError.value = "Vui lòng nhập tiêu đề và nội dung thông báo.";
+    return;
+  }
+
+  const titleCheck = validateTextLength(title, {
     label: "Tiêu đề thông báo",
     max: 200,
     required: true,
@@ -506,9 +495,10 @@ async function submitNotification() {
     return;
   }
 
-  const bodyCheck = validateTextLength(form.value.body, {
+  const bodyCheck = validateTextLength(body, {
     label: "Nội dung thông báo",
     max: 2000,
+    required: true,
   });
   if (!bodyCheck.valid) {
     composeError.value = bodyCheck.message;
@@ -520,8 +510,8 @@ async function submitNotification() {
   try {
     const result = await adminNotificationService.create({
       ...form.value,
-      title: form.value.title.trim(),
-      body: form.value.body.trim() || null,
+      title,
+      body,
       sendEmail: form.value.type === "SPECIAL" || Boolean(form.value.sendEmail),
     });
     statusBannerIsWarning.value = result.emailConfigured === false;
