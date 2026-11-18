@@ -296,6 +296,101 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
             adjustment.AppliedDate);
     }
 
+    public async Task DeleteSalaryAdjustmentAsync(
+    int adjustmentId,
+    CancellationToken cancellationToken = default)
+    {
+        if (adjustmentId <= 0)
+        {
+            throw ApiException.BadRequest("Mã khoản điều chỉnh không hợp lệ.");
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
+
+        var adjustment = await context.SalaryAdjustments
+            .FirstOrDefaultAsync(item => item.Id == adjustmentId, cancellationToken);
+
+        if (adjustment is null)
+        {
+            throw ApiException.NotFound("Không tìm thấy khoản thưởng/phạt.");
+        }
+
+        var teacherId = adjustment.TeacherId;
+        var month = adjustment.AppliedDate.Month;
+        var year = adjustment.AppliedDate.Year;
+
+        context.SalaryAdjustments.Remove(adjustment);
+        await context.SaveChangesAsync(cancellationToken);
+
+        var (startDate, endDate) = GetPeriod(month, year);
+
+        var rate = await context.TeacherSalaryConfigs
+            .AsNoTracking()
+            .Where(config => config.TeacherId == teacherId)
+            .Select(config => (decimal?)config.BaseRatePerSession)
+            .SingleOrDefaultAsync(cancellationToken) ?? 0m;
+
+        var sessionCount = await context.Lessons
+            .AsNoTracking()
+            .CountAsync(lesson =>
+                lesson.Class.TeacherId == teacherId
+                && lesson.LessonDate >= startDate
+                && lesson.LessonDate < endDate
+                && lesson.Status == "COMPLETED"
+                && lesson.Attendances.Any(),
+                cancellationToken);
+
+        var remainingAdjustments = await context.SalaryAdjustments
+            .AsNoTracking()
+            .Where(item =>
+                item.TeacherId == teacherId
+                && item.AppliedDate >= DateOnly.FromDateTime(startDate)
+                && item.AppliedDate < DateOnly.FromDateTime(endDate))
+            .ToListAsync(cancellationToken);
+
+        var totalPenalty = remainingAdjustments
+            .Where(item => item.Type == "Penalty")
+            .Sum(item => item.Amount);
+        var totalBonus = remainingAdjustments
+            .Where(item => item.Type == "Bonus")
+            .Sum(item => item.Amount);
+        var baseSalary = sessionCount * rate;
+        var finalSalary = baseSalary + totalBonus - totalPenalty;
+
+        var summary = await context.PayrollSummaries
+            .FirstOrDefaultAsync(
+                payroll => payroll.TeacherId == teacherId && payroll.Month == month && payroll.Year == year,
+                cancellationToken);
+
+        if (summary is not null)
+        {
+            var financialsChanged = summary.TotalValidSessions != sessionCount
+                || summary.BaseSalary != baseSalary
+                || summary.TotalPenalty != totalPenalty
+                || summary.TotalBonus != totalBonus
+                || summary.FinalSalary != finalSalary;
+
+            summary.TotalValidSessions = sessionCount;
+            summary.BaseSalary = baseSalary;
+            summary.TotalPenalty = totalPenalty;
+            summary.TotalBonus = totalBonus;
+            summary.FinalSalary = finalSalary;
+
+            if (financialsChanged && summary.EmailStatus is "Sent" or "Failed")
+            {
+                summary.EmailStatus = "NotSent";
+                summary.EmailSentAt = null;
+                summary.EmailErrorMessage = null;
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     public async Task<TeacherBaseRateDto> UpdateTeacherBaseRateAsync(
         int teacherId,
         UpdateTeacherBaseRateRequestDto request,
