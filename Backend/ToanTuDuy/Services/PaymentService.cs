@@ -217,9 +217,27 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
-            if (invoice.Status == "PAID")
+            try
             {
-                await NotifyPaymentSuccessAsync(invoice);
+                if (invoice.Status == "PAID")
+                {
+                    await NotifyPaymentSuccessAsync(invoice);
+                }
+                else if (invoice.Status == "FAILED")
+                {
+                    var studentName = invoice.Student?.FullName ?? "Học sinh";
+                    await _notificationService.PublishAsync(
+                        new NotificationMessage(
+                            NotificationTypes.Tuition,
+                            "Thanh toán học phí chưa thành công",
+                            $"Giao dịch cho hóa đơn #{invoice.Id} của bé {studentName} chưa hoàn tất. Bạn có thể vào mục Hóa đơn để thanh toán lại.",
+                            $"INVOICE:{invoice.Id}:FAILED:{DateTime.UtcNow:yyyyMMddHHmmss}"),
+                        AudienceSpec.StudentParent(invoice.StudentId));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PaymentService] Không thể gửi thông báo kết quả thanh toán cho hóa đơn #{invoice.Id}: {ex.Message}");
             }
         }
 

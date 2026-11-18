@@ -1,18 +1,30 @@
 import { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { Feather } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser'; // Import thêm thư viện này
 
+import {
+  notificationsRootQueryKey,
+  notificationUnreadCountQueryKey,
+} from '@/lib/queryKeys';
+
 export default function PaymentResultScreen() {
-  const { code } = useLocalSearchParams();
+  const { code } = useLocalSearchParams<{ code?: string | string[] }>();
   const router = useRouter();
-  const isSuccess = code === '00';
+  const queryClient = useQueryClient();
+  const normalizedCode = Array.isArray(code) ? code[0] : code;
+  const isSuccess = normalizedCode === '00';
 
   useEffect(() => {
     // Ép đóng triệt để trình duyệt web đang chạy ngầm ngay khi màn hình kết quả hiện lên
     WebBrowser.dismissBrowser();
-  }, []);
+
+    // Đồng bộ lại thông báo và số chưa đọc ngay sau khi thanh toán xong
+    void queryClient.invalidateQueries({ queryKey: notificationsRootQueryKey });
+    void queryClient.invalidateQueries({ queryKey: notificationUnreadCountQueryKey });
+  }, [queryClient]);
 
   return (
     <View className="flex-1 bg-white items-center justify-center p-6">

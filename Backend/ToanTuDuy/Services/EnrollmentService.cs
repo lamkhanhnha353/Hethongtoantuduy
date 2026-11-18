@@ -186,6 +186,19 @@ namespace ToanTuDuy.Services
                     AudienceSpec.AllAdmins(),
                     AudienceSpec.ClassTeacher(classInfo.Id)));
 
+            var parentTuitionRefId = $"INVOICE:{invoice.Id}:CREATED";
+            const string parentTuitionTitle = "Nhắc đóng học phí khóa học";
+            var parentTuitionBody =
+                $"Hóa đơn #{invoice.Id} ({invoice.Amount:N0} VNĐ) cho bé {student.FullName} tại lớp {classInfo.Name} đã được tạo. Vui lòng thanh toán để hoàn tất giữ chỗ.";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.Tuition,
+                    parentTuitionTitle,
+                    parentTuitionBody,
+                    parentTuitionRefId),
+                AudienceSpec.StudentParent(student.Id));
+
             var details = new List<(string Label, string Value)>
             {
                 ("Học sinh", student.FullName),

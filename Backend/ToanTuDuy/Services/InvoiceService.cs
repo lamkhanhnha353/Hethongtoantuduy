@@ -8,16 +8,21 @@ using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class InvoiceService : IInvoiceService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public InvoiceService(ApplicationDbContext context)
+        public InvoiceService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<InvoiceHistoryResponse>> GetHistoryAsync(int accountId)
@@ -139,6 +144,8 @@ namespace ToanTuDuy.Services
         {
             var invoice = await _context.Invoices
                 .Include(item => item.ClassStudent)
+                .Include(item => item.Student)
+                .Include(item => item.Class)
                 .FirstOrDefaultAsync(item =>
                     item.Id == invoiceId
                     && item.Parent.AccountId == accountId);
@@ -158,6 +165,17 @@ namespace ToanTuDuy.Services
             {
                 invoice.ClassStudent.Status = "CANCELLED";
             }
+
+            var studentName = invoice.Student?.FullName ?? "Học sinh";
+            var className = invoice.Class?.Name ?? $"Lớp #{invoice.ClassId}";
+
+            await _notificationService.EnqueueAsync(
+                new NotificationMessage(
+                    NotificationTypes.Tuition,
+                    "Đã hủy hóa đơn học phí",
+                    $"Hóa đơn #{invoice.Id} của bé {studentName} tại lớp {className} đã được hủy thành công và chỗ giữ đã được giải phóng.",
+                    $"INVOICE:{invoice.Id}:CANCELLED"),
+                AudienceSpec.StudentParent(invoice.StudentId));
 
             await _context.SaveChangesAsync();
         }

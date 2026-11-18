@@ -176,7 +176,7 @@ builder.Services.AddScoped<IUnreadCountStore, RedisUnreadCountStore>();
 builder.Services.AddHostedService<NotificationFanoutWorker>();
 builder.Services.AddHostedService<ToanTuDuy.Services.BackgroundJobs.UpcomingLessonReminderService>();
 
-// builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
+builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 builder.Services.AddSingleton<PayslipEmailQueue>();
 builder.Services.AddHostedService<PayslipEmailWorker>();
 builder.Services.AddHostedService<MonthlyPayslipEmailScheduler>();
