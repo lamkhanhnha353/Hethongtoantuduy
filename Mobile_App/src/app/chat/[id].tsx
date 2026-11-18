@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   HubConnection,
@@ -24,7 +25,14 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { API_URL } from '@/config/env';
 import { useSession } from '@/hooks/useSession';
-import { chatService, type ChatAttachment, type ChatMessage } from '@/services/chat.service';
+import { chatConversationsQueryKey } from '@/lib/queryKeys';
+import {
+  chatService,
+  type ChatAttachment,
+  type ChatConversation,
+  type ChatMessage,
+} from '@/services/chat.service';
+import { chatHubService } from '@/services/chatHub';
 import { toApiError } from '@/services/apiError';
 
 import { ChatAttachmentPicker } from '@/components/chat/ChatAttachmentPicker';
@@ -56,6 +64,7 @@ function belongsToSameMessageGroup(current: ChatMessage, next?: ChatMessage) {
 
 export default function ChatRoomScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { id, partnerId, partnerName } = useLocalSearchParams<{
     id: string;
@@ -65,6 +74,32 @@ export default function ChatRoomScreen() {
   const { session } = useSession();
   const conversationId = Number(id);
   const receiverId = Number(partnerId);
+
+  useEffect(() => {
+    if (!Number.isInteger(conversationId) || conversationId <= 0) {
+      return;
+    }
+
+    chatHubService.setActiveConversationId(conversationId);
+    queryClient.setQueryData<ChatConversation[]>(chatConversationsQueryKey, (old) =>
+      old?.map((conv) =>
+        conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv,
+      ),
+    );
+
+    return () => {
+      if (chatHubService.getActiveConversationId() === conversationId) {
+        chatHubService.setActiveConversationId(null);
+      }
+      // Gọi nhẹ page=1 để đánh dấu đã đọc các tin nhắn vừa tới trong lúc đang mở phòng chat
+      void chatService
+        .getMessages(conversationId, 1)
+        .catch(() => undefined)
+        .finally(() => {
+          void queryClient.invalidateQueries({ queryKey: chatConversationsQueryKey });
+        });
+    };
+  }, [conversationId, queryClient]);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const inputRef = useRef<ComponentRef<typeof TextInput> | null>(null);
   const rootRef = useRef<ComponentRef<typeof View> | null>(null);

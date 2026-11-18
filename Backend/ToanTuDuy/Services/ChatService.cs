@@ -53,6 +53,8 @@ namespace ToanTuDuy.Services
                 ? query.Where(conversation => conversation.ParentId == actor.ProfileId)
                 : query.Where(conversation => conversation.TeacherId == actor.ProfileId);
 
+            var partnerSenderType = actor.Role == ParentRole ? TeacherRole : ParentRole;
+
             return await query
                 .OrderByDescending(conversation => conversation.LastMessageAt)
                 .Select(conversation => new ConversationDto
@@ -68,7 +70,10 @@ namespace ToanTuDuy.Services
                     PartnerAvatar = actor.Role == ParentRole ? null : conversation.Parent.Avatar,
                     LastMessage = conversation.LastMessage,
                     LastMessageAt = conversation.LastMessageAt,
-                    UnreadCount = 0
+                    UnreadCount = _context.Messages.Count(message =>
+                        message.ConversationId == conversation.Id
+                        && message.SenderType == partnerSenderType
+                        && !message.IsRead)
                 })
                 .ToListAsync(cancellationToken);
         }
@@ -124,6 +129,21 @@ namespace ToanTuDuy.Services
                 {
                     throw ApiException.Forbidden("Bạn không có quyền xem cuộc hội thoại này.");
                 }
+            }
+
+            if (page == 1 && !string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var incomingSenderType = string.Equals(role, ParentRole, StringComparison.OrdinalIgnoreCase)
+                    ? TeacherRole
+                    : ParentRole;
+
+                await _context.Messages
+                    .Where(message => message.ConversationId == conversationId
+                        && message.SenderType == incomingSenderType
+                        && !message.IsRead)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(message => message.IsRead, true),
+                        cancellationToken);
             }
 
             var messages = await _context.Messages

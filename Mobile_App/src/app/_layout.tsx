@@ -6,6 +6,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 
+import { RealtimeChatBanner } from '@/components/chat/RealtimeChatBanner';
+import { RealtimeNotificationBanner } from '@/components/notifications/RealtimeNotificationBanner';
 import { useAudioHydration } from '@/hooks/useAudio';
 import { useAuthHydration } from '@/hooks/useSession';
 import { AppQueryClientProvider } from '@/lib/queryClientProvider';
@@ -30,6 +32,8 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AppQueryClientProvider>
           <Stack screenOptions={{ headerShown: false }} />
+          <RealtimeNotificationBanner />
+          <RealtimeChatBanner />
         </AppQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

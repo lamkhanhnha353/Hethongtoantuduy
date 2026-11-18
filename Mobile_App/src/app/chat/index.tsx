@@ -1,38 +1,36 @@
 import { Feather } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect } from 'react';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
-import { chatService, type ChatConversation } from '@/services/chat.service';
+import { useChatConversationsQuery } from '@/hooks/useChatRealtime';
+import type { ChatConversation } from '@/services/chat.service';
 import { toApiError } from '@/services/apiError';
 
 import { formatChatDate } from '@/components/chat/chatDateTime';
 
 export default function ChatListScreen() {
   const router = useRouter();
-  const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: conversations = [],
+    isPending: loading,
+    isRefetching,
+    error,
+    refetch,
+  } = useChatConversationsQuery(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
 
   useEffect(() => {
-    let active = true;
-
-    chatService
-      .getConversations()
-      .then(({ data }) => {
-        if (active) setConversations(data.data);
-      })
-      .catch((error: unknown) => {
-        if (active) Alert.alert('Không tải được tin nhắn', toApiError(error).message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (error) {
+      Alert.alert('Không tải được tin nhắn', toApiError(error).message);
+    }
+  }, [error]);
 
   const renderItem = ({ item }: { item: ChatConversation }) => (
     <TouchableOpacity
@@ -67,8 +65,10 @@ export default function ChatListScreen() {
           {item.lastMessageAt ? formatChatDate(item.lastMessageAt) : ''}
         </Text>
         {item.unreadCount > 0 && (
-          <View className="mt-1 min-w-5 items-center rounded-full bg-indigo-600 px-1.5 py-0.5">
-            <Text className="text-[10px] font-bold text-white">{item.unreadCount}</Text>
+          <View className="mt-1 min-w-5 items-center rounded-full bg-rose-500 px-1.5 py-0.5">
+            <Text className="text-[10px] font-bold text-white">
+              {item.unreadCount > 99 ? '99+' : item.unreadCount}
+            </Text>
           </View>
         )}
       </View>
@@ -127,6 +127,16 @@ export default function ChatListScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={
+          <RefreshControl
+            colors={['#4f46e5']}
+            onRefresh={() => {
+              void refetch();
+            }}
+            refreshing={isRefetching}
+            tintColor="#4f46e5"
+          />
+        }
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center p-8">
             <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-white">

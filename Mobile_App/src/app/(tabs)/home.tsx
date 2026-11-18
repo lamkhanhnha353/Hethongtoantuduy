@@ -1,18 +1,30 @@
-import { useState } from 'react';
-import { Redirect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, ScrollView, Text, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 import { WelcomeHeader } from '@/components/parent/WelcomeHeader';
+import { useChatUnreadCount } from '@/hooks/useChatRealtime';
 import { useParentLessons } from '@/hooks/useParentLessons';
 import { useSession } from '@/hooks/useSession';
 
 export default function ScreenHome() {
   const router = useRouter();
   const { session, isHydrated } = useSession();
-  const { lessons, studentsQuery, lessonsQuery } = useParentLessons(session?.role === 'Parent');
+  const isParent = session?.role === 'Parent';
+  const { lessons, studentsQuery, lessonsQuery } = useParentLessons(isParent);
+  const { unreadCount: unreadChatCount, refetch: refetchChatUnread } =
+    useChatUnreadCount(isParent);
   const [now] = useState(() => Date.now());
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isParent) {
+        void refetchChatUnread();
+      }
+    }, [isParent, refetchChatUnread]),
+  );
 
   if (!isHydrated) {
     return (
@@ -236,8 +248,15 @@ export default function ScreenHome() {
               className="items-center gap-2"
               onPress={() => router.push('/chat')}
             >
-              <View className="w-14 h-14 rounded-2xl bg-fuchsia-500 items-center justify-center shadow-sm">
+              <View className="relative w-14 h-14 rounded-2xl bg-fuchsia-500 items-center justify-center shadow-sm">
                 <Feather name="message-circle" size={24} color="white" />
+                {unreadChatCount > 0 ? (
+                  <View className="absolute -right-1.5 -top-1.5 min-w-[20px] h-5 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1">
+                    <Text className="text-[10px] font-extrabold leading-none text-white">
+                      {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
               <Text className="text-[11px] font-semibold text-slate-700">Nhắn tin</Text>
           </TouchableOpacity>

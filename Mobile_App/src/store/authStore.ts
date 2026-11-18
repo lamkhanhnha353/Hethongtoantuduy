@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { chatHubService } from '@/services/chatHub';
+import { notificationHubService } from '@/services/notificationHub';
 import { clearSession, loadSession, saveSession } from '@/services/tokenStorage';
 import type { StoredSession } from '@/types/auth';
 
@@ -25,6 +27,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    await Promise.all([
+      notificationHubService.stopConnection(),
+      chatHubService.stopConnection(),
+    ]);
     await clearSession();
     set({ session: null });
   },
