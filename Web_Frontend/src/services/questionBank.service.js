@@ -19,6 +19,22 @@ class QuestionBankService {
   }
 
   /**
+   * Lấy danh sách ngân hàng câu hỏi có phân trang
+   * GET /api/question-banks/paged
+   */
+  async getPaged({ page = 1, pageSize = 10, courseId = null, keyword = null } = {}) {
+    const res = await this.api.get("/paged", {
+      params: {
+        page,
+        pageSize,
+        courseId: courseId || undefined,
+        keyword: keyword?.trim() || undefined,
+      },
+    });
+    return res.data;
+  }
+
+  /**
    * Lấy chi tiết ngân hàng câu hỏi kèm toàn bộ câu hỏi bên trong
    * GET /api/question-banks/{id}
    */
@@ -67,6 +83,26 @@ class QuestionBankService {
     if (difficulty) params.difficulty = difficulty;
     if (type) params.type = type;
     const res = await this.api.get(`/${bankId}/questions`, { params });
+    return res.data;
+  }
+
+  /**
+   * Lấy danh sách câu hỏi có phân trang trong ngân hàng
+   * GET /api/question-banks/{bankId}/questions/paged
+   */
+  async getQuestionsPaged(
+    bankId,
+    { page = 1, pageSize = 20, difficulty = null, type = null, keyword = null } = {}
+  ) {
+    const res = await this.api.get(`/${bankId}/questions/paged`, {
+      params: {
+        page,
+        pageSize,
+        difficulty: difficulty || undefined,
+        type: type || undefined,
+        keyword: keyword?.trim() || undefined,
+      },
+    });
     return res.data;
   }
 

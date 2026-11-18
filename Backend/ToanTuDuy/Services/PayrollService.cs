@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services;
@@ -25,9 +26,10 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
             {
                 teacher.Id,
                 teacher.FullName,
-                TeacherEmail = teacher.Email ?? teacher.Account.Email
+                TeacherEmail = !string.IsNullOrWhiteSpace(teacher.Email) ? teacher.Email : teacher.Account.Email
             })
             .OrderBy(teacher => teacher.FullName)
+            .ThenBy(teacher => teacher.Id)
             .ToListAsync(cancellationToken);
 
         var teacherIds = teachers.Select(teacher => teacher.Id).ToArray();
@@ -120,6 +122,38 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
             .ToList();
     }
 
+    public async Task<PagedResult<PayslipDto>> GetMonthlyPayrollsPagedAsync(
+        int month,
+        int year,
+        int page,
+        int pageSize,
+        string? keyword = null,
+        string? emailStatus = null,
+        CancellationToken cancellationToken = default)
+    {
+        var allPayrolls = await GetMonthlyPayrollsAsync(month, year, cancellationToken);
+        IEnumerable<PayslipDto> filtered = allPayrolls;
+
+        if (!string.IsNullOrWhiteSpace(emailStatus) &&
+            !emailStatus.Trim().Equals("ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalizedStatus = emailStatus.Trim();
+            filtered = filtered.Where(item =>
+                string.Equals(item.EmailStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.Trim();
+            filtered = filtered.Where(item =>
+                item.TeacherName.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(item.TeacherEmail) &&
+                 item.TeacherEmail.Contains(kw, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        return filtered.ToPagedResult(page, pageSize);
+    }
+
     public async Task<PayslipDetailDto> GetTeacherPayslipDetailAsync(
         int teacherId,
         int month,
@@ -135,7 +169,12 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
         var teacher = await context.TeacherProfiles
             .AsNoTracking()
             .Where(item => item.Id == teacherId)
-            .Select(item => new { item.Id, item.FullName, TeacherEmail = item.Email ?? item.Account.Email })
+            .Select(item => new
+            {
+                item.Id,
+                item.FullName,
+                TeacherEmail = !string.IsNullOrWhiteSpace(item.Email) ? item.Email : item.Account.Email
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (teacher is null)
@@ -294,6 +333,101 @@ public sealed class PayrollService(ApplicationDbContext context) : IPayrollServi
             adjustment.Amount,
             adjustment.Reason,
             adjustment.AppliedDate);
+    }
+
+    public async Task DeleteSalaryAdjustmentAsync(
+    int adjustmentId,
+    CancellationToken cancellationToken = default)
+    {
+        if (adjustmentId <= 0)
+        {
+            throw ApiException.BadRequest("Mã khoản điều chỉnh không hợp lệ.");
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
+
+        var adjustment = await context.SalaryAdjustments
+            .FirstOrDefaultAsync(item => item.Id == adjustmentId, cancellationToken);
+
+        if (adjustment is null)
+        {
+            throw ApiException.NotFound("Không tìm thấy khoản thưởng/phạt.");
+        }
+
+        var teacherId = adjustment.TeacherId;
+        var month = adjustment.AppliedDate.Month;
+        var year = adjustment.AppliedDate.Year;
+
+        context.SalaryAdjustments.Remove(adjustment);
+        await context.SaveChangesAsync(cancellationToken);
+
+        var (startDate, endDate) = GetPeriod(month, year);
+
+        var rate = await context.TeacherSalaryConfigs
+            .AsNoTracking()
+            .Where(config => config.TeacherId == teacherId)
+            .Select(config => (decimal?)config.BaseRatePerSession)
+            .SingleOrDefaultAsync(cancellationToken) ?? 0m;
+
+        var sessionCount = await context.Lessons
+            .AsNoTracking()
+            .CountAsync(lesson =>
+                lesson.Class.TeacherId == teacherId
+                && lesson.LessonDate >= startDate
+                && lesson.LessonDate < endDate
+                && lesson.Status == "COMPLETED"
+                && lesson.Attendances.Any(),
+                cancellationToken);
+
+        var remainingAdjustments = await context.SalaryAdjustments
+            .AsNoTracking()
+            .Where(item =>
+                item.TeacherId == teacherId
+                && item.AppliedDate >= DateOnly.FromDateTime(startDate)
+                && item.AppliedDate < DateOnly.FromDateTime(endDate))
+            .ToListAsync(cancellationToken);
+
+        var totalPenalty = remainingAdjustments
+            .Where(item => item.Type == "Penalty")
+            .Sum(item => item.Amount);
+        var totalBonus = remainingAdjustments
+            .Where(item => item.Type == "Bonus")
+            .Sum(item => item.Amount);
+        var baseSalary = sessionCount * rate;
+        var finalSalary = baseSalary + totalBonus - totalPenalty;
+
+        var summary = await context.PayrollSummaries
+            .FirstOrDefaultAsync(
+                payroll => payroll.TeacherId == teacherId && payroll.Month == month && payroll.Year == year,
+                cancellationToken);
+
+        if (summary is not null)
+        {
+            var financialsChanged = summary.TotalValidSessions != sessionCount
+                || summary.BaseSalary != baseSalary
+                || summary.TotalPenalty != totalPenalty
+                || summary.TotalBonus != totalBonus
+                || summary.FinalSalary != finalSalary;
+
+            summary.TotalValidSessions = sessionCount;
+            summary.BaseSalary = baseSalary;
+            summary.TotalPenalty = totalPenalty;
+            summary.TotalBonus = totalBonus;
+            summary.FinalSalary = finalSalary;
+
+            if (financialsChanged && summary.EmailStatus is "Sent" or "Failed")
+            {
+                summary.EmailStatus = "NotSent";
+                summary.EmailSentAt = null;
+                summary.EmailErrorMessage = null;
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task<TeacherBaseRateDto> UpdateTeacherBaseRateAsync(

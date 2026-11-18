@@ -19,15 +19,18 @@ namespace ToanTuDuy.Services
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IBusinessNotificationEmailService _businessEmailService;
 
         public PaymentService(
             IConfiguration configuration,
             ApplicationDbContext context,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IBusinessNotificationEmailService businessEmailService)
         {
             _configuration = configuration;
             _context = context;
             _notificationService = notificationService;
+            _businessEmailService = businessEmailService;
         }
 
         public async Task<string> CreatePaymentUrl(int invoiceId, int accountId, string clientIpAddress)
@@ -232,6 +235,52 @@ namespace ToanTuDuy.Services
                 AudienceSpec.Union(
                     AudienceSpec.AllAdmins(),
                     AudienceSpec.ClassTeacher(invoice.ClassId)));
+
+            var classInfo = await _context.Classes
+                .AsNoTracking()
+                .Where(c => c.Id == invoice.ClassId)
+                .Select(c => new { c.Name, c.StartDate, c.TeacherId })
+                .FirstOrDefaultAsync();
+
+            var className = classInfo?.Name ?? $"Lớp #{invoice.ClassId}";
+            var allocRefId = $"ENROLLMENT:{invoice.Id}:ALLOCATED";
+            const string allocTitle = "Học sinh đã được phân bổ vào lớp";
+            var allocBody = $"{studentName} đã hoàn tất học phí và được xếp chính thức vào lớp {className}.";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(NotificationTypes.Enrollment, allocTitle, allocBody, allocRefId),
+                AudienceSpec.StudentParent(invoice.StudentId));
+
+            var details = new System.Collections.Generic.List<(string Label, string Value)>
+            {
+                ("Học sinh", studentName),
+                ("Lớp học", className),
+                ("Mã hóa đơn", $"#{invoice.Id}"),
+                ("Số tiền đã thanh toán", $"{invoice.Amount:N0} VNĐ")
+            };
+            if (classInfo != null)
+            {
+                details.Add(("Ngày khai giảng", $"{classInfo.StartDate:dd/MM/yyyy}"));
+            }
+
+            await _businessEmailService.SendToStudentParentAsync(
+                invoice.StudentId,
+                new BusinessEmailPayload(
+                    $"Xác nhận phân bổ lớp {className} — Toán Tư Duy",
+                    allocTitle,
+                    allocBody,
+                    details));
+
+            if (classInfo?.TeacherId != null)
+            {
+                await _businessEmailService.SendToTeacherAsync(
+                    classInfo.TeacherId.Value,
+                    new BusinessEmailPayload(
+                        $"Học sinh mới vào lớp {className} — Toán Tư Duy",
+                        "Lớp có học sinh mới hoàn tất ghi danh",
+                        $"Học sinh {studentName} vừa hoàn tất học phí và chính thức tham gia lớp {className}.",
+                        details));
+            }
         }
     }
 }

@@ -69,6 +69,7 @@ namespace ToanTuDuy.Services.Notifications
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var resolver = scope.ServiceProvider.GetRequiredService<INotificationAudienceResolver>();
             var unreadCountStore = scope.ServiceProvider.GetRequiredService<IUnreadCountStore>();
+            var businessEmailService = scope.ServiceProvider.GetRequiredService<IBusinessNotificationEmailService>();
 
             var now = DateTime.UtcNow;
             var messages = await context.OutboxMessages
@@ -98,8 +99,16 @@ namespace ToanTuDuy.Services.Notifications
 
                     if (result != null)
                     {
-                        await UpdateUnreadCountsAsync(unreadCountStore, result, cancellationToken);
-                        await PublishAsync(result, cancellationToken);
+                        if (result.Inboxes.Count > 0)
+                        {
+                            await UpdateUnreadCountsAsync(unreadCountStore, result, cancellationToken);
+                            await PublishAsync(result, cancellationToken);
+                        }
+
+                        if (result.EmailAccountIds.Count > 0)
+                        {
+                            await SendBusinessEmailsAsync(businessEmailService, result, cancellationToken);
+                        }
                     }
 
                     message.Status = (int)OutboxStatus.Done;
@@ -152,40 +161,43 @@ namespace ToanTuDuy.Services.Notifications
                 message.AudienceSpec,
                 AudienceSpecJson.Options) ?? new AudienceSpec();
 
-            var accountIds = await resolver.ResolveAccountIdsAsync(audience, cancellationToken);
-            if (accountIds.Count == 0)
+            var resolvedAccountIds = await resolver.ResolveAccountIdsAsync(audience, cancellationToken);
+            if (resolvedAccountIds.Count == 0)
             {
                 return null;
-            }
-
-            var disabledAccountIds = await context.NotificationSettings
-                .AsNoTracking()
-                .Where(setting => accountIds.Contains(setting.AccountId)
-                    && setting.Type == NotificationSettingTypes.InApp
-                    && !setting.Enabled)
-                .Select(setting => setting.AccountId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            foreach (var accountId in disabledAccountIds)
-            {
-                accountIds.Remove(accountId);
             }
 
             var notification = await context.Notifications
                 .AsNoTracking()
                 .FirstAsync(item => item.Id == message.NotificationId, cancellationToken);
 
-            if (accountIds.Count == 0)
+            var shouldSendEmail = audience.SendEmail
+                || string.Equals(notification.Type, NotificationTypes.Special, StringComparison.OrdinalIgnoreCase);
+
+            var disabledAccountIds = await context.NotificationSettings
+                .AsNoTracking()
+                .Where(setting => resolvedAccountIds.Contains(setting.AccountId)
+                    && setting.Type == NotificationSettingTypes.InApp
+                    && !setting.Enabled)
+                .Select(setting => setting.AccountId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            var inAppAccountIds = new HashSet<int>(resolvedAccountIds);
+            foreach (var accountId in disabledAccountIds)
             {
-                return null;
+                inAppAccountIds.Remove(accountId);
             }
+
+            var emailAccountIds = shouldSendEmail
+                ? new HashSet<int>(resolvedAccountIds)
+                : new HashSet<int>();
 
             if (notification.RefId != null)
             {
                 var alreadyDelivered = await context.UserInboxes
                     .AsNoTracking()
-                    .Where(inbox => accountIds.Contains(inbox.AccountId)
+                    .Where(inbox => resolvedAccountIds.Contains(inbox.AccountId)
                         && inbox.Type == notification.Type
                         && inbox.RefId == notification.RefId)
                     .Select(inbox => inbox.AccountId)
@@ -193,17 +205,18 @@ namespace ToanTuDuy.Services.Notifications
 
                 foreach (var accountId in alreadyDelivered)
                 {
-                    accountIds.Remove(accountId);
+                    inAppAccountIds.Remove(accountId);
+                    emailAccountIds.Remove(accountId);
                 }
             }
 
-            if (accountIds.Count == 0)
+            if (inAppAccountIds.Count == 0 && emailAccountIds.Count == 0)
             {
                 return null;
             }
 
             var createdAt = DateTime.UtcNow;
-            var inboxes = accountIds.Select(accountId => new UserInbox
+            var inboxes = inAppAccountIds.Select(accountId => new UserInbox
             {
                 NotificationId = notification.Id,
                 AccountId = accountId,
@@ -213,10 +226,13 @@ namespace ToanTuDuy.Services.Notifications
                 CreatedAt = createdAt,
             }).ToList();
 
-            context.UserInboxes.AddRange(inboxes);
-            await context.SaveChangesAsync(cancellationToken);
+            if (inboxes.Count > 0)
+            {
+                context.UserInboxes.AddRange(inboxes);
+                await context.SaveChangesAsync(cancellationToken);
+            }
 
-            return new FanoutResult(notification, inboxes);
+            return new FanoutResult(notification, inboxes, emailAccountIds.ToList());
         }
 
         private static async Task UpdateUnreadCountsAsync(
@@ -266,9 +282,51 @@ namespace ToanTuDuy.Services.Notifications
             }
         }
 
+        private static async Task SendBusinessEmailsAsync(
+            IBusinessNotificationEmailService businessEmailService,
+            FanoutResult result,
+            CancellationToken cancellationToken)
+        {
+            var isSpecial = string.Equals(
+                result.Notification.Type,
+                NotificationTypes.Special,
+                StringComparison.OrdinalIgnoreCase);
+
+            var subjectPrefix = isSpecial ? "[Thông báo đặc biệt] " : string.Empty;
+            var typeLabel = result.Notification.Type switch
+            {
+                NotificationTypes.Special => "Thông báo đặc biệt",
+                NotificationTypes.Announcement => "Thông báo chung",
+                NotificationTypes.System => "Thông báo hệ thống",
+                _ => result.Notification.Type
+            };
+
+            var bodyText = string.IsNullOrWhiteSpace(result.Notification.Body)
+                ? result.Notification.Title
+                : result.Notification.Body!;
+
+            var details = new List<(string Label, string Value)>
+            {
+                ("Loại thông báo", typeLabel),
+                ("Thời gian gửi", $"{result.Notification.CreatedAt:HH:mm dd/MM/yyyy}")
+            };
+
+            await businessEmailService.SendToAccountsAsync(
+                result.EmailAccountIds,
+                new BusinessEmailPayload(
+                    $"{subjectPrefix}{result.Notification.Title} — Toán Tư Duy",
+                    result.Notification.Title,
+                    bodyText,
+                    details),
+                cancellationToken);
+        }
+
         private static string Truncate(string value, int maxLength) =>
             value.Length <= maxLength ? value : value[..maxLength];
 
-        private sealed record FanoutResult(Notification Notification, IReadOnlyList<UserInbox> Inboxes);
+        private sealed record FanoutResult(
+            Notification Notification,
+            IReadOnlyList<UserInbox> Inboxes,
+            IReadOnlyList<int> EmailAccountIds);
     }
 }

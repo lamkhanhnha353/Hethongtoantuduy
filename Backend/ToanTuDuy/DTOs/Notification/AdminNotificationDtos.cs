@@ -20,6 +20,8 @@ namespace ToanTuDuy.DTOs.Notification
 
         [StringLength(2000)]
         public string? Body { get; set; }
+
+        public bool SendEmail { get; set; }
     }
 
     public class AdminNotificationHistoryItem

@@ -3,33 +3,33 @@
     <!-- ─── Page Header ───────────────────────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-orange-950">Ngân hàng câu hỏi</h1>
-        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+        <h1 class="text-xl sm:text-2xl font-bold text-stone-900">Ngân hàng câu hỏi</h1>
+        <p class="text-xs sm:text-sm text-stone-500 mt-0.5">
           Quản lý ngân hàng câu hỏi theo khóa học, phân loại độ khó và xây dựng kho đề bài chuẩn mực
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <button
           type="button"
           @click="openImportModal()"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-white border border-orange-300 text-orange-800 hover:bg-orange-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         >
-          <SparklesIcon class="w-4 h-4" />
+          <SparklesIcon class="w-4 h-4 text-orange-600" />
           Import từ File (AI Worker)
         </button>
         <button
           type="button"
           @click="openBankModal()"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-orange-200 text-orange-900 hover:bg-orange-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-white border border-stone-300 hover:border-stone-400 text-stone-800 hover:bg-stone-100 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         >
-          <FolderPlusIcon class="w-4 h-4 text-orange-600" />
+          <FolderPlusIcon class="w-4 h-4 text-stone-600" />
           Tạo ngân hàng mới
         </button>
         <button
           type="button"
           :disabled="!selectedBank"
           @click="openQuestionModal()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-400 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         >
           <PlusIcon class="w-4 h-4" />
           Thêm câu hỏi
@@ -41,32 +41,32 @@
     <div
       v-if="actionMessage.text"
       :class="[
-        'px-4 py-3 rounded-2xl text-xs font-medium flex items-center justify-between transition-all duration-300',
+        'px-4 py-3 rounded-lg text-xs font-medium flex items-center justify-between transition-all duration-300',
         actionMessage.isError
-          ? 'bg-red-50 text-red-800 border border-red-200'
-          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+          ? 'bg-rose-50 text-rose-800 border border-rose-300'
+          : 'bg-emerald-50 text-emerald-800 border border-emerald-300'
       ]"
     >
       <div class="flex items-center gap-2">
         <span class="text-base">{{ actionMessage.isError ? '⚠️' : '✅' }}</span>
         <span>{{ actionMessage.text }}</span>
       </div>
-      <button @click="actionMessage.text = ''" class="text-gray-400 hover:text-gray-600 text-sm font-bold cursor-pointer">✕</button>
+      <button @click="actionMessage.text = ''" class="text-stone-500 hover:text-stone-700 text-sm font-bold cursor-pointer">✕</button>
     </div>
 
     <!-- ─── Quick Info Banner: Điểm theo mốc & Cách tính điểm ──────────────── -->
-    <div class="p-3.5 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 rounded-2xl border border-orange-200 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
-      <div class="flex items-center gap-2.5 text-orange-950 font-medium">
-        <span class="p-1 rounded-lg bg-orange-200/70 text-orange-800 text-sm">🎯</span>
+    <div class="p-3.5 bg-white rounded-lg border border-stone-300 border-l-4 border-l-orange-600 flex flex-wrap items-center justify-between gap-3 text-xs shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div class="flex items-center gap-2.5 text-stone-800 font-medium">
+        <span class="p-1.5 rounded-md bg-orange-50 border border-orange-300 text-orange-700 text-sm">🎯</span>
         <span>
           <strong>Ràng buộc điểm theo mức độ:</strong>
-          <span class="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[11px]">Dễ: 1.0đ</span>
-          <span class="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-bold text-[11px]">Trung bình: 1.5đ</span>
-          <span class="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold text-[11px]">Khó: 2.0đ</span>
+          <span class="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold text-[11px] tabular-nums">Dễ: 1.0đ</span>
+          <span class="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded border border-stone-300 bg-stone-100 text-stone-800 font-bold text-[11px] tabular-nums">Trung bình: 1.5đ</span>
+          <span class="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-800 font-bold text-[11px] tabular-nums">Khó: 2.0đ</span>
         </span>
       </div>
-      <div class="text-[11px] font-semibold text-orange-900 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-2xs">
-        Cách tính điểm bài thi: <span class="font-bold text-orange-600">(Tổng điểm đạt / Tổng số điểm) × 100</span>
+      <div class="text-[11px] font-semibold text-stone-800 bg-stone-50 px-3 py-1.5 rounded-md border border-stone-300 tabular-nums">
+        Cách tính điểm bài thi: <span class="font-bold text-orange-700">(Tổng điểm đạt / Tổng số điểm) × 100</span>
       </div>
     </div>
 
@@ -74,24 +74,24 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
       <!-- ─── Left Column: Ngân hàng câu hỏi (4 cols) ───────────────────────── -->
       <div class="lg:col-span-4 space-y-4">
-        <div class="bg-white rounded-2xl border border-orange-100 p-4 shadow-sm space-y-3">
+        <div class="bg-white rounded-lg border border-stone-300 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold text-orange-950 flex items-center gap-1.5">
-              <FolderIcon class="w-4 h-4 text-orange-500" />
+            <h2 class="text-sm font-bold text-stone-900 flex items-center gap-1.5">
+              <FolderIcon class="w-4 h-4 text-orange-600" />
               Ngân hàng đề & chuyên đề
             </h2>
-            <span class="text-xs bg-orange-100 text-orange-900 px-2 py-0.5 rounded-full font-bold">
-              {{ questionBanks.length }}
+            <span class="text-xs bg-orange-50 border border-orange-300 text-orange-800 px-2 py-0.5 rounded font-bold tabular-nums">
+              {{ bankTotalCount }}
             </span>
           </div>
 
           <!-- Course filter -->
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 mb-1">Lọc theo khóa học</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Lọc theo khóa học</label>
             <select
               v-model="filterCourseId"
-              @change="fetchBanks()"
-              class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              @change="handleCourseFilterChange"
+              class="w-full h-10 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             >
               <option :value="null">-- Tất cả khóa học --</option>
               <option v-for="c in courses" :key="c.id" :value="c.id">
@@ -111,12 +111,12 @@
 
           <!-- Banks List -->
           <div v-if="loadingBanks" class="py-10 text-center">
-            <ArrowPathIcon class="w-6 h-6 text-orange-400 animate-spin mx-auto mb-2" />
-            <p class="text-xs text-gray-400">Đang tải danh sách ngân hàng...</p>
+            <ArrowPathIcon class="w-6 h-6 text-orange-600 animate-spin mx-auto mb-2" />
+            <p class="text-xs text-stone-500">Đang tải danh sách ngân hàng...</p>
           </div>
 
-          <div v-else-if="questionBanks.length === 0" class="py-8 text-center bg-orange-50/50 rounded-xl border border-orange-100">
-            <p class="text-xs text-gray-500 font-medium">Chưa có ngân hàng câu hỏi nào</p>
+          <div v-else-if="questionBanks.length === 0" class="py-8 text-center bg-stone-50 rounded-md border border-stone-300">
+            <p class="text-xs text-stone-500 font-medium">Chưa có ngân hàng câu hỏi nào</p>
             <button
               type="button"
               @click="openBankModal()"
@@ -132,14 +132,14 @@
               :key="b.id"
               @click="selectBank(b)"
               :class="[
-                'p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1',
+                'p-3 rounded-md border transition-all cursor-pointer flex flex-col gap-1',
                 selectedBank?.id === b.id
-                  ? 'bg-orange-50/90 border-orange-400 shadow-xs ring-1 ring-orange-300'
-                  : 'bg-white border-orange-100 hover:border-orange-200 hover:bg-orange-50/30'
+                  ? 'bg-orange-50/80 border-orange-500 shadow-xs ring-1 ring-orange-500/20'
+                  : 'bg-white border-stone-300 hover:border-stone-400 hover:bg-stone-50'
               ]"
             >
               <div class="flex items-start justify-between gap-2">
-                <h3 class="text-xs font-bold text-gray-900 line-clamp-1">
+                <h3 class="text-xs font-bold text-stone-900 line-clamp-1">
                   {{ b.name }}
                 </h3>
                 <div class="flex items-center gap-1 flex-shrink-0" @click.stop>
@@ -147,7 +147,7 @@
                     type="button"
                     title="Chỉnh sửa ngân hàng"
                     @click="openBankModal(b)"
-                    class="p-1 hover:bg-orange-200/60 text-gray-500 hover:text-orange-900 rounded-md transition-colors"
+                    class="p-1 hover:bg-stone-200/70 text-stone-500 hover:text-stone-900 rounded transition-colors cursor-pointer"
                   >
                     <PencilSquareIcon class="w-3.5 h-3.5" />
                   </button>
@@ -155,46 +155,59 @@
                     type="button"
                     title="Xóa ngân hàng"
                     @click="confirmDeleteBank(b)"
-                    class="p-1 hover:bg-red-100 text-gray-400 hover:text-red-600 rounded-md transition-colors"
+                    class="p-1 hover:bg-rose-50 text-stone-400 hover:text-rose-700 rounded transition-colors cursor-pointer"
                   >
                     <TrashIcon class="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              <span class="text-[10px] text-orange-800 bg-orange-100/70 px-2 py-0.5 rounded-md font-medium inline-block w-fit">
+              <span class="text-[10px] text-orange-800 bg-orange-50 border border-orange-300 px-2 py-0.5 rounded font-medium inline-block w-fit">
                 {{ b.courseName || 'Khóa học' }}
               </span>
 
-              <p v-if="b.description" class="text-[11px] text-gray-500 line-clamp-2 mt-0.5">
+              <p v-if="b.description" class="text-[11px] text-stone-500 line-clamp-2 mt-0.5">
                 {{ b.description }}
               </p>
 
-              <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1 mt-1 border-t border-orange-50">
+              <div class="flex items-center justify-between text-[11px] text-stone-500 pt-1 mt-1 border-t border-stone-200 tabular-nums">
                 <span>{{ b.totalQuestions || 0 }} câu hỏi</span>
-                <span :class="selectedBank?.id === b.id ? 'text-orange-600 font-bold' : 'text-gray-400'">
+                <span :class="selectedBank?.id === b.id ? 'text-orange-700 font-bold' : 'text-stone-400'">
                   {{ selectedBank?.id === b.id ? 'Đang chọn ▸' : 'Xem câu hỏi' }}
                 </span>
               </div>
             </div>
           </div>
+
+          <PaginationBar
+            v-model:page="bankPage"
+            v-model:page-size="bankPageSize"
+            :total-count="bankTotalCount"
+            :total-pages="bankTotalPages"
+            :disabled="loadingBanks"
+            :bordered="false"
+            compact
+            item-label="ngân hàng"
+            class="border-t border-stone-200 px-0 pt-2.5 pb-0"
+            @change="fetchBanks"
+          />
         </div>
       </div>
 
       <!-- ─── Right Column: Danh sách câu hỏi trong ngân hàng (8 cols) ───────── -->
       <div class="lg:col-span-8 space-y-4">
         <!-- Bank Active Header & Filters -->
-        <div class="bg-white rounded-2xl border border-orange-100 p-4 shadow-sm space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-orange-50">
+        <div class="bg-white rounded-lg border border-stone-300 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200">
             <div>
               <span class="text-[11px] uppercase tracking-wider font-bold text-orange-600">
                 Ngân hàng được chọn
               </span>
-              <h2 class="text-base font-bold text-orange-950">
+              <h2 class="text-base font-bold text-stone-900">
                 {{ selectedBank ? selectedBank.name : 'Vui lòng chọn một ngân hàng' }}
               </h2>
-              <p v-if="selectedBank" class="text-xs text-gray-500 mt-0.5">
-                Thuộc khóa: <strong class="text-gray-700">{{ selectedBank.courseName }}</strong>
+              <p v-if="selectedBank" class="text-xs text-stone-500 mt-0.5">
+                Thuộc khóa: <strong class="text-stone-800">{{ selectedBank.courseName }}</strong>
                 <span v-if="selectedBank.description"> • {{ selectedBank.description }}</span>
               </p>
             </div>
@@ -203,7 +216,7 @@
               <button
                 type="button"
                 @click="openImportModal(selectedBank.id)"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md bg-white hover:bg-stone-100 border border-stone-300 hover:border-stone-400 text-stone-800 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
                 <SparklesIcon class="w-3.5 h-3.5 text-orange-600" />
                 Import từ file
@@ -211,7 +224,7 @@
               <button
                 type="button"
                 @click="openQuestionModal()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-400 hover:bg-orange-500 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
                 <PlusIcon class="w-3.5 h-3.5" />
                 Thêm câu hỏi
@@ -222,11 +235,11 @@
           <!-- Questions Filter Bar -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="block text-[11px] font-semibold text-gray-500 mb-1">Mức độ khó & Điểm</label>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Mức độ khó & Điểm</label>
               <select
                 v-model="filterDifficulty"
-                @change="fetchQuestions()"
-                class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                @change="handleQuestionFilterChange"
+                class="w-full h-10 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               >
                 <option value="">-- Tất cả mức độ --</option>
                 <option value="EASY">Dễ (1.0 điểm)</option>
@@ -236,11 +249,11 @@
             </div>
 
             <div>
-              <label class="block text-[11px] font-semibold text-gray-500 mb-1">Loại câu hỏi</label>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Loại câu hỏi</label>
               <select
                 v-model="filterType"
-                @change="fetchQuestions()"
-                class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                @change="handleQuestionFilterChange"
+                class="w-full h-10 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               >
                 <option value="">-- Tất cả loại --</option>
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm (4 phương án)</option>
@@ -252,38 +265,39 @@
             </div>
 
             <div>
-              <label class="block text-[11px] font-semibold text-gray-500 mb-1">Tìm nội dung</label>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Tìm nội dung</label>
               <SearchBar
                 v-model="questionKeyword"
                 placeholder="Tìm nội dung câu hỏi..."
+                @update:modelValue="debouncedFetchQuestions"
               />
             </div>
           </div>
         </div>
 
         <!-- Selection toolbar & Stats -->
-        <div class="flex items-center justify-between text-xs text-gray-500 px-1">
+        <div class="flex items-center justify-between text-xs text-stone-600 px-1 tabular-nums">
           <div class="flex items-center gap-2">
-            <label class="flex items-center gap-1.5 font-semibold text-orange-950 cursor-pointer">
+            <label class="flex items-center gap-1.5 font-semibold text-stone-900 cursor-pointer">
               <input
                 type="checkbox"
                 :checked="isAllSelected"
                 @change="toggleSelectAll"
-                class="rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
+                class="rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
               />
-              Chọn tất cả ({{ filteredQuestions.length }})
+              Chọn trang này ({{ questions.length }})
             </label>
-            <span v-if="selectedQuestionIds.length > 0" class="text-orange-600 font-bold">
+            <span v-if="selectedQuestionIds.length > 0" class="text-orange-700 font-bold">
               • Đã chọn {{ selectedQuestionIds.length }} câu
             </span>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap justify-end">
+          <div class="flex items-center gap-3 flex-wrap justify-end">
             <button
               v-if="selectedQuestionIds.length > 0"
               type="button"
               @click="confirmDeleteSelectedQuestions"
-              class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 font-semibold cursor-pointer"
+              class="inline-flex items-center gap-1 text-rose-700 hover:text-rose-800 font-semibold cursor-pointer"
             >
               <TrashIcon class="w-3.5 h-3.5" /> Xóa đã chọn ({{ selectedQuestionIds.length }})
             </button>
@@ -291,21 +305,21 @@
               v-if="selectedQuestionIds.length > 0"
               type="button"
               @click="exportSelectedQuestions"
-              class="inline-flex items-center gap-1 text-orange-700 hover:text-orange-900 font-semibold cursor-pointer"
+              class="inline-flex items-center gap-1 text-orange-700 hover:text-orange-800 font-semibold cursor-pointer"
             >
               <ArrowDownTrayIcon class="w-3.5 h-3.5" /> Trích xuất câu hỏi
             </button>
-            <span>Hiển thị {{ filteredQuestions.length }} câu hỏi</span>
+            <span>Tìm thấy {{ questionTotalCount }} câu hỏi</span>
           </div>
         </div>
 
         <!-- Questions List Container -->
-        <div v-if="loadingQuestions" class="bg-white rounded-2xl border border-orange-100 p-12 text-center shadow-sm">
-          <ArrowPathIcon class="w-7 h-7 text-orange-400 animate-spin mx-auto mb-2" />
-          <p class="text-xs text-gray-500">Đang tải danh sách câu hỏi...</p>
+        <div v-if="loadingQuestions" class="bg-white rounded-lg border border-stone-300 p-12 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <ArrowPathIcon class="w-7 h-7 text-orange-600 animate-spin mx-auto mb-2" />
+          <p class="text-xs text-stone-500">Đang tải danh sách câu hỏi...</p>
         </div>
 
-        <div v-else-if="!selectedBank" class="bg-white rounded-2xl border border-orange-100 p-12 text-center shadow-sm">
+        <div v-else-if="!selectedBank" class="bg-white rounded-lg border border-stone-300 p-12 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <EmptyState
             :icon="FolderIcon"
             message="Chưa chọn ngân hàng câu hỏi"
@@ -313,7 +327,7 @@
           />
         </div>
 
-        <div v-else-if="filteredQuestions.length === 0" class="bg-white rounded-2xl border border-orange-100 p-12 text-center shadow-sm">
+        <div v-else-if="questions.length === 0" class="bg-white rounded-lg border border-stone-300 p-12 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <EmptyState
             :icon="DocumentTextIcon"
             message="Không tìm thấy câu hỏi nào"
@@ -323,38 +337,38 @@
 
         <div v-else class="space-y-3.5">
           <div
-            v-for="(q, idx) in filteredQuestions"
+            v-for="(q, idx) in questions"
             :key="q.id"
-            class="bg-white rounded-2xl border border-orange-100 p-4 shadow-sm hover:border-orange-300 transition-all flex items-start gap-3.5"
+            class="bg-white rounded-lg border border-stone-300 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-orange-400 transition-all flex items-start gap-3.5"
           >
             <input
               type="checkbox"
               :value="q.id"
               v-model="selectedQuestionIds"
-              class="mt-1 rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
+              class="mt-1 rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
             />
 
             <div class="flex-1 min-w-0">
               <!-- Question meta tags -->
               <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="text-[11px] font-mono font-bold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
-                  #{{ idx + 1 }} (ID: {{ q.id }})
+                <span class="text-[11px] font-mono font-bold text-orange-800 bg-orange-50 border border-orange-300 px-2 py-0.5 rounded tabular-nums">
+                  #{{ (questionPage - 1) * questionPageSize + idx + 1 }} (ID: {{ q.id }})
                 </span>
 
                 <!-- Difficulty & Score Milestone Tag -->
                 <span
                   :class="[
-                    'text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1',
-                    q.difficulty === 'EASY' ? 'bg-emerald-100 text-emerald-800' :
-                    q.difficulty === 'MEDIUM' ? 'bg-blue-100 text-blue-800' :
-                    'bg-amber-100 text-amber-800'
+                    'text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 tabular-nums',
+                    q.difficulty === 'EASY' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' :
+                    q.difficulty === 'MEDIUM' ? 'bg-stone-100 border-stone-300 text-stone-800' :
+                    'bg-amber-50 border-amber-300 text-amber-800'
                   ]"
                 >
                   <span>{{ q.difficulty === 'EASY' ? 'Dễ' : q.difficulty === 'MEDIUM' ? 'Trung bình' : 'Khó' }}</span>
                   <span class="font-extrabold">• {{ getDifficultyPoint(q.difficulty) }}đ</span>
                 </span>
 
-                <span class="text-[10px] font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span class="text-[10px] font-semibold text-stone-700 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded">
                   {{
                     q.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' :
                     q.type === 'TRUE_FALSE' ? 'Đúng / Sai' :
@@ -368,7 +382,7 @@
               <div class="space-y-2">
                 <!-- If Multiple Choice: display question text + 4 distinct options -->
                 <template v-if="q.type === 'MULTIPLE_CHOICE'">
-                  <p class="text-xs sm:text-sm font-semibold text-gray-900 leading-relaxed whitespace-pre-line">
+                  <p class="text-xs sm:text-sm font-semibold text-stone-900 leading-relaxed whitespace-pre-line">
                     {{ getParsedQuestion(q).questionText }}
                   </p>
 
@@ -381,18 +395,18 @@
                       v-for="optKey in ['A', 'B', 'C', 'D']"
                       :key="optKey"
                       :class="[
-                        'p-2.5 rounded-xl border text-xs flex items-start gap-2 transition-all',
+                        'p-2.5 rounded-md border text-xs flex items-start gap-2 transition-all',
                         showAnswerMap[q.id] && isCorrectOption(getParsedQuestion(q), optKey)
                           ? 'bg-emerald-50 border-emerald-300 text-emerald-950 ring-1 ring-emerald-300 font-semibold'
-                          : 'bg-orange-50/30 border-orange-100 text-gray-800'
+                          : 'bg-stone-50/60 border-stone-300 text-stone-800'
                       ]"
                     >
                       <span
                         :class="[
-                          'w-5 h-5 rounded-md flex items-center justify-center font-bold text-[11px] flex-shrink-0',
+                          'w-5 h-5 rounded flex items-center justify-center font-bold text-[11px] flex-shrink-0',
                           showAnswerMap[q.id] && isCorrectOption(getParsedQuestion(q), optKey)
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-orange-200/80 text-orange-950'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-stone-200 text-stone-800'
                         ]"
                       >
                         {{ optKey }}
@@ -402,7 +416,7 @@
                       </span>
                       <span
                         v-if="showAnswerMap[q.id] && isCorrectOption(getParsedQuestion(q), optKey)"
-                        class="text-emerald-600 text-xs font-bold"
+                        class="text-emerald-700 text-xs font-bold"
                       >
                         ✓ Đúng
                       </span>
@@ -412,7 +426,7 @@
 
                 <!-- If Fill-in or Essay: regular text -->
                 <template v-else>
-                  <p class="text-xs sm:text-sm font-semibold text-gray-900 leading-relaxed whitespace-pre-line">
+                  <p class="text-xs sm:text-sm font-semibold text-stone-900 leading-relaxed whitespace-pre-line">
                     {{ q.content }}
                   </p>
                 </template>
@@ -423,7 +437,7 @@
                 <!-- YouTube Video Embed -->
                 <div
                   v-if="isYouTubeUrl(q.imageUrl)"
-                  class="max-w-md rounded-2xl overflow-hidden border border-orange-200 shadow-xs bg-black"
+                  class="max-w-md rounded-md overflow-hidden border border-stone-300 shadow-xs bg-black"
                 >
                   <iframe
                     :src="getYouTubeEmbedUrl(q.imageUrl)"
@@ -438,24 +452,24 @@
                 <!-- Image Display -->
                 <div
                   v-else
-                  class="max-w-sm rounded-xl overflow-hidden border border-orange-100 bg-white shadow-2xs"
+                  class="max-w-sm rounded-md overflow-hidden border border-stone-300 bg-white shadow-2xs"
                 >
                   <img
                     :src="q.imageUrl"
                     alt="Hình ảnh minh họa"
-                    class="w-full object-contain max-h-48 bg-orange-50/20"
+                    class="w-full object-contain max-h-48 bg-stone-50"
                     loading="lazy"
                   />
                 </div>
               </div>
 
               <!-- Answer / Options display toggle -->
-              <div class="mt-3 pt-2.5 border-t border-orange-50">
+              <div class="mt-3 pt-2.5 border-t border-stone-200">
                 <div class="flex items-center justify-between text-xs">
                   <button
                     type="button"
                     @click="toggleAnswerView(q.id)"
-                    class="text-orange-600 hover:text-orange-800 font-semibold cursor-pointer inline-flex items-center gap-1"
+                    class="text-orange-700 hover:text-orange-800 font-semibold cursor-pointer inline-flex items-center gap-1"
                   >
                     <EyeIcon v-if="!showAnswerMap[q.id]" class="w-3.5 h-3.5" />
                     <EyeSlashIcon v-else class="w-3.5 h-3.5" />
@@ -466,14 +480,14 @@
                     <button
                       type="button"
                       @click="openQuestionModal(q)"
-                      class="px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-50 rounded-lg transition-colors cursor-pointer"
+                      class="h-7 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 rounded-md transition-colors cursor-pointer"
                     >
                       Sửa
                     </button>
                     <button
                       type="button"
                       @click="confirmDeleteQuestion(q)"
-                      class="px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      class="h-7 px-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
                     >
                       Xóa
                     </button>
@@ -483,20 +497,33 @@
                 <!-- Answer reveal box -->
                 <div
                   v-if="showAnswerMap[q.id]"
-                  class="mt-2.5 p-3 rounded-xl bg-orange-50/80 border border-orange-200 text-xs text-orange-950 space-y-1.5"
+                  class="mt-2.5 p-3 rounded-md bg-stone-50 border border-stone-300 text-xs text-stone-900 space-y-1.5"
                 >
-                  <p class="font-bold text-orange-900 flex items-center gap-1">
+                  <p class="font-bold text-stone-900 flex items-center gap-1 flex-wrap">
                     🎯 Đáp án chuẩn & Điểm:
-                    <span class="text-[11px] font-normal text-gray-600">
+                    <span class="text-[11px] font-normal text-stone-600 tabular-nums">
                       (Độ khó: {{ q.difficulty === 'EASY' ? 'Dễ' : q.difficulty === 'MEDIUM' ? 'Trung bình' : 'Khó' }} • Điểm số: <strong>{{ getDifficultyPoint(q.difficulty) }}đ</strong>)
                     </span>
                   </p>
-                  <p class="text-gray-800 whitespace-pre-line font-medium leading-relaxed bg-white/80 p-2.5 rounded-lg border border-orange-100">
+                  <p class="text-stone-800 whitespace-pre-line font-medium leading-relaxed bg-white p-2.5 rounded-md border border-stone-200">
                     {{ q.answer }}
                   </p>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <PaginationBar
+              v-model:page="questionPage"
+              v-model:page-size="questionPageSize"
+              :total-count="questionTotalCount"
+              :total-pages="questionTotalPages"
+              :disabled="loadingQuestions"
+              :bordered="false"
+              item-label="câu hỏi"
+              @change="fetchQuestions"
+            />
           </div>
         </div>
       </div>
@@ -507,23 +534,29 @@
       v-if="showBankModal"
       class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-2xs"
     >
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-orange-100 space-y-4">
-        <div class="flex items-center justify-between border-b border-orange-100 pb-3">
-          <h3 class="text-base font-bold text-orange-950">
+      <div class="bg-white rounded-lg max-w-md w-full shadow-xl border border-stone-300 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 bg-stone-50 border-b border-stone-200">
+          <h3 class="text-base font-bold text-stone-900">
             {{ editingBank ? 'Chỉnh sửa ngân hàng câu hỏi' : 'Tạo ngân hàng câu hỏi mới' }}
           </h3>
-          <button @click="showBankModal = false" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">✕</button>
+          <button
+            type="button"
+            @click="showBankModal = false"
+            class="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-200/70 transition-colors text-base leading-none cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
 
-        <form @submit.prevent="saveBank" class="space-y-3.5 text-xs">
+        <form @submit.prevent="saveBank" class="p-6 space-y-3.5 text-xs">
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">
-              Khóa học <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Khóa học <span class="text-rose-600">*</span>
             </label>
             <select
               v-model="bankForm.courseId"
               required
-              class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 font-medium"
+              class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm font-medium text-stone-900 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             >
               <option :value="null" disabled>-- Chọn khóa học --</option>
               <option v-for="c in courses" :key="c.id" :value="c.id">
@@ -533,8 +566,8 @@
           </div>
 
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">
-              Tên ngân hàng câu hỏi <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Tên ngân hàng câu hỏi <span class="text-rose-600">*</span>
             </label>
             <input
               type="text"
@@ -542,33 +575,33 @@
               required
               maxlength="200"
               placeholder="VD: Chuyên đề Số học & Dãy số logic Lớp 3"
-              class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3 text-sm text-stone-900 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             />
           </div>
 
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">Mô tả / Ghi chú</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Mô tả / Ghi chú</label>
             <textarea
               v-model="bankForm.description"
               rows="3"
               maxlength="1000"
               placeholder="Ghi chú về phạm vi kiến thức, mục tiêu rèn luyện..."
-              class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              class="w-full rounded-md border border-stone-300 bg-stone-50/70 p-2.5 text-sm text-stone-900 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             ></textarea>
           </div>
 
-          <div class="pt-3 border-t border-orange-100 flex items-center justify-end gap-2">
+          <div class="px-6 py-4 -mx-6 -mb-6 mt-4 bg-stone-50 border-t border-stone-200 flex items-center justify-end gap-2">
             <button
               type="button"
               @click="showBankModal = false"
-              class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer"
+              class="h-9 px-3.5 rounded-md bg-white border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-xs font-semibold text-stone-800 transition-colors cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
               :disabled="savingBank"
-              class="px-4 py-2 rounded-xl bg-orange-400 hover:bg-orange-500 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+              class="h-9 px-4 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
             >
               <ArrowPathIcon v-if="savingBank" class="w-3.5 h-3.5 animate-spin" />
               <span>{{ editingBank ? 'Lưu cập nhật' : 'Tạo ngân hàng' }}</span>
@@ -583,30 +616,36 @@
       v-if="showQuestionModal"
       class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-2xs"
     >
-      <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-xl border border-orange-100 space-y-4 max-h-[92vh] overflow-y-auto">
-        <div class="flex items-center justify-between border-b border-orange-100 pb-3">
+      <div class="bg-white rounded-lg max-w-2xl w-full shadow-xl border border-stone-300 max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between px-6 py-4 bg-stone-50 border-b border-stone-200">
           <div>
-            <h3 class="text-base font-bold text-orange-950">
+            <h3 class="text-base font-bold text-stone-900">
               {{ editingQuestion ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới vào ngân hàng' }}
             </h3>
-            <p class="text-[11px] text-gray-500 mt-0.5">
+            <p class="text-[11px] text-stone-500 mt-0.5">
               Ngân hàng: <span class="text-orange-700 font-semibold">{{ selectedBank?.name }}</span>
             </p>
           </div>
-          <button @click="showQuestionModal = false" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">✕</button>
+          <button
+            type="button"
+            @click="showQuestionModal = false"
+            class="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-200/70 transition-colors text-base leading-none cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
 
-        <form @submit.prevent="saveQuestion" class="space-y-4 text-xs">
+        <form @submit.prevent="saveQuestion" class="p-6 space-y-4 text-xs">
           <!-- 1. Loại câu hỏi & Mức độ khó -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block font-semibold text-gray-700 mb-1">
-                Loại câu hỏi <span class="text-red-500">*</span>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+                Loại câu hỏi <span class="text-rose-600">*</span>
               </label>
               <select
                 v-model="questionForm.type"
                 required
-                class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 font-medium bg-white"
+                class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 font-medium text-stone-900"
               >
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm (Hiện 4 ô A, B, C, D)</option>
                 <option value="TRUE_FALSE">Đúng / Sai</option>
@@ -617,21 +656,21 @@
             </div>
 
             <div>
-              <label class="block font-semibold text-gray-700 mb-1">
-                Mức độ khó & Điểm quy chuẩn <span class="text-red-500">*</span>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+                Mức độ khó & Điểm quy chuẩn <span class="text-rose-600">*</span>
               </label>
               <select
                 v-model="questionForm.difficulty"
                 required
-                class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 font-medium bg-white"
+                class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 font-medium text-stone-900"
               >
                 <option value="EASY">Dễ (Nhận biết) — Quy định 1.0 điểm</option>
                 <option value="MEDIUM">Trung bình (Thông hiểu) — Quy định 1.5 điểm</option>
                 <option value="HARD">Khó (Vận dụng cao) — Quy định 2.0 điểm</option>
               </select>
-              <div class="mt-1 flex items-center justify-between text-[11px] text-orange-800 font-semibold">
+              <div class="mt-1.5 flex items-center justify-between text-[11px] text-stone-700 font-semibold">
                 <span>Điểm câu này:</span>
-                <span class="px-2 py-0.5 rounded-md bg-orange-100 text-orange-950 font-bold">
+                <span class="px-2 py-0.5 rounded border border-orange-300 bg-orange-50 text-orange-800 font-bold tabular-nums">
                   {{ DIFFICULTY_POINTS[questionForm.difficulty] }} điểm
                 </span>
               </div>
@@ -640,8 +679,8 @@
 
           <!-- 2. Nội dung câu hỏi -->
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">
-              Nội dung câu hỏi / Đề bài <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Nội dung câu hỏi / Đề bài <span class="text-rose-600">*</span>
             </label>
             <textarea
               v-model="questionForm.content"
@@ -649,26 +688,26 @@
               rows="3"
               maxlength="2000"
               placeholder="Nhập nội dung đề bài, các điều kiện hoặc yêu cầu của câu hỏi..."
-              class="w-full rounded-xl border border-orange-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              class="w-full rounded-md border border-stone-300 bg-stone-50/70 p-2.5 text-sm text-stone-900 focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
             ></textarea>
           </div>
 
           <!-- 3. Tùy chọn Media: Upload ảnh hoặc Link YouTube -->
-          <div class="p-3.5 rounded-2xl bg-orange-50/50 border border-orange-200 space-y-2.5">
+          <div class="p-4 rounded-lg bg-stone-50 border border-stone-300 space-y-2.5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label class="font-bold text-orange-950 flex items-center gap-1.5">
+              <label class="font-bold text-stone-900 flex items-center gap-1.5">
                 <PhotoIcon class="w-4 h-4 text-orange-600" />
                 Tài liệu minh họa (Ảnh / Video YouTube)
               </label>
 
               <!-- Media Type Selector -->
-              <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-orange-200 text-[11px] font-semibold">
+              <div class="flex items-center gap-1 bg-white p-1 rounded-md border border-stone-300 text-[11px] font-semibold">
                 <button
                   type="button"
                   @click="setMediaType('upload')"
                   :class="[
-                    'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
-                    mediaType === 'upload' ? 'bg-orange-500 text-white font-bold' : 'text-gray-600 hover:text-orange-900'
+                    'px-2.5 py-1 rounded transition-colors cursor-pointer',
+                    mediaType === 'upload' ? 'bg-orange-600 text-white font-bold' : 'text-stone-600 hover:text-stone-900'
                   ]"
                 >
                   Upload ảnh
@@ -677,8 +716,8 @@
                   type="button"
                   @click="setMediaType('youtube')"
                   :class="[
-                    'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
-                    mediaType === 'youtube' ? 'bg-orange-500 text-white font-bold' : 'text-gray-600 hover:text-orange-900'
+                    'px-2.5 py-1 rounded transition-colors cursor-pointer',
+                    mediaType === 'youtube' ? 'bg-orange-600 text-white font-bold' : 'text-stone-600 hover:text-stone-900'
                   ]"
                 >
                   Link YouTube
@@ -687,8 +726,8 @@
                   type="button"
                   @click="setMediaType('url')"
                   :class="[
-                    'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
-                    mediaType === 'url' ? 'bg-orange-500 text-white font-bold' : 'text-gray-600 hover:text-orange-900'
+                    'px-2.5 py-1 rounded transition-colors cursor-pointer',
+                    mediaType === 'url' ? 'bg-orange-600 text-white font-bold' : 'text-stone-600 hover:text-stone-900'
                   ]"
                 >
                   Link ảnh web
@@ -696,7 +735,7 @@
                 <button
                   type="button"
                   @click="clearMedia()"
-                  class="px-2 py-1 text-gray-400 hover:text-rose-600 rounded-lg cursor-pointer"
+                  class="px-2 py-1 text-stone-400 hover:text-rose-700 rounded cursor-pointer"
                   title="Không dùng media"
                 >
                   ✕
@@ -707,7 +746,7 @@
             <!-- Tab Upload Ảnh -->
             <div v-if="mediaType === 'upload'" class="space-y-2">
               <div class="flex items-center gap-2">
-                <label class="px-3.5 py-2 rounded-xl bg-white border border-orange-300 text-orange-800 hover:bg-orange-50 font-semibold cursor-pointer shadow-2xs inline-flex items-center gap-1.5">
+                <label class="h-9 px-3.5 rounded-md bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 hover:border-stone-400 font-semibold cursor-pointer shadow-xs inline-flex items-center gap-1.5 transition-colors">
                   <ArrowDownTrayIcon class="w-3.5 h-3.5 text-orange-600" />
                   <span>Chọn tệp ảnh từ máy</span>
                   <input
@@ -717,10 +756,10 @@
                     @change="handleImageFileUpload"
                   />
                 </label>
-                <span v-if="uploadFileName" class="text-[11px] text-gray-600 font-medium truncate max-w-xs">
+                <span v-if="uploadFileName" class="text-[11px] text-stone-600 font-medium truncate max-w-xs">
                   {{ uploadFileName }}
                 </span>
-                <span v-else class="text-[11px] text-gray-400">
+                <span v-else class="text-[11px] text-stone-500">
                   Hỗ trợ PNG, JPG, JPEG, WebP, GIF (tối đa 10MB)
                 </span>
               </div>
@@ -732,9 +771,9 @@
                 type="url"
                 v-model="questionForm.imageUrl"
                 placeholder="Dán link video YouTube (VD: https://www.youtube.com/watch?v=... hoặc https://youtu.be/...)"
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                class="w-full h-10 rounded-md border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               />
-              <p class="text-[10px] text-gray-500">
+              <p class="text-[10px] text-stone-500">
                 Video YouTube sẽ được nhúng trực tiếp và phát trên giao diện bài thi của học sinh.
               </p>
             </div>
@@ -745,14 +784,14 @@
                 type="url"
                 v-model="questionForm.imageUrl"
                 placeholder="https://example.com/image.png"
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                class="w-full h-10 rounded-md border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               />
             </div>
 
             <!-- Media Live Preview -->
-            <div v-if="questionForm.imageUrl" class="pt-2 border-t border-orange-100 flex items-start gap-3">
+            <div v-if="questionForm.imageUrl" class="pt-2 border-t border-stone-200 flex items-start gap-3">
               <!-- If YouTube -->
-              <div v-if="isYouTubeUrl(questionForm.imageUrl)" class="w-full max-w-sm rounded-xl overflow-hidden border border-orange-300 bg-black shadow-xs">
+              <div v-if="isYouTubeUrl(questionForm.imageUrl)" class="w-full max-w-sm rounded-md overflow-hidden border border-stone-300 bg-black shadow-xs">
                 <iframe
                   :src="getYouTubeEmbedUrl(questionForm.imageUrl)"
                   class="w-full aspect-video"
@@ -763,14 +802,14 @@
               </div>
 
               <!-- If Image -->
-              <div v-else class="relative max-w-xs rounded-xl overflow-hidden border border-orange-200 bg-white p-1">
+              <div v-else class="relative max-w-xs rounded-md overflow-hidden border border-stone-300 bg-white p-1">
                 <img :src="questionForm.imageUrl" alt="Xem trước ảnh" class="w-full max-h-36 object-contain" />
               </div>
 
               <button
                 type="button"
                 @click="clearMedia()"
-                class="px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold cursor-pointer"
+                class="h-8 px-2.5 text-xs text-rose-700 hover:bg-rose-50 rounded-md font-semibold cursor-pointer"
               >
                 Gỡ bỏ media
               </button>
@@ -782,13 +821,13 @@
           <!-- ─── CASE 1: TRẮC NGHIỆM (4 ô A, B, C, D) ─── -->
           <div
             v-if="questionForm.type === 'MULTIPLE_CHOICE'"
-            class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-3"
+            class="p-4 rounded-lg bg-stone-50 border border-stone-300 space-y-3"
           >
-            <div class="flex items-center justify-between">
-              <label class="font-bold text-orange-950 text-xs flex items-center gap-1.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <label class="font-bold text-stone-900 text-xs flex items-center gap-1.5">
                 <span>🔘 4 Phương án Trắc nghiệm (Chọn chấm tròn để chỉ định đáp án đúng):</span>
               </label>
-              <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+              <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded">
                 Đáp án đúng: Phương án {{ mcCorrectOption }}
               </span>
             </div>
@@ -799,10 +838,10 @@
                 v-for="opt in ['A', 'B', 'C', 'D']"
                 :key="opt"
                 :class="[
-                  'p-2 rounded-xl border flex items-center gap-2.5 transition-all',
+                  'p-2.5 rounded-md border flex items-center gap-2.5 transition-all',
                   mcCorrectOption === opt
-                    ? 'bg-emerald-50/90 border-emerald-300 ring-1 ring-emerald-300'
-                    : 'bg-white border-orange-200'
+                    ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-300'
+                    : 'bg-white border-stone-300'
                 ]"
               >
                 <!-- Radio chọn đáp án đúng -->
@@ -812,12 +851,12 @@
                     name="mcCorrectOption"
                     :value="opt"
                     v-model="mcCorrectOption"
-                    class="w-4 h-4 text-emerald-600 focus:ring-emerald-400 cursor-pointer"
+                    class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
                   <span
                     :class="[
-                      'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold',
-                      mcCorrectOption === opt ? 'bg-emerald-600 text-white' : 'bg-orange-100 text-orange-950'
+                      'w-6 h-6 rounded flex items-center justify-center text-xs font-bold',
+                      mcCorrectOption === opt ? 'bg-emerald-600 text-white' : 'bg-stone-100 border border-stone-300 text-stone-800'
                     ]"
                   >
                     {{ opt }}
@@ -831,18 +870,18 @@
                   required
                   maxlength="500"
                   :placeholder="`Nhập nội dung phương án ${opt}...`"
-                  class="flex-1 bg-transparent border-0 focus:outline-none text-xs font-medium text-gray-900 placeholder:text-gray-400"
+                  class="flex-1 bg-transparent border-0 focus:outline-none text-xs font-medium text-stone-900 placeholder:text-stone-400"
                 />
 
-                <span v-if="mcCorrectOption === opt" class="text-[11px] font-bold text-emerald-700 px-2">
+                <span v-if="mcCorrectOption === opt" class="text-[11px] font-bold text-emerald-800 px-2">
                   ✓ Đáp án đúng
                 </span>
               </div>
             </div>
 
             <!-- Lời giải / Giải thích chi tiết cho trắc nghiệm (Tùy chọn) -->
-            <div class="pt-2 border-t border-orange-200/60">
-              <label class="block font-semibold text-gray-700 mb-1 text-[11px]">
+            <div class="pt-2.5 border-t border-stone-200">
+              <label class="block font-semibold uppercase tracking-wide text-stone-700 mb-1.5 text-[11px]">
                 Lời giải / Hướng dẫn giải chi tiết (Tùy chọn)
               </label>
               <textarea
@@ -850,7 +889,7 @@
                 rows="2"
                 maxlength="1000"
                 placeholder="Giải thích vì sao phương án này đúng, phương pháp tư duy cần áp dụng..."
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs"
+                class="w-full rounded-md border border-stone-300 bg-white p-2.5 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 text-xs text-stone-900"
               ></textarea>
             </div>
           </div>
@@ -858,16 +897,16 @@
           <!-- ─── CASE 2: ĐÚNG / SAI ─── -->
           <div
             v-else-if="questionForm.type === 'TRUE_FALSE'"
-            class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-3"
+            class="p-4 rounded-lg bg-stone-50 border border-stone-300 space-y-3"
           >
             <div>
-              <label class="block font-semibold text-gray-800 mb-1 text-xs">
-                Đáp án đúng <span class="text-red-500">*</span>
+              <label class="block font-semibold uppercase tracking-wide text-stone-700 mb-1.5 text-xs">
+                Đáp án đúng <span class="text-rose-600">*</span>
               </label>
               <select
                 v-model="trueFalseAnswer"
                 required
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs font-bold text-orange-950"
+                class="w-full h-10 rounded-md border border-stone-300 bg-white px-3 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               >
                 <option value="" disabled>-- Chọn đáp án --</option>
                 <option value="Đúng">Đúng</option>
@@ -875,14 +914,14 @@
               </select>
             </div>
             <div>
-              <label class="block font-semibold text-gray-700 mb-1 text-[11px]">
+              <label class="block font-semibold uppercase tracking-wide text-stone-700 mb-1.5 text-[11px]">
                 Giải thích (Tùy chọn)
               </label>
               <textarea
                 v-model="trueFalseExplanation"
                 rows="2"
                 placeholder="Giải thích ngắn gọn vì sao nhận định đúng hoặc sai..."
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 text-xs"
+                class="w-full rounded-md border border-stone-300 bg-white p-2.5 text-xs text-stone-900 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               ></textarea>
             </div>
           </div>
@@ -890,11 +929,11 @@
           <!-- ─── CASE 3: ĐIỀN KHUYẾT ─── -->
           <div
             v-else-if="questionForm.type === 'FILL_IN'"
-            class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-3"
+            class="p-4 rounded-lg bg-stone-50 border border-stone-300 space-y-3"
           >
             <div>
-              <label class="block font-semibold text-gray-800 mb-1 text-xs">
-                Đáp án chuẩn cần điền <span class="text-red-500">*</span>
+              <label class="block font-semibold uppercase tracking-wide text-stone-700 mb-1.5 text-xs">
+                Đáp án chuẩn cần điền <span class="text-rose-600">*</span>
               </label>
               <input
                 type="text"
@@ -902,15 +941,15 @@
                 required
                 maxlength="500"
                 placeholder="Nhập từ hoặc con số chính xác học sinh cần điền (VD: 42 hoặc 15 cm)..."
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs font-bold text-orange-950"
+                class="w-full h-10 rounded-md border border-stone-300 bg-white px-3 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 text-xs font-bold text-stone-900"
               />
-              <p class="text-[10px] text-gray-400 mt-1">
+              <p class="text-[10px] text-stone-500 mt-1">
                 Hệ thống sẽ đối chiếu đáp án học sinh nhập với đáp án chuẩn này để chấm điểm.
               </p>
             </div>
 
             <div>
-              <label class="block font-semibold text-gray-700 mb-1 text-[11px]">
+              <label class="block font-semibold uppercase tracking-wide text-stone-700 mb-1.5 text-[11px]">
                 Hướng dẫn giải / Lời giải chi tiết (Tùy chọn)
               </label>
               <textarea
@@ -918,7 +957,7 @@
                 rows="2"
                 maxlength="1000"
                 placeholder="Các bước tính toán ra kết quả..."
-                class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs"
+                class="w-full rounded-md border border-stone-300 bg-white p-2.5 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 text-xs text-stone-900"
               ></textarea>
             </div>
           </div>
@@ -926,10 +965,10 @@
           <!-- ─── CASE 3: TỰ LUẬN (Textarea thông thường) ─── -->
           <div
             v-else-if="questionForm.type === 'ESSAY'"
-            class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-2"
+            class="p-4 rounded-lg bg-stone-50 border border-stone-300 space-y-2"
           >
-            <label class="block font-semibold text-gray-800 mb-1 text-xs">
-              Đáp án mẫu & Tiêu chí chấm điểm tự luận <span class="text-red-500">*</span>
+            <label class="block font-semibold uppercase tracking-wide text-stone-700 mb-1.5 text-xs">
+              Đáp án mẫu & Tiêu chí chấm điểm tự luận <span class="text-rose-600">*</span>
             </label>
             <textarea
               v-model="essayAnswer"
@@ -937,23 +976,23 @@
               rows="4"
               maxlength="5000"
               placeholder="Nhập bài giải mẫu, các bước lập luận, cách phân bổ điểm theo từng ý để giáo viên chấm thi..."
-              class="w-full rounded-xl border border-orange-200 bg-white p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 text-xs"
+              class="w-full rounded-md border border-stone-300 bg-white p-2.5 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 text-xs text-stone-900"
             ></textarea>
           </div>
 
           <!-- Modal Action Buttons -->
-          <div class="pt-3 border-t border-orange-100 flex items-center justify-end gap-2">
+          <div class="pt-4 border-t border-stone-200 flex items-center justify-end gap-2">
             <button
               type="button"
               @click="showQuestionModal = false"
-              class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer"
+              class="h-9 px-3.5 rounded-md bg-white border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-xs font-semibold text-stone-800 transition-colors cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
               :disabled="savingQuestion"
-              class="px-5 py-2.5 rounded-xl bg-orange-400 hover:bg-orange-500 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+              class="h-9 px-4 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
             >
               <ArrowPathIcon v-if="savingQuestion" class="w-3.5 h-3.5 animate-spin" />
               <span>{{ editingQuestion ? 'Lưu cập nhật câu hỏi' : 'Thêm câu hỏi vào ngân hàng' }}</span>
@@ -969,25 +1008,25 @@
       class="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4 backdrop-blur-2xs"
       @click.self="closeConfirm"
     >
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-orange-100 space-y-4">
+      <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border border-stone-300 space-y-4">
         <div class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+          <div class="w-10 h-10 rounded-md bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center flex-shrink-0">
             <ExclamationTriangleIcon class="w-5 h-5" />
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="text-base font-bold text-orange-950">{{ confirmDialog.title }}</h3>
-            <p class="text-xs text-gray-600 mt-1.5 leading-relaxed whitespace-pre-line">
+            <h3 class="text-base font-bold text-stone-900">{{ confirmDialog.title }}</h3>
+            <p class="text-xs text-stone-600 mt-1.5 leading-relaxed whitespace-pre-line">
               {{ confirmDialog.message }}
             </p>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-orange-100 flex items-center justify-end gap-2">
+        <div class="pt-3 border-t border-stone-200 flex items-center justify-end gap-2">
           <button
             type="button"
             :disabled="confirmDialog.loading"
             @click="closeConfirm"
-            class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
+            class="h-9 px-3.5 rounded-md bg-white border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-xs font-semibold text-stone-800 disabled:opacity-50 transition-colors cursor-pointer"
           >
             Hủy
           </button>
@@ -995,7 +1034,7 @@
             type="button"
             :disabled="confirmDialog.loading"
             @click="executeConfirm"
-            class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+            class="h-9 px-3.5 rounded-md bg-rose-600 hover:bg-rose-700 border border-rose-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             <ArrowPathIcon v-if="confirmDialog.loading" class="w-3.5 h-3.5 animate-spin" />
             <TrashIcon v-else class="w-3.5 h-3.5" />
@@ -1018,7 +1057,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onBeforeUnmount, onMounted } from 'vue'
 import {
   PlusIcon,
   FolderIcon,
@@ -1034,9 +1073,11 @@ import {
   SparklesIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ImportQuestionsModal from '@/components/question/ImportQuestionsModal.vue'
+import { usePagination } from '@/composables/usePagination'
 import questionBankService from '@/services/questionBank.service'
 import courseService from '@/services/course.service'
 import {
@@ -1055,6 +1096,24 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
 
 // ─── State ─────────────────────────────────────────────────────────────────
+const {
+  page: bankPage,
+  pageSize: bankPageSize,
+  totalCount: bankTotalCount,
+  totalPages: bankTotalPages,
+  applyPagedResult: applyBankPaged,
+  resetPage: resetBankPage,
+} = usePagination({ initialPageSize: 10 })
+
+const {
+  page: questionPage,
+  pageSize: questionPageSize,
+  totalCount: questionTotalCount,
+  totalPages: questionTotalPages,
+  applyPagedResult: applyQuestionPaged,
+  resetPage: resetQuestionPage,
+} = usePagination({ initialPageSize: 20 })
+
 const courses = ref([])
 const questionBanks = ref([])
 const questions = ref([])
@@ -1265,28 +1324,19 @@ function isCorrectOption(parsed, key) {
 }
 
 // ─── Computed ──────────────────────────────────────────────────────────────
-const filteredQuestions = computed(() => {
-  return questions.value.filter(q => {
-    const matchSearch =
-      !questionKeyword.value.trim() ||
-      q.content.toLowerCase().includes(questionKeyword.value.toLowerCase()) ||
-      q.answer.toLowerCase().includes(questionKeyword.value.toLowerCase())
-    return matchSearch
-  })
-})
-
 const isAllSelected = computed(() => {
   return (
-    filteredQuestions.value.length > 0 &&
-    filteredQuestions.value.every(q => selectedQuestionIds.value.includes(q.id))
+    questions.value.length > 0 &&
+    questions.value.every(q => selectedQuestionIds.value.includes(q.id))
   )
 })
 
 function toggleSelectAll() {
+  const currentIds = questions.value.map(q => q.id)
   if (isAllSelected.value) {
-    selectedQuestionIds.value = []
+    selectedQuestionIds.value = selectedQuestionIds.value.filter(id => !currentIds.includes(id))
   } else {
-    selectedQuestionIds.value = filteredQuestions.value.map(q => q.id)
+    selectedQuestionIds.value = Array.from(new Set([...selectedQuestionIds.value, ...currentIds]))
   }
 }
 
@@ -1295,12 +1345,40 @@ function toggleAnswerView(id) {
 }
 
 // ─── API: Load Courses & Banks ─────────────────────────────────────────────
-let debounceTimer = null
+let bankDebounceTimer = null
+let questionDebounceTimer = null
+let bankRequestToken = 0
+let questionRequestToken = 0
+
+onBeforeUnmount(() => {
+  if (bankDebounceTimer) clearTimeout(bankDebounceTimer)
+  if (questionDebounceTimer) clearTimeout(questionDebounceTimer)
+})
+
 function debouncedFetchBanks() {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
+  clearTimeout(bankDebounceTimer)
+  bankDebounceTimer = setTimeout(() => {
+    resetBankPage()
     fetchBanks()
   }, 300)
+}
+
+function handleCourseFilterChange() {
+  resetBankPage()
+  fetchBanks()
+}
+
+function debouncedFetchQuestions() {
+  clearTimeout(questionDebounceTimer)
+  questionDebounceTimer = setTimeout(() => {
+    resetQuestionPage()
+    fetchQuestions()
+  }, 300)
+}
+
+function handleQuestionFilterChange() {
+  resetQuestionPage()
+  fetchQuestions()
 }
 
 async function loadCourses() {
@@ -1313,34 +1391,52 @@ async function loadCourses() {
 }
 
 async function fetchBanks() {
+  const token = ++bankRequestToken
   loadingBanks.value = true
   try {
-    const res = await questionBankService.getAll(
-      filterCourseId.value || null,
-      bankKeyword.value.trim() || null
-    )
-    questionBanks.value = Array.isArray(res) ? res : []
+    const res = await questionBankService.getPaged({
+      page: bankPage.value,
+      pageSize: bankPageSize.value,
+      courseId: filterCourseId.value || null,
+      keyword: bankKeyword.value.trim() || null,
+    })
+    if (token !== bankRequestToken) return
+
+    const items = applyBankPaged(res)
+    if (items.length === 0 && bankPage.value > 1 && bankTotalPages.value > 0 && bankPage.value > bankTotalPages.value) {
+      bankPage.value = bankTotalPages.value
+      await fetchBanks()
+      return
+    }
+    questionBanks.value = items
 
     if (selectedBank.value) {
       const found = questionBanks.value.find(b => b.id === selectedBank.value.id)
       if (found) {
         selectedBank.value = found
       } else if (questionBanks.value.length > 0) {
-        selectBank(questionBanks.value[0])
+        await selectBank(questionBanks.value[0])
       } else {
         selectedBank.value = null
         questions.value = []
+        questionTotalCount.value = 0
+        questionTotalPages.value = 0
       }
     } else if (questionBanks.value.length > 0) {
-      selectBank(questionBanks.value[0])
+      await selectBank(questionBanks.value[0])
     } else {
       questions.value = []
+      questionTotalCount.value = 0
+      questionTotalPages.value = 0
     }
   } catch (err) {
+    if (token !== bankRequestToken) return
     console.error('Lỗi tải ngân hàng câu hỏi:', err)
     notify('Không thể tải danh sách ngân hàng câu hỏi.', true)
   } finally {
-    loadingBanks.value = false
+    if (token === bankRequestToken) {
+      loadingBanks.value = false
+    }
   }
 }
 
@@ -1348,24 +1444,39 @@ async function fetchBanks() {
 async function selectBank(bank) {
   selectedBank.value = bank
   selectedQuestionIds.value = []
+  resetQuestionPage()
   await fetchQuestions()
 }
 
 async function fetchQuestions() {
   if (!selectedBank.value) return
+  const token = ++questionRequestToken
   loadingQuestions.value = true
   try {
-    const res = await questionBankService.getQuestions(
-      selectedBank.value.id,
-      filterDifficulty.value || null,
-      filterType.value || null
-    )
-    questions.value = Array.isArray(res) ? res : []
+    const res = await questionBankService.getQuestionsPaged(selectedBank.value.id, {
+      page: questionPage.value,
+      pageSize: questionPageSize.value,
+      difficulty: filterDifficulty.value || null,
+      type: filterType.value || null,
+      keyword: questionKeyword.value.trim() || null,
+    })
+    if (token !== questionRequestToken) return
+
+    const items = applyQuestionPaged(res)
+    if (items.length === 0 && questionPage.value > 1 && questionTotalPages.value > 0 && questionPage.value > questionTotalPages.value) {
+      questionPage.value = questionTotalPages.value
+      await fetchQuestions()
+      return
+    }
+    questions.value = items
   } catch (err) {
+    if (token !== questionRequestToken) return
     console.error('Lỗi tải danh sách câu hỏi:', err)
     notify('Không thể tải danh sách câu hỏi của ngân hàng.', true)
   } finally {
-    loadingQuestions.value = false
+    if (token === questionRequestToken) {
+      loadingQuestions.value = false
+    }
   }
 }
 

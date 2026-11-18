@@ -4,24 +4,24 @@
     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-5 backdrop-blur-2xs overflow-y-auto"
   >
     <div
-      class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-orange-100 flex flex-col max-h-[92vh] overflow-hidden my-auto"
+      class="bg-white rounded-lg max-w-4xl w-full shadow-2xl border border-stone-300 flex flex-col max-h-[92vh] overflow-hidden my-auto"
     >
       <!-- ─── Modal Header ─────────────────────────────────────────────────── -->
-      <div class="px-6 py-4 border-b border-orange-100 flex items-center justify-between bg-gradient-to-r from-orange-50/70 via-white to-amber-50/60">
+      <div class="px-6 py-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-xs">
+          <div class="w-9 h-9 rounded-md bg-orange-600 border border-orange-700 text-white flex items-center justify-center shadow-xs">
             <SparklesIcon class="w-5 h-5" />
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-base sm:text-lg font-bold text-orange-950">
+              <h3 class="text-base sm:text-lg font-bold text-stone-900">
                 Nhập câu hỏi từ File (AI Import Worker)
               </h3>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-800 border border-orange-300">
                 AI Powered
               </span>
             </div>
-            <p class="text-xs text-gray-500">
+            <p class="text-xs text-stone-500">
               Tự động bóc tách đề thi (.docx, .pdf), trích xuất hình ảnh vẽ hình và cấu trúc hóa câu hỏi
             </p>
           </div>
@@ -31,24 +31,24 @@
           type="button"
           @click="closeModal"
           :disabled="isProcessing"
-          class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1 rounded-xl hover:bg-orange-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          class="text-stone-400 hover:text-stone-700 text-xl font-bold p-1.5 rounded-md hover:bg-stone-200/70 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           ✕
         </button>
       </div>
 
       <!-- ─── Step Indicator Bar ───────────────────────────────────────────── -->
-      <div class="px-6 py-3 bg-orange-50/30 border-b border-orange-100/80 flex items-center justify-between text-xs font-semibold">
+      <div class="px-6 py-3 bg-stone-50/70 border-b border-stone-200 flex items-center justify-between text-xs font-semibold tabular-nums">
         <div
           :class="[
             'flex items-center gap-2 transition-colors',
-            currentStep === 1 ? 'text-orange-600 font-bold' : currentStep > 1 ? 'text-emerald-600' : 'text-gray-400'
+            currentStep === 1 ? 'text-orange-700 font-bold' : currentStep > 1 ? 'text-emerald-700' : 'text-stone-400'
           ]"
         >
           <span
             :class="[
-              'w-6 h-6 rounded-full flex items-center justify-center text-xs',
-              currentStep === 1 ? 'bg-orange-500 text-white' : currentStep > 1 ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600'
+              'w-6 h-6 rounded flex items-center justify-center text-xs',
+              currentStep === 1 ? 'bg-orange-600 text-white' : currentStep > 1 ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-600'
             ]"
           >
             {{ currentStep > 1 ? '✓' : '1' }}
@@ -56,18 +56,18 @@
           <span>1. Tải tệp & Thiết lập</span>
         </div>
 
-        <div class="h-0.5 flex-1 mx-3 bg-orange-100 hidden sm:block"></div>
+        <div class="h-0.5 flex-1 mx-3 bg-stone-200 hidden sm:block"></div>
 
         <div
           :class="[
             'flex items-center gap-2 transition-colors',
-            currentStep === 2 ? 'text-orange-600 font-bold' : currentStep > 2 ? 'text-emerald-600' : 'text-gray-400'
+            currentStep === 2 ? 'text-orange-700 font-bold' : currentStep > 2 ? 'text-emerald-700' : 'text-stone-400'
           ]"
         >
           <span
             :class="[
-              'w-6 h-6 rounded-full flex items-center justify-center text-xs',
-              currentStep === 2 ? 'bg-orange-500 text-white animate-pulse' : currentStep > 2 ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600'
+              'w-6 h-6 rounded flex items-center justify-center text-xs',
+              currentStep === 2 ? 'bg-orange-600 text-white animate-pulse' : currentStep > 2 ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-600'
             ]"
           >
             {{ currentStep > 2 ? '✓' : '2' }}
@@ -75,18 +75,18 @@
           <span>2. AI Bóc tách dữ liệu</span>
         </div>
 
-        <div class="h-0.5 flex-1 mx-3 bg-orange-100 hidden sm:block"></div>
+        <div class="h-0.5 flex-1 mx-3 bg-stone-200 hidden sm:block"></div>
 
         <div
           :class="[
             'flex items-center gap-2 transition-colors',
-            currentStep === 3 ? 'text-orange-600 font-bold' : 'text-gray-400'
+            currentStep === 3 ? 'text-orange-700 font-bold' : 'text-stone-400'
           ]"
         >
           <span
             :class="[
-              'w-6 h-6 rounded-full flex items-center justify-center text-xs',
-              currentStep === 3 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'
+              'w-6 h-6 rounded flex items-center justify-center text-xs',
+              currentStep === 3 ? 'bg-orange-600 text-white' : 'bg-stone-200 text-stone-600'
             ]"
           >
             3
@@ -103,16 +103,16 @@
         <!-- ═════════════════════════════════════════════════════════════════════ -->
         <div v-if="currentStep === 1" class="space-y-5">
           <!-- 1. Chọn Ngân hàng đích hoặc tạo nhanh -->
-          <div class="p-4 rounded-2xl bg-orange-50/50 border border-orange-200/80 space-y-3">
+          <div class="p-4 rounded-lg bg-stone-50 border border-stone-300 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-orange-950 flex items-center gap-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wide text-stone-700 flex items-center gap-1.5">
                 <FolderIcon class="w-4 h-4 text-orange-600" />
-                Ngân hàng câu hỏi đích <span class="text-red-500">*</span>
+                Ngân hàng câu hỏi đích <span class="text-rose-600">*</span>
               </label>
               <button
                 type="button"
                 @click="isCreatingNewBank = !isCreatingNewBank"
-                class="text-[11px] font-bold text-orange-600 hover:text-orange-700 underline cursor-pointer"
+                class="text-xs font-semibold text-orange-600 hover:text-orange-700 underline cursor-pointer"
               >
                 {{ isCreatingNewBank ? '← Chọn ngân hàng đã có' : '+ Tạo ngân hàng mới ngay' }}
               </button>
@@ -122,7 +122,7 @@
             <div v-if="!isCreatingNewBank">
               <select
                 v-model="targetBankId"
-                class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 shadow-2xs"
+                class="w-full h-10 text-sm font-medium bg-white border border-stone-300 text-stone-900 rounded-md px-3 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
               >
                 <option :value="null" disabled>-- Chọn ngân hàng lưu câu hỏi --</option>
                 <option v-for="b in banks" :key="b.id" :value="b.id">
@@ -134,23 +134,23 @@
             <!-- Nếu tạo ngân hàng mới tại chỗ -->
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
-                <label class="block text-[11px] font-semibold text-gray-600 mb-1">Khóa học</label>
+                <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Khóa học</label>
                 <select
                   v-model="newBankCourseId"
-                  class="w-full text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  class="w-full h-10 text-sm font-medium bg-white border border-stone-300 text-stone-900 rounded-md px-3 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
                 >
                   <option :value="null" disabled>-- Chọn khóa học --</option>
                   <option v-for="c in courses" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-[11px] font-semibold text-gray-600 mb-1">Tên ngân hàng mới</label>
+                <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Tên ngân hàng mới</label>
                 <input
                   type="text"
                   v-model="newBankName"
                   maxlength="200"
                   placeholder="VD: Bộ đề thi giữa kỳ Toán tư duy..."
-                  class="w-full text-xs font-medium bg-white border border-orange-200 text-gray-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  class="w-full h-10 text-sm font-medium bg-white border border-stone-300 text-stone-900 rounded-md px-3 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
                 />
               </div>
             </div>
@@ -158,9 +158,9 @@
 
           <!-- 2. Vùng kéo thả File Upload -->
           <div class="space-y-2">
-            <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
-              <span>Tệp tài liệu đề thi (.docx hoặc .pdf) <span class="text-red-500">*</span></span>
-              <span class="text-[11px] text-gray-400 font-normal">Hỗ trợ tối đa 50MB</span>
+            <label class="text-xs font-semibold uppercase tracking-wide text-stone-700 flex items-center justify-between">
+              <span>Tệp tài liệu đề thi (.docx hoặc .pdf) <span class="text-rose-600">*</span></span>
+              <span class="text-[11px] text-stone-400 font-normal normal-case">Hỗ trợ tối đa 50MB</span>
             </label>
 
             <!-- Dropzone -->
@@ -169,12 +169,12 @@
               @dragleave.prevent="isDragging = false"
               @drop.prevent="handleFileDrop"
               :class="[
-                'border-2 border-dashed rounded-3xl p-6 sm:p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-3',
+                'border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors cursor-pointer flex flex-col items-center justify-center gap-3',
                 isDragging
-                  ? 'border-orange-500 bg-orange-100/60 scale-[1.01]'
+                  ? 'border-orange-600 bg-orange-50'
                   : selectedFile
-                  ? 'border-emerald-300 bg-emerald-50/40'
-                  : 'border-orange-200 bg-orange-50/20 hover:border-orange-400 hover:bg-orange-50/50'
+                  ? 'border-emerald-400 bg-emerald-50/40'
+                  : 'border-stone-300 bg-stone-50/60 hover:border-orange-500 hover:bg-orange-50/40'
               ]"
               @click="triggerFileInput"
             >
@@ -188,38 +188,38 @@
 
               <div
                 :class="[
-                  'w-14 h-14 rounded-2xl flex items-center justify-center shadow-xs transition-transform',
-                  selectedFile ? 'bg-emerald-500 text-white' : 'bg-orange-100 text-orange-600'
+                  'w-12 h-12 rounded-md flex items-center justify-center border transition-colors',
+                  selectedFile ? 'bg-emerald-600 border-emerald-700 text-white' : 'bg-orange-50 border-orange-200 text-orange-600'
                 ]"
               >
-                <DocumentArrowUpIcon v-if="!selectedFile" class="w-7 h-7" />
-                <CheckCircleIcon v-else class="w-8 h-8" />
+                <DocumentArrowUpIcon v-if="!selectedFile" class="w-6 h-6" />
+                <CheckCircleIcon v-else class="w-7 h-7" />
               </div>
 
               <div v-if="!selectedFile">
-                <p class="text-sm font-bold text-gray-800">
+                <p class="text-sm font-bold text-stone-900">
                   Kéo thả tệp đề thi vào đây, hoặc <span class="text-orange-600 underline">duyệt từ máy</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-1">
+                <p class="text-xs text-stone-500 mt-1">
                   Định dạng được hỗ trợ: Microsoft Word (.docx) và Tài liệu PDF văn bản (.pdf)
                 </p>
               </div>
 
               <!-- Thẻ hiển thị file đã chọn -->
-              <div v-else class="w-full max-w-md bg-white p-3.5 rounded-2xl border border-emerald-200 shadow-2xs flex items-center justify-between gap-3" @click.stop>
+              <div v-else class="w-full max-w-md bg-white p-3.5 rounded-md border border-emerald-300 flex items-center justify-between gap-3" @click.stop>
                 <div class="flex items-center gap-3 min-w-0">
                   <span class="text-2xl flex-shrink-0">
                     {{ selectedFile.name.endsWith('.pdf') ? '📄' : '📝' }}
                   </span>
                   <div class="min-w-0 text-left">
-                    <p class="text-xs font-bold text-gray-900 truncate">{{ selectedFile.name }}</p>
-                    <p class="text-[11px] text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+                    <p class="text-xs font-bold text-stone-900 truncate">{{ selectedFile.name }}</p>
+                    <p class="text-[11px] text-stone-500 tabular-nums">{{ formatFileSize(selectedFile.size) }}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   @click="clearFile"
-                  class="px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 rounded-lg font-semibold cursor-pointer"
+                  class="px-2.5 py-1 text-xs bg-white border border-rose-300 text-rose-700 hover:bg-rose-50 rounded-md font-semibold cursor-pointer"
                   title="Chọn lại tệp khác"
                 >
                   Đổi tệp
@@ -230,27 +230,27 @@
 
           <!-- 3. Smart Features Highlight -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="p-3 rounded-2xl bg-white border border-orange-100 shadow-2xs flex items-start gap-2.5">
-              <span class="text-base p-1.5 rounded-xl bg-orange-100 text-orange-700">🧩</span>
+            <div class="p-3 rounded-lg bg-white border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex items-start gap-2.5">
+              <span class="text-base p-1.5 rounded-md bg-orange-50 border border-orange-200 text-orange-700">🧩</span>
               <div>
-                <h4 class="text-xs font-bold text-gray-800">Nhận diện mọi dạng câu</h4>
-                <p class="text-[11px] text-gray-500 mt-0.5">Trắc nghiệm ABCD, điền kết quả hoặc tự luận giải thích.</p>
+                <h4 class="text-xs font-bold text-stone-900">Nhận diện mọi dạng câu</h4>
+                <p class="text-[11px] text-stone-500 mt-0.5">Trắc nghiệm ABCD, điền kết quả hoặc tự luận giải thích.</p>
               </div>
             </div>
 
-            <div class="p-3 rounded-2xl bg-white border border-orange-100 shadow-2xs flex items-start gap-2.5">
-              <span class="text-base p-1.5 rounded-xl bg-amber-100 text-amber-800">🖼️</span>
+            <div class="p-3 rounded-lg bg-white border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex items-start gap-2.5">
+              <span class="text-base p-1.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800">🖼️</span>
               <div>
-                <h4 class="text-xs font-bold text-gray-800">Tự trích xuất hình vẽ</h4>
-                <p class="text-[11px] text-gray-500 mt-0.5">Bóc tách toàn bộ hình ảnh minh họa nhúng trong đề Word/PDF.</p>
+                <h4 class="text-xs font-bold text-stone-900">Tự trích xuất hình vẽ</h4>
+                <p class="text-[11px] text-stone-500 mt-0.5">Bóc tách toàn bộ hình ảnh minh họa nhúng trong đề Word/PDF.</p>
               </div>
             </div>
 
-            <div class="p-3 rounded-2xl bg-white border border-orange-100 shadow-2xs flex items-start gap-2.5">
-              <span class="text-base p-1.5 rounded-xl bg-emerald-100 text-emerald-800">⚖️</span>
+            <div class="p-3 rounded-lg bg-white border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex items-start gap-2.5">
+              <span class="text-base p-1.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800">⚖️</span>
               <div>
-                <h4 class="text-xs font-bold text-gray-800">Gán độ khó & điểm chuẩn</h4>
-                <p class="text-[11px] text-gray-500 mt-0.5">Tự động đánh giá Dễ (1đ), Trung bình (1.5đ) và Khó (2đ).</p>
+                <h4 class="text-xs font-bold text-stone-900">Gán độ khó & điểm chuẩn</h4>
+                <p class="text-[11px] text-stone-500 mt-0.5 tabular-nums">Tự động đánh giá Dễ (1đ), Trung bình (1.5đ) và Khó (2đ).</p>
               </div>
             </div>
           </div>
@@ -265,17 +265,17 @@
             <div class="relative w-20 h-20 mx-auto">
               <div
                 v-if="!processingError"
-                class="w-20 h-20 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin"
+                class="w-20 h-20 rounded-full border-4 border-stone-200 border-t-orange-600 animate-spin"
               ></div>
               <div
                 v-else
-                class="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-3xl font-bold"
+                class="w-20 h-20 rounded-lg bg-rose-50 border border-rose-300 text-rose-600 flex items-center justify-center text-3xl font-bold"
               >
                 ⚠️
               </div>
               <div
                 v-if="!processingError"
-                class="absolute inset-0 flex items-center justify-center text-xs font-extrabold text-orange-900"
+                class="absolute inset-0 flex items-center justify-center text-xs font-bold text-stone-900 tabular-nums"
               >
                 {{ progressPercentage }}%
               </div>
@@ -283,18 +283,18 @@
 
             <!-- Status Headline -->
             <div>
-              <h3 class="text-base font-bold text-orange-950">
+              <h3 class="text-base font-bold text-stone-900">
                 {{ processingError ? 'Quá trình bóc tách gặp lỗi' : currentStatusText }}
               </h3>
-              <p class="text-xs text-gray-500 mt-1">
+              <p class="text-xs text-stone-500 mt-1">
                 {{ processingSubText }}
               </p>
             </div>
 
             <!-- Progress Bar -->
-            <div v-if="!processingError" class="w-full bg-orange-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+            <div v-if="!processingError" class="w-full bg-stone-200 rounded h-2.5 overflow-hidden">
               <div
-                class="bg-gradient-to-r from-orange-400 to-amber-500 h-2.5 rounded-full transition-all duration-500"
+                class="bg-orange-600 h-2.5 rounded transition-all duration-500"
                 :style="{ width: `${progressPercentage}%` }"
               ></div>
             </div>
@@ -302,22 +302,22 @@
             <!-- Error Box with detailed instructions -->
             <div
               v-if="processingError"
-              class="p-4 rounded-2xl bg-red-50 border border-red-200 text-left text-xs space-y-2 text-red-900"
+              class="p-4 rounded-lg bg-rose-50 border border-rose-300 text-left text-xs space-y-2 text-rose-900"
             >
               <p class="font-bold">Chi tiết thông báo:</p>
-              <p class="font-mono text-[11px] bg-white/80 p-2.5 rounded-xl border border-red-200 break-words">
+              <p class="font-mono text-[11px] bg-white p-2.5 rounded-md border border-rose-300 break-words">
                 {{ processingError }}
               </p>
-              <div v-if="processingError.includes('[SCAN_DETECTED]')" class="text-[11px] text-red-700 pt-1">
+              <div v-if="processingError.includes('[SCAN_DETECTED]')" class="text-[11px] text-rose-800 pt-1">
                 💡 <strong>Gợi ý:</strong> File PDF này là bản scan hình ảnh không có văn bản có thể chọn được. Vui lòng chuyển đổi sang file Word (.docx) hoặc dùng file PDF xuất từ Word/LaTeX có chữ.
               </div>
-              <div v-else-if="processingError.includes('Port 8000') || processingError.includes('Network Error')" class="text-[11px] text-red-700 pt-1">
+              <div v-else-if="processingError.includes('Port 8000') || processingError.includes('Network Error')" class="text-[11px] text-rose-800 pt-1">
                 💡 <strong>Gợi ý:</strong> Hãy kiểm tra dịch vụ <code>Question Import Worker</code> đã được khởi chạy trên cổng 8000 hay chưa (<code>python -m uvicorn app.main:app --port 8000</code>).
               </div>
             </div>
 
             <!-- Processing Stage Pipeline steps -->
-            <div v-if="!processingError" class="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200/70 text-left text-xs space-y-2">
+            <div v-if="!processingError" class="p-3.5 rounded-lg bg-stone-50 border border-stone-300 text-left text-xs space-y-2">
               <div
                 v-for="stg in pipelineStages"
                 :key="stg.key"
@@ -325,13 +325,13 @@
               >
                 <div class="flex items-center gap-2">
                   <span v-if="stg.status === 'completed'" class="text-emerald-600 font-bold">✓</span>
-                  <ArrowPathIcon v-else-if="stg.status === 'active'" class="w-3.5 h-3.5 text-orange-500 animate-spin" />
-                  <span v-else class="text-gray-300">•</span>
-                  <span :class="stg.status === 'active' ? 'font-bold text-orange-950' : stg.status === 'completed' ? 'text-gray-700' : 'text-gray-400'">
+                  <ArrowPathIcon v-else-if="stg.status === 'active'" class="w-3.5 h-3.5 text-orange-600 animate-spin" />
+                  <span v-else class="text-stone-300">•</span>
+                  <span :class="stg.status === 'active' ? 'font-bold text-stone-900' : stg.status === 'completed' ? 'text-stone-700' : 'text-stone-400'">
                     {{ stg.label }}
                   </span>
                 </div>
-                <span class="text-[10px] uppercase font-semibold text-gray-400">
+                <span class="text-[10px] uppercase font-semibold text-stone-400">
                   {{ stg.status === 'completed' ? 'Xong' : stg.status === 'active' ? 'Đang chạy...' : 'Chờ' }}
                 </span>
               </div>
@@ -341,7 +341,7 @@
               <button
                 type="button"
                 @click="currentStep = 1"
-                class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                class="h-9 px-4 rounded-md bg-orange-600 hover:bg-orange-700 border border-orange-700 text-white text-sm font-semibold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
               >
                 <ArrowLeftIcon class="w-4 h-4" />
                 <span>Quay lại chọn tệp khác</span>
@@ -355,63 +355,63 @@
         <!-- ═════════════════════════════════════════════════════════════════════ -->
         <div v-else-if="currentStep === 3" class="space-y-4">
           <!-- Summary Bar & Stats -->
-          <div class="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-orange-50 border border-emerald-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-300 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div class="flex items-center gap-3">
-              <span class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg shadow-2xs font-bold">
+              <span class="w-9 h-9 rounded-md bg-emerald-600 border border-emerald-700 text-white flex items-center justify-center text-base font-bold">
                 ✓
               </span>
               <div>
-                <h4 class="font-bold text-gray-900 text-sm">
+                <h4 class="font-bold text-stone-900 text-sm tabular-nums">
                   Đã bóc tách thành công {{ stagingQuestions.length }} câu hỏi!
                 </h4>
-                <p class="text-gray-500 text-[11px] mt-0.5">
+                <p class="text-stone-600 text-[11px] mt-0.5">
                   Tệp: <strong>{{ selectedFile?.name }}</strong> • Ngân hàng đích: <strong class="text-orange-700">{{ currentBankName }}</strong>
                 </p>
               </div>
             </div>
 
             <!-- Stats badges -->
-            <div class="flex items-center gap-1.5 text-[11px] font-semibold">
-              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold tabular-nums">
+              <span class="px-2 py-0.5 rounded bg-white border border-stone-300 text-stone-800">
                 MC: {{ countByType('MULTIPLE_CHOICE') }}
               </span>
-              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+              <span class="px-2 py-0.5 rounded bg-white border border-stone-300 text-stone-800">
                 Đúng/Sai: {{ countByType('TRUE_FALSE') }}
               </span>
-              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+              <span class="px-2 py-0.5 rounded bg-white border border-stone-300 text-stone-800">
                 Điền số: {{ countByType('FILL_IN') }}
               </span>
-              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+              <span class="px-2 py-0.5 rounded bg-white border border-stone-300 text-stone-800">
                 Tính theo nhịp: {{ countByType('TIMED_SEQUENCE') }}
               </span>
-              <span class="px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-900">
+              <span class="px-2 py-0.5 rounded bg-white border border-stone-300 text-stone-800">
                 Tự luận: {{ countByType('ESSAY') }}
               </span>
             </div>
           </div>
 
           <!-- Selection & Filter Bar -->
-          <div class="flex flex-wrap items-center justify-between gap-3 text-xs px-1">
+          <div class="flex flex-wrap items-center justify-between gap-3 text-xs px-1 tabular-nums">
             <div class="flex items-center gap-3">
-              <label class="flex items-center gap-1.5 font-bold text-orange-950 cursor-pointer">
+              <label class="flex items-center gap-1.5 font-bold text-stone-900 cursor-pointer">
                 <input
                   type="checkbox"
                   :checked="isAllSelected"
                   @change="toggleSelectAllStaging"
-                  class="rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
+                  class="rounded text-orange-600 focus:ring-orange-500 cursor-pointer accent-orange-600"
                 />
                 Chọn tất cả ({{ stagingQuestions.length }})
               </label>
 
               <span class="text-orange-700 font-semibold">
-                • Đã chọn <strong class="text-orange-900">{{ selectedStagingIndexes.length }}</strong> câu để nạp vào ngân hàng
+                • Đã chọn <strong class="text-stone-900">{{ selectedStagingIndexes.length }}</strong> câu để nạp vào ngân hàng
               </span>
             </div>
 
             <div class="flex items-center gap-2">
               <select
                 v-model="previewFilterType"
-                class="text-xs font-semibold bg-white border border-orange-200 text-gray-800 rounded-xl px-2.5 py-1.5 focus:outline-none"
+                class="h-9 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 focus:outline-none"
               >
                 <option value="">Tất cả dạng câu</option>
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm</option>
@@ -429,10 +429,10 @@
               v-for="(q, idx) in filteredStagingQuestions"
               :key="idx"
               :class="[
-                'p-4 rounded-2xl border transition-all space-y-3',
+                'p-4 rounded-lg border transition-colors space-y-3',
                 selectedStagingIndexes.includes(idx)
-                  ? 'bg-white border-orange-300 shadow-xs'
-                  : 'bg-gray-50/70 border-gray-200 opacity-60'
+                  ? 'bg-white border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                  : 'bg-stone-50 border-stone-200 opacity-60'
               ]"
             >
               <div class="flex items-start justify-between gap-3">
@@ -441,16 +441,16 @@
                     type="checkbox"
                     :value="idx"
                     v-model="selectedStagingIndexes"
-                    class="rounded text-orange-500 focus:ring-orange-400 cursor-pointer"
+                    class="rounded text-orange-600 focus:ring-orange-500 cursor-pointer accent-orange-600"
                   />
-                  <span class="text-[11px] font-mono font-bold text-orange-800 bg-orange-100/70 px-2 py-0.5 rounded-md">
+                  <span class="text-[11px] font-mono font-bold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded tabular-nums">
                     #{{ idx + 1 }}
                   </span>
 
                   <!-- Type Badge -->
                   <select
                     v-model="q.type"
-                    class="text-[10px] font-bold px-2 py-1 rounded-full border border-gray-200 bg-white text-gray-800"
+                    class="text-[11px] font-semibold px-2 py-1 rounded border border-stone-300 bg-white text-stone-800 focus:border-orange-600 focus:outline-none"
                     aria-label="Loại câu hỏi đã nhận diện"
                   >
                     <option value="MULTIPLE_CHOICE">Trắc nghiệm</option>
@@ -463,11 +463,11 @@
                   <!-- Editable Difficulty Badge -->
                   <select
                     v-model="q.difficulty"
-                    class="text-[10px] font-bold px-2 py-0.5 rounded-lg border focus:outline-none cursor-pointer bg-white"
+                    class="text-[11px] font-semibold px-2 py-1 rounded border focus:outline-none cursor-pointer bg-white"
                     :class="[
-                      q.difficulty === 'EASY' ? 'border-emerald-300 text-emerald-800' :
-                      q.difficulty === 'MEDIUM' ? 'border-blue-300 text-blue-800' :
-                      'border-amber-300 text-amber-800'
+                      q.difficulty === 'EASY' ? 'border-emerald-300 text-emerald-800 bg-emerald-50' :
+                      q.difficulty === 'MEDIUM' ? 'border-orange-300 text-orange-800 bg-orange-50' :
+                      'border-amber-300 text-amber-800 bg-amber-50'
                     ]"
                   >
                     <option value="EASY">Dễ (1.0đ)</option>
@@ -480,7 +480,7 @@
                   <button
                     type="button"
                     @click="removeStagingQuestion(idx)"
-                    class="p-1 text-gray-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                    class="p-1.5 text-stone-400 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
                     title="Bỏ câu này khỏi danh sách import"
                   >
                     <TrashIcon class="w-4 h-4" />
@@ -492,7 +492,7 @@
               <div class="space-y-2 text-xs">
                 <!-- If Multiple Choice -->
                 <template v-if="q.type === 'MULTIPLE_CHOICE'">
-                  <p class="font-semibold text-gray-900 leading-relaxed whitespace-pre-line">
+                  <p class="font-semibold text-stone-900 leading-relaxed whitespace-pre-line">
                     {{ getParsedStagingQuestion(q).questionText }}
                   </p>
 
@@ -504,18 +504,18 @@
                       v-for="optKey in ['A', 'B', 'C', 'D']"
                       :key="optKey"
                       :class="[
-                        'p-2 rounded-xl border text-[11px] flex items-start gap-2',
+                        'p-2 rounded-md border text-[11px] flex items-start gap-2',
                         isCorrectOption(getParsedStagingQuestion(q), optKey)
-                          ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold'
-                          : 'bg-orange-50/20 border-orange-100 text-gray-800'
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold'
+                          : 'bg-stone-50 border-stone-200 text-stone-800'
                       ]"
                     >
                       <span
                         :class="[
-                          'w-5 h-5 rounded-md flex items-center justify-center font-bold text-[10px] flex-shrink-0',
+                          'w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] flex-shrink-0',
                           isCorrectOption(getParsedStagingQuestion(q), optKey)
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-orange-200/80 text-orange-950'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-stone-200 text-stone-800'
                         ]"
                       >
                         {{ optKey }}
@@ -523,7 +523,7 @@
                       <span class="flex-1">{{ getOptionText(getParsedStagingQuestion(q), optKey) }}</span>
                       <span
                         v-if="isCorrectOption(getParsedStagingQuestion(q), optKey)"
-                        class="text-emerald-600 text-[10px] font-bold"
+                        class="text-emerald-700 text-[10px] font-bold"
                       >
                         ✓ Đúng
                       </span>
@@ -533,14 +533,14 @@
 
                 <!-- If Fill-in or Essay -->
                 <template v-else>
-                  <p class="font-semibold text-gray-900 leading-relaxed whitespace-pre-line">
+                  <p class="font-semibold text-stone-900 leading-relaxed whitespace-pre-line">
                     {{ q.content }}
                   </p>
                 </template>
               </div>
 
               <!-- Extracted Image (if available) -->
-              <div v-if="q.imageUrl || q.image_url" class="max-w-xs rounded-xl overflow-hidden border border-orange-200 bg-white p-1">
+              <div v-if="q.imageUrl || q.image_url" class="max-w-xs rounded-md overflow-hidden border border-stone-300 bg-white p-1">
                 <img
                   :src="q.imageUrl || q.image_url"
                   alt="Ảnh minh họa bóc tách"
@@ -550,9 +550,9 @@
               </div>
 
               <!-- Answer / Explanation -->
-              <div class="p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/60 text-[11px] text-gray-800 space-y-1">
-                <span class="font-bold text-orange-900">🎯 Đáp án & Lời giải:</span>
-                <p class="whitespace-pre-line text-gray-700 bg-white/70 p-2 rounded-lg border border-orange-100">
+              <div class="p-2.5 rounded-md bg-stone-50 border border-stone-200 text-[11px] text-stone-800 space-y-1">
+                <span class="font-bold text-stone-900">🎯 Đáp án & Lời giải:</span>
+                <p class="whitespace-pre-line text-stone-700 bg-white p-2 rounded border border-stone-200">
                   {{ q.answer }}
                 </p>
               </div>
@@ -562,14 +562,14 @@
       </div>
 
       <!-- ─── Modal Footer Action Buttons ──────────────────────────────────── -->
-      <div class="px-6 py-4 border-t border-orange-100 bg-gray-50/60 flex items-center justify-between gap-3">
+      <div class="px-6 py-4 border-t border-stone-200 bg-stone-50 flex items-center justify-between gap-3">
         <!-- Left Side: Back / Cancel -->
         <div>
           <button
             v-if="currentStep === 1"
             type="button"
             @click="closeModal"
-            class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-200/60 transition-colors cursor-pointer"
+            class="h-9 px-3.5 rounded-md bg-white border border-stone-300 text-sm font-semibold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
           >
             Đóng
           </button>
@@ -578,7 +578,7 @@
             type="button"
             @click="currentStep = 1"
             :disabled="isSaving"
-            class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-200/60 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            class="h-9 px-3.5 rounded-md bg-white border border-stone-300 text-sm font-semibold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             <ArrowLeftIcon class="w-3.5 h-3.5" />
             <span>Tải tệp khác</span>
@@ -593,7 +593,7 @@
             type="button"
             :disabled="!canStartProcess"
             @click="startProcessing"
-            class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-all"
+            class="h-9 px-4 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-colors"
           >
             <SparklesIcon class="w-4 h-4" />
             <span>Bắt đầu bóc tách AI</span>
@@ -604,7 +604,7 @@
             v-else-if="currentStep === 2 && !processingError"
             type="button"
             @click="cancelProcessing"
-            class="px-4 py-2 rounded-xl border border-orange-200 text-xs font-semibold text-gray-600 hover:bg-orange-50 cursor-pointer"
+            class="h-9 px-3.5 rounded-md bg-white border border-stone-300 text-sm font-semibold text-stone-800 hover:bg-stone-100 cursor-pointer"
           >
             Hủy tiến trình
           </button>
@@ -615,7 +615,7 @@
             type="button"
             :disabled="selectedStagingIndexes.length === 0 || isSaving"
             @click="commitQuestionsToBank"
-            class="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-2 transition-all"
+            class="h-9 px-4 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold shadow-xs cursor-pointer inline-flex items-center gap-2 transition-colors tabular-nums"
           >
             <ArrowPathIcon v-if="isSaving" class="w-4 h-4 animate-spin" />
             <CheckIcon v-else class="w-4 h-4" />

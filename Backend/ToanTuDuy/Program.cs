@@ -12,6 +12,7 @@ using ToanTuDuy.Middleware;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Email;
 using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Services.Storage;
 
@@ -170,19 +171,24 @@ builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IChatService, ChatService>();    // chat
 builder.Services.AddScoped<INotificationAudienceResolver, NotificationAudienceResolver>();
+builder.Services.AddScoped<IBusinessNotificationEmailService, BusinessNotificationEmailService>();
 builder.Services.AddScoped<IUnreadCountStore, RedisUnreadCountStore>();
 builder.Services.AddHostedService<NotificationFanoutWorker>();
+builder.Services.AddHostedService<ToanTuDuy.Services.BackgroundJobs.UpcomingLessonReminderService>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 builder.Services.AddSingleton<PayslipEmailQueue>();
 builder.Services.AddHostedService<PayslipEmailWorker>();
 builder.Services.AddHostedService<MonthlyPayslipEmailScheduler>();
 
-// Gửi email xác minh tài khoản qua Resend
+// Gửi email thống nhất qua SMTP hoặc Resend
 builder.Services.AddResend(options =>
 {
     options.ApiToken = builder.Configuration["Resend:ApiToken"] ?? string.Empty;
 });
+builder.Services.Configure<SmtpSettings>(
+    builder.Configuration.GetSection(SmtpSettings.SectionName));
+builder.Services.AddScoped<IEmailDeliveryService, EmailDeliveryService>();
 builder.Services.Configure<EmailVerificationSettings>(
     builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
@@ -249,3 +255,5 @@ app.MapHub<ChatHub>("/chathub"); // Chat
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
+
+public partial class Program { }

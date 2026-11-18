@@ -11,6 +11,7 @@ using ToanTuDuy.DTOs.Notification;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Email;
 using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Controllers
@@ -25,13 +26,16 @@ namespace ToanTuDuy.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IEmailDeliveryService _emailDeliveryService;
 
         public AdminNotificationsController(
             ApplicationDbContext context,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IEmailDeliveryService emailDeliveryService)
         {
             _context = context;
             _notificationService = notificationService;
+            _emailDeliveryService = emailDeliveryService;
         }
 
         [HttpGet]
@@ -138,10 +142,15 @@ namespace ToanTuDuy.Controllers
             }
 
             var type = request.Type.Trim().ToUpperInvariant();
-            if (type != NotificationTypes.System && type != NotificationTypes.Announcement)
+            if (type != NotificationTypes.System &&
+                type != NotificationTypes.Announcement &&
+                type != NotificationTypes.Special)
             {
                 return BadRequest(new { message = "Loại thông báo không hợp lệ." });
             }
+
+            var shouldSendEmail = type == NotificationTypes.Special || request.SendEmail;
+            audience.SendEmail = shouldSendEmail;
 
             var title = request.Title.Trim();
             if (string.IsNullOrWhiteSpace(title))
@@ -180,7 +189,20 @@ namespace ToanTuDuy.Controllers
                 return BadRequest(new { message = "Không thể đưa thông báo vào hàng đợi." });
             }
 
-            return Accepted(new { queued = true, message = "Thông báo đã được đưa vào hàng đợi gửi." });
+            var emailConfigured = !shouldSendEmail || _emailDeliveryService.IsConfigured(out _);
+            var messageText = !shouldSendEmail
+                ? "Thông báo đã được đưa vào hàng đợi gửi."
+                : (emailConfigured
+                    ? "Thông báo đã được đưa vào hàng đợi gửi (hộp thư trong ứng dụng và email cá nhân)."
+                    : "Đã lưu thông báo trong ứng dụng, nhưng chưa cấu hình SMTP hoặc Resend nên chưa gửi được ra email cá nhân.");
+
+            return Accepted(new
+            {
+                queued = true,
+                emailQueued = shouldSendEmail && emailConfigured,
+                emailConfigured,
+                message = messageText
+            });
         }
 
         private static string DescribeAudience(string? audienceJson)

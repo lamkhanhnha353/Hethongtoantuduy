@@ -3,64 +3,99 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 
 namespace ToanTuDuy.Services
 {
     public class LessonService : ILessonService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public LessonService(ApplicationDbContext context)
+        public LessonService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<LessonResponse>> GetAllLessonsAsync()
         {
-            return await _context.Lessons
-                .Include(l => l.Class)
-                .OrderByDescending(l => l.LessonDate)
-                .Select(l => new LessonResponse
-                {
-                    Id = l.Id,
-                    ClassId = l.ClassId,
-                    ClassName = l.Class.Name,
-                    LessonDate = l.LessonDate,
-                    StartTime = l.StartTime,
-                    EndTime = l.EndTime,
-                    Status = l.Status,
-                    IsImportan = l.IsImportan,
-                    AttendancesCount = l.Attendances.Count,
-                    LeaveRequestsCount = l.LeaveRequests.Count
-                })
+            return await BuildLessonQuery(classId: null, status: null, keyword: null, ascendingByDate: false)
                 .ToListAsync();
+        }
+
+        public async Task<PagedResult<LessonResponse>> GetPagedLessonsAsync(
+            int page,
+            int pageSize,
+            int? classId = null,
+            string? status = null,
+            string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await BuildLessonQuery(classId, status, keyword, ascendingByDate: false)
+                .ToPagedResultAsync(page, pageSize, cancellationToken: cancellationToken);
         }
 
         public async Task<IEnumerable<LessonResponse>> GetLessonsByClassIdAsync(int classId)
         {
-            return await _context.Lessons
-                .Include(l => l.Class)
-                .Where(l => l.ClassId == classId)
-                .OrderBy(l => l.LessonDate)
-                .Select(l => new LessonResponse
-                {
-                    Id = l.Id,
-                    ClassId = l.ClassId,
-                    ClassName = l.Class.Name,
-                    LessonDate = l.LessonDate,
-                    StartTime = l.StartTime,
-                    EndTime = l.EndTime,
-                    Status = l.Status,
-                    IsImportan = l.IsImportan,
-                    AttendancesCount = l.Attendances.Count,
-                    LeaveRequestsCount = l.LeaveRequests.Count
-                })
+            return await BuildLessonQuery(classId, status: null, keyword: null, ascendingByDate: true)
                 .ToListAsync();
+        }
+
+        private IQueryable<LessonResponse> BuildLessonQuery(
+            int? classId,
+            string? status,
+            string? keyword,
+            bool ascendingByDate)
+        {
+            var query = _context.Lessons.AsNoTracking();
+
+            if (classId.HasValue)
+            {
+                query = query.Where(l => l.ClassId == classId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) &&
+                !status.Trim().Equals("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                var normalizedStatus = status.Trim().ToUpperInvariant();
+                query = query.Where(l => l.Status == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                query = query.Where(l =>
+                    l.Class.Name.ToLower().Contains(kw) ||
+                    (l.Title != null && l.Title.ToLower().Contains(kw)));
+            }
+
+            var ordered = ascendingByDate
+                ? query.OrderBy(l => l.LessonDate).ThenBy(l => l.StartTime).ThenBy(l => l.Id)
+                : query.OrderByDescending(l => l.LessonDate).ThenByDescending(l => l.StartTime).ThenByDescending(l => l.Id);
+
+            return ordered.Select(l => new LessonResponse
+            {
+                Id = l.Id,
+                ClassId = l.ClassId,
+                ClassName = l.Class.Name,
+                LessonDate = l.LessonDate,
+                StartTime = l.StartTime,
+                EndTime = l.EndTime,
+                Status = l.Status,
+                IsImportan = l.IsImportan,
+                AttendancesCount = l.Attendances.Count,
+                LeaveRequestsCount = l.LeaveRequests.Count
+            });
         }
 
         public async Task<LessonResponse?> GetLessonByIdAsync(int id)
@@ -240,6 +275,11 @@ namespace ToanTuDuy.Services
             _context.Lessons.Add(lesson);
             await _context.SaveChangesAsync();
 
+            if (lesson.IsImportan)
+            {
+                await NotifySpecialLessonAsync(lesson);
+            }
+
             return (await GetLessonByIdAsync(lesson.Id))!;
         }
 
@@ -262,6 +302,8 @@ namespace ToanTuDuy.Services
                 throw new Exception("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.");
             }
 
+            var wasImportant = lesson.IsImportan;
+
             lesson.ClassId = request.ClassId;
             lesson.LessonDate = request.LessonDate;
             lesson.StartTime = request.StartTime;
@@ -270,7 +312,42 @@ namespace ToanTuDuy.Services
             lesson.IsImportan = request.IsImportan;
 
             await _context.SaveChangesAsync();
+
+            if (!wasImportant && lesson.IsImportan)
+            {
+                await NotifySpecialLessonAsync(lesson);
+            }
+
             return true;
+        }
+
+        private async Task NotifySpecialLessonAsync(Lesson lesson)
+        {
+            var className = await _context.Classes
+                .AsNoTracking()
+                .Where(c => c.Id == lesson.ClassId)
+                .Select(c => c.Name)
+                .FirstOrDefaultAsync() ?? $"Lớp #{lesson.ClassId}";
+
+            var timeRange = lesson.StartTime.HasValue && lesson.EndTime.HasValue
+                ? $" ({lesson.StartTime.Value:HH:mm} - {lesson.EndTime.Value:HH:mm})"
+                : (lesson.StartTime.HasValue ? $" (lúc {lesson.StartTime.Value:HH:mm})" : string.Empty);
+
+            var title = $"Thông báo đặc biệt: Buổi học quan trọng lớp {className}";
+            var body = $"Lớp {className} có buổi học đặc biệt / quan trọng vào ngày {lesson.LessonDate:dd/MM/yyyy}{timeRange}. Vui lòng chú ý sắp xếp tham gia đầy đủ.";
+
+            var audience = AudienceSpec.Union(
+                AudienceSpec.ClassTeacher(lesson.ClassId),
+                AudienceSpec.ClassParents(lesson.ClassId));
+            audience.SendEmail = true;
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.Special,
+                    title,
+                    body,
+                    $"LESSON:{lesson.Id}:SPECIAL:{DateTime.UtcNow:yyyyMMddHHmmssfff}"),
+                audience);
         }
 
         public async Task<bool> DeleteLessonAsync(int id)
@@ -307,23 +384,48 @@ namespace ToanTuDuy.Services
                 return new List<string>();
             }
 
-            using var document = JsonDocument.Parse(syllabus);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            try
+            {
+                using var document = JsonDocument.Parse(syllabus);
+                if (document.RootElement.ValueKind != JsonValueKind.Array)
+                {
+                    return new List<string>();
+                }
+
+                var titles = new List<string>();
+                foreach (var item in document.RootElement.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    string? resolvedTitle = null;
+                    foreach (var prop in item.EnumerateObject())
+                    {
+                        if (string.Equals(prop.Name, "title", StringComparison.OrdinalIgnoreCase))
+                        {
+                            resolvedTitle = prop.Value.ValueKind == JsonValueKind.String
+                                ? prop.Value.GetString()
+                                : prop.Value.ValueKind != JsonValueKind.Null && prop.Value.ValueKind != JsonValueKind.Undefined
+                                    ? prop.Value.ToString()
+                                    : null;
+                            break;
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(resolvedTitle))
+                    {
+                        titles.Add(resolvedTitle);
+                    }
+                }
+
+                return titles;
+            }
+            catch (JsonException)
             {
                 return new List<string>();
             }
-
-            return document.RootElement
-                .EnumerateArray()
-                .Select(item =>
-                    item.ValueKind == JsonValueKind.Object &&
-                    item.TryGetProperty("title", out var title) &&
-                    title.ValueKind == JsonValueKind.String
-                        ? title.GetString()
-                        : null)
-                .Where(title => !string.IsNullOrWhiteSpace(title))
-                .Select(title => title!)
-                .ToList();
         }
     }
 }

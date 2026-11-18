@@ -10,6 +10,35 @@ class ClassService {
     return (await this.api.get("/")).data;
   }
 
+  // Lấy danh sách lớp học có phân trang & bộ lọc phía server
+  async getPaged({
+    page = 1,
+    pageSize = 12,
+    keyword = "",
+    courseId = undefined,
+    courseLevelId = undefined,
+    teacherId = undefined,
+    status = "",
+    capacity = "",
+    sort = "",
+  } = {}) {
+    return (
+      await this.api.get("/paged", {
+        params: {
+          page,
+          pageSize,
+          keyword: keyword?.trim() || undefined,
+          courseId: courseId || undefined,
+          courseLevelId: courseLevelId || undefined,
+          teacherId: teacherId || undefined,
+          status: status && status !== "ALL" ? status : undefined,
+          capacity: capacity && capacity !== "ALL" ? capacity : undefined,
+          sort: sort || undefined,
+        },
+      })
+    ).data;
+  }
+
   // Lấy danh sách lớp học theo ID cấp độ khóa học
   async getByCourseLevel(levelId) {
     return (await this.api.get(`/course-level/${levelId}`)).data;
@@ -38,6 +67,19 @@ class ClassService {
   // Lấy danh sách học viên hiện tại của lớp học
   async getStudents(classId) {
     return (await this.api.get(`/${classId}/students`)).data;
+  }
+
+  // Lấy danh sách học viên trong lớp có phân trang
+  async getStudentsPaged(classId, { page = 1, pageSize = 20, keyword = "" } = {}) {
+    return (
+      await this.api.get(`/${classId}/students/paged`, {
+        params: {
+          page,
+          pageSize,
+          keyword: keyword?.trim() || undefined,
+        },
+      })
+    ).data;
   }
 
   // Thêm học viên vào lớp học

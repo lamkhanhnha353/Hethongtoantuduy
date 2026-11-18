@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -27,45 +28,67 @@ namespace ToanTuDuy.Services
         // --- NGHỆP VỤ PHỤ HUYNH ---
         public async Task<IEnumerable<ParentResponseDto>> GetAllParentsAsync(string? keyword = null)
         {
+            return await BuildParentQuery(keyword, isActive: null).ToListAsync();
+        }
+
+        public async Task<PagedResult<ParentResponseDto>> GetPagedParentsAsync(
+            int page = 1,
+            int pageSize = PaginationDefaults.DefaultPageSize,
+            string? keyword = null,
+            bool? isActive = null)
+        {
+            return await BuildParentQuery(keyword, isActive)
+                .ToPagedResultAsync(page, pageSize);
+        }
+
+        private IQueryable<ParentResponseDto> BuildParentQuery(string? keyword, bool? isActive)
+        {
             var query = _context.ParentProfiles
-                .Include(p => p.Account)
-                .Include(p => p.StudentProfiles)
+                .AsNoTracking()
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                var kw = keyword.Trim().ToLower();
-                query = query.Where(p => p.FullName.ToLower().Contains(kw) ||
-                                         (p.Account.PhoneNumber != null && p.Account.PhoneNumber.Contains(kw)) ||
-                                         (p.Account.Email != null && p.Account.Email.ToLower().Contains(kw)));
+                var kw = keyword.Trim();
+                var hasNumericId = int.TryParse(kw, out var parsedId);
+                query = query.Where(p =>
+                    (hasNumericId && p.Id == parsedId) ||
+                    EF.Functions.Like(p.FullName, $"%{kw}%") ||
+                    (p.Account.PhoneNumber != null && EF.Functions.Like(p.Account.PhoneNumber, $"%{kw}%")) ||
+                    (p.Account.Email != null && EF.Functions.Like(p.Account.Email, $"%{kw}%")) ||
+                    p.StudentProfiles.Any(s => EF.Functions.Like(s.FullName, $"%{kw}%")));
             }
 
-            return await query.Select(p => new ParentResponseDto
+            if (isActive.HasValue)
             {
-                Id = p.Id,
-                AccountId = p.AccountId,
-                FullName = p.FullName,
-                Phone = p.Account.PhoneNumber ?? "",
-                Email = p.Account.Email,
-                // Pin được ánh xạ qua PinHash theo Entity mới
-                Pin = p.Pin,
-                Avatar = p.Avatar,
-                IsActive = p.Account.IsActive,
-                Students = p.StudentProfiles.Select(s => new StudentResponseDto
+                query = query.Where(p => p.Account.IsActive == isActive.Value);
+            }
+
+            return query
+                .OrderByDescending(p => p.Id)
+                .Select(p => new ParentResponseDto
                 {
-                    Id = s.Id,
-                    // ParentAccountId được đổi thành ParentId trong StudentResponseDto nếu bạn muốn khớp, 
-                    // nhưng nếu DTO vẫn dùng ParentAccountId, ta map sang ParentId của Entity
-                    ParentAccountId = s.ParentId,
-                    ParentName = p.FullName,
-                    ParentPhone = p.Account.PhoneNumber ?? "",
-                    FullName = s.FullName,
-                    Avatar = s.Avatar,
-                    TotalPoints = s.TotalPoints,
-                    Stars = s.Stars,
-                    StreakDays = s.StreakDays
-                }).ToList()
-            }).ToListAsync();
+                    Id = p.Id,
+                    AccountId = p.AccountId,
+                    FullName = p.FullName,
+                    Phone = p.Account.PhoneNumber ?? "",
+                    Email = p.Account.Email,
+                    Pin = p.Pin,
+                    Avatar = p.Avatar,
+                    IsActive = p.Account.IsActive,
+                    Students = p.StudentProfiles.Select(s => new StudentResponseDto
+                    {
+                        Id = s.Id,
+                        ParentAccountId = s.ParentId,
+                        ParentName = p.FullName,
+                        ParentPhone = p.Account.PhoneNumber ?? "",
+                        FullName = s.FullName,
+                        Avatar = s.Avatar,
+                        TotalPoints = s.TotalPoints,
+                        Stars = s.Stars,
+                        StreakDays = s.StreakDays
+                    }).ToList()
+                });
         }
 
         public async Task<ParentResponseDto?> GetParentByIdAsync(int id)
@@ -279,13 +302,25 @@ namespace ToanTuDuy.Services
         // --- NGHIỆP VỤ HỌC SINH ---
         public async Task<IEnumerable<StudentResponseDto>> GetAllStudentsAsync(string? keyword = null, int? parentAccountId = null)
         {
+            return await BuildStudentQuery(keyword, parentAccountId).ToListAsync();
+        }
+
+        public async Task<PagedResult<StudentResponseDto>> GetPagedStudentsAsync(
+            int page = 1,
+            int pageSize = PaginationDefaults.DefaultPageSize,
+            string? keyword = null,
+            int? parentAccountId = null)
+        {
+            return await BuildStudentQuery(keyword, parentAccountId)
+                .ToPagedResultAsync(page, pageSize);
+        }
+
+        private IQueryable<StudentResponseDto> BuildStudentQuery(string? keyword, int? parentAccountId)
+        {
             var query = _context.StudentProfiles
-                .Include(s => s.Parent)
-                .ThenInclude(p => p.Account)
+                .AsNoTracking()
                 .AsQueryable();
 
-            // Nếu DTO đang truyền vào ParentAccountId (của ApplicationUser)
-            // Ta cần lấy ParentProfile có AccountId tương ứng
             if (parentAccountId.HasValue && parentAccountId.Value > 0)
             {
                 query = query.Where(s => s.Parent != null && s.Parent.AccountId == parentAccountId.Value);
@@ -293,23 +328,30 @@ namespace ToanTuDuy.Services
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                var kw = keyword.Trim().ToLower();
-                query = query.Where(s => s.FullName.ToLower().Contains(kw) ||
-                                         (s.Parent != null && s.Parent.FullName.ToLower().Contains(kw)));
+                var kw = keyword.Trim();
+                var hasNumericId = int.TryParse(kw, out var parsedId);
+                query = query.Where(s =>
+                    (hasNumericId && s.Id == parsedId) ||
+                    EF.Functions.Like(s.FullName, $"%{kw}%") ||
+                    (s.Parent != null && EF.Functions.Like(s.Parent.FullName, $"%{kw}%")) ||
+                    (s.Parent != null && s.Parent.Account != null && s.Parent.Account.PhoneNumber != null &&
+                        EF.Functions.Like(s.Parent.Account.PhoneNumber, $"%{kw}%")));
             }
 
-            return await query.Select(s => new StudentResponseDto
-            {
-                Id = s.Id,
-                ParentAccountId = s.Parent != null ? s.Parent.AccountId : 0,
-                ParentName = s.Parent != null ? s.Parent.FullName : "",
-                ParentPhone = s.Parent != null && s.Parent.Account != null ? s.Parent.Account.PhoneNumber ?? "" : "",
-                FullName = s.FullName,
-                Avatar = s.Avatar,
-                TotalPoints = s.TotalPoints,
-                Stars = s.Stars,
-                StreakDays = s.StreakDays
-            }).ToListAsync();
+            return query
+                .OrderByDescending(s => s.Id)
+                .Select(s => new StudentResponseDto
+                {
+                    Id = s.Id,
+                    ParentAccountId = s.Parent != null ? s.Parent.AccountId : 0,
+                    ParentName = s.Parent != null ? s.Parent.FullName : "",
+                    ParentPhone = s.Parent != null && s.Parent.Account != null ? s.Parent.Account.PhoneNumber ?? "" : "",
+                    FullName = s.FullName,
+                    Avatar = s.Avatar,
+                    TotalPoints = s.TotalPoints,
+                    Stars = s.Stars,
+                    StreakDays = s.StreakDays
+                });
         }
 
         public async Task<StudentResponseDto?> GetStudentByIdAsync(int id)

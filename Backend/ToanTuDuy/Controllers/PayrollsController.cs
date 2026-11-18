@@ -5,6 +5,7 @@ using ToanTuDuy.DTOs;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Email;
 
 namespace ToanTuDuy.Controllers;
 
@@ -13,7 +14,8 @@ namespace ToanTuDuy.Controllers;
 [Authorize]
 public sealed class PayrollsController(
     IPayrollService payrollService,
-    IPayslipMailService payslipMailService) : ControllerBase
+    IPayslipMailService payslipMailService,
+    IEmailDeliveryService emailDeliveryService) : ControllerBase
 {
     /// <summary>Returns and refreshes monthly payroll summaries for all teachers.</summary>
     [HttpGet("admin/summary")]
@@ -26,6 +28,30 @@ public sealed class PayrollsController(
     {
         var payrolls = await payrollService.GetMonthlyPayrollsAsync(month, year, cancellationToken);
         return Ok(payrolls);
+    }
+
+    /// <summary>Returns paginated monthly payroll summaries for all teachers.</summary>
+    [HttpGet("admin/summary/paged")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType<PagedResult<PayslipDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<PayslipDto>>> GetMonthlySummaryPaged(
+        [FromQuery, Range(1, 12)] int month,
+        [FromQuery, Range(1, 9998)] int year,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+        [FromQuery] string? keyword = null,
+        [FromQuery] string? emailStatus = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await payrollService.GetMonthlyPayrollsPagedAsync(
+            month,
+            year,
+            page,
+            pageSize,
+            keyword,
+            emailStatus,
+            cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>Sets the salary rate paid to a teacher for each eligible session.</summary>
@@ -95,6 +121,18 @@ public sealed class PayrollsController(
             adjustment);
     }
 
+    [HttpDelete("adjustments/{adjustmentId:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSalaryAdjustment(
+    int adjustmentId,
+    CancellationToken cancellationToken)
+    {
+        await payrollService.DeleteSalaryAdjustmentAsync(adjustmentId, cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Renders an email preview for a saved payroll summary.</summary>
     [HttpGet("{id:int}/preview-email")]
     [Authorize(Roles = "Admin")]
@@ -116,6 +154,11 @@ public sealed class PayrollsController(
         int id,
         CancellationToken cancellationToken)
     {
+        if (!emailDeliveryService.IsConfigured(out var reason))
+        {
+            throw ApiException.BadRequest(reason!);
+        }
+
         var queued = await payslipMailService.QueueSingleEmailAsync(id, cancellationToken);
         return Accepted(new
         {
@@ -136,6 +179,11 @@ public sealed class PayrollsController(
         [FromQuery, Range(1, 9998)] int year,
         CancellationToken cancellationToken)
     {
+        if (!emailDeliveryService.IsConfigured(out var reason))
+        {
+            throw ApiException.BadRequest(reason!);
+        }
+
         var result = await payslipMailService.QueueBatchEmailsAsync(month, year, cancellationToken);
         return Accepted(new QueueBatchEmailsResponse(result.QueuedCount, result.SkippedCount));
     }

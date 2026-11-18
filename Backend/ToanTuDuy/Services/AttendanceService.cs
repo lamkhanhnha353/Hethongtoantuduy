@@ -165,6 +165,12 @@ namespace ToanTuDuy.Services
                     item.StudentId,
                     Status: item.Status?.Trim().ToUpper() ?? "PRESENT")));
 
+            await NotifyAttendanceCompletedIfAllMarkedAsync(
+                request.LessonId,
+                lesson.ClassId,
+                lesson.Class?.Name,
+                lesson.LessonDate);
+
             // Trả về dữ liệu chi tiết sau khi đã cập nhật
             var result = await GetAttendanceByLessonIdAsync(request.LessonId);
             return result!;
@@ -173,6 +179,7 @@ namespace ToanTuDuy.Services
         public async Task<StudentAttendanceItemResponse> SaveSingleAttendanceAsync(int lessonId, AttendanceItemDto dto)
         {
             var lesson = await _context.Lessons
+                .Include(l => l.Class)
                 .FirstOrDefaultAsync(l => l.Id == lessonId);
 
             if (lesson == null)
@@ -223,6 +230,12 @@ namespace ToanTuDuy.Services
                 lessonId,
                 lesson.LessonDate,
                 new[] { (dto.StudentId, Status: normalizedStatus) });
+
+            await NotifyAttendanceCompletedIfAllMarkedAsync(
+                lessonId,
+                lesson.ClassId,
+                lesson.Class?.Name,
+                lesson.LessonDate);
 
             var leave = await _context.LeaveRequests
                 .FirstOrDefaultAsync(lr => lr.LessonId == lessonId && lr.StudentId == dto.StudentId);
@@ -321,6 +334,63 @@ namespace ToanTuDuy.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task NotifyAttendanceCompletedIfAllMarkedAsync(
+            int lessonId,
+            int classId,
+            string? className,
+            DateTime lessonDate)
+        {
+            var activeStudentIds = await _context.ClassStudents
+                .AsNoTracking()
+                .Where(cs => cs.ClassId == classId && cs.Status == "ACTIVE")
+                .Select(cs => cs.StudentId)
+                .Distinct()
+                .ToListAsync();
+
+            if (activeStudentIds.Count == 0)
+            {
+                return;
+            }
+
+            var markedStatuses = await _context.Attendances
+                .AsNoTracking()
+                .Where(a => a.LessonId == lessonId && activeStudentIds.Contains(a.StudentId))
+                .GroupBy(a => a.StudentId)
+                .Select(g => g.Select(x => x.Status).First())
+                .ToListAsync();
+
+            var validMarkedStatuses = markedStatuses
+                .Where(status => !string.IsNullOrWhiteSpace(status) && status != "UNMARKED")
+                .ToList();
+
+            if (validMarkedStatuses.Count < activeStudentIds.Count)
+            {
+                return;
+            }
+
+            var presentCount = validMarkedStatuses.Count(s => s == "PRESENT");
+            var lateCount = validMarkedStatuses.Count(s => s == "LATE");
+            var absentCount = validMarkedStatuses.Count(s => s == "ABSENT");
+            var excusedCount = validMarkedStatuses.Count(s => s == "EXCUSED");
+            var resolvedClassName = string.IsNullOrWhiteSpace(className) ? $"Lớp #{classId}" : className.Trim();
+
+            var title = "Hoàn thiện điểm danh buổi học";
+            var body =
+                $"Buổi học lớp {resolvedClassName} ngày {lessonDate:dd/MM/yyyy} đã hoàn thiện điểm danh " +
+                $"({validMarkedStatuses.Count}/{activeStudentIds.Count} học sinh: " +
+                $"{presentCount} có mặt, {lateCount} đi trễ, {absentCount} vắng, {excusedCount} có phép).";
+
+            await _notificationService.PublishAsync(
+                new NotificationMessage(
+                    NotificationTypes.Attendance,
+                    title,
+                    body,
+                    $"LESSON:{lessonId}:ATTENDANCE_COMPLETED"),
+                AudienceSpec.Union(
+                    AudienceSpec.ClassTeacher(classId),
+                    AudienceSpec.AllAdmins()));
         }
     }
 }

@@ -1,15 +1,22 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import createApiClient from "@/services/api.service";
+import { usePagination } from "@/composables/usePagination";
+import adminPayrollService from "@/services/admin-payroll.service";
 
-const api = createApiClient("/api/payrolls");
+const { page, pageSize, totalCount, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 20,
+});
+
 const period = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 const payrolls = ref([]);
+const keyword = ref("");
+const emailStatusFilter = ref("ALL");
 const loading = ref(false);
 const batchLoading = ref(false);
 const detailLoading = ref(false);
 const adjustmentLoading = ref(false);
+const deletingAdjustmentId = ref(null);
 const baseRateLoading = ref(false);
 const emailLoadingId = ref(null);
 const previewLoading = ref(false);
@@ -95,20 +102,74 @@ function getErrorMessage(error, fallback) {
     ?? fallback;
 }
 
+let searchTimer = null;
+let requestToken = 0;
+
 async function loadPayrolls() {
+  const token = ++requestToken;
   loading.value = true;
   try {
-    const response = await api.get("/admin/summary", { params: periodQuery.value });
-    payrolls.value = Array.isArray(response.data) ? response.data : [];
+    const data = await adminPayrollService.getPaged({
+      ...periodQuery.value,
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: keyword.value,
+      emailStatus: emailStatusFilter.value,
+    });
+    if (token !== requestToken) return;
+    payrolls.value = applyPagedResult(data);
   } catch (error) {
+    if (token !== requestToken) return;
     payrolls.value = [];
+    totalCount.value = 0;
     ElMessage.error(getErrorMessage(error, "Không thể tải bảng lương."));
   } finally {
-    loading.value = false;
+    if (token === requestToken) {
+      loading.value = false;
+    }
   }
 }
 
-watch(period, loadPayrolls, { immediate: true });
+function handlePageChange(nextPage) {
+  page.value = nextPage;
+  loadPayrolls();
+}
+
+function handlePageSizeChange(nextSize) {
+  pageSize.value = nextSize;
+  page.value = 1;
+  loadPayrolls();
+}
+
+watch(period, () => {
+  resetPage();
+  loadPayrolls();
+}, { immediate: true });
+
+watch(emailStatusFilter, () => {
+  resetPage();
+  loadPayrolls();
+});
+
+watch(keyword, () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    resetPage();
+    loadPayrolls();
+  }, 300);
+});
+
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer);
+});
+
+async function refreshCurrentDetail() {
+  if (!selectedPayroll.value) return;
+  selectedDetail.value = await adminPayrollService.getDetail({
+    teacherId: selectedPayroll.value.teacherId,
+    ...periodQuery.value,
+  });
+}
 
 async function openLessonDetails(payroll) {
   selectedPayroll.value = payroll;
@@ -116,13 +177,7 @@ async function openLessonDetails(payroll) {
   detailDialogVisible.value = true;
   detailLoading.value = true;
   try {
-    const response = await api.get("/detail", {
-      params: {
-        teacherId: payroll.teacherId,
-        ...periodQuery.value,
-      },
-    });
-    selectedDetail.value = response.data;
+    await refreshCurrentDetail();
   } catch (error) {
     detailDialogVisible.value = false;
     ElMessage.error(getErrorMessage(error, "Không thể tải chi tiết phiếu lương."));
@@ -168,9 +223,7 @@ async function submitBaseRate() {
 
   baseRateLoading.value = true;
   try {
-    await api.put(`/teachers/${form.teacherId}/base-rate`, {
-      baseRatePerSession: Number(form.baseRatePerSession),
-    });
+    await adminPayrollService.updateBaseRate(form.teacherId, Number(form.baseRatePerSession));
     baseRateDialogVisible.value = false;
     ElMessage.success("Đã cập nhật lương cơ bản cho giáo viên.");
     await loadPayrolls();
@@ -213,7 +266,7 @@ async function submitAdjustment() {
 
   adjustmentLoading.value = true;
   try {
-    await api.post("/adjustments", {
+    await adminPayrollService.createAdjustment({
       teacherId: form.teacherId,
       type: form.type,
       amount: Number(form.amount),
@@ -230,6 +283,33 @@ async function submitAdjustment() {
   }
 }
 
+async function handleDeleteAdjustment(adjustment) {
+  if (!adjustment?.id || deletingAdjustmentId.value) return;
+
+  const typeLabel = adjustment.type === "Bonus" ? "thưởng" : "phạt";
+  try {
+    await ElMessageBox.confirm(
+      `Xóa khoản ${typeLabel} "${adjustment.reason}" (${formatCurrency(adjustment.amount)})?`,
+      "Xác nhận xóa điều chỉnh",
+      { confirmButtonText: "Xóa", cancelButtonText: "Hủy", type: "warning" },
+    );
+  } catch {
+    return;
+  }
+
+  deletingAdjustmentId.value = adjustment.id;
+  try {
+    await adminPayrollService.deleteAdjustment(adjustment.id);
+    ElMessage.success("Đã xóa khoản điều chỉnh và tính lại thực nhận.");
+    await refreshCurrentDetail();
+    await loadPayrolls();
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, "Không thể xóa khoản điều chỉnh."));
+  } finally {
+    deletingAdjustmentId.value = null;
+  }
+}
+
 async function openEmailPreview(payroll) {
   if (!payroll.payrollId) {
     ElMessage.warning("Phiếu lương chưa được tạo, vui lòng tải lại bảng lương.");
@@ -241,12 +321,8 @@ async function openEmailPreview(payroll) {
   previewDialogVisible.value = true;
   previewLoading.value = true;
   try {
-    const response = await api.get(`/${payroll.payrollId}/preview-email`, {
-      responseType: "text",
-    });
-    previewHtml.value = typeof response.data === "string"
-      ? response.data
-      : JSON.stringify(response.data);
+    const data = await adminPayrollService.previewEmail(payroll.payrollId);
+    previewHtml.value = typeof data === "string" ? data : JSON.stringify(data);
   } catch (error) {
     previewDialogVisible.value = false;
     ElMessage.error(getErrorMessage(error, "Không thể tạo bản xem trước email."));
@@ -273,8 +349,8 @@ async function sendSingleEmail(payroll) {
 
   emailLoadingId.value = payroll.payrollId;
   try {
-    const response = await api.post(`/${payroll.payrollId}/send-email`);
-    ElMessage.success(response.data?.message ?? "Email đã được đưa vào hàng đợi.");
+    const data = await adminPayrollService.sendSingleEmail(payroll.payrollId);
+    ElMessage.success(data?.message ?? "Email đã được đưa vào hàng đợi.");
     await loadPayrolls();
   } catch (error) {
     ElMessage.error(getErrorMessage(error, "Không thể gửi email phiếu lương."));
@@ -296,9 +372,9 @@ async function sendBatchEmails() {
 
   batchLoading.value = true;
   try {
-    const response = await api.post("/send-batch-emails", null, { params: periodQuery.value });
-    const queued = response.data?.queuedCount ?? 0;
-    const skipped = response.data?.skippedCount ?? 0;
+    const data = await adminPayrollService.sendBatchEmails(periodQuery.value);
+    const queued = data?.queuedCount ?? 0;
+    const skipped = data?.skippedCount ?? 0;
     ElMessage.success(`Đã đưa ${queued} email vào hàng đợi; bỏ qua ${skipped} email.`);
     await loadPayrolls();
   } catch (error) {
@@ -334,6 +410,21 @@ async function sendBatchEmails() {
     </header>
 
     <section class="table-card">
+      <div class="table-toolbar">
+        <el-input
+          v-model="keyword"
+          placeholder="Tìm tên hoặc email giáo viên..."
+          clearable
+          class="toolbar-search"
+        />
+        <el-select v-model="emailStatusFilter" class="toolbar-select" aria-label="Lọc trạng thái gửi email">
+          <el-option label="Tất cả trạng thái mail" value="ALL" />
+          <el-option label="NotSent (Chưa gửi)" value="NotSent" />
+          <el-option label="Pending (Đang chờ)" value="Pending" />
+          <el-option label="Sent (Đã gửi)" value="Sent" />
+          <el-option label="Failed (Thất bại)" value="Failed" />
+        </el-select>
+      </div>
       <el-table v-loading="loading" :data="payrolls" row-key="payrollId" stripe>
         <el-table-column label="Giáo viên" min-width="200">
           <template #default="{ row }">
@@ -360,8 +451,8 @@ async function sendBatchEmails() {
         <el-table-column label="Thưởng / Phạt" min-width="165" align="right">
           <template #default="{ row }">
             <span class="adjustment-values">
-              <span class="bonus">+{{ formatCurrency(row.totalBonus) }}</span>
-              <span class="penalty">−{{ formatCurrency(row.totalPenalty) }}</span>
+              <span :class="Number(row.totalBonus) > 0 ? 'bonus' : 'muted-zero'">+{{ formatCurrency(row.totalBonus) }}</span>
+              <span :class="Number(row.totalPenalty) > 0 ? 'penalty' : 'muted-zero'">−{{ formatCurrency(row.totalPenalty) }}</span>
             </span>
           </template>
         </el-table-column>
@@ -405,7 +496,20 @@ async function sendBatchEmails() {
           <el-empty description="Không có dữ liệu lương trong tháng này." />
         </template>
       </el-table>
-      <footer class="table-footer">Kỳ lương: <strong>{{ formatPeriod() }}</strong> · {{ payrolls.length }} giáo viên</footer>
+      <footer class="table-footer">
+        <span>Kỳ lương: <strong>{{ formatPeriod() }}</strong> · {{ totalCount }} giáo viên</span>
+        <el-pagination
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="totalCount"
+          :disabled="loading"
+          background
+          layout="sizes, prev, pager, next"
+          @current-change="handlePageChange"
+          @size-change="handlePageSizeChange"
+        />
+      </footer>
     </section>
 
     <el-dialog v-model="detailDialogVisible" :title="`Chi tiết lương — ${selectedPayroll?.teacherName ?? ''}`" width="min(980px, 94vw)" destroy-on-close>
@@ -438,7 +542,21 @@ async function sendBatchEmails() {
             <el-table-column label="Ngày" width="130"><template #default="{ row }">{{ formatDate(row.appliedDate) }}</template></el-table-column>
             <el-table-column label="Loại" width="120"><template #default="{ row }"><el-tag :type="row.type === 'Bonus' ? 'success' : 'danger'">{{ row.type === "Bonus" ? "Thưởng" : "Phạt" }}</el-tag></template></el-table-column>
             <el-table-column label="Số tiền" width="150" align="right"><template #default="{ row }">{{ formatCurrency(row.amount) }}</template></el-table-column>
-            <el-table-column prop="reason" label="Lý do" min-width="220" />
+            <el-table-column prop="reason" label="Lý do" min-width="200" />
+            <el-table-column label="Thao tác" width="100" align="center">
+              <template #default="{ row }">
+                <el-button
+                  size="small"
+                  type="danger"
+                  plain
+                  :loading="deletingAdjustmentId === row.id"
+                  :disabled="deletingAdjustmentId !== null && deletingAdjustmentId !== row.id"
+                  @click="handleDeleteAdjustment(row)"
+                >
+                  Xóa
+                </el-button>
+              </template>
+            </el-table-column>
             <template #empty><el-empty description="Không có khoản điều chỉnh." :image-size="60" /></template>
           </el-table>
         </template>
@@ -516,41 +634,46 @@ async function sendBatchEmails() {
 </template>
 
 <style scoped>
-.payroll-page { display: grid; gap: 22px; max-width: 1500px; margin: 0 auto; padding-bottom: 36px; color: #1f2937; }
+.payroll-page { display: grid; gap: 22px; max-width: 1500px; margin: 0 auto; padding-bottom: 36px; color: #1c1917; font-variant-numeric: tabular-nums; }
 .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 .eyebrow { margin: 0 0 5px; color: #ea580c; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-h1 { margin: 0; color: #431407; font-size: clamp(24px, 3vw, 32px); font-weight: 800; letter-spacing: -.03em; }
-.page-description { margin: 7px 0 0; color: #6b7280; font-size: 14px; }
+h1 { margin: 0; color: #1c1917; font-size: clamp(24px, 3vw, 32px); font-weight: 800; letter-spacing: -.03em; }
+.page-description { margin: 7px 0 0; color: #78716c; font-size: 14px; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.table-card { overflow: hidden; border: 1px solid #ffedd5; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgb(124 45 18 / 5%); }
-.table-footer { padding: 13px 18px; border-top: 1px solid #fff7ed; color: #6b7280; font-size: 12px; }
-.table-footer strong { color: #9a3412; }
+.table-card { overflow: hidden; border: 1px solid #d6d3d1; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #e7e5e4; background: #fafaf9; }
+.toolbar-search { max-width: 340px; width: 100%; }
+.toolbar-select { width: 210px; }
+.table-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 13px 18px; border-top: 1px solid #e7e5e4; background: #fafaf9; color: #57534e; font-size: 12px; font-variant-numeric: tabular-nums; }
+.table-footer strong { color: #1c1917; }
 .teacher-cell { display: flex; align-items: center; gap: 10px; }
 .teacher-cell strong, .teacher-cell small { display: block; }
-.teacher-cell strong { color: #292524; font-size: 13px; }
-.teacher-cell small { margin-top: 3px; color: #9ca3af; font-size: 11px; }
-.teacher-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 12px; background: #fff7ed; color: #c2410c; font-weight: 800; }
-.session-count { display: inline-grid; min-width: 30px; height: 30px; place-items: center; border-radius: 10px; background: #fff7ed; color: #c2410c; font-weight: 800; }
-.adjustment-values { display: grid; gap: 3px; font-size: 12px; }
-.bonus { color: #15803d; }
-.penalty { color: #dc2626; }
-.net-pay { color: #9a3412; }
+.teacher-cell strong { color: #1c1917; font-size: 13px; }
+.teacher-cell small { margin-top: 3px; color: #78716c; font-size: 11px; }
+.teacher-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 9999px; border: 1px solid #fed7aa; background: #ffedd5; color: #c2410c; font-weight: 800; }
+.session-count { display: inline-grid; min-width: 28px; height: 28px; padding: 0 6px; place-items: center; border-radius: 4px; border: 1px solid #fed7aa; background: #fff7ed; color: #c2410c; font-weight: 700; font-variant-numeric: tabular-nums; }
+.adjustment-values { display: grid; gap: 3px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bonus { color: #15803d; font-weight: 600; }
+.penalty { color: #be123c; font-weight: 600; }
+.muted-zero { color: #a8a29e; font-weight: 400; }
+.net-pay { color: #9a3412; font-variant-numeric: tabular-nums; }
 .row-actions { display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
-.more-actions-button { color: #57534e; border-color: #e7e5e4; }
+.more-actions-button { color: #292524; border-color: #d6d3d1; }
 .more-actions-button:hover,
-.more-actions-button:focus { color: #c2410c; border-color: #fdba74; background: #fff7ed; }
+.more-actions-button:focus { color: #1c1917; border-color: #a8a29e; background: #f5f5f4; }
 .dropdown-caret { margin-left: 5px; color: #78716c; font-size: 12px; }
 .dialog-content { min-height: 120px; }
-.detail-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding: 12px 15px; border-radius: 12px; background: #fff7ed; color: #7c2d12; font-size: 13px; }
-.detail-summary strong { font-size: 17px; }
-.adjustments-heading { margin: 22px 0 10px; color: #431407; font-size: 15px; }
+.detail-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding: 12px 15px; border-radius: 8px; border: 1px solid #e7e5e4; background: #fafaf9; color: #1c1917; font-size: 13px; font-variant-numeric: tabular-nums; }
+.detail-summary strong { font-size: 17px; color: #ea580c; }
+.adjustments-heading { margin: 22px 0 10px; color: #1c1917; font-size: 15px; }
 .form-hint { margin: -4px 0 0; color: #78716c; font-size: 12px; }
 .preview-frame { min-height: 60vh; }
-.preview-frame iframe { width: 100%; height: 68vh; border: 1px solid #e5e7eb; border-radius: 10px; background: white; }
+.preview-frame iframe { width: 100%; height: 68vh; border: 1px solid #d6d3d1; border-radius: 8px; background: white; }
 .full-width { width: 100%; }
-:deep(.el-table th.el-table__cell) { background: #fff7ed; color: #7c2d12; font-size: 12px; }
-:deep(.el-table .cell) { line-height: 1.45; }
-.help-icon { margin-left: 3px; color: #9a3412; cursor: help; }
+:deep(.el-table th.el-table__cell) { background: #f5f5f4; color: #44403c; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid #d6d3d1; }
+:deep(.el-table .cell) { line-height: 1.45; font-variant-numeric: tabular-nums; }
+:deep(.el-table tr:hover > td.el-table__cell) { background-color: #fff7ed !important; }
+.help-icon { margin-left: 3px; color: #c2410c; cursor: help; }
 @media (max-width: 640px) {
   .payroll-page { gap: 16px; }
   .header-actions { width: 100%; }

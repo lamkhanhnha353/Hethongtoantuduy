@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Services;
@@ -27,6 +28,26 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll([FromQuery] int? courseId, [FromQuery] string? keyword)
         {
             var result = await _bankService.GetAllBanksAsync(courseId, keyword);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách ngân hàng câu hỏi có phân trang.
+        /// </summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] int? courseId = null,
+            [FromQuery] string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _bankService.GetPagedBanksAsync(
+                page,
+                pageSize,
+                courseId,
+                keyword,
+                cancellationToken);
             return Ok(result);
         }
 
@@ -96,6 +117,30 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetQuestionsByBank(int bankId, [FromQuery] string? difficulty, [FromQuery] string? type)
         {
             var result = await _bankService.GetQuestionsByBankAsync(bankId, difficulty, type);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi có phân trang trong một ngân hàng câu hỏi (lọc theo độ khó, loại, từ khóa).
+        /// </summary>
+        [HttpGet("{bankId:int}/questions/paged")]
+        public async Task<IActionResult> GetQuestionsByBankPaged(
+            int bankId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? difficulty = null,
+            [FromQuery] string? type = null,
+            [FromQuery] string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _bankService.GetPagedQuestionsByBankAsync(
+                bankId,
+                page,
+                pageSize,
+                difficulty,
+                type,
+                keyword,
+                cancellationToken);
             return Ok(result);
         }
 
