@@ -80,6 +80,7 @@ class AIMessage(Base):
     )
     role = Column(String(20), nullable=False)
     content = Column(Text, nullable=False)
+    image_url = Column(Text, nullable=True)
     token_count = Column(Integer, nullable=False, default=0)
     sources_json = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default="done")

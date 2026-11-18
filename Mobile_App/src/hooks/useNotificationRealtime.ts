@@ -36,12 +36,10 @@ export const useNotificationRealtime = (
     // Bắt đầu kết nối
     void notificationHubService.startConnection(apiUrl, getToken);
 
-    // Lắng nghe thay đổi trạng thái App (Foreground / Background)
+    // Lắng nghe thay đổi trạng thái App: khi active thì đảm bảo kết nối vẫn duy trì
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
         void notificationHubService.startConnection(apiUrl, getToken);
-      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
-        void notificationHubService.stopConnection();
       }
     });
 

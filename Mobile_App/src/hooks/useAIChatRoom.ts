@@ -6,7 +6,7 @@ import type { AIChatMessage, AIChatStreamEvent } from '@/types/aiChat';
 type UseAIChatRoomParams = {
   conversationId: number;
   initialTitle?: string;
-  onScrollToBottom?: (animated?: boolean) => void;
+  onScrollToBottom?: (animated?: boolean, force?: boolean) => void;
 };
 
 export function useAIChatRoom({
@@ -19,19 +19,26 @@ export function useAIChatRoom({
   const nextOptimisticIdRef = useRef(-1);
   const mountedRef = useRef(true);
   const streamingRef = useRef(false);
+  const nextPageRef = useRef(2);
+  const hasMoreMessagesRef = useRef(false);
+  const loadingOlderMessagesRef = useRef(false);
 
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
   const [title, setTitle] = useState(initialTitle || 'Trợ lý AI');
   const [loading, setLoading] = useState(!invalidConversationId);
   const [loadError, setLoadError] = useState<string | null>(  invalidConversationId ? 'Mã hội thoại không hợp lệ.' : null, );
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   
   const [inputText, setInputText] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [statusText, setStatusText] = useState<string | null>(null);
 
   const scrollToBottom = useCallback(
-    (animated = true) => {
-      onScrollToBottom?.(animated);
+    (animated = true, force = false) => {
+      onScrollToBottom?.(animated, force);
     },
     [onScrollToBottom],
   );
@@ -47,6 +54,11 @@ export function useAIChatRoom({
 
   useEffect(() => {
     let active = true;
+    nextPageRef.current = 2;
+    hasMoreMessagesRef.current = false;
+    loadingOlderMessagesRef.current = false;
+    setLoadingOlderMessages(false);
+    setHasMore(false);
 
     if (invalidConversationId) {
       return () => {
@@ -56,7 +68,7 @@ export function useAIChatRoom({
 
     Promise.all([
       aiChatService.getConversation(conversationId),
-      aiChatService.getMessages(conversationId),
+      aiChatService.getMessages(conversationId, 1, 20),
     ])
       .then(([conversation, messageList]) => {
         if (!active) {
@@ -65,8 +77,11 @@ export function useAIChatRoom({
 
         setTitle(conversation.title);
         setMessages(messageList.items);
+        hasMoreMessagesRef.current = messageList.hasMore;
+        setHasMore(messageList.hasMore);
+        nextPageRef.current = 2;
         setLoadError(null);
-        scrollToBottom(false);
+        scrollToBottom(false, true);
       })
       .catch((error) => {
         if (active) {
@@ -84,11 +99,59 @@ export function useAIChatRoom({
     };
   }, [conversationId, invalidConversationId, scrollToBottom]);
 
+  const loadOlderMessages = useCallback(async () => {
+    if (
+      loading ||
+      loadingOlderMessagesRef.current ||
+      !hasMoreMessagesRef.current ||
+      invalidConversationId
+    ) {
+      return;
+    }
+
+    loadingOlderMessagesRef.current = true;
+    setLoadingOlderMessages(true);
+
+    try {
+      const olderList = await aiChatService.getMessages(
+        conversationId,
+        nextPageRef.current,
+        20,
+      );
+
+      if (!mountedRef.current) return;
+
+      if (olderList && Array.isArray(olderList.items) && olderList.items.length > 0) {
+        nextPageRef.current += 1;
+        hasMoreMessagesRef.current = olderList.hasMore;
+        setHasMore(olderList.hasMore);
+
+        setMessages((current) => {
+          const existingIds = new Set(current.map((m) => m.id));
+          const newItems = olderList.items.filter((m) => !existingIds.has(m.id));
+          return [...newItems, ...current];
+        });
+      } else {
+        hasMoreMessagesRef.current = false;
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.warn('Lỗi tải tin nhắn cũ AI:', error);
+    } finally {
+      if (mountedRef.current) {
+        loadingOlderMessagesRef.current = false;
+        setLoadingOlderMessages(false);
+      }
+    }
+  }, [conversationId, invalidConversationId, loading]);
+
   const sendMessage = useCallback(async () => {
     const prompt = inputText.trim();
+    const currentImage = selectedImage;
+    const currentBase64 = imageBase64;
 
     if (
-      !prompt ||
+      (!prompt && !currentBase64) ||
       streaming ||
       streamingRef.current ||
       !Number.isInteger(conversationId) ||
@@ -105,11 +168,14 @@ export function useAIChatRoom({
     nextOptimisticIdRef.current -= 1;
     const assistantMessageId = nextOptimisticIdRef.current;
 
+    const displayPrompt = prompt || 'Hãy phân tích hình ảnh này và hướng dẫn giải bài toán.';
+
     const userMessage: AIChatMessage = {
       id: userMessageId,
       conversationId,
       role: 'user',
-      content: prompt,
+      content: displayPrompt,
+      imageUrl: currentImage,
       tokenCount: 0,
       sources: [],
       status: 'done',
@@ -129,10 +195,12 @@ export function useAIChatRoom({
     };
 
     setInputText('');
+    setSelectedImage(null);
+    setImageBase64(null);
     setMessages((current) => [...current, userMessage, assistantMessage]);
     setStreaming(true);
     setStatusText('Đang tìm tài liệu...');
-    scrollToBottom(false);
+    scrollToBottom(false, true);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -207,8 +275,9 @@ export function useAIChatRoom({
 
     try {
       await aiChatService.streamChat({
-        prompt,
+        prompt: displayPrompt,
         conversationId,
+        image_base64: currentBase64,
         signal: controller.signal,
         onEvent: handleEvent,
       });
@@ -246,10 +315,10 @@ export function useAIChatRoom({
       if (mountedRef.current) {
         setStreaming(false);
         setStatusText(null);
-        scrollToBottom(true);
+        scrollToBottom(true, false);
       }
     }
-  }, [conversationId, inputText, scrollToBottom, streaming]);
+  }, [conversationId, imageBase64, inputText, scrollToBottom, selectedImage, streaming]);
 
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort();
@@ -263,9 +332,16 @@ export function useAIChatRoom({
     invalidConversationId,
     inputText,
     setInputText,
+    selectedImage,
+    setSelectedImage,
+    imageBase64,
+    setImageBase64,
     streaming,
     statusText,
     sendMessage,
     stopStreaming,
+    loadOlderMessages,
+    loadingOlderMessages,
+    hasMore,
   };
 }

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-export const DEFAULT_API_URL = 'http://192.168.1.119:5114';
+export const DEFAULT_API_URL = 'http://192.168.1.25:5114';
 export const DEFAULT_AI_PORT = 8001;
 
 function normalize(url: string) {

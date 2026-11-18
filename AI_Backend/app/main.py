@@ -100,13 +100,19 @@ async def chat_with_ai(request: ChatRequest, user: dict = Depends(verify_jwt_tok
             if fallback is None or not should_fallback(exc):
                 raise
             logger.warning(
-                "Provider %s lỗi, fallback sang Ollama: %s",
+                "Provider %s lỗi, fallback sang %s: %s",
                 primary.name,
+                fallback.name,
                 exc,
+            )
+            fallback_model = (
+                settings.GROQ_CHAT_MODEL
+                if fallback.name == "groq"
+                else settings.OLLAMA_CHAT_MODEL
             )
             answer = await fallback.chat(
                 messages=messages,
-                model=settings.OLLAMA_CHAT_MODEL,
+                model=fallback_model,
                 temperature=settings.CHAT_TEMPERATURE,
                 max_tokens=settings.CHAT_NUM_PREDICT,
             )

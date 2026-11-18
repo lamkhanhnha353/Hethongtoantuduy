@@ -45,6 +45,7 @@ async def health_check(user: dict = Depends(verify_jwt_token)):
         or (
             settings.LLM_FALLBACK_ENABLED
             and settings.llm_provider_name not in {"ollama", "local"}
+            and not settings.GROQ_API_KEY.strip()
         )
     )
     result = {

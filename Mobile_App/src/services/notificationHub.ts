@@ -101,12 +101,18 @@ class NotificationHubService {
   }
 
   public async stopConnection(): Promise<void> {
-    this.pendingStart = null;
+    if (this.pendingStart) {
+      try {
+        await this.pendingStart;
+      } catch {
+        // Bỏ qua nếu quá trình start trước đó bị lỗi
+      }
+    }
+
     if (this.connection) {
       try {
         if (
           this.connection.state === HubConnectionState.Connected ||
-          this.connection.state === HubConnectionState.Connecting ||
           this.connection.state === HubConnectionState.Reconnecting
         ) {
           await this.connection.stop();

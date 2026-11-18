@@ -55,6 +55,7 @@ def _serialize_message(message: AIMessage) -> dict[str, Any]:
         "conversationId": message.conversation_id,
         "role": message.role,
         "content": message.content,
+        "imageUrl": getattr(message, "image_url", None),
         "tokenCount": message.token_count,
         "sources": sources,
         "status": message.status,
@@ -277,6 +278,7 @@ def append_message(
     token_count: int,
     sources: list[Any] | None = None,
     status: str = "done",
+    image_url: str | None = None,
 ) -> dict[str, Any]:
     db = SessionLocal()
     try:
@@ -301,6 +303,7 @@ def append_message(
             conversation_id=conversation_id,
             role=role,
             content=content,
+            image_url=image_url,
             token_count=token_count,
             sources_json=(
                 json.dumps(sources, ensure_ascii=False) if sources else None

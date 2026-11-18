@@ -219,9 +219,16 @@ function consumeSSEBlocks(incoming: string, onEvent: (event: AIChatStreamEvent) 
   }
 }
 
-export async function streamAIChat({ prompt, conversationId, signal, onEvent, }: {
+export async function streamAIChat({
+  prompt,
+  conversationId,
+  image_base64,
+  signal,
+  onEvent,
+}: {
   prompt: string;
   conversationId: number;
+  image_base64?: string | null;
   signal?: AbortSignal;
   onEvent: (event: AIChatStreamEvent) => void;
 }): Promise<void> {
@@ -239,6 +246,7 @@ export async function streamAIChat({ prompt, conversationId, signal, onEvent, }:
       body: JSON.stringify({
         prompt,
         conversation_id: conversationId,
+        image_base64: image_base64 || undefined,
       }),
       signal,
     });
@@ -300,7 +308,7 @@ export const aiChatService = {
   getConversation: (conversationId: number) =>
     requestAI<AIConversationDto>(`/api/ai/conversations/${conversationId}`),
 
-  getMessages: (conversationId: number, page = 1, pageSize = 50) =>
+  getMessages: (conversationId: number, page = 1, pageSize = 20) =>
     requestAI<AIMessageListDto>(
       `/api/ai/conversations/${conversationId}/messages?page=${page}&page_size=${pageSize}`,
     ),

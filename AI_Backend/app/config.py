@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     LLM_MAX_TOKENS: int = 512
     LLM_FALLBACK_ENABLED: bool = True
 
+    # Cấu hình dự phòng Groq
+    GROQ_API_KEY: str = ""
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+    GROQ_CHAT_MODEL: str = "openai/gpt-oss-120b"
+
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_CHAT_MODEL: str = "qwen2.5:3b-instruct"
     OLLAMA_SUMMARY_MODEL: str = "qwen2.5:3b-instruct"
@@ -57,6 +62,11 @@ class Settings(BaseSettings):
     SQLITE_URL: str = f"sqlite:///{(STORAGE_DIR / 'app.db').as_posix()}"
     DOCUMENTS_DIR: str = str(STORAGE_DIR / "documents")
     MAX_DOCUMENT_FILE_SIZE_MB: int = 20
+
+    CLOUDINARY_CLOUD_NAME: str = "dys3ii0ow"
+    CLOUDINARY_API_KEY: str = "447982152694634"
+    CLOUDINARY_API_SECRET: str = "w7QvtmYLzZ11sMVk9En1X7kXyFo"
+    CLOUDINARY_FOLDER: str = "chat/ai_attachments"
 
     CORS_ORIGINS: str = "*"
 

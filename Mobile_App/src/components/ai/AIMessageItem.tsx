@@ -1,23 +1,41 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { memo } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { formatChatTime } from '@/components/chat/chatDateTime';
 import type { AIChatMessage } from '@/types/aiChat';
 
-export function AIMessageItem({
+export const AIMessageItem = memo(function AIMessageItem({
   message,
   statusText,
+  onOpenImage,
 }: {
   message: AIChatMessage;
   statusText?: string | null;
+  onOpenImage?: (url: string) => void;
 }) {
   const isUser = message.role === 'user';
 
   if (isUser) {
     return (
       <View className="mb-4 max-w-[84%] self-end">
-        <View className="rounded-2xl rounded-tr-md bg-sky-600 px-4 py-2.5">
-          <Text className="text-[16px] leading-6 text-white" selectable>
+        <View className="rounded-2xl rounded-tr-md bg-sky-600 p-2.5">
+          {message.imageUrl ? (
+            <Pressable
+              onPress={() => onOpenImage?.(message.imageUrl!)}
+              className="mb-2 h-48 w-56 overflow-hidden rounded-xl bg-slate-200 active:opacity-90"
+            >
+              <Image
+                source={{ uri: message.imageUrl }}
+                style={{ width: '100%', height: '100%' }}
+                contentFit="cover"
+                cachePolicy="disk"
+                transition={150}
+              />
+            </Pressable>
+          ) : null}
+          <Text className="text-[16px] leading-6 text-white">
             {message.content}
           </Text>
         </View>
@@ -56,7 +74,6 @@ export function AIMessageItem({
               <Text
                 className={`text-[16px] leading-6 ${message.error ? 'text-rose-700' : 'text-slate-800'
                   }`}
-                selectable
               >
                 {message.content}
                 {message.streaming ? (
@@ -99,4 +116,4 @@ export function AIMessageItem({
       </View>
     </View>
   );
-}
+});

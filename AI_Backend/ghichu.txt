@@ -1,0 +1,34 @@
+1. Câu lệnh Khởi động máy chủ AI_Backend
+Cách 1: Chạy trực tiếp từ thư mục gốc của dự án (D:\ToanTuDuy_Project):
+    python -m uvicorn AI_Backend.app.main:app --host 0.0.0.0 --port 8001 --reload
+Cách 2: Vào thư mục AI_Backend rồi chạy:
+    cd AI_Backend
+    python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+2. Câu lệnh Xem danh sách tài liệu trong kho tri thức (--list)
+Để kiểm tra xem hiện tại trong ChromaDB đang có bao nhiêu tài liệu và bao nhiêu chunks:
+    python AI_Backend/scripts/ingest_documents.py --list
+
+3. Câu lệnh Nạp dữ liệu vào Kho tri thức (Ingest):
+    - Nạp tài liệu Cẩm nang trung tâm & hướng dẫn phụ huynh (mặc định):
+        python AI_Backend/scripts/ingest_documents.py
+    - Nạp một tệp bất kỳ bạn muốn thêm vào:
+        python AI_Backend/scripts/ingest_documents.py "đường_dẫn_đến_file.md"
+    - Nạp cả một thư mục tài liệu mới:
+        python AI_Backend/scripts/ingest_documents.py "đường_dẫn_đến_thư_mục"
+
+4. Câu lệnh Quay về dữ liệu trước đó (Hoàn tác / Rollback):
+    - Cách 1: Tự động hoàn tác tài liệu vừa nạp (xóa cẩm nang để quay về chunks ban đầu):
+        python AI_Backend/scripts/ingest_documents.py --rollback
+    - Cách 2: Xóa chính xác một tài liệu bất kỳ theo mã doc_id:
+        VD: python AI_Backend/scripts/ingest_documents.py --delete "thong-tin-trung-tam-va-huong-dan-phu-huynh"
+        (Bạn có thể thay bằng bất kỳ mã doc_id nào trong danh sách xem được từ lệnh --list)
+
+    - Cách 3: Phục hồi trực tiếp từ file sao lưu an toàn (chroma_backup): Khi chạy nạp dữ liệu, hệ thống luôn tự động copy 1 bản lưu sang
+        AI_Backend/storage/chroma_backup/chroma.sqlite3. 
+            Nếu muốn khôi phục hoàn toàn, bạn chỉ cần copy đè file này ngược lại vào AI_Backend/storage/chroma/chroma.sqlite3.
+
+Lưu ý: 
+    + chroma: Giống như Tủ sách chính của trung tâm (học sinh và phụ huynh đến mượn đọc mỗi ngày).
+    + chroma_backup: Giống như Bản photocopy cất trong két sắt (đề phòng tủ sách chính bị rách hay mất sách thì lấy ra khôi phục lại).
+    

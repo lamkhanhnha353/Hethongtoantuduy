@@ -9,6 +9,7 @@ from app.config import settings
 from app.db.database import SessionLocal
 from app.db.models import AIChatLog
 from app.services import conversation_service, memory
+from app.services.cloudinary_service import upload_image_to_cloudinary
 from app.services.conversation_service import ConversationNotFoundError
 from app.services.llm_provider import (
     create_fallback_provider,
@@ -84,6 +85,7 @@ async def stream_chat(
     history: list[HistoryMessage] | None,
     account_id: str,
     conversation_id: int | None = None,
+    image_base64: str | None = None,
 ) -> AsyncIterator[StreamEvent]:
     yield {"event": "status", "data": {"stage": "retrieving"}}
 
@@ -111,15 +113,27 @@ async def stream_chat(
             return
 
         try:
+            image_url = None
+            if image_base64 and image_base64.strip():
+                try:
+                    image_url = await run_in_threadpool(
+                        upload_image_to_cloudinary, image_base64
+                    )
+                except Exception:
+                    logger.exception("Không thể upload ảnh lên Cloudinary")
+                    image_url = image_base64
+
+            stored_prompt = prompt or ("Hãy phân tích hình ảnh này và hướng dẫn giải bài toán." if image_base64 else "")
             user_result = await run_in_threadpool(
                 conversation_service.append_message,
                 account_id,
                 conversation_id,
                 "user",
-                prompt,
-                memory.estimate_tokens(prompt),
+                stored_prompt,
+                memory.estimate_tokens(stored_prompt),
                 None,
                 "done",
+                image_url,
             )
             user_message_id = user_result["message"]["id"]
             conversation_title = user_result["conversationTitle"]
@@ -231,6 +245,7 @@ async def stream_chat(
                 model=settings.chat_model,
                 temperature=settings.CHAT_TEMPERATURE,
                 max_tokens=settings.LLM_MAX_TOKENS,
+                image_base64=image_base64,
             ):
                 first_delta = True
                 answer_parts.append(content)
@@ -243,15 +258,22 @@ async def stream_chat(
             if first_delta or fallback is None or not should_fallback(exc):
                 raise
             logger.warning(
-                "Provider %s lỗi trước khi có delta, fallback sang Ollama: %s",
+                "Provider %s lỗi trước khi có delta, fallback sang %s: %s",
                 primary.name,
+                fallback.name,
                 exc,
+            )
+            fallback_model = (
+                settings.GROQ_CHAT_MODEL
+                if fallback.name == "groq"
+                else settings.OLLAMA_CHAT_MODEL
             )
             async for content in fallback.chat_stream(
                 messages=prepared.messages,
-                model=settings.OLLAMA_CHAT_MODEL,
+                model=fallback_model,
                 temperature=settings.CHAT_TEMPERATURE,
                 max_tokens=settings.CHAT_NUM_PREDICT,
+                image_base64=image_base64,
             ):
                 first_delta = True
                 answer_parts.append(content)

@@ -37,22 +37,25 @@ class ChatHistoryMessage(BaseModel):
 
 class ChatStreamRequest(BaseModel):
     prompt: str = Field(
-        min_length=1,
+        default="",
         max_length=settings.CHAT_MAX_PROMPT_CHARS,
     )
+    image_base64: str | None = None
     history: list[ChatHistoryMessage] = Field(default_factory=list)
     conversation_id: int | None = Field(default=None, ge=1)
 
     @field_validator("prompt")
     @classmethod
     def strip_prompt(cls, value: str) -> str:
-        prompt = value.strip()
-        if not prompt:
-            raise ValueError("Câu hỏi không được để trống")
-        return prompt
+        return value.strip()
 
     @model_validator(mode="after")
-    def validate_history_length(self) -> "ChatStreamRequest":
+    def validate_prompt_and_history(self) -> "ChatStreamRequest":
+        if not self.prompt and not self.image_base64:
+            raise ValueError("Câu hỏi hoặc hình ảnh không được để trống")
+        if self.image_base64 and not self.prompt:
+            self.prompt = "Hãy quan sát hình ảnh bài toán này và hướng dẫn giải chi tiết cho học sinh."
+
         if self.conversation_id is not None:
             return self
 
@@ -100,6 +103,7 @@ async def chat_stream(
                 history=[item.model_dump() for item in request.history],
                 account_id=user["accountId"],
                 conversation_id=request.conversation_id,
+                image_base64=request.image_base64,
             ):
                 yield _sse_event(event["event"], event["data"])
         except asyncio.CancelledError:

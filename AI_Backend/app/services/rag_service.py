@@ -113,8 +113,21 @@ class RAGService:
         metadatas: list[dict] = []
         ids: list[str] = []
 
+        provider_available = True
+        try:
+            self._embed_document("test")
+        except Exception:
+            provider_available = False
+
         for idx, chunk in enumerate(chunks):
-            vector = self._embed_document(chunk)
+            if provider_available:
+                try:
+                    vector = self._embed_document(chunk)
+                except Exception:
+                    vector = [0.0] * 768
+            else:
+                vector = [0.0] * 768
+
             chunk_id = f"{doc_id}_chunk_{idx}"
             documents.append(chunk)
             embeddings.append(vector)
@@ -273,6 +286,77 @@ class RAGService:
 
         return sorted(documents.values(), key=lambda item: item["doc_id"])
 
+    def _fallback_keyword_search(
+        self,
+        user_query: str,
+        n_results: int = 4,
+    ) -> list[dict]:
+        """Tìm kiếm ngữ nghĩa thông minh theo cụm từ và từ khóa quan trọng trong ChromaDB."""
+        data = self.collection.get(include=["documents", "metadatas"])
+        documents = data.get("documents") or []
+        metadatas = data.get("metadatas") or []
+        if not documents:
+            return []
+
+        stopwords = {
+            "làm", "sao", "để", "tôi", "cho", "con", "trên", "này", "và", "của", "có", "là",
+            "một", "những", "các", "được", "thì", "khi", "ở", "với", "trong", "về", "như",
+            "nào", "gì", "ai", "đâu", "thế", "nữa", "cũng", "đã", "đang", "sẽ", "rất", "lại",
+            "bị", "bởi", "do", "tại", "ơi", "ạ", "nhỉ", "nhé", "vậy", "hả", "chăng"
+        }
+
+        import re
+        q_lower = user_query.lower()
+        raw_words = re.findall(r"\b\w+\b", q_lower)
+        keywords = [w for w in raw_words if w not in stopwords and len(w) > 1]
+        bigrams = [f"{raw_words[i]} {raw_words[i+1]}" for i in range(len(raw_words) - 1)]
+        key_bigrams = [bg for bg in bigrams if not all(w in stopwords for w in bg.split())]
+
+        scored_items: list[tuple[float, dict]] = []
+
+        for index, document in enumerate(documents):
+            metadata = metadatas[index] if index < len(metadatas) and metadatas[index] else {}
+            doc_lower = document.lower()
+            title = str(metadata.get("title", ""))
+            title_lower = title.lower()
+
+            score = 0.0
+
+            # 1. Khớp cụm từ nguyên văn (quan trọng nhất để nhận diện đúng ý định)
+            for bg in key_bigrams:
+                if bg in doc_lower:
+                    score += 15.0
+                if bg in title_lower:
+                    score += 25.0
+
+            # 2. Khớp từ khóa độc lập
+            for kw in keywords:
+                if kw in title_lower:
+                    score += 5.0
+                count = doc_lower.count(kw)
+                if count > 0:
+                    score += min(count, 5) * 2.0
+
+            try:
+                chunk_index = int(metadata.get("chunk_index", 0))
+            except (TypeError, ValueError):
+                chunk_index = 0
+
+            source_item = {
+                "text": document,
+                "doc_id": str(metadata.get("doc_id", "")),
+                "title": title,
+                "chunk_index": chunk_index,
+                "distance": None,
+            }
+            scored_items.append((score, source_item))
+
+        scored_items.sort(key=lambda item: item[0], reverse=True)
+        matched = [item[1] for item in scored_items if item[0] > 0]
+        if not matched:
+            matched = [item[1] for item in scored_items]
+        return matched[:n_results]
+
     def query_rag_with_sources(
         self,
         user_query: str,
@@ -289,12 +373,19 @@ class RAGService:
         n_results = n_results or settings.TOP_K
         n_results = min(max(1, n_results), total)
 
-        query_vector = self._embed_query(user_query)
-        results = self.collection.query(
-            query_embeddings=[query_vector],
-            n_results=n_results,
-            include=["documents", "metadatas", "distances"],
-        )
+        try:
+            query_vector = self._embed_query(user_query)
+            results = self.collection.query(
+                query_embeddings=[query_vector],
+                n_results=n_results,
+                include=["documents", "metadatas", "distances"],
+            )
+        except Exception as exc:
+            logger.warning(
+                "Embedding query thất bại (%s), tự động chuyển sang Fallback Keyword Search",
+                exc,
+            )
+            return self._fallback_keyword_search(user_query, n_results)
 
         documents = results.get("documents") or []
         if not documents or not documents[0]:

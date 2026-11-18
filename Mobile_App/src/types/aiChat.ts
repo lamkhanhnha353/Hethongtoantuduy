@@ -34,6 +34,7 @@ export type AIMessageDto = {
   sources: AIChatSourceDto[];
   status: 'done' | 'partial';
   createdAt: string;
+  imageUrl?: string | null;
 };
 
 export type AIMessageListDto = {
