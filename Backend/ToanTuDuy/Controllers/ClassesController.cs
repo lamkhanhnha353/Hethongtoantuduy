@@ -23,6 +23,23 @@ namespace ToanTuDuy.Controllers
             return Ok(await _classService.GetAllClassesAsync());
         }
 
+        [HttpGet("paged")]
+        [ProducesResponseType(typeof(PagedResult<ClassResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<ClassResponse>>> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 12,
+            [FromQuery] string? keyword = null,
+            [FromQuery] int? courseId = null,
+            [FromQuery] int? courseLevelId = null,
+            [FromQuery] int? teacherId = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? capacity = null,
+            [FromQuery] string? sort = null)
+        {
+            return Ok(await _classService.GetPagedClassesAsync(
+                page, pageSize, keyword, courseId, courseLevelId, teacherId, status, capacity, sort));
+        }
+
         [HttpGet("course-level/{courseLevelId}")]
         public async Task<IActionResult> GetByCourseLevel(int courseLevelId)
         {
@@ -80,6 +97,17 @@ namespace ToanTuDuy.Controllers
         {
             var students = await _classService.GetStudentsByClassIdAsync(id);
             return Ok(students);
+        }
+
+        [HttpGet("{id}/students/paged")]
+        [ProducesResponseType(typeof(PagedResult<ClassStudentResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<ClassStudentResponse>>> GetStudentsPaged(
+            int id,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null)
+        {
+            return Ok(await _classService.GetPagedStudentsByClassIdAsync(id, page, pageSize, keyword));
         }
 
         [HttpPost("{id}/students")]

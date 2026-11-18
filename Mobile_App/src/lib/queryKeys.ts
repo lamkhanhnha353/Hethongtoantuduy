@@ -32,3 +32,11 @@ export function leaveRequestsQueryKey(studentIds: number[]) {
 export function studentRoadmapsQueryKey(studentIds: number[]) {
   return ['studentRoadmaps', studentIds] as const;
 }
+
+export function studentPracticeAssignmentsQueryKey(studentId: number) {
+  return ['studentPracticeAssignments', studentId] as const;
+}
+
+export function studentPracticeAssignmentQueryKey(studentId: number, assignmentId: number) {
+  return ['studentPracticeAssignments', studentId, assignmentId] as const;
+}

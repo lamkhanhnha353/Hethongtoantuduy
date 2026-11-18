@@ -2,8 +2,8 @@
     <div class="space-y-6">
         <!-- Header Page -->
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Quản lý Phụ huynh & Học sinh</h1>
-            <p class="text-sm text-gray-500 mt-1">Tra cứu phụ huynh, học sinh liên kết và cập nhật hồ sơ</p>
+            <h1 class="text-2xl font-bold text-stone-900">Quản lý Phụ huynh & Học sinh</h1>
+            <p class="text-sm text-stone-500 mt-1">Tra cứu phụ huynh, học sinh liên kết và cập nhật hồ sơ</p>
         </div>
 
         <!-- Search Bar -->
@@ -12,60 +12,60 @@
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
             <table class="w-full text-left text-sm">
-                <thead class="bg-orange-50 text-orange-900 border-b border-orange-100">
+                <thead class="bg-stone-100 text-xs font-bold uppercase tracking-wider text-stone-700 border-b-2 border-stone-300">
                     <tr>
-                        <th class="px-6 py-4 font-semibold w-1/4">Họ Tên Phụ huynh</th>
-                        <th class="px-6 py-4 font-semibold w-1/4">Thông tin liên hệ</th>
-                        <th class="px-6 py-4 font-semibold w-1/3">Học sinh trực thuộc</th>
-                        <th class="px-6 py-4 text-right font-semibold">Thao tác</th>
+                        <th class="px-5 py-3.5 w-1/4">Họ Tên Phụ huynh</th>
+                        <th class="px-5 py-3.5 w-1/4">Thông tin liên hệ</th>
+                        <th class="px-5 py-3.5 w-1/3">Học sinh trực thuộc</th>
+                        <th class="px-5 py-3.5 text-right">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-gray-700">
+                <tbody class="divide-y divide-stone-200 text-stone-700">
                     <tr v-if="isLoading">
-                        <td colspan="4" class="px-6 py-8 text-center text-orange-500">Đang tải dữ liệu...</td>
+                        <td colspan="4" class="px-5 py-8 text-center text-orange-600 font-medium">Đang tải dữ liệu...</td>
                     </tr>
                     <tr v-else-if="errorMessage">
-                        <td colspan="4" class="px-6 py-8 text-center text-red-600">{{ errorMessage }}</td>
+                        <td colspan="4" class="px-5 py-8 text-center text-rose-700 font-medium">{{ errorMessage }}</td>
                     </tr>
-                    <tr v-else-if="filteredParents.length === 0">
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">Không tìm thấy tài khoản phụ huynh
+                    <tr v-else-if="parents.length === 0">
+                        <td colspan="4" class="px-5 py-8 text-center text-stone-500">Không tìm thấy tài khoản phụ huynh
                             nào.</td>
                     </tr>
-                    <tr v-for="parent in filteredParents" :key="parent.id" class="hover:bg-orange-50/50 transition-colors">
+                    <tr v-for="parent in parents" :key="parent.id" class="hover:bg-orange-50/50 transition-colors">
                         <!-- Tên Phụ huynh & Trạng thái -->
-                        <td class="px-6 py-4 align-top">
-                            <div class="font-semibold text-gray-900 text-base">{{ parent.fullName }}</div>
+                        <td class="px-5 py-4 align-top">
+                            <div class="font-bold text-stone-900 text-sm">{{ parent.fullName }}</div>
                             <span
-                                class="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                                class="mt-1.5 inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold"
                                 :class="parent.isActive
-                                    ? 'bg-green-50 text-green-700'
-                                    : 'bg-red-50 text-red-700'"
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                    : 'bg-rose-50 text-rose-800 border-rose-300'"
                                 :aria-label="`Trạng thái tài khoản của ${parent.fullName}`">
                                 {{ parent.isActive ? 'Hoạt động' : 'Đã khóa' }}
                             </span>
                         </td>
 
                         <!-- Liên hệ -->
-                        <td class="px-6 py-4 align-top">
-                            <div class="font-mono text-gray-800 font-medium">{{ parent.phone }}</div>
-                            <div class="text-xs text-gray-400 mt-1">{{ parent.email || 'Chưa cập nhật email' }}</div>
+                        <td class="px-5 py-4 align-top">
+                            <div class="font-mono text-stone-900 font-semibold tabular-nums">{{ parent.phone }}</div>
+                            <div class="text-xs text-stone-400 mt-1">{{ parent.email || 'Chưa cập nhật email' }}</div>
                         </td>
 
                         <!-- Danh sách con trực thuộc -->
-                        <td class="px-6 py-4 align-top">
+                        <td class="px-5 py-4 align-top">
                             <div v-if="parent.students && parent.students.length > 0" class="space-y-2">
                                 <div v-for="student in parent.students" :key="student.id"
-                                    class="bg-orange-50/60 border border-orange-100 p-2.5 rounded-xl flex items-center justify-between gap-3">
+                                    class="bg-stone-50 border border-stone-300 p-2.5 rounded-md flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-2.5">
                                         <div
-                                            class="w-8 h-8 rounded-full bg-orange-200 text-orange-800 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                                            class="w-8 h-8 rounded-full bg-orange-600 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
                                             {{ student.fullName.charAt(0).toUpperCase() }}
                                         </div>
                                         <div>
-                                            <div class="font-medium text-gray-800 text-xs">{{ student.fullName }}</div>
-                                            <div class="text-[11px] text-gray-500 flex items-center gap-2 mt-0.5">
+                                            <div class="font-semibold text-stone-900 text-xs">{{ student.fullName }}</div>
+                                            <div class="text-[11px] text-stone-500 flex items-center gap-2 mt-0.5 tabular-nums">
                                                 <span>⭐ {{ student.stars || 0 }} sao</span>
                                                 <span>🏆 {{ student.totalPoints || 0 }} điểm</span>
                                                 <span>🔥 {{ student.streakDays || 0 }} ngày</span>
@@ -74,50 +74,61 @@
                                     </div>
                                 </div>
                             </div>
-                            <span v-else class="text-gray-400 italic text-xs">Chưa có học sinh liên kết</span>
+                            <span v-else class="text-stone-400 italic text-xs">Chưa có học sinh liên kết</span>
                         </td>
 
                         <!-- Thao tác -->
-                        <td class="px-6 py-4 text-right align-top">
+                        <td class="px-5 py-4 text-right align-top whitespace-nowrap">
                             <button @click="openEditModal(parent)"
-                                class="text-orange-500 hover:text-orange-700 font-medium mr-3">
+                                class="h-8 px-2.5 rounded-md border border-stone-300 bg-white text-stone-800 hover:bg-stone-100 hover:border-stone-400 text-xs font-semibold mr-2 transition-colors cursor-pointer">
                                 Sửa
                             </button>
                             <button @click="deleteParent(parent.id)"
-                                class="text-red-500 hover:text-red-700 font-medium">
+                                class="h-8 px-2.5 rounded-md border border-rose-300 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-400 text-xs font-semibold transition-colors cursor-pointer">
                                 Xóa
                             </button>
                         </td>
                     </tr>
                 </tbody>
             </table>
+            <PaginationBar
+                v-model:page="page"
+                v-model:page-size="pageSize"
+                :total-count="totalCount"
+                :total-pages="totalPages"
+                :disabled="isLoading"
+                item-label="phụ huynh"
+                @change="fetchParents"
+            />
         </div>
 
         <!-- Modal Form Sửa Phụ Huynh -->
-        <div v-if="showModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl">
-                <div class="px-6 py-4 border-b border-gray-100 bg-orange-50 flex justify-between items-center">
-                    <h3 class="font-bold text-orange-900">Sửa thông tin Phụ huynh</h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+        <div v-if="showModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg border border-stone-300 w-full max-w-md overflow-hidden shadow-xl">
+                <div class="px-6 py-4 border-b border-stone-200 bg-stone-50 flex justify-between items-center">
+                    <h3 class="font-bold text-stone-900">Sửa thông tin Phụ huynh</h3>
+                    <button @click="showModal = false" class="text-stone-400 hover:text-stone-700 p-1 rounded-md hover:bg-stone-200/70 cursor-pointer">&times;</button>
                 </div>
                 <form @submit.prevent="saveParent" class="p-6 space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
-                        <input v-model="form.fullName" required type="text"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Họ và tên *</label>
+                        <input v-model="form.fullName" required type="text" maxlength="100"
+                            class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 text-sm text-stone-900 transition-colors" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mã PIN bảo mật</label>
-                        <input v-model="form.pin" type="text" placeholder="Nhập mã PIN mới (nếu muốn đổi)..."
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-sm" />
+                        <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Mã PIN bảo mật</label>
+                        <input v-model.trim="form.pin" type="text" inputmode="numeric" minlength="4" maxlength="6"
+                            pattern="[0-9]{4,6}" title="Mã PIN gồm 4 đến 6 chữ số"
+                            placeholder="Nhập mã PIN mới (nếu muốn đổi)..."
+                            class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md focus:bg-white focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 text-sm text-stone-900 tabular-nums transition-colors" />
                     </div>
-                    <div class="flex justify-end gap-3 mt-6">
+                    <div class="flex justify-end gap-2 pt-3 border-t border-stone-200">
                         <button type="button" @click="showModal = false"
-                            class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm">
+                            class="h-9 px-3.5 text-stone-800 bg-white border border-stone-300 rounded-md hover:bg-stone-100 text-sm font-semibold cursor-pointer">
                             Hủy
                         </button>
                         <button type="submit"
-                            class="px-4 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600 text-sm font-medium">
+                            class="h-9 px-4 text-white bg-orange-600 border border-orange-700 rounded-md hover:bg-orange-700 text-sm font-semibold shadow-xs cursor-pointer">
                             Lưu thay đổi
                         </button>
                     </div>
@@ -128,9 +139,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onBeforeUnmount, onMounted, watch } from 'vue'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
+import { usePagination } from '@/composables/usePagination'
 import parentService from '@/services/parent.service'
+import { PIN_REGEX, validateTextLength } from '@/utils/validation.helper'
+
+const { page, pageSize, totalCount, totalPages, applyPagedResult, resetPage } = usePagination({
+    initialPageSize: 20,
+})
 
 const parents = ref([])
 const keyword = ref('')
@@ -140,31 +158,47 @@ const errorMessage = ref('')
 
 const form = ref({ id: null, fullName: '', pin: '' })
 
-const filteredParents = computed(() => {
-    const query = keyword.value.toLowerCase().trim()
-    if (!query) return parents.value
+let searchTimer = null
+let requestToken = 0
 
-    return parents.value.filter(parent =>
-        [
-            parent.id,
-            parent.fullName,
-            parent.phone,
-            parent.email,
-            ...(parent.students ?? []).map(student => student.fullName)
-        ].some(value => String(value ?? '').toLowerCase().includes(query))
-    )
+watch(keyword, () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+        resetPage()
+        fetchParents()
+    }, 300)
+})
+
+onBeforeUnmount(() => {
+    if (searchTimer) clearTimeout(searchTimer)
 })
 
 async function fetchParents() {
+    const token = ++requestToken
     isLoading.value = true
     errorMessage.value = ''
     try {
-        const res = await parentService.getAll()
-        parents.value = Array.isArray(res) ? res : (res.items ?? res.data ?? [])
+        const res = await parentService.getPaged({
+            page: page.value,
+            pageSize: pageSize.value,
+            keyword: keyword.value,
+        })
+        if (token !== requestToken) return
+
+        const items = applyPagedResult(res)
+        if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+            page.value = totalPages.value
+            await fetchParents()
+            return
+        }
+        parents.value = items
     } catch (error) {
+        if (token !== requestToken) return
         errorMessage.value = error.response?.data?.message || 'Không thể tải danh sách phụ huynh.'
     } finally {
-        isLoading.value = false
+        if (token === requestToken) {
+            isLoading.value = false
+        }
     }
 }
 
@@ -172,15 +206,29 @@ function openEditModal(parent) {
     form.value = {
         id: parent.id,
         fullName: parent.fullName,
-        pin: parent.pin || ''
+        pin: ''
     }
     showModal.value = true
 }
 
 async function saveParent() {
+    const fullNameCheck = validateTextLength(form.value.fullName, {
+        label: 'Họ và tên',
+        required: true,
+        max: 100,
+    })
+    if (!fullNameCheck.valid) {
+        alert(fullNameCheck.message)
+        return
+    }
+    if (form.value.pin && !PIN_REGEX.test(form.value.pin)) {
+        alert('Mã PIN phải gồm 4 đến 6 chữ số.')
+        return
+    }
+
     try {
         await parentService.update(form.value.id, {
-            fullName: form.value.fullName,
+            fullName: form.value.fullName.trim(),
             pin: form.value.pin
         })
         showModal.value = false

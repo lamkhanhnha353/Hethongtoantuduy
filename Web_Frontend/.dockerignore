@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.vite/
+Dockerfile
+.dockerignore
+.env
+.env.*
+!.env.example
+npm-debug.log*
+*.log
+.vscode/
+.idea/

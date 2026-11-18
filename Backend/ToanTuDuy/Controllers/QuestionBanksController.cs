@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs;
 using ToanTuDuy.Services;
@@ -27,6 +28,26 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetAll([FromQuery] int? courseId, [FromQuery] string? keyword)
         {
             var result = await _bankService.GetAllBanksAsync(courseId, keyword);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách ngân hàng câu hỏi có phân trang.
+        /// </summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] int? courseId = null,
+            [FromQuery] string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _bankService.GetPagedBanksAsync(
+                page,
+                pageSize,
+                courseId,
+                keyword,
+                cancellationToken);
             return Ok(result);
         }
 
@@ -100,6 +121,30 @@ namespace ToanTuDuy.Controllers
         }
 
         /// <summary>
+        /// Lấy danh sách câu hỏi có phân trang trong một ngân hàng câu hỏi (lọc theo độ khó, loại, từ khóa).
+        /// </summary>
+        [HttpGet("{bankId:int}/questions/paged")]
+        public async Task<IActionResult> GetQuestionsByBankPaged(
+            int bankId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? difficulty = null,
+            [FromQuery] string? type = null,
+            [FromQuery] string? keyword = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _bankService.GetPagedQuestionsByBankAsync(
+                bankId,
+                page,
+                pageSize,
+                difficulty,
+                type,
+                keyword,
+                cancellationToken);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Lấy chi tiết một câu hỏi theo ID.
         /// </summary>
         [HttpGet("questions/{id:int}")]
@@ -163,6 +208,27 @@ namespace ToanTuDuy.Controllers
                 return NotFound(new { message = $"Không tìm thấy câu hỏi với ID {id}." });
             }
             return Ok(new { message = "Xóa câu hỏi thành công." });
+        }
+
+        /// <summary>
+        /// Xóa hàng loạt câu hỏi khỏi ngân hàng.
+        /// </summary>
+        [HttpPost("questions/bulk-delete")]
+        [Authorize(Roles = "Teacher,Admin")]
+        public async Task<IActionResult> BulkDeleteQuestions([FromBody] BulkQuestionDeleteRequest request)
+        {
+            if (request?.Ids == null || request.Ids.Count == 0)
+            {
+                return BadRequest(new { message = "Vui lòng chọn ít nhất một câu hỏi để xóa." });
+            }
+
+            var result = await _bankService.DeleteQuestionsAsync(request.Ids);
+            if (result.DeletedCount == 0)
+            {
+                return NotFound(new { message = result.Message });
+            }
+
+            return Ok(result);
         }
 
         #endregion

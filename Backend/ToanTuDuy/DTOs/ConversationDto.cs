@@ -15,6 +15,7 @@ namespace ToanTuDuy.DTOs
 
         public string? LastMessage { get; set; }
         public DateTime LastMessageAt { get; set; }
+        public string? LastMessageSenderType { get; set; }
 
         // Số tin nhắn chưa đọc (nếu có làm)
         public int UnreadCount { get; set; }

@@ -154,6 +154,86 @@ namespace ToanTuDuy.DTOs
         public string Answer { get; set; } = string.Empty;
     }
 
+    public class StudentPracticeAssignmentDto
+    {
+        public int AssignmentId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? LessonTitle { get; set; }
+        public DateTime StartTime { get; set; }
+        public DateTime Deadline { get; set; }
+        public int TimeLimitMinutes { get; set; }
+        public int TotalQuestions { get; set; }
+        public float TotalPoints { get; set; }
+        public string StudentStatus { get; set; } = string.Empty;
+        public float? Score { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public bool IsAvailable { get; set; }
+    }
+
+    public class StudentPracticeQuestionOptionDto
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
+    public class StudentPracticeQuestionDto
+    {
+        public int QuestionAssignmentId { get; set; }
+        public int OrderIndex { get; set; }
+        public float PointValue { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
+        public string Difficulty { get; set; } = string.Empty;
+        public List<StudentPracticeQuestionOptionDto> Options { get; set; } = new List<StudentPracticeQuestionOptionDto>();
+        public List<StudentPracticeSequenceTermDto> SequenceTerms { get; set; } = new List<StudentPracticeSequenceTermDto>();
+    }
+
+    public class StudentPracticeSequenceTermDto
+    {
+        public string? Operator { get; set; }
+        public int Value { get; set; }
+    }
+
+    public class StudentPracticeAssignmentDetailDto
+    {
+        public int AssignmentId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? LessonTitle { get; set; }
+        public DateTime Deadline { get; set; }
+        public int TimeLimitMinutes { get; set; }
+        public float TotalPoints { get; set; }
+        public List<StudentPracticeQuestionDto> Questions { get; set; } = new List<StudentPracticeQuestionDto>();
+    }
+
+    public class SubmitStudentPracticeRequest
+    {
+        [Required]
+        [MinLength(1)]
+        public List<SubmitStudentPracticeAnswerDto> Answers { get; set; } = new List<SubmitStudentPracticeAnswerDto>();
+    }
+
+    public class SubmitStudentPracticeAnswerDto
+    {
+        [Range(1, int.MaxValue)]
+        public int QuestionAssignmentId { get; set; }
+
+        [Required]
+        [MaxLength(4000)]
+        public string Answer { get; set; } = string.Empty;
+    }
+
+    public class StudentPracticeSubmissionResponseDto
+    {
+        public int AssignmentId { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public float Score { get; set; }
+        public float TotalPoints { get; set; }
+        public int CorrectCount { get; set; }
+        public int TotalQuestions { get; set; }
+        public DateTime SubmittedAt { get; set; }
+    }
+
     public class StudentAssignmentResponse
     {
         public int Id { get; set; }
@@ -207,7 +287,6 @@ namespace ToanTuDuy.DTOs
         public string Status { get; set; } = string.Empty;
         public string? TeacherFeedback { get; set; }
         public DateTime? CompletedAt { get; set; }
-
         public List<AssignmentQuestionDetailDto> Questions { get; set; } = new List<AssignmentQuestionDetailDto>();
     }
 }

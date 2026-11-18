@@ -12,6 +12,7 @@ using ToanTuDuy.Middleware;
 using ToanTuDuy.Models;
 using ToanTuDuy.Options;
 using ToanTuDuy.Services;
+using ToanTuDuy.Services.Email;
 using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Services.Storage;
 
@@ -170,19 +171,24 @@ builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IChatService, ChatService>();    // chat
 builder.Services.AddScoped<INotificationAudienceResolver, NotificationAudienceResolver>();
+builder.Services.AddScoped<IBusinessNotificationEmailService, BusinessNotificationEmailService>();
 builder.Services.AddScoped<IUnreadCountStore, RedisUnreadCountStore>();
 builder.Services.AddHostedService<NotificationFanoutWorker>();
+builder.Services.AddHostedService<ToanTuDuy.Services.BackgroundJobs.UpcomingLessonReminderService>();
 
 // builder.Services.AddHostedService<ToanTuDuy.Services.ReservationCleanupService>(); // Tiến trình chạy ngầm quét hóa đơn
 builder.Services.AddSingleton<PayslipEmailQueue>();
 builder.Services.AddHostedService<PayslipEmailWorker>();
 builder.Services.AddHostedService<MonthlyPayslipEmailScheduler>();
 
-// Gửi email xác minh tài khoản qua Resend
+// Gửi email thống nhất qua SMTP hoặc Resend
 builder.Services.AddResend(options =>
 {
     options.ApiToken = builder.Configuration["Resend:ApiToken"] ?? string.Empty;
 });
+builder.Services.Configure<SmtpSettings>(
+    builder.Configuration.GetSection(SmtpSettings.SectionName));
+builder.Services.AddScoped<IEmailDeliveryService, EmailDeliveryService>();
 builder.Services.Configure<EmailVerificationSettings>(
     builder.Configuration.GetSection(EmailVerificationSettings.SectionName));
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
@@ -199,9 +205,39 @@ builder.Services.AddScoped<IPasswordHasher<ParentProfile>, PasswordHasher<Parent
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 builder.Services.AddSingleton<IChatAttachmentStorage, CloudinaryChatAttachmentStorage>();
+builder.Services.AddSingleton<ICourseMediaStorage, CloudinaryCourseMediaStorage>();
 
+// Seeder sinh dữ liệu mẫu quy mô lớn (Bogus)
+builder.Services.AddScoped<BogusDataSeeder>();
 
 var app = builder.Build();
+
+// Hỗ trợ chạy Seeder bằng CLI: dotnet run --seed-bogus [rowsPerTable] hoặc dotnet run --seed-bogus-sql [rowsPerTable]
+if (args.Contains("--seed-bogus") || args.Contains("--seed-bogus-sql"))
+{
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<BogusDataSeeder>();
+    int count = 1000;
+    for (int i = 0; i < args.Length; i++)
+    {
+        if ((args[i] == "--seed-bogus" || args[i] == "--seed-bogus-sql") && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsedCount))
+        {
+            count = parsedCount;
+            break;
+        }
+    }
+
+    if (args.Contains("--seed-bogus-sql"))
+    {
+        string sqlPath = Path.Combine(Directory.GetCurrentDirectory(), $"DataSeed_Bogus_{count}.sql");
+        await seeder.GenerateSqlScriptAsync(sqlPath, count);
+    }
+    else
+    {
+        await seeder.SeedAsync(count);
+    }
+    return;
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -219,3 +255,5 @@ app.MapHub<ChatHub>("/chathub"); // Chat
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
+
+public partial class Program { }

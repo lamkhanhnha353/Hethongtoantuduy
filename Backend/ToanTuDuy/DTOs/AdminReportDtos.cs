@@ -16,6 +16,17 @@ public sealed class AdminMonthlyRevenue
     public decimal Amount { get; set; }
 }
 
+public sealed class AdminPayrollTrendResponse
+{
+    public List<AdminMonthlyPayroll> MonthlyPayroll { get; set; } = [];
+}
+
+public sealed class AdminMonthlyPayroll
+{
+    public DateTime Month { get; set; }
+    public decimal Amount { get; set; }
+}
+
 public sealed class AdminClassRevenue
 {
     public string Name { get; set; } = string.Empty;

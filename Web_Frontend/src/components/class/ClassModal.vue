@@ -6,21 +6,21 @@
       @click.self="handleClose"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-xl overflow-hidden transform transition-all my-8"
+        class="bg-white rounded-lg shadow-xl border border-stone-300 w-full max-w-xl overflow-hidden transform transition-all my-8"
         role="dialog"
       >
         <!-- ─── Header ──────────────────────────────────────────────────────── -->
-        <div class="px-6 py-4 border-b border-orange-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50">
+        <div class="px-6 py-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-xs">
+            <div class="w-9 h-9 rounded-md bg-orange-600 border border-orange-700 text-white flex items-center justify-center shadow-xs">
               <UserGroupIcon class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-base font-bold text-orange-950">
+              <h3 class="text-base font-bold text-stone-900">
                 <template v-if="isEdit">Chỉnh sửa Lớp học: {{ form.name || `#${cls?.id}` }}</template>
                 <template v-else>Mở Lớp học mới</template>
               </h3>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs text-stone-500">
                 <template v-if="isEdit">Cập nhật thông tin giảng viên, sĩ số và thời gian học</template>
                 <template v-else>Thiết lập lớp học mới thuộc cấp độ đào tạo</template>
               </p>
@@ -28,20 +28,20 @@
           </div>
           <button
             @click="handleClose"
-            class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-orange-100/60 transition-colors"
+            class="text-stone-400 hover:text-stone-700 p-1.5 rounded-md hover:bg-stone-200/70 transition-colors cursor-pointer"
           >
             <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
 
         <!-- ─── Alert Messages ──────────────────────────────────────────────── -->
-        <div v-if="errorMessage" class="mx-6 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
-          <ExclamationCircleIcon class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+        <div v-if="errorMessage" class="mx-6 mt-4 p-3 rounded-md bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-start gap-2">
+          <ExclamationCircleIcon class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
           <span class="flex-1 leading-relaxed">{{ errorMessage }}</span>
         </div>
 
-        <div v-if="successMessage" class="mx-6 mt-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs flex items-center gap-2">
-          <CheckCircleIcon class="w-4 h-4 text-green-600 flex-shrink-0" />
+        <div v-if="successMessage" class="mx-6 mt-4 p-3 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircleIcon class="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span class="flex-1 font-medium">{{ successMessage }}</span>
         </div>
 
@@ -49,17 +49,17 @@
         <form @submit.prevent="handleSubmit" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           <!-- Cấp độ khóa học -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1.5">
-              Cấp độ khóa học (Course Level) <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Cấp độ khóa học (Course Level) <span class="text-rose-600">*</span>
             </label>
-            <div v-if="loadingLevels" class="text-xs text-gray-400 py-2">
+            <div v-if="loadingLevels" class="text-xs text-stone-400 py-2">
               Đang tải danh sách khóa học và cấp độ...
             </div>
             <select
               v-else
               v-model.number="form.courseLevelId"
               required
-              class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+              class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
             >
               <option value="" disabled>-- Chọn cấp độ đào tạo --</option>
               <optgroup
@@ -76,38 +76,44 @@
                 </option>
               </optgroup>
             </select>
-            <p v-if="groupedCourses.length === 0 && !loadingLevels" class="text-[11px] text-amber-600 mt-1">
+            <p v-if="groupedCourses.length === 0 && !loadingLevels" class="text-[11px] text-amber-700 mt-1">
               Chưa có cấp độ khóa học nào trong hệ thống. Vui lòng tạo khóa học và cấp độ trước.
             </p>
           </div>
 
           <!-- Tên lớp học -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1.5">
-              Tên lớp học <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Tên lớp học <span class="text-rose-600">*</span>
             </label>
             <input
               v-model.trim="form.name"
               type="text"
               required
+              maxlength="150"
               placeholder="VD: Soroban Nhập môn Sáng T7 - CN (Phòng 201)"
-              class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+              class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
             />
           </div>
 
           <!-- Giáo viên phụ trách & Trạng thái -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1.5">
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
                 Giáo viên phụ trách
               </label>
+              <SearchBar
+                v-model="teacherSearch"
+                placeholder="Tìm nhanh giáo viên (tên, SĐT, email)..."
+                class="mb-2"
+              />
               <select
                 v-model="form.teacherId"
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+                class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
               >
                 <option :value="null">-- Chưa phân công --</option>
                 <option
-                  v-for="teacher in teachers"
+                  v-for="teacher in filteredTeachers"
                   :key="teacher.id"
                   :value="teacher.id"
                 >
@@ -117,13 +123,13 @@
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1.5">
-                Trạng thái lớp <span class="text-red-500">*</span>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+                Trạng thái lớp <span class="text-rose-600">*</span>
               </label>
               <select
                 v-model="form.status"
                 required
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+                class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
               >
                 <option value="ACTIVE">Đang mở (ACTIVE)</option>
                 <option value="UPCOMING">Sắp khai giảng (UPCOMING)</option>
@@ -135,8 +141,8 @@
 
           <!-- Sĩ số tối đa -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1.5">
-              Sĩ số tối đa (MaxCapacity) <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Sĩ số tối đa (MaxCapacity) <span class="text-rose-600">*</span>
             </label>
             <div class="relative">
               <input
@@ -146,50 +152,51 @@
                 max="100"
                 required
                 placeholder="20"
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+                class="w-full h-10 pl-3.5 pr-16 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 tabular-nums focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
               />
-              <span class="absolute right-3 top-2.5 text-xs text-gray-400">học viên</span>
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400">học viên</span>
             </div>
-            <p v-if="isEdit && cls?.activeStudentsCount != null" class="text-[11px] text-gray-500 mt-1">
-              Hiện tại lớp đang có: <strong class="text-orange-600">{{ cls.activeStudentsCount }}</strong> học viên đã đăng ký.
+            <p v-if="isEdit && cls?.activeStudentsCount != null" class="text-[11px] text-stone-500 mt-1 tabular-nums">
+              Hiện tại lớp đang có: <strong class="text-orange-700">{{ cls.activeStudentsCount }}</strong> học viên đã đăng ký.
             </p>
           </div>
 
           <!-- Thời gian: Ngày khai giảng & Ngày bế giảng -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1.5">
-                Ngày khai giảng <span class="text-red-500">*</span>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+                Ngày khai giảng <span class="text-rose-600">*</span>
               </label>
               <input
                 v-model="form.startDate"
                 type="date"
                 required
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden font-mono"
+                class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 tabular-nums focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none font-mono"
               />
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1.5">
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
                 Ngày bế giảng dự kiến
               </label>
               <input
                 v-model="form.endDate"
                 type="date"
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden font-mono"
+                :min="form.startDate || undefined"
+                class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 tabular-nums focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none font-mono"
               />
-              <p class="text-[10px] text-gray-400 mt-1">Có thể để trống để hệ thống tự tính toán theo lịch học</p>
+              <p class="text-[11px] text-stone-400 mt-1">Có thể để trống để hệ thống tự tính toán theo lịch học</p>
             </div>
           </div>
 
           <!-- ─── Footer Buttons ────────────────────────────────────────────── -->
-          <div class="flex items-center justify-between pt-4 border-t border-orange-100">
+          <div class="flex items-center justify-between pt-4 border-t border-stone-200">
             <button
               v-if="isEdit"
               type="button"
               @click="confirmDelete"
               :disabled="saving || deleting"
-              class="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+              class="inline-flex items-center gap-1.5 h-9 px-3 bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 hover:border-rose-400 text-sm font-semibold rounded-md transition-colors disabled:opacity-50 cursor-pointer"
             >
               <TrashIcon class="w-4 h-4" />
               <span>Xóa lớp học</span>
@@ -201,14 +208,14 @@
                 type="button"
                 @click="handleClose"
                 :disabled="saving || deleting"
-                class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+                class="h-9 px-3.5 bg-white text-stone-800 border border-stone-300 hover:bg-stone-100 hover:border-stone-400 active:bg-stone-200 text-sm font-semibold rounded-md transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 :disabled="saving || deleting"
-                class="inline-flex items-center gap-1.5 px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 h-9 px-4 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-700 text-sm font-semibold rounded-md shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <svg v-if="saving" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
@@ -234,9 +241,15 @@ import {
   CheckCircleIcon,
 } from '@heroicons/vue/24/outline'
 
+import SearchBar from '@/components/common/SearchBar.vue'
 import classService from '@/services/class.service'
 import courseService from '@/services/course.service'
 import teacherService from '@/services/teacher.service'
+import {
+  validateDateRange,
+  validateNumberRange,
+  validateTextLength,
+} from '@/utils/validation.helper'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -257,6 +270,22 @@ const loadingLevels = ref(false)
 
 const groupedCourses = ref([])
 const teachers = ref([])
+const teacherSearch = ref('')
+
+const filteredTeachers = computed(() => {
+  const q = teacherSearch.value.trim().toLowerCase()
+  if (!q) return teachers.value
+  return teachers.value.filter(t => {
+    if (form.value.teacherId != null && t.id === form.value.teacherId) return true
+    return (
+      (t.fullName || '').toLowerCase().includes(q) ||
+      (t.phone || '').toLowerCase().includes(q) ||
+      (t.email || '').toLowerCase().includes(q) ||
+      (t.specialize || '').toLowerCase().includes(q) ||
+      String(t.id).includes(q)
+    )
+  })
+})
 
 const form = ref({
   courseLevelId: '',
@@ -311,6 +340,7 @@ async function loadDependencies() {
 function initForm() {
   errorMessage.value = ''
   successMessage.value = ''
+  teacherSearch.value = ''
 
   if (props.cls) {
     form.value = {
@@ -367,12 +397,38 @@ async function handleSubmit() {
     errorMessage.value = 'Vui lòng chọn cấp độ khóa học cho lớp này.'
     return
   }
-  if (!form.value.name?.trim()) {
-    errorMessage.value = 'Tên lớp học không được để trống.'
+  const nameCheck = validateTextLength(form.value.name, {
+    label: 'Tên lớp học',
+    required: true,
+    max: 150,
+  })
+  if (!nameCheck.valid) {
+    errorMessage.value = nameCheck.message
     return
   }
   if (!form.value.startDate) {
     errorMessage.value = 'Ngày khai giảng không được để trống.'
+    return
+  }
+
+  const capacityCheck = validateNumberRange(form.value.maxCapacity, {
+    label: 'Sĩ số tối đa',
+    required: true,
+    integer: true,
+    min: 1,
+    max: 100,
+  })
+  if (!capacityCheck.valid) {
+    errorMessage.value = capacityCheck.message
+    return
+  }
+
+  const dateCheck = validateDateRange(form.value.startDate, form.value.endDate, {
+    startLabel: 'Ngày khai giảng',
+    endLabel: 'Ngày bế giảng',
+  })
+  if (!dateCheck.valid) {
+    errorMessage.value = dateCheck.message
     return
   }
 

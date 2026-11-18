@@ -6,22 +6,22 @@
       @click.self="handleClose"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-lg overflow-hidden transform transition-all my-8"
+        class="bg-white rounded-lg shadow-xl border border-stone-300 w-full max-w-lg overflow-hidden transform transition-all my-8"
         role="dialog"
       >
         <!-- ─── Modal Header ─────────────────────────────────────────────── -->
-        <div class="px-6 py-4 border-b border-orange-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50">
+        <div class="px-6 py-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-sm">
+            <div class="w-9 h-9 rounded-md bg-orange-600 border border-orange-700 text-white flex items-center justify-center shadow-xs">
               <CalendarDaysIcon class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="text-base font-bold text-orange-950">
+              <h3 class="text-base font-bold text-stone-900">
                 <template v-if="mode === 'create'">Thêm Lịch học mới</template>
                 <template v-else-if="mode === 'edit'">Chỉnh sửa Lịch học #{{ form.id }}</template>
                 <template v-else>Chi tiết Lịch học #{{ schedule?.id }}</template>
               </h3>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs text-stone-500">
                 <template v-if="mode === 'create'">Thiết lập thời gian học trong tuần cho lớp</template>
                 <template v-else-if="mode === 'edit'">Cập nhật thông tin thứ, khung giờ hoặc phòng học</template>
                 <template v-else>{{ schedule?.className ?? 'Thông tin buổi học' }}</template>
@@ -30,21 +30,21 @@
           </div>
           <button
             @click="handleClose"
-            class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-orange-100/60 transition-colors"
+            class="text-stone-400 hover:text-stone-700 p-1.5 rounded-md hover:bg-stone-200/70 transition-colors cursor-pointer"
           >
             <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
 
         <!-- ─── Mode switcher tab when viewing an existing item ───────────── -->
-        <div v-if="mode !== 'create'" class="flex border-b border-orange-100 bg-orange-50/40 px-6 pt-2">
+        <div v-if="mode !== 'create'" class="flex border-b border-stone-200 bg-stone-50/60 px-6 pt-2">
           <button
             @click="mode = 'view'"
             :class="[
-              'pb-2 px-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5',
+              'pb-2 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer',
               mode === 'view'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-orange-500'
+                ? 'border-orange-600 text-orange-700'
+                : 'border-transparent text-stone-500 hover:text-stone-800'
             ]"
           >
             <EyeIcon class="w-4 h-4" />
@@ -53,10 +53,10 @@
           <button
             @click="mode = 'edit'"
             :class="[
-              'pb-2 px-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5',
+              'pb-2 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer',
               mode === 'edit'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-orange-500'
+                ? 'border-orange-600 text-orange-700'
+                : 'border-transparent text-stone-500 hover:text-stone-800'
             ]"
           >
             <PencilSquareIcon class="w-4 h-4" />
@@ -65,14 +65,14 @@
         </div>
 
         <!-- ─── Alert error message ──────────────────────────────────────── -->
-        <div v-if="errorMessage" class="mx-6 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
-          <ExclamationCircleIcon class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+        <div v-if="errorMessage" class="mx-6 mt-4 p-3 rounded-md bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-start gap-2">
+          <ExclamationCircleIcon class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
           <span class="flex-1 leading-relaxed">{{ errorMessage }}</span>
         </div>
 
         <!-- ─── Alert success message ────────────────────────────────────── -->
-        <div v-if="successMessage" class="mx-6 mt-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs flex items-center gap-2">
-          <CheckCircleIcon class="w-4 h-4 text-green-600 flex-shrink-0" />
+        <div v-if="successMessage" class="mx-6 mt-4 p-3 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircleIcon class="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span class="flex-1 font-medium">{{ successMessage }}</span>
         </div>
 
@@ -81,17 +81,17 @@
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <div v-if="mode === 'view'" class="p-6 space-y-4">
           <!-- Class info -->
-          <div class="p-4 bg-orange-50/60 rounded-xl border border-orange-100 flex items-center justify-between">
+          <div class="p-4 bg-orange-50/60 rounded-md border border-orange-200 flex items-center justify-between">
             <div>
-              <p class="text-xs text-gray-500 font-medium">Lớp học</p>
-              <h4 class="font-bold text-gray-900 text-sm mt-0.5">
+              <p class="text-xs text-stone-500 font-medium">Lớp học</p>
+              <h4 class="font-bold text-stone-900 text-sm mt-0.5">
                 {{ schedule?.className ?? `Lớp học #${schedule?.classId}` }}
               </h4>
-              <p class="text-[11px] text-orange-600 font-mono mt-0.5">
+              <p class="text-[11px] text-orange-700 font-mono mt-0.5 tabular-nums">
                 Mã lớp: ID {{ schedule?.classId }}
               </p>
             </div>
-            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-white border border-orange-200 text-orange-700 shadow-2xs">
+            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-white border border-orange-300 text-orange-800 tabular-nums">
               Mã lịch: #{{ schedule?.id }}
             </span>
           </div>
@@ -99,65 +99,65 @@
           <!-- Grid details -->
           <div class="grid grid-cols-2 gap-3">
             <!-- Day of week -->
-            <div class="p-3.5 bg-gray-50 rounded-xl border border-gray-100">
-              <span class="text-[11px] font-medium text-gray-500 flex items-center gap-1">
-                <CalendarIcon class="w-3.5 h-3.5 text-orange-400" />
+            <div class="p-3.5 bg-stone-50 rounded-md border border-stone-300">
+              <span class="text-[11px] font-semibold uppercase tracking-wide text-stone-500 flex items-center gap-1">
+                <CalendarIcon class="w-3.5 h-3.5 text-orange-600" />
                 Ngày trong tuần
               </span>
               <div class="mt-1.5 flex items-center gap-1.5">
-                <span :class="['px-2.5 py-1 text-xs font-bold rounded-lg border', dayInfo.color]">
+                <span :class="['px-2.5 py-0.5 text-xs font-bold rounded border', dayInfo.color]">
                   {{ dayInfo.label }}
                 </span>
-                <span class="text-xs text-gray-400">({{ dayInfo.full }})</span>
+                <span class="text-xs text-stone-500">({{ dayInfo.full }})</span>
               </div>
             </div>
 
             <!-- Room -->
-            <div class="p-3.5 bg-gray-50 rounded-xl border border-gray-100">
-              <span class="text-[11px] font-medium text-gray-500 flex items-center gap-1">
-                <MapPinIcon class="w-3.5 h-3.5 text-orange-400" />
+            <div class="p-3.5 bg-stone-50 rounded-md border border-stone-300">
+              <span class="text-[11px] font-semibold uppercase tracking-wide text-stone-500 flex items-center gap-1">
+                <MapPinIcon class="w-3.5 h-3.5 text-orange-600" />
                 Phòng học
               </span>
-              <p class="mt-1.5 text-xs font-bold text-gray-800">
+              <p class="mt-1.5 text-xs font-bold text-stone-900">
                 {{ schedule?.room ? schedule.room : 'Chưa xếp phòng' }}
               </p>
             </div>
 
             <!-- Time range -->
-            <div class="p-3.5 bg-gray-50 rounded-xl border border-gray-100 col-span-2">
+            <div class="p-3.5 bg-stone-50 rounded-md border border-stone-300 col-span-2">
               <div class="flex items-center justify-between">
-                <span class="text-[11px] font-medium text-gray-500 flex items-center gap-1">
-                  <ClockIcon class="w-3.5 h-3.5 text-orange-400" />
+                <span class="text-[11px] font-semibold uppercase tracking-wide text-stone-500 flex items-center gap-1">
+                  <ClockIcon class="w-3.5 h-3.5 text-orange-600" />
                   Khung giờ học
                 </span>
-                <span v-if="durationText" class="text-[11px] text-orange-600 font-semibold bg-orange-100/70 px-2 py-0.5 rounded-md">
+                <span v-if="durationText" class="text-[11px] text-orange-800 font-semibold bg-orange-50 border border-orange-200 px-2 py-0.5 rounded tabular-nums">
                   {{ durationText }}
                 </span>
               </div>
-              <p class="mt-1.5 text-base font-extrabold text-orange-950 font-mono">
+              <p class="mt-1.5 text-base font-bold text-stone-900 font-mono tabular-nums">
                 {{ formatTimeDisplay(schedule?.startTime) }} → {{ formatTimeDisplay(schedule?.endTime) }}
               </p>
             </div>
           </div>
 
           <!-- Timestamps -->
-          <div class="text-[11px] text-gray-400 space-y-1 pt-2 border-t border-gray-100">
+          <div class="text-[11px] text-stone-400 space-y-1 pt-2 border-t border-stone-200 tabular-nums">
             <div class="flex justify-between">
               <span>Ngày tạo lịch:</span>
-              <span class="text-gray-600 font-medium">{{ formatDateTime(schedule?.createdAt) }}</span>
+              <span class="text-stone-700 font-medium">{{ formatDateTime(schedule?.createdAt) }}</span>
             </div>
             <div v-if="schedule?.updatedAt" class="flex justify-between">
               <span>Cập nhật lần cuối:</span>
-              <span class="text-gray-600 font-medium">{{ formatDateTime(schedule?.updatedAt) }}</span>
+              <span class="text-stone-700 font-medium">{{ formatDateTime(schedule?.updatedAt) }}</span>
             </div>
           </div>
 
           <!-- Footer Actions for View mode -->
-          <div class="flex items-center justify-between pt-4 border-t border-orange-100">
+          <div class="flex items-center justify-between pt-4 border-t border-stone-200">
             <button
               @click="confirmDelete"
               :disabled="deleting"
-              class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+              class="inline-flex items-center gap-1.5 h-9 px-3 bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 hover:border-rose-400 text-sm font-semibold rounded-md transition-colors disabled:opacity-50 cursor-pointer"
             >
               <TrashIcon class="w-4 h-4" />
               <span>Xóa lịch học</span>
@@ -166,13 +166,13 @@
             <div class="flex items-center gap-2">
               <button
                 @click="handleClose"
-                class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                class="h-9 px-3.5 bg-white text-stone-800 border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-sm font-semibold rounded-md transition-colors cursor-pointer"
               >
                 Đóng
               </button>
               <button
                 @click="mode = 'edit'"
-                class="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                class="inline-flex items-center gap-1.5 h-9 px-4 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-700 text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer"
               >
                 <PencilSquareIcon class="w-4 h-4" />
                 Chỉnh sửa lịch
@@ -187,17 +187,22 @@
         <form v-else @submit.prevent="handleSubmit" class="p-6 space-y-4">
           <!-- Class Select -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1.5">
-              Lớp học <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Lớp học <span class="text-rose-600">*</span>
             </label>
+            <SearchBar
+              v-model="classSearch"
+              placeholder="Tìm nhanh lớp học theo tên hoặc mã lớp..."
+              class="mb-2"
+            />
             <select
               v-model.number="form.classId"
               required
-              class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+              class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
             >
               <option value="" disabled>-- Chọn lớp học --</option>
               <option
-                v-for="c in classes"
+                v-for="c in filteredClasses"
                 :key="c.id"
                 :value="c.id"
               >
@@ -208,13 +213,13 @@
 
           <!-- Day of week Select -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1.5">
-              Thứ trong tuần (Quy ước 1 = Thứ 2, 2 = Thứ 3, ..., 0 = CN) <span class="text-red-500">*</span>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+              Thứ trong tuần (1 = Thứ 2, ..., 0 = CN) <span class="text-rose-600">*</span>
             </label>
             <select
               v-model.number="form.dayOfWeek"
               required
-              class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+              class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
             >
               <option :value="1">1 = Thứ 2 (Thứ Hai)</option>
               <option :value="2">2 = Thứ 3 (Thứ Ba)</option>
@@ -229,28 +234,28 @@
           <!-- Time range -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1.5">
-                Giờ bắt đầu <span class="text-red-500">*</span>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+                Giờ bắt đầu <span class="text-rose-600">*</span>
               </label>
               <div class="relative">
                 <input
                   v-model="form.startTime"
                   type="time"
                   required
-                  class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden font-mono"
+                  class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 tabular-nums focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none font-mono"
                 />
               </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1.5">
-                Giờ kết thúc <span class="text-red-500">*</span>
+              <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+                Giờ kết thúc <span class="text-rose-600">*</span>
               </label>
               <div class="relative">
                 <input
                   v-model="form.endTime"
                   type="time"
                   required
-                  class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden font-mono"
+                  class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 tabular-nums focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none font-mono"
                 />
               </div>
             </div>
@@ -258,7 +263,7 @@
 
           <!-- Room Input -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1.5">
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
               Phòng học (Không bắt buộc)
             </label>
             <div class="relative">
@@ -267,33 +272,33 @@
                 type="text"
                 placeholder="Ví dụ: P201, Phòng Thực hành, Online qua Zoom..."
                 maxlength="50"
-                class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-hidden"
+                class="w-full h-10 px-3.5 bg-stone-50/70 border border-stone-300 rounded-md text-sm font-medium text-stone-900 placeholder-stone-400 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 transition-colors outline-none"
               />
             </div>
           </div>
 
           <!-- Helper tip -->
-          <div class="p-3 bg-amber-50 rounded-xl border border-amber-100 text-[11px] text-amber-800 flex items-start gap-2">
-            <InformationCircleIcon class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div class="p-3 bg-amber-50 rounded-md border border-amber-300 text-xs text-amber-900 flex items-start gap-2">
+            <InformationCircleIcon class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
             <span>
               Hệ thống sẽ tự động tính toán lại <strong>Ngày bế giảng (EndDate)</strong> của lớp học dựa trên số buổi và các ngày học trong tuần.
             </span>
           </div>
 
           <!-- Footer Actions for Edit/Create mode -->
-          <div class="flex items-center justify-end gap-2 pt-4 border-t border-orange-100">
+          <div class="flex items-center justify-end gap-2 pt-4 border-t border-stone-200">
             <button
               type="button"
               @click="cancelEdit"
               :disabled="saving"
-              class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+              class="h-9 px-3.5 bg-white text-stone-800 border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-sm font-semibold rounded-md transition-colors disabled:opacity-50 cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
               :disabled="saving"
-              class="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
+              class="inline-flex items-center gap-1.5 h-9 px-4 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-700 text-sm font-semibold rounded-md shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
             >
               <svg v-if="saving" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
@@ -324,7 +329,9 @@ import {
   InformationCircleIcon,
 } from '@heroicons/vue/24/outline'
 
+import SearchBar from '@/components/common/SearchBar.vue'
 import classScheduleService from '@/services/classSchedule.service'
+import { validateTextLength } from '@/utils/validation.helper'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -341,6 +348,7 @@ const saving = ref(false)
 const deleting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const classSearch = ref('')
 
 const form = ref({
   id: null,
@@ -351,15 +359,29 @@ const form = ref({
   room: '',
 })
 
+const filteredClasses = computed(() => {
+  const q = classSearch.value.trim().toLowerCase()
+  if (!q) return props.classes
+  return props.classes.filter(c => {
+    if (form.value.classId && Number(c.id) === Number(form.value.classId)) return true
+    return (
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.code || '').toLowerCase().includes(q) ||
+      (c.teacherName || '').toLowerCase().includes(q) ||
+      String(c.id).includes(q)
+    )
+  })
+})
+
 // ─── Day of week maps ────────────────────────────────────────────────────────
 const DAYS_OF_WEEK = [
-  { value: 1, label: 'Thứ 2', full: 'Thứ Hai', color: 'border-blue-200 bg-blue-50 text-blue-700' },
-  { value: 2, label: 'Thứ 3', full: 'Thứ Ba', color: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
-  { value: 3, label: 'Thứ 4', full: 'Thứ Tư', color: 'border-amber-200 bg-amber-50 text-amber-700' },
-  { value: 4, label: 'Thứ 5', full: 'Thứ Năm', color: 'border-purple-200 bg-purple-50 text-purple-700' },
-  { value: 5, label: 'Thứ 6', full: 'Thứ Sáu', color: 'border-rose-200 bg-rose-50 text-rose-700' },
-  { value: 6, label: 'Thứ 7', full: 'Thứ Bảy', color: 'border-cyan-200 bg-cyan-50 text-cyan-700' },
-  { value: 0, label: 'Chủ nhật', full: 'Chủ Nhật', color: 'border-red-200 bg-red-50 text-red-700' },
+  { value: 1, label: 'Thứ 2', full: 'Thứ Hai', color: 'border-orange-300 bg-orange-50 text-orange-800' },
+  { value: 2, label: 'Thứ 3', full: 'Thứ Ba', color: 'border-emerald-300 bg-emerald-50 text-emerald-800' },
+  { value: 3, label: 'Thứ 4', full: 'Thứ Tư', color: 'border-amber-300 bg-amber-50 text-amber-800' },
+  { value: 4, label: 'Thứ 5', full: 'Thứ Năm', color: 'border-stone-300 bg-stone-100 text-stone-800' },
+  { value: 5, label: 'Thứ 6', full: 'Thứ Sáu', color: 'border-rose-300 bg-rose-50 text-rose-800' },
+  { value: 6, label: 'Thứ 7', full: 'Thứ Bảy', color: 'border-teal-300 bg-teal-50 text-teal-800' },
+  { value: 0, label: 'Chủ nhật', full: 'Chủ Nhật', color: 'border-rose-300 bg-rose-50 text-rose-800' },
 ]
 
 const dayInfo = computed(() => {
@@ -367,7 +389,7 @@ const dayInfo = computed(() => {
   return DAYS_OF_WEEK.find(d => d.value === Number(dow)) ?? {
     label: `Thứ ${dow}`,
     full: `Thứ ${dow}`,
-    color: 'border-gray-200 bg-gray-50 text-gray-700',
+    color: 'border-stone-300 bg-stone-100 text-stone-700',
   }
 })
 
@@ -393,6 +415,7 @@ watch(
   () => {
     errorMessage.value = ''
     successMessage.value = ''
+    classSearch.value = ''
     mode.value = props.initialMode
 
     if (props.schedule) {
@@ -464,8 +487,18 @@ async function handleSubmit() {
   successMessage.value = ''
 
   // Validate StartTime < EndTime
+  if (!form.value.startTime || !form.value.endTime) {
+    errorMessage.value = 'Vui lòng nhập giờ bắt đầu và giờ kết thúc!'
+    return
+  }
   if (form.value.startTime >= form.value.endTime) {
     errorMessage.value = 'Giờ kết thúc phải muộn hơn giờ bắt đầu!'
+    return
+  }
+
+  const roomCheck = validateTextLength(form.value.room, { label: 'Phòng học', max: 50 })
+  if (!roomCheck.valid) {
+    errorMessage.value = roomCheck.message
     return
   }
 

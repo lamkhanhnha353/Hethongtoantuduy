@@ -2,7 +2,6 @@
 # 1. THƯ VIỆN & FILE CHẠY CỦA BACKEND (.NET)
 # ==========================================
 # Chặn thư mục chứa file biên dịch và thư viện tạm
-docker-compose.yml
 **/bin/
 **/obj/
 agents.md
@@ -40,3 +39,6 @@ agents.md
 .DS_Store
 Thumbs.db
 *.log
+
+graphify-out
+TestCases

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kiểm tra Gemini API keys</title>
+    <style>
+      :root { color-scheme: light; font-family: system-ui, sans-serif; }
+      body { max-width: 720px; margin: 40px auto; padding: 0 18px; color: #242424; }
+      main { padding: 24px; border: 1px solid #e8d5c2; border-radius: 16px; }
+      h1 { margin-top: 0; color: #9a4d10; }
+      button { padding: 10px 16px; border: 0; border-radius: 8px; background: #e87922; color: white; font-weight: 700; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: wait; }
+      #summary { margin: 18px 0 8px; font-weight: 700; }
+      li { margin: 8px 0; }
+      .ok { color: #087443; }
+      .failed { color: #b42318; }
+      .hint { color: #666; line-height: 1.55; }
+      code { background: #f5f0eb; padding: 2px 5px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Kiểm tra Gemini API keys</h1>
+      <p class="hint">
+        Trang này yêu cầu worker kiểm tra các key đã cấu hình trong
+        <code>import-worker\.env</code>. Key không được gửi vào trang hoặc hiển thị ở đây.
+        Mỗi key sẽ gửi một yêu cầu thử nghiệm ngắn đến Gemini.
+      </p>
+      <p class="hint">
+        Đảm bảo worker đang chạy tại <code>http://127.0.0.1:8000</code>, sau đó nhấn nút bên dưới.
+      </p>
+      <button id="test-button" type="button">Kiểm tra tất cả Gemini keys</button>
+      <p id="summary" role="status" aria-live="polite"></p>
+      <ul id="results"></ul>
+    </main>
+    <script>
+      const button = document.querySelector('#test-button');
+      const summary = document.querySelector('#summary');
+      const results = document.querySelector('#results');
+
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        summary.textContent = 'Đang kiểm tra các key...';
+        results.replaceChildren();
+
+        try {
+          const response = await fetch('/api/parser/test-gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}',
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || `Worker trả về HTTP ${response.status}`);
+          }
+
+          summary.textContent =
+            `Model: ${data.model} — ${data.working_keys}/${data.total_keys} key hoạt động`;
+          for (const result of data.results) {
+            const item = document.createElement('li');
+            item.className = result.status === 'working' ? 'ok' : 'failed';
+            item.textContent = result.status === 'working'
+              ? `Key thứ ${result.key_index}: Hoạt động`
+              : `Key thứ ${result.key_index}: ${result.message}`;
+            results.append(item);
+          }
+        } catch (error) {
+          summary.textContent = `Không kiểm tra được: ${error.message}`;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

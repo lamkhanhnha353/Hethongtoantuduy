@@ -10,6 +10,25 @@ class TeacherService {
     return (await this.api.get(`/?keyword=${keyword}`)).data;
   }
 
+  // Lấy danh sách giáo viên có phân trang
+  async getPaged({
+    page = 1,
+    pageSize = 20,
+    keyword = "",
+    isActive = undefined,
+  } = {}) {
+    return (
+      await this.api.get("/paged", {
+        params: {
+          page,
+          pageSize,
+          keyword: keyword?.trim() || undefined,
+          isActive: isActive !== undefined && isActive !== "" && isActive !== "ALL" ? isActive : undefined,
+        },
+      })
+    ).data;
+  }
+
   // Lấy thông tin 1 giáo viên theo ID
   async get(id) {
     return (await this.api.get(`/${id}`)).data;

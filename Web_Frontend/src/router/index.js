@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import authService from "@/services/auth.service";
 import Layout from "@/layouts/Layout.vue";
-import PlaceholderView from "@/views/PlaceholderView.vue";
 
 // Authentication
 import LoginView from "@/views/LoginView.vue";
@@ -146,6 +145,10 @@ const router = createRouter({
           component: TeacherChatView,
           meta: { title: "Chat với phụ huynh" },
         },
+        {
+          path: "notifications",
+          redirect: "/teacher/communication/notices?tab=inbox",
+        },
 
         // Tài khoản của tôi
         {
@@ -229,17 +232,6 @@ const router = createRouter({
           meta: { title: "Lịch học & Thời khóa biểu" },
         },
 
-        // Learning
-        {
-          path: "learning/questions",
-          component: PlaceholderView,
-          meta: { title: "Ngân hàng câu hỏi" },
-        },
-        {
-          path: "learning/gamification",
-          component: PlaceholderView,
-          meta: { title: "Gamification" },
-        },
 
         // Finance
         {
@@ -259,6 +251,10 @@ const router = createRouter({
           path: "communication/notifications",
           component: AdminNotificationsView,
           meta: { title: "Quản lý Thông báo" },
+        },
+        {
+          path: "notifications",
+          redirect: "/communication/notifications?tab=inbox",
         },
 
         // Reports

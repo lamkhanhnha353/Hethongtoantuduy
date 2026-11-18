@@ -8,7 +8,8 @@ const BACKEND_URL = (
 const CHAT_HUB_URL = `${BACKEND_URL}/chathub`;
 
 function unwrapList(response) {
-  const payload = response?.data ?? response;
+  const responsePayload = response?.data ?? response;
+  const payload = responsePayload?.data ?? responsePayload;
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.items)) return payload.items;
   return [];
@@ -24,6 +25,11 @@ class ChatService {
   // Danh sách hội thoại của giáo viên hiện tại
   async getConversations() {
     const response = (await this.api.get("/conversations")).data;
+    return unwrapList(response);
+  }
+
+  async getAdminConversations() {
+    const response = (await this.api.get("/admin/conversations")).data;
     return unwrapList(response);
   }
 

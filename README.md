@@ -7,13 +7,19 @@ Nền tảng quản lý trung tâm toán tư duy, phục vụ quản trị viên
 | Thư mục | Nội dung |
 | --- | --- |
 | `Backend/ToanTuDuy/` | ASP.NET Core Web API, mô hình dữ liệu, migration, xác thực và nghiệp vụ |
+| `Backend/import-worker/` | FastAPI worker trích xuất câu hỏi từ PDF/DOCX |
+| `AI_Backend/` | Dịch vụ Python cho chat AI và truy xuất tài liệu |
 | `Backend/SeedData.sql` | Dữ liệu demo cho SQL Server; chạy sau khi đã áp dụng migration |
 | `Web_Frontend/` | SPA Vue cho quản trị viên và giáo viên |
 | `Mobile_App/` | Ứng dụng Expo cho thiết bị di động |
-| `import-worker/` | FastAPI worker trích xuất câu hỏi từ PDF/DOCX |
+| `AI_Backend/` | FastAPI service cho chatbot RAG (ingest tài liệu, chat streaming) |
+| `docker-compose.yml` | Chạy toàn bộ stack bằng Docker: SQL Server, Redis, API, AI service và web |
+| `DOCKER.md` | Hướng dẫn chi tiết cấu hình và vận hành Docker |
+
+Hướng dẫn Docker đầy đủ nằm trong [DOCKER.md](./DOCKER.md).
 | `docker-compose.yml` | SQL Server, chạy migration và seed dữ liệu qua Docker Compose |
 
-Repository hiện không có thư mục `AI_Backend/`. Chức năng chat và các tích hợp liên quan cần được kiểm tra theo cấu hình/dịch vụ thực tế trong từng môi trường.
+Hai dịch vụ Python chạy độc lập; cài requirements và cấu hình `.env` riêng trong từng thư mục dịch vụ.
 
 ## Công nghệ
 
@@ -78,15 +84,11 @@ docker compose --profile seed run --rm seed
 
 ```powershell
 cd Backend\ToanTuDuy
+
+# Áp dụng migration
 dotnet ef database update
-```
 
-Backend dùng `ConnectionStrings:DefaultConnection`; nếu không cấu hình, sẽ thử kết nối `ToanTuDuyDb` trên LocalDB. Có thể đặt cấu hình bằng biến môi trường `ConnectionStrings__DefaultConnection`.
-
-### 2. Backend API
-
-```powershell
-cd Backend\ToanTuDuy
+# Chạy API
 dotnet run
 ```
 
@@ -95,10 +97,7 @@ Theo `launchSettings.json`, HTTP chạy tại `http://localhost:5114`, HTTPS t�
 ### 3. Web Frontend
 
 ```powershell
-cd Web_Frontend
-npm install
-npm run dev
-npm run build
+sqlcmd -S . -E -C -d ToanTuDuyDb
 ```
 
 Vite chạy tại `http://localhost:5173`. Mặc định `/api` được proxy tới `http://localhost:5114`; `/api/parser` được proxy tới `http://localhost:8000`. Có thể thay địa chỉ backend bằng biến `VITE_API_BASE_URL`.
@@ -106,17 +105,15 @@ Vite chạy tại `http://localhost:5173`. Mặc định `/api` được proxy t
 ### 4. Import Worker
 
 ```powershell
-cd import-worker
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-uvicorn app.main:app --reload --port 8000
+dotnet ef migrations add TenMigrationMoi
+dotnet ef database update
 ```
 
-Chọn `LLM_PROVIDER=gemini` hoặc `LLM_PROVIDER=openai` và cấu hình API key tương ứng trong file `.env`. Có thể chọn `LLM_PROVIDER=mock` để chạy luồng kiểm thử không dùng dịch vụ LLM bên ngoài. API docs có tại `http://localhost:8000/docs`; health check tại `http://localhost:8000/health`.
+Cài công cụ EF Core lần đầu: `dotnet tool install --global dotnet-ef --version 10.0.12`.
 
-### 5. Mobile App
+---
+
+## Mobile App
 
 ```powershell
 cd Mobile_App
@@ -191,7 +188,7 @@ cd ..\Mobile_App
 npm run lint
 ```
 
-Import worker có kiểm thử trong `import-worker/tests/`; cách chạy cụ thể được mô tả trong [import-worker/README.md](./import-worker/README.md).
+Import worker có kiểm thử trong `Backend/import-worker/tests/`; cách chạy cụ thể được mô tả trong [Backend/import-worker/README.md](./Backend/import-worker/README.md).
 
 ## Git
 

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
 
-import { API_URL } from '@/config/env';
+import { apiClient } from '@/services/apiClient';
 import { EnrollmentBottomSheet } from '@/components/courses/EnrollmentBottomSheet';
 import { openPaymentUrl } from '@/lib/paymentNavigation';
 import { paymentService } from '@/services/paymentService';
@@ -175,10 +175,8 @@ export default function CourseDetailScreen() {
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/courselevels/${id}`);
-        if (!response.ok) throw new Error("Không thể tải thông tin khóa học");
-        
-        const realData = await response.json();
+        const response = await apiClient.get(`/api/courselevels/${id}`);
+        const realData = response.data;
         
         setCourse({
           id: realData.id,

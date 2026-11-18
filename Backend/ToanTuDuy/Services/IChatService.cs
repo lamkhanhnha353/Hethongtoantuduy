@@ -12,6 +12,9 @@ namespace ToanTuDuy.Services
         Task<List<ConversationDto>> GetHumanConversationsAsync(
             int accountId, string role, CancellationToken cancellationToken = default);
 
+        Task<List<ConversationDto>> GetAdminHumanConversationsAsync(
+            CancellationToken cancellationToken = default);
+
         Task<List<ChatMessageDto>> GetMessagesAsync(
             int accountId, string role, int conversationId, int page = 1,
             CancellationToken cancellationToken = default);

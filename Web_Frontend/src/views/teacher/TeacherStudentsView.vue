@@ -3,13 +3,13 @@
     <!-- ─── Header ───────────────────────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <nav class="flex items-center gap-2 text-xs font-medium text-orange-600 mb-1">
-          <span>Giáo viên</span>
-          <ChevronRightIcon class="w-3.5 h-3.5 text-orange-400" />
+        <nav class="flex items-center gap-2 text-xs font-medium text-stone-500 mb-1">
+          <span class="text-orange-600 font-semibold">Giáo viên</span>
+          <ChevronRightIcon class="w-3.5 h-3.5 text-stone-400" />
           <span>Danh sách học sinh theo lớp</span>
         </nav>
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Danh sách học sinh</h1>
-        <p class="text-xs md:text-sm text-gray-500 mt-0.5">
+        <h1 class="text-2xl md:text-3xl font-bold text-stone-900 tracking-tight">Danh sách học sinh</h1>
+        <p class="text-xs md:text-sm text-stone-500 mt-0.5">
           Xem hồ sơ học viên, điểm rèn luyện, lịch sử chuyên cần và thông tin liên hệ phụ huynh
         </p>
       </div>
@@ -19,7 +19,7 @@
           type="button"
           @click="loadStudentsByClass"
           :disabled="isLoadingStudents || !selectedClassId"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200/80 text-orange-900 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 hover:border-stone-400 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
         >
           <ArrowPathIcon class="w-4 h-4 text-orange-600" :class="{ 'animate-spin': isLoadingStudents }" />
           <span>Làm mới</span>
@@ -27,9 +27,9 @@
 
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           @click="exportCsv"
-          :disabled="students.length === 0"
+          :disabled="!selectedClassId || totalCount === 0"
         >
           <ArrowDownTrayIcon class="w-4 h-4" />
           <span>Xuất danh sách (CSV)</span>
@@ -38,17 +38,17 @@
     </div>
 
     <!-- ─── Filter & Class Selector Card ─────────────────────────────────── -->
-    <div class="bg-white rounded-3xl border border-orange-100 p-4 shadow-sm space-y-3">
+    <div class="bg-white rounded-lg border border-stone-300 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <!-- Class Selector (Assigned classes only) -->
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-            Chọn lớp học phụ trách <span class="text-rose-500">*</span>
+          <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
+            Chọn lớp học phụ trách <span class="text-rose-600">*</span>
           </label>
           <select
             v-model="selectedClassId"
             @change="onClassChange"
-            class="w-full text-xs font-semibold bg-orange-50/50 border border-orange-200 text-gray-900 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all"
+            class="w-full h-10 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3.5 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 outline-none transition-colors"
           >
             <option :value="null" disabled>-- Chọn lớp học --</option>
             <option v-for="cls in myClasses" :key="cls.id" :value="cls.id">
@@ -59,7 +59,7 @@
 
         <!-- Search Bar -->
         <div class="md:col-span-2">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+          <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">
             Tìm kiếm học sinh hoặc phụ huynh
           </label>
           <SearchBar
@@ -73,40 +73,40 @@
     <!-- ─── Current Class Summary Ribbon ─────────────────────────────────── -->
     <div
       v-if="currentClass"
-      class="bg-gradient-to-r from-orange-100/80 via-amber-100/60 to-orange-50 rounded-3xl border border-orange-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs"
+      class="bg-white rounded-lg border border-stone-300 border-l-4 border-l-orange-600 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
     >
       <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0">
+        <div class="w-11 h-11 rounded-md bg-orange-600 border border-orange-700 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 tabular-nums">
           #{{ currentClass.id }}
         </div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <h2 class="font-bold text-gray-900 text-base">{{ currentClass.name }}</h2>
-            <span class="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800">
+            <h2 class="font-bold text-stone-900 text-base">{{ currentClass.name }}</h2>
+            <span class="px-2 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold text-[11px]">
               {{ currentClass.status === 'ACTIVE' || currentClass.status === 'OPEN' ? 'Đang hoạt động' : currentClass.status }}
             </span>
           </div>
-          <p class="text-orange-950 mt-1 font-medium">
-            {{ currentClass.courseLevelName || currentClass.courseName || 'Khóa học' }} &bull; Phòng: <span class="font-bold">{{ currentClass.room || 'Phòng chính' }}</span>
+          <p class="text-stone-600 mt-1 font-medium">
+            {{ currentClass.courseLevelName || currentClass.courseName || 'Khóa học' }} &bull; Phòng: <span class="font-bold text-stone-900">{{ currentClass.room || 'Phòng chính' }}</span>
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3 flex-wrap">
-        <div class="bg-white/80 px-3 py-1.5 rounded-xl border border-orange-200 text-orange-950 font-bold text-xs">
-          Sĩ số: <span class="text-emerald-700 text-sm">{{ filteredStudents.length }}</span> / {{ currentClass.maxCapacity || 20 }} học sinh
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="bg-stone-50 px-3 h-9 inline-flex items-center rounded-md border border-stone-300 text-stone-800 font-semibold text-xs tabular-nums">
+          Sĩ số: <span class="text-emerald-700 font-bold mx-1">{{ currentClass.activeStudentsCount ?? totalCount }}</span> / {{ currentClass.maxCapacity || 20 }} học sinh
         </div>
 
         <router-link
           :to="{ path: '/teacher/attendance', query: { classId: currentClass.id } }"
-          class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition-all shadow-xs"
+          class="inline-flex items-center h-9 px-3.5 rounded-md bg-orange-600 hover:bg-orange-700 text-white border border-orange-700 font-semibold transition-colors shadow-xs"
         >
           Điểm danh lớp này
         </router-link>
 
         <router-link
           :to="{ path: '/teacher/schedule', query: { classId: currentClass.id } }"
-          class="px-3 py-2 rounded-xl bg-white hover:bg-orange-50 text-orange-800 border border-orange-200 font-semibold transition-colors"
+          class="inline-flex items-center h-9 px-3 rounded-md bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 hover:border-stone-400 font-semibold transition-colors"
         >
           Lịch học
         </router-link>
@@ -114,22 +114,22 @@
     </div>
 
     <!-- ─── Students Table ───────────────────────────────────────────────── -->
-    <div class="bg-white rounded-3xl border border-orange-100 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
       <!-- Loading State -->
-      <div v-if="isLoadingStudents" class="p-12 text-center text-orange-600 space-y-3">
-        <ArrowPathIcon class="w-8 h-8 animate-spin mx-auto text-orange-500" />
+      <div v-if="isLoadingStudents" class="p-12 text-center text-stone-600 space-y-3">
+        <ArrowPathIcon class="w-8 h-8 animate-spin mx-auto text-orange-600" />
         <p class="text-sm font-semibold">Đang tải danh sách học sinh từ máy chủ...</p>
       </div>
 
       <!-- No Class Selected -->
-      <div v-else-if="!selectedClassId" class="p-12 text-center text-gray-500 space-y-2">
-        <UserGroupIcon class="w-10 h-10 text-orange-400 mx-auto" />
-        <h3 class="text-base font-bold text-gray-800">Chưa chọn lớp học</h3>
-        <p class="text-xs text-gray-400">Vui lòng chọn lớp học ở danh sách bên trên để hiển thị học sinh.</p>
+      <div v-else-if="!selectedClassId" class="p-12 text-center text-stone-500 space-y-2">
+        <UserGroupIcon class="w-10 h-10 text-stone-400 mx-auto" />
+        <h3 class="text-base font-bold text-stone-800">Chưa chọn lớp học</h3>
+        <p class="text-xs text-stone-500">Vui lòng chọn lớp học ở danh sách bên trên để hiển thị học sinh.</p>
       </div>
 
       <!-- Empty Students -->
-      <div v-else-if="filteredStudents.length === 0" class="p-12 text-center">
+      <div v-else-if="students.length === 0" class="p-12 text-center">
         <EmptyState
           :icon="UserGroupIcon"
           message="Không tìm thấy học sinh nào"
@@ -141,32 +141,32 @@
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
-            <tr class="bg-orange-50/80 border-b border-orange-100 text-orange-950 font-bold uppercase tracking-wider text-[11px]">
-              <th class="py-4 px-4 w-12 text-center">STT</th>
-              <th class="py-4 px-4 min-w-[200px]">Học viên</th>
-              <th class="py-4 px-4 min-w-[100px]">Mã HS</th>
-              <th class="py-4 px-4 min-w-[180px]">Phụ huynh liên hệ</th>
-              <th class="py-4 px-4 min-w-[120px]">Trạng thái</th>
-              <th class="py-4 px-4 text-center min-w-[110px]">Tích lũy & Sao</th>
-              <th class="py-4 px-4 text-center min-w-[110px]">Ngày tham gia</th>
-              <th class="py-4 px-4 text-right min-w-[130px]">Thao tác</th>
+            <tr class="bg-stone-100 border-b-2 border-stone-300 text-stone-700 font-bold uppercase tracking-wider text-xs">
+              <th class="py-3.5 px-4 w-12 text-center">STT</th>
+              <th class="py-3.5 px-4 min-w-[200px]">Học viên</th>
+              <th class="py-3.5 px-4 min-w-[100px]">Mã HS</th>
+              <th class="py-3.5 px-4 min-w-[180px]">Phụ huynh liên hệ</th>
+              <th class="py-3.5 px-4 min-w-[120px]">Trạng thái</th>
+              <th class="py-3.5 px-4 text-center min-w-[110px]">Tích lũy & Sao</th>
+              <th class="py-3.5 px-4 text-center min-w-[110px]">Ngày tham gia</th>
+              <th class="py-3.5 px-4 text-right min-w-[130px]">Thao tác</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-orange-50">
+          <tbody class="divide-y divide-stone-200">
             <tr
-              v-for="(st, index) in filteredStudents"
+              v-for="(st, index) in students"
               :key="st.studentId || st.id"
-              class="hover:bg-orange-50/30 transition-colors"
+              class="hover:bg-orange-50/50 transition-colors"
             >
               <!-- Index -->
-              <td class="py-3.5 px-4 text-center text-gray-400 font-mono font-medium">
-                {{ index + 1 }}
+              <td class="py-3.5 px-4 text-center text-stone-500 font-medium tabular-nums">
+                {{ (page - 1) * pageSize + index + 1 }}
               </td>
 
               <!-- Student Name & Avatar -->
               <td class="py-3.5 px-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-orange-100 border border-orange-200 text-orange-800 font-bold flex items-center justify-center text-xs shadow-2xs flex-shrink-0">
+                  <div class="w-9 h-9 rounded-full bg-orange-50 border border-orange-200 text-orange-800 font-bold flex items-center justify-center text-xs flex-shrink-0">
                     <img
                       v-if="st.avatar"
                       :src="st.avatar"
@@ -176,24 +176,24 @@
                     <span v-else>{{ getInitials(st.studentName) }}</span>
                   </div>
                   <div>
-                    <p class="font-bold text-sm text-gray-900">{{ st.studentName || 'Học sinh' }}</p>
-                    <p class="text-[10px] text-gray-400">ID tài khoản: #{{ st.studentId }}</p>
+                    <p class="font-bold text-sm text-stone-900">{{ st.studentName || 'Học sinh' }}</p>
+                    <p class="text-[11px] text-stone-500 tabular-nums">ID tài khoản: #{{ st.studentId }}</p>
                   </div>
                 </div>
               </td>
 
               <!-- Student Code -->
-              <td class="py-3.5 px-4 font-mono font-bold text-orange-700">
+              <td class="py-3.5 px-4 font-mono font-bold text-orange-700 tabular-nums">
                 HS-{{ String(st.studentId).padStart(4, '0') }}
               </td>
 
               <!-- Parent Info -->
               <td class="py-3.5 px-4">
-                <p class="font-bold text-gray-800">{{ st.parentName || 'Chưa cập nhật PH' }}</p>
-                <p v-if="st.parentPhone" class="text-[11px] font-mono text-gray-500 mt-0.5">
+                <p class="font-semibold text-stone-800">{{ st.parentName || 'Chưa cập nhật PH' }}</p>
+                <p v-if="st.parentPhone" class="text-[11px] font-mono text-stone-600 mt-0.5 tabular-nums">
                   📞 {{ st.parentPhone }}
                 </p>
-                <p v-if="st.parentEmail" class="text-[10px] text-gray-400 truncate max-w-[180px]">
+                <p v-if="st.parentEmail" class="text-[11px] text-stone-500 truncate max-w-[180px]">
                   ✉️ {{ st.parentEmail }}
                 </p>
               </td>
@@ -202,10 +202,10 @@
               <td class="py-3.5 px-4">
                 <span
                   :class="[
-                    'px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-block',
-                    st.status === 'ACTIVE' || !st.status ? 'bg-emerald-100 text-emerald-800' :
-                    st.status === 'PENDING' ? 'bg-amber-100 text-amber-800' :
-                    'bg-gray-100 text-gray-700'
+                    'px-2 py-0.5 rounded border text-[11px] font-semibold inline-block',
+                    st.status === 'ACTIVE' || !st.status ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
+                    st.status === 'PENDING' ? 'border-amber-300 bg-amber-50 text-amber-800' :
+                    'border-stone-300 bg-stone-100 text-stone-700'
                   ]"
                 >
                   {{ st.status === 'ACTIVE' || !st.status ? 'Đang học' : (st.status === 'PENDING' ? 'Chờ duyệt' : st.status) }}
@@ -213,20 +213,32 @@
               </td>
 
               <!-- Points & Stars -->
-              <td class="py-3.5 px-4 text-center">
+              <td class="py-3.5 px-4 text-center tabular-nums">
                 <div class="flex items-center justify-center gap-2">
-                  <span class="inline-flex items-center gap-1 font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100 text-[11px]">
+                  <span
+                    :class="[
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px]',
+                      (st.stars || 0) === 0
+                        ? 'text-stone-400 font-normal bg-stone-50 border-stone-200'
+                        : 'font-bold text-orange-700 bg-orange-50 border-orange-200'
+                    ]"
+                  >
                     ⭐ {{ st.stars || 0 }}
                   </span>
-                  <span class="text-gray-600 font-semibold text-[11px]">
+                  <span
+                    :class="[
+                      'text-[11px]',
+                      (st.totalPoints || 0) === 0 ? 'text-stone-400 font-normal' : 'text-stone-700 font-semibold'
+                    ]"
+                  >
                     🏆 {{ st.totalPoints || 0 }}đ
                   </span>
                 </div>
               </td>
 
               <!-- Joined Date -->
-              <td class="py-3.5 px-4 text-center text-gray-500 font-mono text-[11px]">
-                {{ formatDate(st.joinedAt) || '—' }}
+              <td class="py-3.5 px-4 text-center text-stone-600 font-mono text-[11px] tabular-nums">
+                <span :class="!st.joinedAt ? 'text-stone-400' : ''">{{ formatDate(st.joinedAt) || '—' }}</span>
               </td>
 
               <!-- Actions -->
@@ -236,26 +248,26 @@
                   <button
                     type="button"
                     @click="openStudentHistory(st)"
-                    class="p-1.5 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
                     title="Xem lịch sử chuyên cần của học sinh này"
                   >
-                    <ClockIcon class="w-4 h-4" />
+                    <ClockIcon class="w-4 h-4 text-orange-600" />
                   </button>
 
                   <!-- Grading -->
                   <router-link
                     to="/teacher/grading"
-                    class="p-1.5 rounded-lg text-orange-600 hover:bg-orange-100 transition-colors"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 hover:border-stone-400 transition-colors"
                     title="Chấm điểm & Nhận xét"
                   >
-                    <PencilSquareIcon class="w-4 h-4" />
+                    <PencilSquareIcon class="w-4 h-4 text-orange-600" />
                   </router-link>
 
                   <!-- Chat with parent -->
                   <router-link
                     v-if="st.parentId"
                     :to="{ path: '/teacher/communication/chat', query: { parentId: st.parentId } }"
-                    class="p-1.5 rounded-lg text-sky-600 hover:bg-sky-50 transition-colors"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 hover:border-stone-400 transition-colors"
                     title="Chat với phụ huynh"
                   >
                     <ChatBubbleLeftRightIcon class="w-4 h-4" />
@@ -265,7 +277,7 @@
                   <a
                     v-if="st.parentPhone"
                     :href="`tel:${st.parentPhone}`"
-                    class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
                     title="Gọi cho phụ huynh"
                   >
                     <PhoneIcon class="w-4 h-4" />
@@ -277,28 +289,33 @@
         </table>
       </div>
 
-      <!-- Table Footer -->
-      <div class="p-4 bg-gray-50/60 border-t border-orange-100 flex items-center justify-between text-xs text-gray-500">
-        <span>Tổng cộng: <strong class="text-gray-900">{{ filteredStudents.length }}</strong> học sinh</span>
-        <span v-if="search" class="text-orange-600 font-medium">Đang lọc theo kết quả tìm kiếm</span>
-      </div>
+      <!-- Table Pagination Footer -->
+      <PaginationBar
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total-count="totalCount"
+        :total-pages="totalPages"
+        :disabled="isLoadingStudents"
+        item-label="học sinh"
+        @change="loadStudentsByClass"
+      />
     </div>
 
     <!-- ─── Modal: Student Attendance History ──────────────────────────── -->
     <div
       v-if="showHistoryModal"
-      class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
     >
-      <div class="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-orange-100 flex flex-col max-h-[90vh]">
+      <div class="bg-white rounded-lg w-full max-w-2xl overflow-hidden shadow-xl border border-stone-300 flex flex-col max-h-[90vh]">
         <!-- Modal Header -->
-        <div class="px-6 py-4 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 flex items-center justify-between">
+        <div class="px-6 py-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            <div class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm">
               {{ getInitials(selectedStudent?.studentName || 'HS') }}
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 text-base">Lịch sử chuyên cần học sinh</h3>
-              <p class="text-xs text-gray-600">
+              <h3 class="font-bold text-stone-900 text-base">Lịch sử chuyên cần học sinh</h3>
+              <p class="text-xs text-stone-600 tabular-nums">
                 {{ selectedStudent?.studentName }} &bull; Mã HS: HS-{{ String(selectedStudent?.studentId).padStart(4, '0') }}
               </p>
             </div>
@@ -306,7 +323,7 @@
           <button
             type="button"
             @click="showHistoryModal = false"
-            class="text-gray-400 hover:text-gray-600 p-1 rounded-xl transition-colors cursor-pointer"
+            class="text-stone-400 hover:text-stone-700 p-1 rounded-md hover:bg-stone-200/60 transition-colors cursor-pointer"
           >
             <XMarkIcon class="w-5 h-5" />
           </button>
@@ -315,25 +332,25 @@
         <!-- Modal Body Content -->
         <div class="p-6 overflow-y-auto space-y-4 flex-1">
           <!-- Stats Ribbon -->
-          <div class="grid grid-cols-4 gap-2 text-center text-xs">
-            <div class="p-2.5 rounded-xl bg-gray-50 border border-gray-100">
-              <p class="text-gray-500">Tổng buổi</p>
-              <p class="text-base font-bold text-gray-900 mt-0.5">{{ studentHistoryList.length }}</p>
+          <div class="grid grid-cols-4 gap-2 text-center text-xs tabular-nums">
+            <div class="p-2.5 rounded-md bg-stone-50 border border-stone-300">
+              <p class="text-stone-500 font-medium">Tổng buổi</p>
+              <p class="text-base font-bold text-stone-900 mt-0.5">{{ studentHistoryList.length }}</p>
             </div>
-            <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
-              <p class="text-emerald-700">Có mặt</p>
+            <div class="p-2.5 rounded-md bg-emerald-50 border border-emerald-300">
+              <p class="text-emerald-800 font-medium">Có mặt</p>
               <p class="text-base font-bold text-emerald-800 mt-0.5">
                 {{ studentHistoryList.filter(h => h.status === 'PRESENT').length }}
               </p>
             </div>
-            <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-100">
-              <p class="text-amber-700">Đi muộn</p>
+            <div class="p-2.5 rounded-md bg-amber-50 border border-amber-300">
+              <p class="text-amber-800 font-medium">Đi muộn</p>
               <p class="text-base font-bold text-amber-800 mt-0.5">
                 {{ studentHistoryList.filter(h => h.status === 'LATE').length }}
               </p>
             </div>
-            <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-100">
-              <p class="text-rose-700">Vắng</p>
+            <div class="p-2.5 rounded-md bg-rose-50 border border-rose-300">
+              <p class="text-rose-800 font-medium">Vắng</p>
               <p class="text-base font-bold text-rose-800 mt-0.5">
                 {{ studentHistoryList.filter(h => h.status === 'ABSENT' || h.status === 'EXCUSED').length }}
               </p>
@@ -341,19 +358,19 @@
           </div>
 
           <!-- History Table -->
-          <div v-if="isLoadingHistory" class="py-8 text-center text-orange-500 space-y-2">
-            <ArrowPathIcon class="w-6 h-6 animate-spin mx-auto" />
+          <div v-if="isLoadingHistory" class="py-8 text-center text-stone-600 space-y-2">
+            <ArrowPathIcon class="w-6 h-6 animate-spin mx-auto text-orange-600" />
             <p class="text-xs font-semibold">Đang tải lịch sử điểm danh...</p>
           </div>
 
-          <div v-else-if="studentHistoryList.length === 0" class="py-8 text-center text-gray-400 space-y-1">
-            <CalendarDaysIcon class="w-8 h-8 mx-auto text-gray-300" />
+          <div v-else-if="studentHistoryList.length === 0" class="py-8 text-center text-stone-500 space-y-1">
+            <CalendarDaysIcon class="w-8 h-8 mx-auto text-stone-300" />
             <p class="text-xs font-medium">Chưa có bản ghi điểm danh nào trước đây của học sinh này.</p>
           </div>
 
-          <div v-else class="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
+          <div v-else class="border border-stone-300 rounded-md overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-gray-50 border-b border-gray-100 text-gray-700 font-bold uppercase text-[10px]">
+              <thead class="bg-stone-100 border-b-2 border-stone-300 text-stone-700 font-bold uppercase text-[11px]">
                 <tr>
                   <th class="py-2.5 px-3">Ngày học</th>
                   <th class="py-2.5 px-3">Lớp học</th>
@@ -361,28 +378,28 @@
                   <th class="py-2.5 px-3">Ghi chú</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100">
-                <tr v-for="h in studentHistoryList" :key="h.attendanceId || h.lessonId" class="hover:bg-gray-50/50">
-                  <td class="py-2.5 px-3 font-medium text-gray-900">
+              <tbody class="divide-y divide-stone-200">
+                <tr v-for="h in studentHistoryList" :key="h.attendanceId || h.lessonId" class="hover:bg-orange-50/40">
+                  <td class="py-2.5 px-3 font-medium text-stone-900 tabular-nums">
                     {{ formatDate(h.lessonDate) }}
                   </td>
-                  <td class="py-2.5 px-3 text-gray-700">
+                  <td class="py-2.5 px-3 text-stone-700">
                     {{ h.className || currentClass?.name || 'Toán tư duy' }}
                   </td>
                   <td class="py-2.5 px-3 text-center">
                     <span
                       :class="[
-                        'px-2 py-0.5 rounded-full font-bold text-[10px] inline-block',
-                        h.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' :
-                        h.status === 'LATE' ? 'bg-amber-100 text-amber-800' :
-                        h.status === 'EXCUSED' ? 'bg-sky-100 text-sky-800' :
-                        'bg-rose-100 text-rose-800'
+                        'px-2 py-0.5 rounded border font-semibold text-[11px] inline-block',
+                        h.status === 'PRESENT' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
+                        h.status === 'LATE' ? 'border-amber-300 bg-amber-50 text-amber-800' :
+                        h.status === 'EXCUSED' ? 'border-stone-300 bg-stone-100 text-stone-700' :
+                        'border-rose-300 bg-rose-50 text-rose-800'
                       ]"
                     >
                       {{ formatStatusLabel(h.status) }}
                     </span>
                   </td>
-                  <td class="py-2.5 px-3 text-gray-500 italic">
+                  <td class="py-2.5 px-3 text-stone-500 italic">
                     {{ h.teacherNotes || '—' }}
                   </td>
                 </tr>
@@ -392,11 +409,11 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+        <div class="px-6 py-3.5 bg-stone-50 border-t border-stone-200 flex justify-end">
           <button
             type="button"
             @click="showHistoryModal = false"
-            class="px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+            class="h-9 px-4 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
           >
             Đóng
           </button>
@@ -407,7 +424,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import classService from '@/services/class.service'
 import teacherService from '@/services/teacher.service'
@@ -426,17 +443,38 @@ import {
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
+import PaginationBar from '@/components/common/PaginationBar.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { usePagination } from '@/composables/usePagination'
 
 const route = useRoute()
 const { fetchProfile } = useUserState()
+const { page, pageSize, totalCount, totalPages, applyPagedResult, resetPage } = usePagination({
+  initialPageSize: 20,
+})
 
 const search = ref('')
 const selectedClassId = ref(null)
 const myClasses = ref([])
 const students = ref([])
 const isLoadingStudents = ref(false)
+
+let searchTimer = null
+let requestToken = 0
+
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (!selectedClassId.value) return
+    resetPage()
+    loadStudentsByClass()
+  }, 300)
+})
+
+onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer)
+})
 
 // Modal history states
 const showHistoryModal = ref(false)
@@ -492,36 +530,42 @@ async function loadClasses() {
 
 async function loadStudentsByClass() {
   if (!selectedClassId.value) return
+  const token = ++requestToken
   isLoadingStudents.value = true
-  students.value = []
   try {
-    const data = await classService.getStudents(selectedClassId.value)
-    students.value = Array.isArray(data) ? data : (data.items || [])
+    const data = await classService.getStudentsPaged(selectedClassId.value, {
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: search.value,
+    })
+    if (token !== requestToken) return
+
+    const items = applyPagedResult(data)
+    if (items.length === 0 && page.value > 1 && totalPages.value > 0 && page.value > totalPages.value) {
+      page.value = totalPages.value
+      await loadStudentsByClass()
+      return
+    }
+    students.value = items
   } catch (err) {
+    if (token !== requestToken) return
     console.error('Lỗi khi tải học sinh của lớp:', err)
+    students.value = []
+    totalCount.value = 0
   } finally {
-    isLoadingStudents.value = false
+    if (token === requestToken) {
+      isLoadingStudents.value = false
+    }
   }
 }
 
 async function onClassChange() {
+  resetPage()
   await loadStudentsByClass()
 }
 
 const currentClass = computed(() => {
   return myClasses.value.find(c => c.id === selectedClassId.value) || null
-})
-
-const filteredStudents = computed(() => {
-  if (!search.value.trim()) return students.value
-  const q = search.value.toLowerCase().trim()
-  return students.value.filter(s => {
-    const name = (s.studentName || '').toLowerCase()
-    const code = String(s.studentId)
-    const parent = (s.parentName || '').toLowerCase()
-    const phone = s.parentPhone || ''
-    return name.includes(q) || code.includes(q) || parent.includes(q) || phone.includes(q)
-  })
 })
 
 // ─── Modal History Action ────────────────────────────────────────────────────
@@ -544,12 +588,23 @@ async function openStudentHistory(student) {
 }
 
 // ─── Export CSV ──────────────────────────────────────────────────────────────
-function exportCsv() {
-  if (students.value.length === 0) return
+async function exportCsv() {
+  if (!selectedClassId.value) return
+  let allStudents = students.value
+  if (totalCount.value > students.value.length || search.value.trim()) {
+    try {
+      const fullData = await classService.getStudents(selectedClassId.value)
+      allStudents = Array.isArray(fullData) ? fullData : (fullData?.items || students.value)
+    } catch (err) {
+      console.warn('Không thể tải đầy đủ danh sách để xuất CSV, xuất theo trang hiện tại:', err)
+    }
+  }
+  if (allStudents.length === 0) return
+
   const className = currentClass.value?.name || 'LopHoc'
   const headers = ['STT', 'Mã HS', 'Họ và tên', 'Họ tên Phụ huynh', 'SĐT Phụ huynh', 'Email Phụ huynh', 'Trạng thái', 'Điểm rèn luyện', 'Số sao']
 
-  const rows = students.value.map((s, idx) => [
+  const rows = allStudents.map((s, idx) => [
     idx + 1,
     `HS-${String(s.studentId).padStart(4, '0')}`,
     `"${(s.studentName || '').replace(/"/g, '""')}"`,

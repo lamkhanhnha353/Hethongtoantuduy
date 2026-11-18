@@ -1,4 +1,10 @@
-import type { MathQuestion, MathTheme } from '@/types/game';
+import type {
+  MathQuestion,
+  MathTheme,
+  TimedSequenceQuestion,
+  TimedSequenceTerm,
+  TrueFalseQuestion,
+} from '@/types/game';
 
 export const RANGE = 10;
 export const OPTION_COUNT = 3;
@@ -21,6 +27,24 @@ export const THEMES: MathTheme[] = [
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function buildNumericOptions(answer: number): { options: number[]; correctIndex: number } {
+  const candidates = [answer + 1, answer - 1, answer + 2, answer - 2, answer + 3, answer + 4]
+    .filter((value) => value >= 0 && value <= 30 && value !== answer);
+  const distractors = [...new Set(candidates)].slice(0, OPTION_COUNT - 1);
+  let next = answer + 5;
+  while (distractors.length < OPTION_COUNT - 1) {
+    if (next !== answer && !distractors.includes(next)) distractors.push(next);
+    next += 1;
+  }
+
+  const options = [...distractors, answer];
+  for (let index = options.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [options[index], options[swapIndex]] = [options[swapIndex], options[index]];
+  }
+  return { options, correctIndex: options.indexOf(answer) };
 }
 
 function pickTheme(): MathTheme {
@@ -106,5 +130,48 @@ export function generateQuestion(): MathQuestion {
     correctIndex,
     theme,
     story: buildStory(a, b, isAddition, theme),
+  };
+}
+
+export function generateTimedSequenceQuestion(): TimedSequenceQuestion {
+  const terms: TimedSequenceTerm[] = [];
+  let total = randomInt(1, 5);
+  terms.push({ operator: null, value: total });
+
+  for (let index = 0; index < 3; index += 1) {
+    const canSubtract = total > 0;
+    const subtract = canSubtract && Math.random() < 0.4;
+    const operator = subtract ? '−' : '+';
+    const maxValue = subtract ? Math.min(5, total) : 5;
+    const value = randomInt(1, maxValue);
+    total = subtract ? total - value : total + value;
+    terms.push({ operator, value });
+  }
+
+  const { options, correctIndex } = buildNumericOptions(total);
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    terms,
+    answer: total,
+    options,
+    correctIndex,
+  };
+}
+
+export function generateTrueFalseQuestion(): TrueFalseQuestion {
+  const isAddition = Math.random() < 0.5;
+  const first = randomInt(1, isAddition ? RANGE - 1 : RANGE);
+  const second = isAddition ? randomInt(1, RANGE - first) : randomInt(1, first);
+  const answer = isAddition ? first + second : first - second;
+  const isTrue = Math.random() < 0.5;
+  const displayedAnswer = isTrue || answer === 0
+    ? answer + (isTrue ? 0 : 1)
+    : answer + (Math.random() < 0.5 ? 1 : -1);
+  const operator = isAddition ? '+' : '−';
+
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    expression: `${first} ${operator} ${second} = ${displayedAnswer}`,
+    isTrue,
   };
 }

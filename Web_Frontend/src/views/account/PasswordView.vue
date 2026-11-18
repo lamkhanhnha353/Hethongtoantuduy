@@ -83,6 +83,7 @@
                   v-model="passwordForm.currentPassword"
                   :type="showCurrentPassword ? 'text' : 'password'"
                   required
+                  maxlength="128"
                   placeholder="Nhập mật khẩu hiện đang sử dụng..."
                   class="w-full pl-4 pr-11 py-2.5 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-3 focus:ring-orange-100 text-sm transition-all text-gray-900"
                 />
@@ -109,6 +110,7 @@
                   :type="showNewPassword ? 'text' : 'password'"
                   required
                   minlength="6"
+                  maxlength="128"
                   placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)..."
                   class="w-full pl-4 pr-11 py-2.5 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-3 focus:ring-orange-100 text-sm transition-all text-gray-900"
                 />
@@ -168,6 +170,8 @@
                   v-model="passwordForm.confirmNewPassword"
                   :type="showConfirmPassword ? 'text' : 'password'"
                   required
+                  minlength="6"
+                  maxlength="128"
                   placeholder="Nhập lại mật khẩu mới..."
                   :class="[
                     'w-full pl-4 pr-11 py-2.5 rounded-xl border text-sm transition-all focus:outline-none',
@@ -253,6 +257,7 @@
               <input
                 v-model="pinForm.pin"
                 type="password"
+                minlength="4"
                 maxlength="6"
                 inputmode="numeric"
                 pattern="[0-9]*"
@@ -270,6 +275,7 @@
               <input
                 v-model="pinForm.confirmPin"
                 type="password"
+                minlength="4"
                 maxlength="6"
                 inputmode="numeric"
                 pattern="[0-9]*"
@@ -480,12 +486,24 @@ function resetPasswordForm() {
 
 // ─── Change Password Handler ─────────────────────────────────────────────────
 async function handleChangePassword() {
+  if (!passwordForm.currentPassword) {
+    showFeedback('Vui lòng nhập mật khẩu hiện tại.', 'error')
+    return
+  }
+  if (passwordForm.currentPassword.length > 128) {
+    showFeedback('Mật khẩu hiện tại không được vượt quá 128 ký tự.', 'error')
+    return
+  }
   if (!isPasswordMatch.value) {
     showFeedback('Mật khẩu xác nhận không khớp.', 'error')
     return
   }
   if (passwordForm.newPassword.length < 6) {
     showFeedback('Mật khẩu mới phải có ít nhất 6 ký tự.', 'error')
+    return
+  }
+  if (passwordForm.newPassword.length > 128) {
+    showFeedback('Mật khẩu mới không được vượt quá 128 ký tự.', 'error')
     return
   }
 

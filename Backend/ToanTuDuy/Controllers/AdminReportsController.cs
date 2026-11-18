@@ -19,6 +19,14 @@ public sealed class AdminReportsController(IAdminReportService reportService) : 
         return Ok(await reportService.GetRevenueAsync(months));
     }
 
+    [HttpGet("payroll")]
+    [ProducesResponseType(typeof(AdminPayrollTrendResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<AdminPayrollTrendResponse>> GetPayrollTrend(
+        [FromQuery, Range(1, 24)] int months = 6)
+    {
+        return Ok(await reportService.GetPayrollTrendAsync(months));
+    }
+
     [HttpGet("student-growth")]
     [ProducesResponseType(typeof(AdminStudentGrowthReportResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<AdminStudentGrowthReportResponse>> GetStudentGrowth(

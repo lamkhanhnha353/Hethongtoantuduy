@@ -5,6 +5,7 @@
 -- sqlcmd -S "(localdb)\mssqllocaldb" -d ToanTuDuyDb -i SeedData.sql -f 65001
 -- Cần chạy đầy đủ các migration hiện có trước khi chạy script này.
 -- =============================================================================
+EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT ALL";
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 SET QUOTED_IDENTIFIER ON;
@@ -56,7 +57,7 @@ BEGIN TRY
 --   Admin chính:      User = Admin123   / Password = Demo123@   (Email: admin123@toantuduy.edu.vn)
 --   Admin dự phòng:   User = 0901000000 / Password = Admin@Test123!
 --   Teacher chính:    User = Teacher123 / Password = Demo123@   (Email: teacher123@toantuduy.edu.vn)
---   Teacher dự phòng: User = 0902000001 / Password = Teacher@Test123!
+--   Teacher dự phòng: User =    / Password = Teacher@Test123!
 --   Parent:           User = 0903000001 .. 0903000032 / Password = Parent@Test123!
 SET IDENTITY_INSERT [dbo].[ACCOUNT] ON;
 INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_active, created_at, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount) VALUES
@@ -69,7 +70,7 @@ INSERT INTO [dbo].[ACCOUNT] (id, phone, password_hash, role, refresh_token, is_a
 (7, '0902000006', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000006', '0902000006', 'gv.hoangquocbao@toantuduy.edu.vn', 'GV.HOANGQUOCBAO@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
 (8, '0902000007', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000007', '0902000007', 'gv.dothikieuoanh@toantuduy.edu.vn', 'GV.DOTHIKIEUOANH@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
 (9, '0902000008', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Teacher', NULL, 1, '2026-08-01 08:00:00', '0902000008', '0902000008', 'gv.vuminhduc@toantuduy.edu.vn', 'GV.VUMINHDUC@TOANTUDUY.EDU.VN', 1, 1, 0, 0, 0),
-(10, '0903000001', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000001', '0903000001', 'parent01@gmail.com', 'PARENT01@GMAIL.COM', 1, 1, 0, 0, 0),
+(10, '0903000001', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000001', '0903000001', 'duytan2005hg@gmail.com', 'DUYTAN2005HG@GMAIL.COM', 1, 1, 0, 0, 0),
 (11, '0903000002', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000002', '0903000002', 'parent02@gmail.com', 'PARENT02@GMAIL.COM', 1, 1, 0, 0, 0),
 (12, '0903000003', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000003', '0903000003', 'parent03@gmail.com', 'PARENT03@GMAIL.COM', 1, 1, 0, 0, 0),
 (13, '0903000004', 'AQAAAAEAACcQAAAAEHashFake1234567890abcdefghijklmnopqrstuvwxyz==', 'Parent', NULL, 1, '2026-08-01 08:00:00', '0903000004', '0903000004', 'parent04@gmail.com', 'PARENT04@GMAIL.COM', 1, 1, 0, 0, 0),
@@ -1248,3 +1249,5 @@ BEGIN CATCH
     PRINT N'>>> LỖI XẢY RA KHI SEED DỮ LIỆU: ' + @ErrorMessage;
     RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
 END CATCH;
+
+EXEC sp_MSforeachtable "ALTER TABLE ? CHECK CONSTRAINT ALL";

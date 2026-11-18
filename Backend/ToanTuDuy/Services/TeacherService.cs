@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Models;
 
 namespace ToanTuDuy.Services
@@ -19,33 +20,69 @@ namespace ToanTuDuy.Services
 
         public async Task<IEnumerable<TeacherResponseDto>> GetAllAsync(string? keyword = null)
         {
+            return await BuildTeacherQuery(keyword, isActive: null).ToListAsync();
+        }
+
+        public async Task<PagedResult<TeacherResponseDto>> GetPagedAsync(
+            int page = 1,
+            int pageSize = PaginationDefaults.DefaultPageSize,
+            string? keyword = null,
+            bool? isActive = null)
+        {
+            return await BuildTeacherQuery(keyword, isActive)
+                .ToPagedResultAsync(page, pageSize);
+        }
+
+        private IQueryable<TeacherResponseDto> BuildTeacherQuery(string? keyword, bool? isActive)
+        {
             var query = _context.TeacherProfiles
-                .Include(t => t.Account)
+                .AsNoTracking()
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 var kw = keyword.Trim();
+                var hasNumericId = int.TryParse(kw, out var parsedId);
 
-                // Sử dụng EF.Functions.Like tối ưu cho SQL Server (hỗ trợ Tiếng Việt và không phân biệt hoa/thường)
                 query = query.Where(t =>
+                    (hasNumericId && t.Id == parsedId) ||
                     EF.Functions.Like(t.FullName, $"%{kw}%") ||
+                    (t.Specialize != null && EF.Functions.Like(t.Specialize, $"%{kw}%")) ||
                     (t.Email != null && EF.Functions.Like(t.Email, $"%{kw}%")) ||
                     (t.Account != null && t.Account.PhoneNumber != null && EF.Functions.Like(t.Account.PhoneNumber, $"%{kw}%"))
                 );
             }
 
-            return await query.Select(t => new TeacherResponseDto
+            if (isActive.HasValue)
             {
-                Id = t.Id,
-                AccountId = t.AccountId,
-                FullName = t.FullName,
-                Email = t.Email,
-                Phone = t.Account != null ? (t.Account.PhoneNumber ?? "") : "",
-                Specialize = t.Specialize,
-                IsActive = t.Account != null && t.Account.IsActive &&
-                    (t.Account.LockoutEnd == null || t.Account.LockoutEnd <= DateTimeOffset.UtcNow)
-            }).ToListAsync();
+                var now = DateTimeOffset.UtcNow;
+                if (isActive.Value)
+                {
+                    query = query.Where(t =>
+                        t.Account != null && t.Account.IsActive &&
+                        (t.Account.LockoutEnd == null || t.Account.LockoutEnd <= now));
+                }
+                else
+                {
+                    query = query.Where(t =>
+                        t.Account == null || !t.Account.IsActive ||
+                        (t.Account.LockoutEnd != null && t.Account.LockoutEnd > now));
+                }
+            }
+
+            return query
+                .OrderByDescending(t => t.Id)
+                .Select(t => new TeacherResponseDto
+                {
+                    Id = t.Id,
+                    AccountId = t.AccountId,
+                    FullName = t.FullName,
+                    Email = t.Email,
+                    Phone = t.Account != null ? (t.Account.PhoneNumber ?? "") : "",
+                    Specialize = t.Specialize,
+                    IsActive = t.Account != null && t.Account.IsActive &&
+                        (t.Account.LockoutEnd == null || t.Account.LockoutEnd <= DateTimeOffset.UtcNow)
+                });
         }
 
         public async Task<TeacherResponseDto?> GetByIdAsync(int id)

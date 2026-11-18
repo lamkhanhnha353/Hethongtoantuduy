@@ -48,6 +48,21 @@ export default function TabsLayout() {
           ),
         }}
       />
+      
+      <Tabs.Screen
+        name="news"
+        options={{
+          title: 'Tin tức',
+          tabBarIcon: ({ color }) => (
+            <Feather
+              name="book-open"
+              size={24}
+              color={typeof color === 'string' ? color : '#94a3b8'}
+            />
+          ),
+        }}
+      />
+      
       <Tabs.Screen
         name="notifications"
         options={{
@@ -58,19 +73,6 @@ export default function TabsLayout() {
               color={typeof color === 'string' ? color : '#94a3b8'}
               name="notifications-outline"
               size={24}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="progress"
-        options={{
-          title: 'Tiến độ',
-          tabBarIcon: ({ color }) => (
-            <Feather
-              name="bar-chart-2"
-              size={24}
-              color={typeof color === 'string' ? color : '#94a3b8'}
             />
           ),
         }}

@@ -30,6 +30,15 @@ namespace ToanTuDuy.Controllers
                     User.GetAccountId(), User.GetRole(), cancellationToken)
             });
 
+        [HttpGet("admin/conversations")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAdminConversations(CancellationToken cancellationToken) =>
+            Ok(new
+            {
+                success = true,
+                data = await _chatService.GetAdminHumanConversationsAsync(cancellationToken)
+            });
+
         [HttpGet("{conversationId:int}/messages")]
         public async Task<IActionResult> GetMessages(
             int conversationId,

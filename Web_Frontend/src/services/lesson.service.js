@@ -10,6 +10,27 @@ class LessonService {
     return (await this.api.get("")).data;
   }
 
+  // Lấy danh sách buổi học có phân trang [GET] /api/lessons/paged
+  async getPaged({
+    page = 1,
+    pageSize = 20,
+    classId = undefined,
+    status = "",
+    keyword = "",
+  } = {}) {
+    return (
+      await this.api.get("/paged", {
+        params: {
+          page,
+          pageSize,
+          classId: classId || undefined,
+          status: status && status !== "ALL" ? status : undefined,
+          keyword: keyword?.trim() || undefined,
+        },
+      })
+    ).data;
+  }
+
   // Lấy danh sách buổi học theo ID lớp [GET] /api/lessons/class/:classId
   async getByClass(classId) {
     return (await this.api.get(`/class/${classId}`)).data;

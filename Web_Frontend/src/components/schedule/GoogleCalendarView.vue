@@ -1,17 +1,17 @@
 <template>
-  <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden flex flex-col">
+  <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <!-- ─── 1. GOOGLE CALENDAR HEADER ──────────────────────────────────────── -->
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <div class="px-5 py-3.5 border-b border-orange-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white">
+    <div class="px-5 py-3.5 border-b border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white">
       <!-- Left controls: Today button, Prev/Next, Month-Year title -->
       <div class="flex items-center gap-3">
         <!-- Toggle Left Sidebar Button -->
         <button
           @click="sidebarOpen = !sidebarOpen"
           :class="[
-            'p-2 rounded-xl text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer',
-            sidebarOpen ? 'bg-orange-50 text-orange-600' : ''
+            'p-2 rounded-md border text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer',
+            sidebarOpen ? 'bg-orange-50 border-orange-300 text-orange-700' : 'border-stone-300 bg-white'
           ]"
           title="Thu gọn / Mở rộng bảng điều khiển"
         >
@@ -21,7 +21,7 @@
         <!-- Today button -->
         <button
           @click="goToToday"
-          class="px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all cursor-pointer shadow-2xs"
+          class="h-9 px-3.5 rounded-md border border-stone-300 bg-white text-sm font-semibold text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
         >
           Hôm nay
         </button>
@@ -30,14 +30,14 @@
         <div class="flex items-center gap-0.5">
           <button
             @click="prevWeek"
-            class="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
+            class="p-1.5 rounded-md border border-transparent hover:border-stone-300 text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer"
             title="Tuần trước"
           >
             <ChevronLeftIcon class="w-4 h-4" />
           </button>
           <button
             @click="nextWeek"
-            class="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
+            class="p-1.5 rounded-md border border-transparent hover:border-stone-300 text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer"
             title="Tuần sau"
           >
             <ChevronRightIcon class="w-4 h-4" />
@@ -45,7 +45,7 @@
         </div>
 
         <!-- Month & Year display -->
-        <h2 class="text-base sm:text-lg font-bold text-gray-800 tracking-tight ml-1">
+        <h2 class="text-base sm:text-lg font-bold text-stone-900 tracking-tight ml-1 tabular-nums">
           {{ weekRangeTitle }}
         </h2>
       </div>
@@ -55,19 +55,19 @@
         <!-- Stack indicator chip -->
         <div
           v-if="stackedGroupsCount > 0"
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-orange-100/80 text-orange-800 text-xs font-semibold border border-orange-200"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-orange-50 text-orange-800 text-xs font-semibold border border-orange-300 tabular-nums"
         >
           <Square3Stack3DIcon class="w-4 h-4 text-orange-600" />
           <span>{{ stackedGroupsCount }} ngăn xếp mốc giờ</span>
         </div>
 
         <!-- View mode dropdown (Tuần / Ngày) -->
-        <div class="flex items-center bg-gray-100 p-0.5 rounded-xl text-xs font-semibold text-gray-600">
+        <div class="flex items-center bg-stone-100 border border-stone-300 p-0.5 rounded-md text-xs font-semibold text-stone-600">
           <button
             @click="calendarMode = 'week'"
             :class="[
-              'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-              calendarMode === 'week' ? 'bg-white text-orange-600 shadow-2xs font-bold' : 'hover:text-gray-900'
+              'px-3 py-1.5 rounded transition-colors cursor-pointer',
+              calendarMode === 'week' ? 'bg-orange-600 text-white shadow-xs font-bold' : 'hover:text-stone-900'
             ]"
           >
             Tuần
@@ -75,8 +75,8 @@
           <button
             @click="calendarMode = 'day'"
             :class="[
-              'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-              calendarMode === 'day' ? 'bg-white text-orange-600 shadow-2xs font-bold' : 'hover:text-gray-900'
+              'px-3 py-1.5 rounded transition-colors cursor-pointer',
+              calendarMode === 'day' ? 'bg-orange-600 text-white shadow-xs font-bold' : 'hover:text-stone-900'
             ]"
           >
             Ngày
@@ -86,7 +86,7 @@
         <!-- Create Button -->
         <button
           @click="$emit('create')"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-700 text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer"
         >
           <PlusIcon class="w-4 h-4" />
           <span>Thêm lịch</span>
@@ -102,43 +102,43 @@
       <transition name="slide-left">
         <aside
           v-if="sidebarOpen"
-          class="w-64 sm:w-72 border-r border-orange-100 bg-gray-50/50 p-4 space-y-5 flex-shrink-0 overflow-y-auto hidden md:block"
+          class="w-64 sm:w-72 border-r border-stone-200 bg-stone-50/70 p-4 space-y-5 flex-shrink-0 overflow-y-auto hidden md:block"
         >
           <!-- Mini Month Calendar -->
-          <div class="bg-white p-3 rounded-2xl border border-gray-200/70 shadow-2xs">
+          <div class="bg-white p-3 rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-gray-800">{{ miniCalendarMonthName }}</span>
+              <span class="text-xs font-bold text-stone-900 tabular-nums">{{ miniCalendarMonthName }}</span>
               <div class="flex items-center gap-1">
                 <button
                   @click="changeMiniMonth(-1)"
-                  class="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  class="p-1 rounded text-stone-400 hover:text-stone-800 hover:bg-stone-100 cursor-pointer"
                 >
                   <ChevronLeftIcon class="w-3.5 h-3.5" />
                 </button>
                 <button
                   @click="changeMiniMonth(1)"
-                  class="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  class="p-1 rounded text-stone-400 hover:text-stone-800 hover:bg-stone-100 cursor-pointer"
                 >
                   <ChevronRightIcon class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
             <!-- Mini day header (T2..CN) -->
-            <div class="grid grid-cols-7 text-center text-[10px] font-bold text-gray-400 mb-1">
+            <div class="grid grid-cols-7 text-center text-[10px] font-bold text-stone-400 mb-1">
               <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
             </div>
             <!-- Mini day cells -->
-            <div class="grid grid-cols-7 gap-1 text-center text-xs">
+            <div class="grid grid-cols-7 gap-1 text-center text-xs tabular-nums">
               <button
                 v-for="(day, idx) in miniCalendarDays"
                 :key="idx"
                 @click="selectDateFromMini(day.date)"
                 :class="[
-                  'w-6 h-6 mx-auto rounded-full text-[11px] font-medium transition-all flex items-center justify-center cursor-pointer',
-                  day.isCurrentMonth ? 'text-gray-700' : 'text-gray-300',
-                  day.isToday ? 'border border-orange-500 font-bold' : '',
-                  day.isSelectedWeek ? 'bg-orange-100 text-orange-800 font-bold' : 'hover:bg-gray-100',
-                  day.isExactDate ? 'bg-orange-500 text-white font-bold hover:bg-orange-600' : ''
+                  'w-6 h-6 mx-auto rounded text-[11px] font-medium transition-colors flex items-center justify-center cursor-pointer',
+                  day.isCurrentMonth ? 'text-stone-700' : 'text-stone-300',
+                  day.isToday ? 'border border-orange-600 font-bold' : '',
+                  day.isSelectedWeek ? 'bg-orange-100 text-orange-800 font-bold' : 'hover:bg-stone-100',
+                  day.isExactDate ? 'bg-orange-600 text-white font-bold hover:bg-orange-700' : ''
                 ]"
               >
                 {{ day.date.getDate() }}
@@ -149,13 +149,13 @@
           <!-- Class Filter List ("My Calendars" style) -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
-                <AcademicCapIcon class="w-4 h-4 text-orange-500" />
+              <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                <AcademicCapIcon class="w-4 h-4 text-orange-600" />
                 Lớp học hiển thị ({{ classes.length }})
               </h3>
               <button
                 @click="toggleAllClasses"
-                class="text-[11px] text-orange-600 hover:text-orange-800 font-medium cursor-pointer"
+                class="text-[11px] text-orange-600 hover:text-orange-800 font-semibold cursor-pointer"
               >
                 {{ allSelected ? 'Bỏ chọn' : 'Chọn tất cả' }}
               </button>
@@ -165,8 +165,9 @@
             <input
               v-model="classSearchQuery"
               type="text"
+              maxlength="100"
               placeholder="Lọc tên lớp..."
-              class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs placeholder-gray-400 focus:border-orange-400 focus:outline-hidden"
+              class="w-full h-9 px-3 bg-white border border-stone-300 rounded-md text-xs text-stone-900 placeholder-stone-400 focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 focus:outline-none"
             />
 
             <!-- Class list with colored checkboxes -->
@@ -174,27 +175,27 @@
               <label
                 v-for="c in filteredClassList"
                 :key="c.id"
-                class="flex items-center justify-between p-2 rounded-xl bg-white border border-gray-100 hover:border-orange-200 transition-all cursor-pointer group text-xs"
+                class="flex items-center justify-between p-2 rounded-md bg-white border border-stone-300 hover:border-orange-400 transition-colors cursor-pointer group text-xs"
               >
                 <div class="flex items-center gap-2 min-w-0">
                   <input
                     type="checkbox"
                     :value="c.id"
                     v-model="selectedClassIds"
-                    class="rounded text-orange-500 focus:ring-orange-400 h-3.5 w-3.5 cursor-pointer"
+                    class="rounded text-orange-600 focus:ring-orange-500 h-3.5 w-3.5 cursor-pointer accent-orange-600"
                   />
                   <span
                     class="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     :class="getClassTheme(c.id).bg"
                   />
-                  <span class="truncate font-medium text-gray-700 group-hover:text-gray-900">
+                  <span class="truncate font-medium text-stone-700 group-hover:text-stone-900">
                     {{ c.name }}
                   </span>
                 </div>
                 <button
                   @click.prevent.stop="showClassStackModal(c)"
                   title="Xem tất cả mốc giờ của lớp này (Ngăn xếp)"
-                  class="opacity-0 group-hover:opacity-100 p-1 text-orange-600 hover:bg-orange-50 rounded transition-all flex-shrink-0 cursor-pointer"
+                  class="opacity-0 group-hover:opacity-100 p-1 text-orange-600 hover:bg-orange-50 rounded transition-opacity flex-shrink-0 cursor-pointer"
                 >
                   <Square3Stack3DIcon class="w-3.5 h-3.5" />
                 </button>
@@ -203,7 +204,7 @@
           </div>
 
           <!-- Quick Tip -->
-          <div class="p-3 bg-orange-100/50 rounded-xl border border-orange-200/60 text-[11px] text-orange-900 leading-relaxed">
+          <div class="p-3 bg-orange-50 rounded-md border border-orange-200 text-[11px] text-orange-950 leading-relaxed">
             <span class="font-bold flex items-center gap-1 mb-1 text-orange-950">
               <Square3Stack3DIcon class="w-3.5 h-3.5 text-orange-600" />
               Tính năng Ngăn xếp:
@@ -216,9 +217,9 @@
       <!-- ─── TIME GRID VIEW (GOOGLE CALENDAR CORE) ────────────────────────── -->
       <div class="flex-1 flex flex-col overflow-hidden bg-white">
         <!-- Day Columns Header -->
-        <div class="flex border-b border-orange-100 bg-white sticky top-0 z-20">
+        <div class="flex border-b border-stone-200 bg-stone-50/70 sticky top-0 z-20">
           <!-- Time gutter corner -->
-          <div class="w-16 sm:w-20 flex-shrink-0 border-r border-orange-100 p-2 text-center text-[11px] text-gray-400 font-mono">
+          <div class="w-16 sm:w-20 flex-shrink-0 border-r border-stone-200 p-2 text-center text-[11px] text-stone-400 font-mono">
             GMT+7
           </div>
 
@@ -227,26 +228,26 @@
             v-for="day in displayedDays"
             :key="day.dayOfWeek"
             :class="[
-              'flex-1 min-w-[120px] py-3 px-2 text-center border-r border-orange-50 transition-colors',
-              day.isToday ? 'bg-orange-50/50' : ''
+              'flex-1 min-w-[120px] py-3 px-2 text-center border-r border-stone-200 transition-colors',
+              day.isToday ? 'bg-orange-50/60' : ''
             ]"
           >
-            <div class="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500">
               {{ day.dayName }}
             </div>
             <div class="mt-1 flex items-center justify-center">
               <span
                 :class="[
-                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all',
+                  'w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold transition-colors tabular-nums',
                   day.isToday
-                    ? 'bg-orange-500 text-white shadow-sm'
-                    : 'text-gray-800'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-stone-900'
                 ]"
               >
                 {{ day.date.getDate() }}
               </span>
             </div>
-            <div class="text-[10px] text-gray-400 mt-0.5">
+            <div class="text-[10px] text-stone-400 mt-0.5 tabular-nums">
               {{ getDaySchedules(day.dayOfWeek).length }} buổi
             </div>
           </div>
@@ -259,11 +260,11 @@
         >
           <div class="flex relative" :style="{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }">
             <!-- ─── Time labels (left gutter) ─── -->
-            <div class="w-16 sm:w-20 flex-shrink-0 border-r border-orange-100 select-none bg-white z-10">
+            <div class="w-16 sm:w-20 flex-shrink-0 border-r border-stone-200 select-none bg-white z-10">
               <div
                 v-for="hour in HOURS_LIST"
                 :key="hour"
-                class="relative text-right pr-2 text-[11px] font-mono font-medium text-gray-400 -translate-y-2.5"
+                class="relative text-right pr-2 text-[11px] font-mono font-medium text-stone-400 -translate-y-2.5 tabular-nums"
                 :style="{ height: `${HOUR_HEIGHT}px` }"
               >
                 {{ formatHourLabel(hour) }}
@@ -275,12 +276,12 @@
               <div
                 v-for="hour in HOURS_LIST"
                 :key="'line-' + hour"
-                class="border-b border-gray-100 w-full"
+                class="border-b border-stone-200/80 w-full"
                 :style="{ height: `${HOUR_HEIGHT}px` }"
               >
                 <!-- Half-hour dashed line -->
                 <div
-                  class="border-b border-dashed border-gray-50/90 w-full"
+                  class="border-b border-dashed border-stone-100 w-full"
                   :style="{ height: `${HOUR_HEIGHT / 2}px` }"
                 />
               </div>
@@ -292,8 +293,8 @@
               class="absolute left-16 sm:left-20 right-0 z-20 pointer-events-none flex items-center"
               :style="{ top: `${currentTimeTop}px` }"
             >
-              <div class="w-3 h-3 rounded-full bg-red-500 -ml-1.5 shadow-sm" />
-              <div class="flex-1 border-t-2 border-red-500 shadow-xs" />
+              <div class="w-3 h-3 rounded-full bg-rose-600 -ml-1.5 shadow-xs" />
+              <div class="flex-1 border-t-2 border-rose-600" />
             </div>
 
             <!-- ─── Day Columns & Event Placements ─── -->
@@ -301,8 +302,8 @@
               v-for="day in displayedDays"
               :key="'col-' + day.dayOfWeek"
               :class="[
-                'flex-1 min-w-[120px] border-r border-orange-50 relative',
-                day.isToday ? 'bg-orange-50/20' : ''
+                'flex-1 min-w-[120px] border-r border-stone-200 relative',
+                day.isToday ? 'bg-orange-50/25' : ''
               ]"
             >
               <!-- Overlapping Cluster Groups / Stacked Cards -->
@@ -320,7 +321,7 @@
                   v-if="cluster.schedules.length === 1"
                   @click.stop="handleEventClick(cluster.schedules[0])"
                   :class="[
-                    'w-full h-full rounded-xl border p-2 flex flex-col justify-between overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group',
+                    'w-full h-full rounded-md border p-2 flex flex-col justify-between overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-sm transition-shadow cursor-pointer group',
                     getClassTheme(cluster.schedules[0].classId).lightBg,
                     getClassTheme(cluster.schedules[0].classId).border,
                   ]"
@@ -328,7 +329,7 @@
                   <div class="min-w-0">
                     <div class="flex items-center justify-between gap-1 mb-1">
                       <span
-                        class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded-md leading-none shadow-2xs text-white"
+                        class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded leading-none text-white tabular-nums"
                         :class="getClassTheme(cluster.schedules[0].classId).bg"
                       >
                         {{ formatTime(cluster.schedules[0].startTime) }} - {{ formatTime(cluster.schedules[0].endTime) }}
@@ -338,7 +339,7 @@
                         title="Chỉnh sửa"
                         class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white rounded transition-opacity cursor-pointer"
                       >
-                        <PencilSquareIcon class="w-3 h-3 text-gray-600" />
+                        <PencilSquareIcon class="w-3 h-3 text-stone-700" />
                       </button>
                     </div>
                     <h4
@@ -349,15 +350,15 @@
                     </h4>
                   </div>
 
-                  <div class="flex items-center justify-between text-[10px] text-gray-500 pt-1">
+                  <div class="flex items-center justify-between text-[10px] text-stone-600 pt-1">
                     <span class="truncate flex items-center gap-1">
-                      <MapPinIcon class="w-3 h-3 text-orange-400" />
+                      <MapPinIcon class="w-3 h-3 text-orange-600" />
                       {{ cluster.schedules[0].room || 'Phòng linh hoạt' }}
                     </span>
                     <button
                       @click.stop="openClassStackBySchedule(cluster.schedules[0])"
                       title="Xem ngăn xếp các mốc giờ của lớp này"
-                      class="text-[10px] text-orange-600 hover:text-orange-800 font-semibold flex items-center gap-0.5"
+                      class="text-[10px] text-orange-700 hover:text-orange-900 font-semibold flex items-center gap-0.5 cursor-pointer"
                     >
                       <Square3Stack3DIcon class="w-3 h-3" />
                       <span>Ngăn xếp</span>
@@ -369,22 +370,22 @@
                 <div
                   v-else
                   @click.stop="openStackCluster(cluster, day)"
-                  class="relative w-full h-full rounded-xl cursor-pointer group select-none"
+                  class="relative w-full h-full rounded-md cursor-pointer group select-none"
                 >
                   <!-- Background Stack Layer Effect -->
-                  <div class="absolute inset-0 bg-orange-200/50 rounded-xl transform translate-x-1.5 translate-y-1.5 border border-orange-300 pointer-events-none" />
-                  <div class="absolute inset-0 bg-amber-100/70 rounded-xl transform translate-x-0.5 translate-y-0.5 border border-amber-300 pointer-events-none" />
+                  <div class="absolute inset-0 bg-stone-200 rounded-md transform translate-x-1.5 translate-y-1.5 border border-stone-300 pointer-events-none" />
+                  <div class="absolute inset-0 bg-orange-100 rounded-md transform translate-x-0.5 translate-y-0.5 border border-orange-300 pointer-events-none" />
 
                   <!-- Top Card of the Stack -->
-                  <div class="relative w-full h-full bg-gradient-to-br from-white to-orange-50 rounded-xl border-2 border-orange-400 p-2.5 shadow-md flex flex-col justify-between overflow-hidden group-hover:scale-[1.01] transition-transform">
+                  <div class="relative w-full h-full bg-white rounded-md border-2 border-orange-500 p-2.5 shadow-sm flex flex-col justify-between overflow-hidden group-hover:border-orange-600 transition-colors">
                     <div>
                       <!-- Stack Header Badge -->
                       <div class="flex items-center justify-between mb-1">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-600 text-white font-extrabold text-[10px] shadow-sm animate-pulse">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-orange-600 text-white font-bold text-[10px] tabular-nums">
                           <Square3Stack3DIcon class="w-3 h-3" />
                           Ngăn xếp ({{ cluster.schedules.length }} lớp)
                         </span>
-                        <span class="text-[10px] font-mono font-bold text-orange-800">
+                        <span class="text-[10px] font-mono font-bold text-stone-700 tabular-nums">
                           {{ formatTime(cluster.minStart) }} - {{ formatTime(cluster.maxEnd) }}
                         </span>
                       </div>
@@ -394,19 +395,19 @@
                         <div
                           v-for="(s, sIdx) in cluster.schedules.slice(0, 2)"
                           :key="s.id"
-                          class="flex items-center gap-1.5 text-xs text-gray-800 truncate"
+                          class="flex items-center gap-1.5 text-xs text-stone-800 truncate"
                         >
                           <span class="w-2 h-2 rounded-full flex-shrink-0" :class="getClassTheme(s.classId).bg" />
                           <span class="truncate font-semibold text-[11px]">{{ s.className }}</span>
                         </div>
-                        <div v-if="cluster.schedules.length > 2" class="text-[10px] text-orange-600 font-bold pl-3.5">
+                        <div v-if="cluster.schedules.length > 2" class="text-[10px] text-orange-700 font-bold pl-3.5 tabular-nums">
                           +{{ cluster.schedules.length - 2 }} lớp khác trong ngăn xếp...
                         </div>
                       </div>
                     </div>
 
                     <!-- Call to action -->
-                    <div class="pt-1 border-t border-orange-200/80 flex items-center justify-between text-[10px] text-orange-700 font-bold">
+                    <div class="pt-1 border-t border-stone-200 flex items-center justify-between text-[10px] text-orange-700 font-bold">
                       <span>Ấn để mở chi tiết ngăn xếp</span>
                       <ChevronRightIcon class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -428,82 +429,82 @@
         class="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-xs"
         @click.self="stackDrawerOpen = false"
       >
-        <div class="w-full max-w-md h-full bg-white shadow-2xl flex flex-col border-l border-orange-100 overflow-hidden transform transition-all animate-slide-left">
+        <div class="w-full max-w-md h-full bg-white shadow-2xl flex flex-col border-l border-stone-300 overflow-hidden transform transition-all animate-slide-left">
           <!-- Drawer Header -->
-          <div class="p-5 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 flex items-center justify-between">
+          <div class="p-5 border-b border-stone-200 bg-stone-50 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <div class="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-sm">
-                <Square3Stack3DIcon class="w-6 h-6" />
+              <div class="w-9 h-9 rounded-md bg-orange-600 border border-orange-700 text-white flex items-center justify-center shadow-xs">
+                <Square3Stack3DIcon class="w-5 h-5" />
               </div>
               <div>
-                <h3 class="text-base font-bold text-orange-950">
+                <h3 class="text-base font-bold text-stone-900">
                   {{ stackDrawerTitle }}
                 </h3>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-stone-500">
                   {{ stackDrawerSubtitle }}
                 </p>
               </div>
             </div>
             <button
               @click="stackDrawerOpen = false"
-              class="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-orange-100/60 transition-colors cursor-pointer"
+              class="p-1.5 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-200/70 transition-colors cursor-pointer"
             >
               <XMarkIcon class="w-5 h-5" />
             </button>
           </div>
 
           <!-- Drawer Content: List of stacked sessions -->
-          <div class="flex-1 overflow-y-auto p-5 space-y-3.5 bg-gray-50/50">
+          <div class="flex-1 overflow-y-auto p-5 space-y-3 bg-stone-50/70">
             <div
               v-for="(item, idx) in activeStackItems"
               :key="item.id"
-              class="bg-white rounded-2xl border border-orange-100 p-4 shadow-sm hover:border-orange-300 hover:shadow-md transition-all space-y-3 group"
+              class="bg-white rounded-lg border border-stone-300 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-orange-500 transition-colors space-y-3 group"
             >
               <!-- Item Header -->
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="w-3 h-3 rounded-full flex-shrink-0" :class="getClassTheme(item.classId).bg" />
-                  <span class="text-xs font-mono font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                  <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="getClassTheme(item.classId).bg" />
+                  <span class="text-xs font-mono font-bold text-orange-800 bg-orange-50 px-2 py-0.5 rounded border border-orange-200 tabular-nums">
                     #{{ item.id }}
                   </span>
-                  <span class="text-xs font-bold text-gray-700">
+                  <span class="text-xs font-bold text-stone-800">
                     {{ formatDayOfWeek(item.dayOfWeek) }}
                   </span>
                 </div>
-                <span class="text-[11px] font-semibold text-gray-400 font-mono">
+                <span class="text-[11px] font-semibold text-stone-400 font-mono tabular-nums">
                   Lớp #{{ item.classId }}
                 </span>
               </div>
 
               <!-- Class Name -->
-              <h4 class="font-bold text-sm text-gray-900 group-hover:text-orange-600 transition-colors">
+              <h4 class="font-bold text-sm text-stone-900 group-hover:text-orange-600 transition-colors">
                 {{ item.className }}
               </h4>
 
               <!-- Time & Room info -->
-              <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 pt-1 border-t border-gray-100">
-                <div class="flex items-center gap-1.5 font-mono font-bold text-orange-700">
-                  <ClockIcon class="w-4 h-4 text-orange-500 flex-shrink-0" />
+              <div class="grid grid-cols-2 gap-2 text-xs text-stone-600 pt-2 border-t border-stone-200 tabular-nums">
+                <div class="flex items-center gap-1.5 font-mono font-bold text-stone-900">
+                  <ClockIcon class="w-4 h-4 text-orange-600 flex-shrink-0" />
                   <span>{{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-gray-500">
-                  <MapPinIcon class="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <div class="flex items-center gap-1.5 text-stone-500">
+                  <MapPinIcon class="w-4 h-4 text-orange-600 flex-shrink-0" />
                   <span class="truncate">{{ item.room ? item.room : 'Chưa xếp phòng' }}</span>
                 </div>
               </div>
 
               <!-- Quick action buttons -->
-              <div class="pt-2 border-t border-orange-50 flex items-center justify-end gap-2">
+              <div class="pt-2 border-t border-stone-200 flex items-center justify-end gap-2">
                 <button
                   @click="openViewScheduleFromStack(item)"
-                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
                 >
                   <EyeIcon class="w-3.5 h-3.5" />
                   <span>Chi tiết</span>
                 </button>
                 <button
                   @click="openEditScheduleFromStack(item)"
-                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 transition-colors cursor-pointer"
                 >
                   <PencilSquareIcon class="w-3.5 h-3.5" />
                   <span>Chỉnh sửa</span>
@@ -513,13 +514,13 @@
           </div>
 
           <!-- Drawer Footer -->
-          <div class="p-4 border-t border-orange-100 bg-white flex items-center justify-between">
-            <span class="text-xs text-gray-500 font-medium">
-              Tổng số: <strong>{{ activeStackItems.length }}</strong> buổi học
+          <div class="p-4 border-t border-stone-200 bg-white flex items-center justify-between tabular-nums">
+            <span class="text-xs text-stone-600 font-medium">
+              Tổng số: <strong class="text-stone-900">{{ activeStackItems.length }}</strong> buổi học
             </span>
             <button
               @click="stackDrawerOpen = false"
-              class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              class="h-9 px-4 bg-white border border-stone-300 hover:bg-stone-100 hover:border-stone-400 text-stone-800 text-sm font-semibold rounded-md transition-colors cursor-pointer"
             >
               Đóng
             </button>

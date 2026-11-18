@@ -2,9 +2,9 @@
   <div class="space-y-5">
     <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Báo cáo &amp; thống kê</p>
-        <h1 class="mt-1 text-2xl font-bold text-orange-950">Thống kê chuyên cần</h1>
-        <p class="mt-1 text-sm text-gray-500">Tổng hợp tình hình đi học theo lớp và từng buổi học.</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">Báo cáo &amp; thống kê</p>
+        <h1 class="mt-1 text-2xl font-bold text-stone-900">Thống kê chuyên cần</h1>
+        <p class="mt-1 text-sm text-stone-500">Tổng hợp tình hình đi học theo lớp và từng buổi học.</p>
       </div>
       <div>
         <select v-model="period" aria-label="Khoảng thời gian báo cáo" class="filter-select min-w-40">
@@ -15,13 +15,13 @@
       </div>
     </header>
 
-    <div v-if="errorMessage" class="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm text-red-700">{{ errorMessage }}</p>
-      <button type="button" class="shrink-0 text-sm font-semibold text-red-700 underline" @click="loadReport">Thử lại</button>
+    <div v-if="errorMessage" class="flex flex-col gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-sm text-rose-700">{{ errorMessage }}</p>
+      <button type="button" class="shrink-0 text-sm font-semibold text-rose-700 underline" @click="loadReport">Thử lại</button>
     </div>
 
-    <section class="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-      <label for="attendance-class" class="mb-1.5 block text-xs font-semibold text-gray-600">Lọc theo lớp</label>
+    <section class="rounded-lg border border-stone-300 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <label for="attendance-class" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Lọc theo lớp</label>
       <select id="attendance-class" v-model="selectedClassId" class="filter-select max-w-xl">
         <option value="">Tất cả lớp học</option>
         <option v-for="item in classOptions" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
@@ -29,90 +29,90 @@
     </section>
 
     <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Tổng quan chuyên cần">
-      <article v-for="stat in stats" :key="stat.label" class="flex items-center gap-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" :class="stat.bg">
+      <article v-for="stat in stats" :key="stat.label" class="flex items-center gap-3 rounded-lg border border-stone-300 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-stone-200" :class="stat.bg">
           <component :is="stat.icon" class="h-5 w-5" :class="stat.color" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-medium text-gray-500">{{ stat.label }}</p>
-          <p class="mt-1 truncate text-lg font-bold text-gray-900">{{ stat.value }}</p>
-          <p class="mt-0.5 text-xs text-gray-400">{{ stat.caption }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">{{ stat.label }}</p>
+          <p class="mt-1 truncate text-lg font-bold text-stone-900 tabular-nums">{{ stat.value }}</p>
+          <p class="mt-0.5 text-xs text-stone-500">{{ stat.caption }}</p>
         </div>
       </article>
     </section>
 
     <section class="grid grid-cols-1 gap-5 xl:grid-cols-3">
-      <article class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm xl:col-span-2">
-        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-orange-100 pb-4">
+      <article class="rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] xl:col-span-2">
+        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-stone-200 pb-4">
           <div>
-            <h2 class="font-bold text-orange-950">Tỷ lệ có mặt theo buổi</h2>
-            <p class="mt-1 text-xs text-gray-500">Tỷ lệ học viên có mặt trên tổng sĩ số được điểm danh</p>
+            <h2 class="font-bold text-stone-900">Tỷ lệ có mặt theo buổi</h2>
+            <p class="mt-1 text-xs text-stone-500">Tỷ lệ học viên có mặt trên tổng sĩ số được điểm danh</p>
           </div>
-          <span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">{{ report?.lessonCount ?? 0 }} buổi học</span>
+          <span class="rounded border border-orange-300 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-800 tabular-nums">{{ report?.lessonCount ?? 0 }} buổi học</span>
         </div>
-        <div v-if="loading" class="flex h-56 items-center justify-center text-sm text-gray-500">Đang tổng hợp dữ liệu điểm danh...</div>
-        <div v-else-if="!chartLessons.length" class="flex h-56 items-center justify-center text-sm text-gray-500">Chưa có dữ liệu điểm danh trong kỳ.</div>
+        <div v-if="loading" class="flex h-56 items-center justify-center text-sm text-stone-500">Đang tổng hợp dữ liệu điểm danh...</div>
+        <div v-else-if="!chartLessons.length" class="flex h-56 items-center justify-center text-sm text-stone-500">Chưa có dữ liệu điểm danh trong kỳ.</div>
         <div v-else class="flex h-56 items-end gap-2 overflow-x-auto pt-6 sm:gap-3">
           <div v-for="item in chartLessons" :key="item.lessonId" class="group flex h-full min-w-8 flex-1 flex-col items-center justify-end gap-2">
-            <span class="text-[10px] font-semibold text-orange-800 opacity-0 transition group-hover:opacity-100">{{ item.rate }}%</span>
-            <div class="w-full max-w-10 rounded-t-lg bg-gradient-to-t from-orange-500 to-amber-300 transition hover:from-orange-600" :style="{ height: `${Math.max(item.rate, 3)}%` }" :title="`${item.className}: ${item.rate}% có mặt`"></div>
-            <span class="text-[9px] text-gray-500">{{ formatShortDate(item.lessonDate) }}</span>
+            <span class="text-[10px] font-semibold text-stone-800 tabular-nums opacity-0 transition group-hover:opacity-100">{{ item.rate }}%</span>
+            <div class="w-full max-w-10 rounded-t bg-orange-500 transition hover:bg-orange-600" :style="{ height: `${Math.max(item.rate, 3)}%` }" :title="`${item.className}: ${item.rate}% có mặt`"></div>
+            <span class="text-[9px] text-stone-500 tabular-nums">{{ formatShortDate(item.lessonDate) }}</span>
           </div>
         </div>
       </article>
 
-      <article class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-        <div class="border-b border-orange-100 pb-4">
-          <h2 class="font-bold text-orange-950">Tình trạng điểm danh</h2>
-          <p class="mt-1 text-xs text-gray-500">Tổng lượt ghi nhận trong kỳ</p>
+      <article class="rounded-lg border border-stone-300 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="border-b border-stone-200 pb-4">
+          <h2 class="font-bold text-stone-900">Tình trạng điểm danh</h2>
+          <p class="mt-1 text-xs text-stone-500">Tổng lượt ghi nhận trong kỳ</p>
         </div>
-        <div v-if="!attendanceBreakdown.total" class="flex h-56 items-center justify-center text-center text-sm text-gray-500">Chưa có lượt điểm danh.</div>
+        <div v-if="!attendanceBreakdown.total" class="flex h-56 items-center justify-center text-center text-sm text-stone-500">Chưa có lượt điểm danh.</div>
         <div v-else class="space-y-5 pt-5">
           <div v-for="item in attendanceBreakdown.items" :key="item.label">
             <div class="mb-2 flex items-center justify-between text-xs">
-              <span class="flex items-center gap-2 text-gray-600"><span class="h-2.5 w-2.5 rounded-full" :class="item.dot"></span>{{ item.label }}</span>
-              <span class="font-semibold text-gray-900">{{ item.count }} <span class="font-normal text-gray-400">({{ item.percent }}%)</span></span>
+              <span class="flex items-center gap-2 text-stone-700"><span class="h-2.5 w-2.5 rounded-full" :class="item.dot"></span>{{ item.label }}</span>
+              <span class="font-semibold text-stone-900 tabular-nums">{{ item.count }} <span class="font-normal text-stone-400">({{ item.percent }}%)</span></span>
             </div>
-            <div class="h-2 overflow-hidden rounded-full bg-gray-100">
-              <div class="h-full rounded-full" :class="item.bar" :style="{ width: `${item.percent}%` }"></div>
+            <div class="h-2 overflow-hidden rounded bg-stone-100">
+              <div class="h-full rounded" :class="item.bar" :style="{ width: `${item.percent}%` }"></div>
             </div>
           </div>
         </div>
       </article>
     </section>
 
-    <section class="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
-      <div class="border-b border-orange-100 p-4">
-        <h2 class="font-bold text-orange-950">Chi tiết buổi học</h2>
-        <p class="mt-1 text-xs text-gray-500">{{ filteredLessons.length }} buổi học trong kỳ báo cáo</p>
+    <section class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div class="border-b border-stone-200 bg-stone-50 p-4">
+        <h2 class="font-bold text-stone-900">Chi tiết buổi học</h2>
+        <p class="mt-1 text-xs text-stone-500 tabular-nums">{{ filteredLessons.length }} buổi học trong kỳ báo cáo</p>
       </div>
-      <div v-if="loading" class="flex min-h-40 items-center justify-center text-sm text-gray-500">Đang tải danh sách buổi học...</div>
-      <div v-else-if="!filteredLessons.length" class="flex min-h-40 items-center justify-center text-sm text-gray-500">Không có buổi học phù hợp trong kỳ.</div>
+      <div v-if="loading" class="flex min-h-40 items-center justify-center text-sm text-stone-500">Đang tải danh sách buổi học...</div>
+      <div v-else-if="!filteredLessons.length" class="flex min-h-40 items-center justify-center text-sm text-stone-500">Không có buổi học phù hợp trong kỳ.</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full min-w-[720px] text-left text-sm">
-          <thead class="bg-orange-50/80 text-xs uppercase tracking-wide text-orange-900">
+          <thead class="border-b-2 border-stone-300 bg-stone-100 text-xs font-bold uppercase tracking-wider text-stone-700">
             <tr>
-              <th class="px-5 py-3.5 font-semibold">Ngày học</th>
-              <th class="px-5 py-3.5 font-semibold">Lớp</th>
-              <th class="px-5 py-3.5 text-center font-semibold">Có mặt</th>
-              <th class="px-5 py-3.5 text-center font-semibold">Vắng</th>
-              <th class="px-5 py-3.5 text-center font-semibold">Đi muộn</th>
-              <th class="px-5 py-3.5 text-right font-semibold">Tỷ lệ có mặt</th>
+              <th class="px-5 py-3.5">Ngày học</th>
+              <th class="px-5 py-3.5">Lớp</th>
+              <th class="px-5 py-3.5 text-center">Có mặt</th>
+              <th class="px-5 py-3.5 text-center">Vắng</th>
+              <th class="px-5 py-3.5 text-center">Đi muộn</th>
+              <th class="px-5 py-3.5 text-right">Tỷ lệ có mặt</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="item in filteredLessons.slice(0, 15)" :key="item.lessonId" class="hover:bg-orange-50/40">
-              <td class="whitespace-nowrap px-5 py-3.5 text-gray-600">{{ formatDate(item.lessonDate) }}</td>
-              <td class="px-5 py-3.5 font-medium text-gray-800">{{ item.className }}</td>
-              <td class="px-5 py-3.5 text-center text-emerald-700">{{ item.presentCount }}</td>
-              <td class="px-5 py-3.5 text-center text-red-600">{{ item.absentCount + item.excusedCount }}</td>
-              <td class="px-5 py-3.5 text-center text-amber-600">{{ item.lateCount }}</td>
-              <td class="px-5 py-3.5 text-right font-semibold text-gray-900">{{ item.rate }}%</td>
+          <tbody class="divide-y divide-stone-200">
+            <tr v-for="item in filteredLessons.slice(0, 15)" :key="item.lessonId" class="transition hover:bg-orange-50/50">
+              <td class="whitespace-nowrap px-5 py-3.5 text-stone-600 tabular-nums">{{ formatDate(item.lessonDate) }}</td>
+              <td class="px-5 py-3.5 font-semibold text-stone-900">{{ item.className }}</td>
+              <td class="px-5 py-3.5 text-center tabular-nums" :class="item.presentCount ? 'font-semibold text-emerald-700' : 'text-stone-400 font-normal'">{{ item.presentCount }}</td>
+              <td class="px-5 py-3.5 text-center tabular-nums" :class="item.absentCount + item.excusedCount ? 'font-semibold text-rose-700' : 'text-stone-400 font-normal'">{{ item.absentCount + item.excusedCount }}</td>
+              <td class="px-5 py-3.5 text-center tabular-nums" :class="item.lateCount ? 'font-semibold text-amber-700' : 'text-stone-400 font-normal'">{{ item.lateCount }}</td>
+              <td class="px-5 py-3.5 text-right font-semibold text-stone-900 tabular-nums">{{ item.rate }}%</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p v-if="filteredLessons.length > 15" class="border-t border-orange-50 px-5 py-3 text-xs text-gray-500">Đang hiển thị 15 buổi mới nhất.</p>
+      <p v-if="filteredLessons.length > 15" class="border-t border-stone-200 bg-stone-50 px-5 py-3 text-xs text-stone-500">Đang hiển thị 15 buổi mới nhất.</p>
     </section>
   </div>
 </template>
@@ -142,10 +142,10 @@ const attendanceBreakdown = computed(() => {
   const total = result.presentCount + result.absentCount + result.excusedCount + result.lateCount + result.unmarkedCount
   const items = [
     { label: 'Có mặt', count: result.presentCount, dot: 'bg-emerald-500', bar: 'bg-emerald-500' },
-    { label: 'Vắng không phép', count: result.absentCount, dot: 'bg-rose-400', bar: 'bg-rose-400' },
-    { label: 'Vắng có phép', count: result.excusedCount, dot: 'bg-blue-400', bar: 'bg-blue-400' },
+    { label: 'Vắng không phép', count: result.absentCount, dot: 'bg-rose-500', bar: 'bg-rose-500' },
+    { label: 'Vắng có phép', count: result.excusedCount, dot: 'bg-stone-500', bar: 'bg-stone-500' },
     { label: 'Đi muộn', count: result.lateCount, dot: 'bg-amber-400', bar: 'bg-amber-400' },
-    { label: 'Chưa điểm danh', count: result.unmarkedCount, dot: 'bg-gray-300', bar: 'bg-gray-300' },
+    { label: 'Chưa điểm danh', count: result.unmarkedCount, dot: 'bg-stone-300', bar: 'bg-stone-300' },
   ].map(item => ({ ...item, percent: total ? Math.round((item.count / total) * 100) : 0 }))
   return { total, items }
 })

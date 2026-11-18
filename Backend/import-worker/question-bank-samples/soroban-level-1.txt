@@ -1,0 +1,32 @@
+KHÓA HỌC: Soroban
+CẤP ĐỘ: 1
+CHỦ ĐỀ: Cộng trừ cơ bản
+
+Câu 1: 12 + 5 = ?
+A. 16
+B. 17
+C. 18
+D. 15
+Đáp án giáo viên: B. 17
+
+Câu 2: 16 - 7 = ?
+A. 8
+B. 9
+C. 10
+D. 7
+Đáp án giáo viên: B. 9
+
+Câu 3: Tính nhẩm theo thứ tự: 3, +4, -2. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 5
+
+Câu 4: Điền số còn thiếu: 9 + ___ = 15.
+Đáp án giáo viên: 6
+
+Câu 5: Nhận định sau đúng hay sai: 8 + 7 = 15.
+Đáp án giáo viên: Đúng.
+
+Câu 6: Nhận định sau đúng hay sai: 14 - 5 = 10.
+Đáp án giáo viên: Sai. Vì 14 - 5 = 9.
+
+Câu 7: Tính nhẩm theo thứ tự: 10, -3, +5. Kết quả cuối cùng là bao nhiêu?
+Đáp án giáo viên: 12

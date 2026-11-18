@@ -3,13 +3,13 @@
     <!-- ─── Header & Title ──────────────────────────────────────────────── -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <nav class="flex items-center gap-2 text-xs font-medium text-orange-600 mb-1">
-          <span>Giáo viên</span>
-          <ChevronRightIcon class="w-3.5 h-3.5 text-orange-400" />
+        <nav class="flex items-center gap-2 text-xs font-medium text-stone-500 mb-1">
+          <span class="text-orange-600 font-semibold">Giáo viên</span>
+          <ChevronRightIcon class="w-3.5 h-3.5 text-stone-400" />
           <span>Điểm danh học viên</span>
         </nav>
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Điểm danh & Quản lý chuyên cần</h1>
-        <p class="text-xs md:text-sm text-gray-500 mt-0.5">
+        <h1 class="text-2xl md:text-3xl font-bold text-stone-900 tracking-tight">Điểm danh & Quản lý chuyên cần</h1>
+        <p class="text-xs md:text-sm text-stone-500 mt-0.5">
           Theo dõi chuyên cần từng buổi học, duyệt đơn xin nghỉ phép và tra cứu lịch sử học sinh
         </p>
       </div>
@@ -20,7 +20,7 @@
           type="button"
           @click="reloadCurrentLesson"
           :disabled="isLoading || !selectedLessonId"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-orange-200 bg-white hover:bg-orange-50 text-orange-800 text-xs font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md border border-stone-300 bg-white hover:bg-stone-100 hover:border-stone-400 text-stone-800 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
           title="Tải lại dữ liệu buổi học"
         >
           <ArrowPathIcon class="w-4 h-4 text-orange-600" :class="{ 'animate-spin': isLoading }" />
@@ -32,10 +32,10 @@
           @click="handleSaveBatchAttendance"
           :disabled="isSavingBatch || !selectedLessonId || students.length === 0 || lockState.isLocked"
           :class="[
-            'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer',
+            'inline-flex items-center gap-2 h-9 px-4 rounded-md text-xs font-semibold shadow-xs transition-colors',
             lockState.isLocked
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-              : 'bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50'
+              ? 'bg-stone-200 text-stone-500 border border-stone-300 cursor-not-allowed shadow-none'
+              : 'bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-700 disabled:opacity-50 cursor-pointer'
           ]"
           :title="lockState.isLocked ? 'Đã hết hạn điểm danh (Chỉ được điểm danh trong 1 ngày sau khi kết thúc buổi học)' : 'Lưu điểm danh cả lớp'"
         >
@@ -52,12 +52,12 @@
       <div
         v-if="feedback.message"
         :class="[
-          'flex items-center justify-between p-4 rounded-2xl shadow-xs border text-sm',
+          'flex items-center justify-between p-4 rounded-lg border text-sm',
           feedback.type === 'success'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
             : feedback.type === 'warning'
-            ? 'bg-amber-50 border-amber-200 text-amber-800'
-            : 'bg-rose-50 border-rose-200 text-rose-800'
+            ? 'bg-amber-50 border-amber-300 text-amber-800'
+            : 'bg-rose-50 border-rose-300 text-rose-800'
         ]"
       >
         <div class="flex items-center gap-3">
@@ -69,7 +69,7 @@
         <button
           type="button"
           @click="feedback.message = ''"
-          class="text-gray-400 hover:text-gray-600 p-1 rounded-lg transition-colors cursor-pointer"
+          class="text-stone-400 hover:text-stone-700 p-1 rounded-md transition-colors cursor-pointer"
         >
           <XMarkIcon class="w-4 h-4" />
         </button>
@@ -77,13 +77,13 @@
     </transition>
 
     <!-- ─── Session & Class Selector Card (Only assigned classes & sorted lessons) ─── -->
-    <div class="bg-white rounded-3xl border border-orange-100 p-5 shadow-sm space-y-4">
+    <div class="bg-white rounded-lg border border-stone-300 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- 1. Select Class (Only Assigned Classes) -->
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5 flex items-center justify-between">
-            <span>1. Chọn lớp phụ trách <span class="text-rose-500">*</span></span>
-            <span class="text-[11px] font-medium text-orange-600 lowercase">
+          <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5 flex items-center justify-between">
+            <span>1. Chọn lớp phụ trách <span class="text-rose-600">*</span></span>
+            <span class="text-[11px] font-medium text-orange-600 lowercase tabular-nums">
               ({{ classes.length }} lớp được phân công)
             </span>
           </label>
@@ -91,7 +91,7 @@
             <select
               v-model="selectedClassId"
               @change="onClassChange"
-              class="w-full text-xs font-semibold bg-orange-50/50 border border-orange-200 text-gray-900 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all"
+              class="w-full h-10 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3.5 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 outline-none transition-colors"
             >
               <option :value="null" disabled>-- Chọn lớp học đang phụ trách --</option>
               <option v-for="cls in classes" :key="cls.id" :value="cls.id">
@@ -99,16 +99,16 @@
               </option>
             </select>
           </div>
-          <p v-if="classes.length === 0 && !isLoadingClasses" class="text-xs text-amber-600 mt-1">
+          <p v-if="classes.length === 0 && !isLoadingClasses" class="text-xs text-amber-700 mt-1">
             Không tìm thấy lớp học nào được phân công cho giáo viên này.
           </p>
         </div>
 
         <!-- 2. Select Lesson (Sorted by Date & Sequenced: Buổi 1 -> Buổi 24) -->
         <div class="lg:col-span-2">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5 flex items-center justify-between">
-            <span>2. Chọn buổi học <span class="text-rose-500">*</span></span>
-            <span class="text-[11px] font-medium text-gray-500">
+          <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5 flex items-center justify-between">
+            <span>2. Chọn buổi học <span class="text-rose-600">*</span></span>
+            <span class="text-[11px] font-medium text-stone-500 normal-case tabular-nums">
               (Sắp xếp theo ngày học: Buổi 1 &rarr; Buổi {{ lessons.length || 24 }})
             </span>
           </label>
@@ -117,7 +117,7 @@
               v-model="selectedLessonId"
               @change="onLessonChange"
               :disabled="isLoadingLessons || lessons.length === 0"
-              class="w-full text-xs font-semibold bg-orange-50/50 border border-orange-200 text-gray-900 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all disabled:opacity-50"
+              class="w-full h-10 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-900 rounded-md px-3.5 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 outline-none transition-colors disabled:opacity-50 tabular-nums"
             >
               <option :value="null" disabled>
                 {{ isLoadingLessons ? 'Đang tải danh sách buổi học...' : (lessons.length === 0 ? '-- Lớp chưa có buổi học nào --' : '-- Chọn buổi học --') }}
@@ -135,19 +135,19 @@
       </div>
 
       <!-- Quick Lesson Filter Bar by State: Tất cả, Đang diễn ra, Đã kết thúc, Đã điểm danh, Chưa điểm danh -->
-      <div v-if="lessons.length > 0" class="pt-2 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2 text-xs">
-        <span class="font-bold text-gray-600 text-[11px] uppercase tracking-wider">Lọc nhanh buổi học:</span>
-        <div class="flex items-center gap-1.5 flex-wrap">
+      <div v-if="lessons.length > 0" class="pt-3 border-t border-stone-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <span class="font-bold text-stone-600 text-[11px] uppercase tracking-wider">Lọc nhanh buổi học:</span>
+        <div class="inline-flex items-center bg-stone-100 border border-stone-300 p-1 rounded-md flex-wrap gap-1">
           <button
             type="button"
             v-for="tab in lessonTabs"
             :key="tab.id"
             @click="currentLessonTab = tab.id"
             :class="[
-              'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+              'h-7 px-2.5 rounded text-xs font-semibold transition-colors cursor-pointer tabular-nums',
               currentLessonTab === tab.id
-                ? 'bg-orange-500 text-white shadow-xs'
-                : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-900'
+                ? 'bg-orange-600 text-white shadow-xs'
+                : 'text-stone-700 hover:text-stone-900'
             ]"
           >
             {{ tab.label }}
@@ -158,23 +158,23 @@
       <!-- ─── Current Lesson Metadata & Status Banner ───────────────────── -->
       <div
         v-if="currentLesson"
-        class="mt-3 p-4 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50/40 border border-orange-200 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs"
+        class="mt-3 p-4 rounded-lg bg-stone-50 border border-stone-300 border-l-4 border-l-orange-600 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs"
       >
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0">
+          <div class="w-11 h-11 rounded-md bg-orange-600 border border-orange-700 text-white flex items-center justify-center font-bold text-base flex-shrink-0 tabular-nums">
             {{ currentLesson.lessonNumber || '1' }}
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-base text-gray-900">{{ currentLesson.label }} - {{ lessonDetail?.className || 'Lớp học' }}</span>
+              <span class="font-bold text-base text-stone-900">{{ currentLesson.label }} - {{ lessonDetail?.className || 'Lớp học' }}</span>
 
               <!-- Timing Status: Đang diễn ra / Đã kết thúc / Sắp diễn ra -->
               <span
                 :class="[
-                  'px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1',
-                  currentLessonTiming.code === 'IN_PROGRESS' ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300' :
-                  currentLessonTiming.code === 'ENDED' ? 'bg-gray-200 text-gray-800' :
-                  'bg-blue-100 text-blue-800'
+                  'px-2 py-0.5 rounded border font-semibold text-[11px] inline-flex items-center gap-1',
+                  currentLessonTiming.code === 'IN_PROGRESS' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
+                  currentLessonTiming.code === 'ENDED' ? 'border-stone-300 bg-stone-100 text-stone-700' :
+                  'border-amber-300 bg-amber-50 text-amber-800'
                 ]"
               >
                 <span v-if="currentLessonTiming.code === 'IN_PROGRESS'" class="w-2 h-2 rounded-full bg-emerald-600 animate-ping"></span>
@@ -184,10 +184,10 @@
               <!-- Attendance Status: Đã điểm danh / Chưa điểm danh -->
               <span
                 :class="[
-                  'px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1',
-                  currentLessonAttendanceStatus.code === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
-                  currentLessonAttendanceStatus.code === 'PARTIAL' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
-                  'bg-rose-100 text-rose-800 border border-rose-300'
+                  'px-2 py-0.5 rounded border font-semibold text-[11px] inline-flex items-center gap-1',
+                  currentLessonAttendanceStatus.code === 'COMPLETED' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
+                  currentLessonAttendanceStatus.code === 'PARTIAL' ? 'border-amber-300 bg-amber-50 text-amber-800' :
+                  'border-rose-300 bg-rose-50 text-rose-800'
                 ]"
               >
                 <CheckIcon v-if="currentLessonAttendanceStatus.code === 'COMPLETED'" class="w-3.5 h-3.5" />
@@ -196,12 +196,12 @@
             </div>
 
             <!-- Date and Time -->
-            <p class="text-gray-600 mt-1 flex items-center gap-3 flex-wrap">
-              <span class="flex items-center gap-1 text-gray-700">
+            <p class="text-stone-600 mt-1 flex items-center gap-3 flex-wrap tabular-nums">
+              <span class="flex items-center gap-1 text-stone-700">
                 <CalendarDaysIcon class="w-3.5 h-3.5 text-orange-600" />
                 Ngày học: <strong>{{ formatDate(currentLesson.lessonDate) }}</strong>
               </span>
-              <span v-if="currentLesson.startTime" class="flex items-center gap-1 text-gray-700">
+              <span v-if="currentLesson.startTime" class="flex items-center gap-1 text-stone-700">
                 <ClockIcon class="w-3.5 h-3.5 text-orange-600" />
                 Thời gian: {{ formatTime(currentLesson.startTime) }} - {{ formatTime(currentLesson.endTime) }}
               </span>
@@ -213,27 +213,27 @@
         <div class="flex items-center gap-3 self-start md:self-auto">
           <div
             v-if="lockState.isLocked"
-            class="px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-right"
+            class="px-3 py-2 rounded-md bg-rose-50 border border-rose-300 text-rose-800 text-right tabular-nums"
           >
-            <p class="font-bold flex items-center gap-1 text-[11px] text-rose-700">
+            <p class="font-bold flex items-center justify-end gap-1 text-[11px] text-rose-700">
               <LockClosedIcon class="w-3.5 h-3.5" /> ĐÃ HẾT HẠN ĐIỂM DANH
             </p>
-            <p class="text-[10px] text-rose-600 mt-0.5">Quá 1 ngày sau khi kết thúc buổi</p>
+            <p class="text-[11px] text-rose-600 mt-0.5">Quá 1 ngày sau khi kết thúc buổi</p>
           </div>
           <div
             v-else
-            class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-right"
+            class="px-3 py-2 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-800 text-right tabular-nums"
           >
-            <p class="font-bold flex items-center gap-1 text-[11px] text-emerald-700">
+            <p class="font-bold flex items-center justify-end gap-1 text-[11px] text-emerald-700">
               <ClockIcon class="w-3.5 h-3.5" /> Có thể điểm danh
             </p>
-            <p class="text-[10px] text-emerald-600 mt-0.5">Hạn chót: {{ lockState.deadlineFormatted }}</p>
+            <p class="text-[11px] text-emerald-700 mt-0.5">Hạn chót: {{ lockState.deadlineFormatted }}</p>
           </div>
 
           <!-- Ratio ring -->
-          <div class="w-12 h-12 rounded-full border-2 border-orange-400 flex flex-col items-center justify-center font-bold text-xs text-orange-950 bg-white shadow-2xs">
+          <div class="w-12 h-12 rounded-full border-2 border-orange-500 flex flex-col items-center justify-center font-bold text-xs text-stone-900 bg-white tabular-nums">
             <span>{{ attendanceRate }}%</span>
-            <span class="text-[8px] font-normal text-gray-500">có mặt</span>
+            <span class="text-[8px] font-medium text-stone-500">có mặt</span>
           </div>
         </div>
       </div>
@@ -242,70 +242,70 @@
     <!-- ─── Warning Banner When Attendance is Locked (After 1 day) ──────── -->
     <div
       v-if="lockState.isLocked && currentLesson"
-      class="rounded-3xl border border-rose-200 bg-rose-50/90 p-4.5 flex items-start gap-3.5 text-xs text-rose-900 shadow-xs"
+      class="rounded-lg border border-rose-300 bg-rose-50 p-4 flex items-start gap-3.5 text-xs text-rose-900 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
     >
-      <div class="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
+      <div class="w-8 h-8 rounded-md bg-rose-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
         <LockClosedIcon class="w-4 h-4" />
       </div>
-      <div class="flex-1">
+      <div class="flex-1 tabular-nums">
         <h4 class="font-bold text-sm text-rose-950">Ràng buộc bảo mật: Đã khóa quyền điểm danh cho buổi học này</h4>
         <p class="text-rose-800 mt-1 leading-relaxed">
           Theo quy chế của trung tâm, giáo viên chỉ được phép ghi nhận điểm danh trong thời gian buổi học diễn ra và <strong>tối đa 1 ngày (24 giờ) sau khi kết thúc buổi học</strong>.
           Buổi học này đã kết thúc vào ngày <strong>{{ lockState.lessonEndTimeFormatted }}</strong> và đã hết hạn chỉnh sửa từ <strong>{{ lockState.deadlineFormatted }}</strong>.
         </p>
-        <p class="text-rose-700 mt-1 font-medium">
+        <p class="text-rose-800 mt-1 font-medium">
           Dữ liệu bên dưới đang ở <strong>Chế độ chỉ xem</strong>. Nếu cần điều chỉnh điểm danh học viên cho buổi học này, vui lòng liên hệ Ban Đào Tạo / Quản trị viên (Admin).
         </p>
       </div>
     </div>
 
     <!-- ─── Realtime Attendance Stats Cards ─────────────────────────────── -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 tabular-nums">
       <!-- Total -->
-      <div class="bg-white rounded-2xl border border-orange-100 p-4 text-center shadow-xs">
-        <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Tổng sĩ số</p>
-        <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.total }}</p>
-        <p class="text-[10px] text-gray-400 mt-0.5">học sinh trong lớp</p>
+      <div class="bg-white rounded-lg border border-stone-300 p-4 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <p class="text-[11px] text-stone-500 font-bold uppercase tracking-wider">Tổng sĩ số</p>
+        <p class="text-2xl font-bold text-stone-900 mt-1">{{ stats.total }}</p>
+        <p class="text-[11px] text-stone-400 mt-0.5">học sinh trong lớp</p>
       </div>
 
       <!-- Present -->
-      <div class="bg-emerald-50/70 rounded-2xl border border-emerald-200 p-4 text-center shadow-xs">
-        <p class="text-[11px] text-emerald-700 font-bold uppercase tracking-wider">Có mặt</p>
+      <div class="bg-emerald-50/70 rounded-lg border border-emerald-300 p-4 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <p class="text-[11px] text-emerald-800 font-bold uppercase tracking-wider">Có mặt</p>
         <p class="text-2xl font-bold text-emerald-800 mt-1">{{ stats.present }}</p>
-        <p class="text-[10px] text-emerald-600 font-medium mt-0.5">đang tham gia</p>
+        <p class="text-[11px] text-emerald-700 font-medium mt-0.5">đang tham gia</p>
       </div>
 
       <!-- Late -->
-      <div class="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 text-center shadow-xs">
-        <p class="text-[11px] text-amber-700 font-bold uppercase tracking-wider">Đi muộn</p>
+      <div class="bg-amber-50/70 rounded-lg border border-amber-300 p-4 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <p class="text-[11px] text-amber-800 font-bold uppercase tracking-wider">Đi muộn</p>
         <p class="text-2xl font-bold text-amber-800 mt-1">{{ stats.late }}</p>
-        <p class="text-[10px] text-amber-600 font-medium mt-0.5">đến sau giờ học</p>
+        <p class="text-[11px] text-amber-700 font-medium mt-0.5">đến sau giờ học</p>
       </div>
 
       <!-- Excused -->
-      <div class="bg-sky-50/70 rounded-2xl border border-sky-200 p-4 text-center shadow-xs">
-        <p class="text-[11px] text-sky-700 font-bold uppercase tracking-wider">Có phép</p>
-        <p class="text-2xl font-bold text-sky-800 mt-1">{{ stats.excused }}</p>
-        <p class="text-[10px] text-sky-600 font-medium mt-0.5">có đơn xin nghỉ</p>
+      <div class="bg-stone-100 rounded-lg border border-stone-300 p-4 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <p class="text-[11px] text-stone-700 font-bold uppercase tracking-wider">Có phép</p>
+        <p class="text-2xl font-bold text-stone-900 mt-1">{{ stats.excused }}</p>
+        <p class="text-[11px] text-stone-500 font-medium mt-0.5">có đơn xin nghỉ</p>
       </div>
 
       <!-- Absent -->
-      <div class="bg-rose-50/70 rounded-2xl border border-rose-200 p-4 text-center shadow-xs">
-        <p class="text-[11px] text-rose-700 font-bold uppercase tracking-wider">Vắng mặt</p>
+      <div class="bg-rose-50/70 rounded-lg border border-rose-300 p-4 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <p class="text-[11px] text-rose-800 font-bold uppercase tracking-wider">Vắng mặt</p>
         <p class="text-2xl font-bold text-rose-800 mt-1">{{ stats.absent }}</p>
-        <p class="text-[10px] text-rose-600 font-medium mt-0.5">không có phép</p>
+        <p class="text-[11px] text-rose-700 font-medium mt-0.5">không có phép</p>
       </div>
 
       <!-- Unmarked -->
-      <div class="bg-gray-50 rounded-2xl border border-gray-200 p-4 text-center shadow-xs">
-        <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Chưa điểm danh</p>
-        <p class="text-2xl font-bold text-gray-700 mt-1">{{ stats.unmarked }}</p>
-        <p class="text-[10px] text-gray-400 mt-0.5">cần xác nhận</p>
+      <div class="bg-white rounded-lg border border-stone-300 p-4 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <p class="text-[11px] text-stone-500 font-bold uppercase tracking-wider">Chưa điểm danh</p>
+        <p :class="['text-2xl font-bold mt-1', stats.unmarked === 0 ? 'text-stone-400 font-normal' : 'text-stone-800']">{{ stats.unmarked }}</p>
+        <p class="text-[11px] text-stone-400 mt-0.5">cần xác nhận</p>
       </div>
     </div>
 
     <!-- ─── Controls Toolbar & Filters ──────────────────────────────────── -->
-    <div class="bg-white rounded-3xl border border-orange-100 p-4 shadow-sm space-y-3">
+    <div class="bg-white rounded-lg border border-stone-300 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <!-- Quick Batch Actions (Disabled if locked) -->
         <div class="flex items-center gap-2 flex-wrap">
@@ -314,10 +314,10 @@
             @click="markAllPresent"
             :disabled="students.length === 0 || lockState.isLocked"
             :class="[
-              'px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5',
+              'h-9 px-3.5 rounded-md border text-xs font-semibold transition-colors flex items-center gap-1.5',
               lockState.isLocked
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 disabled:opacity-50'
+                ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                : 'bg-emerald-50 border-emerald-300 hover:bg-emerald-100 text-emerald-800 disabled:opacity-50 cursor-pointer'
             ]"
             :title="lockState.isLocked ? 'Đã hết hạn điểm danh' : 'Đánh dấu tất cả có mặt'"
           >
@@ -330,14 +330,14 @@
             @click="autoApplyExcusedForLeaveRequests"
             :disabled="students.length === 0 || countWithLeaveRequest === 0 || lockState.isLocked"
             :class="[
-              'px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5',
+              'h-9 px-3.5 rounded-md border text-xs font-semibold transition-colors flex items-center gap-1.5 tabular-nums',
               lockState.isLocked
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-sky-100/80 hover:bg-sky-200 text-sky-900 disabled:opacity-50'
+                ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                : 'bg-stone-100 border-stone-300 hover:bg-stone-200 text-stone-800 disabled:opacity-50 cursor-pointer'
             ]"
             :title="`Có ${countWithLeaveRequest} học sinh gửi đơn xin nghỉ phép`"
           >
-            <DocumentTextIcon class="w-3.5 h-3.5 text-sky-700" />
+            <DocumentTextIcon class="w-3.5 h-3.5 text-orange-600" />
             <span>Duyệt đơn nghỉ phép ({{ countWithLeaveRequest }})</span>
           </button>
 
@@ -345,7 +345,7 @@
             type="button"
             @click="resetAllToUnmarked"
             :disabled="students.length === 0 || lockState.isLocked"
-            class="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="h-9 px-3 rounded-md border border-stone-300 bg-white text-xs font-semibold text-stone-700 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Đặt lại
           </button>
@@ -357,15 +357,16 @@
             <input
               type="text"
               v-model="searchQuery"
+              maxlength="100"
               placeholder="Tìm theo tên học sinh..."
-              class="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300"
+              class="w-full h-9 pl-8 pr-3 rounded-md bg-stone-50/70 border border-stone-300 text-xs text-stone-900 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 outline-none"
             />
-            <MagnifyingGlassIcon class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+            <MagnifyingGlassIcon class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" />
           </div>
 
           <select
             v-model="statusFilter"
-            class="text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+            class="h-9 text-xs font-semibold bg-stone-50/70 border border-stone-300 text-stone-800 rounded-md px-3 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 outline-none tabular-nums"
           >
             <option value="ALL">Tất cả trạng thái ({{ students.length }})</option>
             <option value="PRESENT">Có mặt</option>
@@ -380,43 +381,43 @@
     </div>
 
     <!-- ─── Main Attendance Table ───────────────────────────────────────── -->
-    <div class="bg-white rounded-3xl border border-orange-100 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
       <!-- Loading state -->
-      <div v-if="isLoading" class="p-12 text-center text-orange-600 space-y-3">
-        <ArrowPathIcon class="w-8 h-8 animate-spin mx-auto text-orange-500" />
+      <div v-if="isLoading" class="p-12 text-center text-stone-600 space-y-3">
+        <ArrowPathIcon class="w-8 h-8 animate-spin mx-auto text-orange-600" />
         <p class="text-sm font-semibold">Đang tải danh sách điểm danh buổi học...</p>
       </div>
 
       <!-- No lesson selected state -->
-      <div v-else-if="!selectedLessonId" class="p-12 text-center text-gray-500 space-y-3">
-        <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 mx-auto flex items-center justify-center">
-          <CalendarDaysIcon class="w-7 h-7" />
+      <div v-else-if="!selectedLessonId" class="p-12 text-center text-stone-500 space-y-3">
+        <div class="w-12 h-12 rounded-md bg-orange-50 border border-orange-200 text-orange-600 mx-auto flex items-center justify-center">
+          <CalendarDaysIcon class="w-6 h-6" />
         </div>
-        <h3 class="text-base font-bold text-gray-800">Chưa chọn buổi học để điểm danh</h3>
-        <p class="text-xs text-gray-500 max-w-sm mx-auto">
+        <h3 class="text-base font-bold text-stone-800">Chưa chọn buổi học để điểm danh</h3>
+        <p class="text-xs text-stone-500 max-w-sm mx-auto">
           Vui lòng chọn Lớp học và Buổi học ở thanh công cụ phía trên để tải danh sách học sinh và ghi nhận chuyên cần.
         </p>
       </div>
 
       <!-- Empty list state -->
-      <div v-else-if="filteredStudents.length === 0" class="p-12 text-center text-gray-500 space-y-2">
-        <p class="font-bold text-gray-800">Không tìm thấy học sinh nào</p>
-        <p class="text-xs text-gray-400">Không có học sinh phù hợp với bộ lọc hiện tại.</p>
+      <div v-else-if="filteredStudents.length === 0" class="p-12 text-center text-stone-500 space-y-2">
+        <p class="font-bold text-stone-800">Không tìm thấy học sinh nào</p>
+        <p class="text-xs text-stone-400">Không có học sinh phù hợp với bộ lọc hiện tại.</p>
       </div>
 
       <!-- Students Table -->
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
-            <tr class="bg-orange-50/80 border-b border-orange-100 text-orange-950 font-bold uppercase tracking-wider text-[11px]">
-              <th class="py-4 px-4 w-12 text-center">STT</th>
-              <th class="py-4 px-4 min-w-[220px]">Học sinh & Đơn xin nghỉ</th>
-              <th class="py-4 px-4 text-center min-w-[340px]">Trạng thái điểm danh</th>
-              <th class="py-4 px-4 min-w-[220px]">Ghi chú giáo viên</th>
-              <th class="py-4 px-4 text-center min-w-[150px]">Thao tác lẻ</th>
+            <tr class="bg-stone-100 border-b-2 border-stone-300 text-stone-700 font-bold uppercase tracking-wider text-xs">
+              <th class="py-3.5 px-4 w-12 text-center">STT</th>
+              <th class="py-3.5 px-4 min-w-[220px]">Học sinh & Đơn xin nghỉ</th>
+              <th class="py-3.5 px-4 text-center min-w-[340px]">Trạng thái điểm danh</th>
+              <th class="py-3.5 px-4 min-w-[220px]">Ghi chú giáo viên</th>
+              <th class="py-3.5 px-4 text-center min-w-[150px]">Thao tác lẻ</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-orange-50">
+          <tbody class="divide-y divide-stone-200">
             <tr
               v-for="(st, index) in filteredStudents"
               :key="st.studentId"
@@ -424,13 +425,13 @@
                 'transition-colors',
                 st.status === 'ABSENT' ? 'bg-rose-50/40' :
                 st.status === 'LATE' ? 'bg-amber-50/30' :
-                st.status === 'EXCUSED' ? 'bg-sky-50/30' :
+                st.status === 'EXCUSED' ? 'bg-stone-50/80' :
                 st.status === 'PRESENT' ? 'hover:bg-emerald-50/20' :
-                'hover:bg-orange-50/20'
+                'hover:bg-orange-50/50'
               ]"
             >
               <!-- Index -->
-              <td class="py-3.5 px-4 text-center text-gray-400 font-mono font-medium">
+              <td class="py-3.5 px-4 text-center text-stone-500 font-medium tabular-nums">
                 {{ index + 1 }}
               </td>
 
@@ -438,7 +439,7 @@
               <td class="py-3.5 px-4">
                 <div class="flex items-center gap-3">
                   <!-- Avatar -->
-                  <div class="w-9 h-9 rounded-full bg-orange-100 border border-orange-200 text-orange-800 font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs">
+                  <div class="w-9 h-9 rounded-full bg-orange-50 border border-orange-200 text-orange-800 font-bold text-xs flex items-center justify-center flex-shrink-0">
                     <img
                       v-if="st.avatar"
                       :src="st.avatar"
@@ -451,11 +452,11 @@
                   <!-- Name and Details -->
                   <div class="min-w-0">
                     <div class="flex items-center gap-1.5 flex-wrap">
-                      <p class="font-bold text-sm text-gray-900 truncate">{{ st.studentName }}</p>
-                      <span class="text-[10px] font-mono text-gray-400">#{{ st.studentId }}</span>
+                      <p class="font-bold text-sm text-stone-900 truncate">{{ st.studentName }}</p>
+                      <span class="text-[11px] font-mono text-stone-400 tabular-nums">#{{ st.studentId }}</span>
                       <span
                         v-if="st.gender"
-                        class="text-[10px] px-1.5 py-0.2 rounded bg-gray-100 text-gray-600 font-medium"
+                        class="text-[10px] px-1.5 py-0.5 rounded border border-stone-300 bg-stone-100 text-stone-700 font-medium"
                       >
                         {{ st.gender === 'Female' ? 'Nữ' : 'Nam' }}
                       </span>
@@ -464,18 +465,18 @@
                     <!-- Leave Request Indicator (If student submitted a leave request) -->
                     <div v-if="st.hasLeaveRequest" class="mt-1 flex items-center gap-1.5 flex-wrap">
                       <span
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 cursor-pointer hover:bg-indigo-100 transition-colors"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-50 text-orange-800 border border-orange-300 cursor-pointer hover:bg-orange-100 transition-colors"
                         @click="openLeaveDetailModal(st)"
                         title="Bấm để xem nội dung chi tiết đơn xin nghỉ phép"
                       >
-                        <DocumentTextIcon class="w-3 h-3 text-indigo-600" />
+                        <DocumentTextIcon class="w-3 h-3 text-orange-600" />
                         Đơn xin nghỉ: {{ st.leaveReason || 'Phụ huynh xin phép' }}
                       </span>
                       <button
                         v-if="st.status !== 'EXCUSED' && !lockState.isLocked"
                         type="button"
                         @click="applyLeaveRequest(st)"
-                        class="text-[10px] font-semibold text-sky-700 hover:text-sky-900 underline cursor-pointer"
+                        class="text-[11px] font-semibold text-orange-700 hover:text-orange-900 underline cursor-pointer"
                       >
                         Duyệt có phép
                       </button>
@@ -493,11 +494,11 @@
                     @click="setStudentStatus(st, 'PRESENT')"
                     :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      'h-8 px-2.5 rounded-md border font-semibold text-xs transition-colors flex items-center gap-1',
                       lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'PRESENT'
-                        ? 'bg-emerald-500 text-white shadow-xs ring-2 ring-emerald-300'
-                        : 'bg-gray-100/80 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                        : 'bg-white border-stone-300 text-stone-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300'
                     ]"
                   >
                     <CheckIcon v-if="st.status === 'PRESENT'" class="w-3.5 h-3.5" />
@@ -510,11 +511,11 @@
                     @click="setStudentStatus(st, 'LATE')"
                     :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      'h-8 px-2.5 rounded-md border font-semibold text-xs transition-colors flex items-center gap-1',
                       lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'LATE'
-                        ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300'
-                        : 'bg-gray-100/80 text-gray-600 hover:bg-amber-50 hover:text-amber-700'
+                        ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                        : 'bg-white border-stone-300 text-stone-700 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300'
                     ]"
                   >
                     <ClockIcon v-if="st.status === 'LATE'" class="w-3.5 h-3.5" />
@@ -527,11 +528,11 @@
                     @click="setStudentStatus(st, 'EXCUSED')"
                     :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      'h-8 px-2.5 rounded-md border font-semibold text-xs transition-colors flex items-center gap-1',
                       lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'EXCUSED'
-                        ? 'bg-sky-500 text-white shadow-xs ring-2 ring-sky-300'
-                        : 'bg-gray-100/80 text-gray-600 hover:bg-sky-50 hover:text-sky-700'
+                        ? 'bg-stone-700 text-white border-stone-800 shadow-xs'
+                        : 'bg-white border-stone-300 text-stone-700 hover:bg-stone-100 hover:border-stone-400'
                     ]"
                   >
                     <span>Có phép</span>
@@ -543,11 +544,11 @@
                     @click="setStudentStatus(st, 'ABSENT')"
                     :disabled="lockState.isLocked"
                     :class="[
-                      'px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1',
+                      'h-8 px-2.5 rounded-md border font-semibold text-xs transition-colors flex items-center gap-1',
                       lockState.isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer',
                       st.status === 'ABSENT'
-                        ? 'bg-rose-500 text-white shadow-xs ring-2 ring-rose-300'
-                        : 'bg-gray-100/80 text-gray-600 hover:bg-rose-50 hover:text-rose-700'
+                        ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
+                        : 'bg-white border-stone-300 text-stone-700 hover:bg-rose-50 hover:text-rose-800 hover:border-rose-300'
                     ]"
                   >
                     <span>Vắng</span>
@@ -560,32 +561,33 @@
                 <input
                   type="text"
                   v-model="st.teacherNotes"
+                  maxlength="500"
                   :disabled="lockState.isLocked"
                   :placeholder="st.status === 'ABSENT' ? 'Lý do vắng mặt...' : 'Ghi chú thêm...'"
                   :class="[
-                    'w-full text-xs rounded-xl px-3 py-2 border transition-all focus:outline-none focus:ring-2 focus:ring-orange-300',
-                    lockState.isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed border-gray-200' :
-                    st.status === 'ABSENT' ? 'border-rose-300 bg-rose-50/20 text-rose-900 placeholder-rose-400' :
-                    st.status === 'LATE' ? 'border-amber-300 bg-amber-50/20 text-amber-900' :
-                    'border-gray-200 bg-white'
+                    'w-full h-9 text-xs rounded-md px-3 border transition-colors outline-none focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20',
+                    lockState.isLocked ? 'bg-stone-100 text-stone-500 cursor-not-allowed border-stone-200' :
+                    st.status === 'ABSENT' ? 'border-rose-300 bg-rose-50/30 text-rose-900 placeholder-rose-400' :
+                    st.status === 'LATE' ? 'border-amber-300 bg-amber-50/30 text-amber-900' :
+                    'border-stone-300 bg-stone-50/70'
                   ]"
                 />
               </td>
 
               <!-- Single Row Actions (PUT Single + View History) -->
               <td class="py-3.5 px-4 text-center">
-                <div class="flex items-center justify-center gap-2">
+                <div class="flex items-center justify-center gap-1.5">
                   <!-- Quick Save Single (PUT /api/attendance/lesson/{lessonId}/student/{studentId}) -->
                   <button
                     type="button"
                     @click="handleSaveSingle(st)"
                     :disabled="st.isSavingSingle || st.status === 'UNMARKED' || lockState.isLocked"
                     :class="[
-                      'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1',
-                      lockState.isLocked ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
+                      'h-8 px-2.5 rounded-md border text-xs font-semibold transition-colors flex items-center gap-1',
+                      lockState.isLocked ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed' :
                       st.justSavedSingle
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-orange-100/70 hover:bg-orange-200 text-orange-900 cursor-pointer'
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                        : 'bg-orange-50 border-orange-300 hover:bg-orange-100 text-orange-800 cursor-pointer'
                     ]"
                     :title="lockState.isLocked ? 'Đã hết hạn điểm danh' : (st.status === 'UNMARKED' ? 'Vui lòng chọn trạng thái trước khi lưu lẻ' : 'Lưu riêng học sinh này')"
                   >
@@ -599,7 +601,7 @@
                   <button
                     type="button"
                     @click="openStudentHistory(st)"
-                    class="p-1.5 rounded-lg text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer"
+                    class="h-8 w-8 inline-flex items-center justify-center rounded-md border border-stone-300 bg-white text-stone-600 hover:text-orange-700 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
                     title="Xem lịch sử điểm danh của học sinh"
                   >
                     <ClockIcon class="w-4 h-4" />
@@ -612,9 +614,9 @@
       </div>
 
       <!-- Table Footer Save Bar -->
-      <div v-if="filteredStudents.length > 0" class="p-4 bg-gray-50/60 border-t border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p class="text-xs text-gray-500">
-          Hiển thị <strong class="text-gray-900">{{ filteredStudents.length }}</strong> / {{ students.length }} học sinh
+      <div v-if="filteredStudents.length > 0" class="p-4 bg-stone-50 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-xs text-stone-600 tabular-nums">
+          Hiển thị <strong class="text-stone-900">{{ filteredStudents.length }}</strong> / {{ students.length }} học sinh
         </p>
 
         <button
@@ -622,10 +624,10 @@
           @click="handleSaveBatchAttendance"
           :disabled="isSavingBatch || !selectedLessonId || lockState.isLocked"
           :class="[
-            'inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all',
+            'inline-flex items-center gap-2 h-9 px-5 rounded-md text-xs font-semibold shadow-xs transition-colors',
             lockState.isLocked
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-              : 'bg-orange-500 hover:bg-orange-600 text-white cursor-pointer disabled:opacity-50'
+              ? 'bg-stone-200 text-stone-500 border border-stone-300 cursor-not-allowed shadow-none'
+              : 'bg-orange-600 hover:bg-orange-700 text-white border border-orange-700 cursor-pointer disabled:opacity-50'
           ]"
         >
           <LockClosedIcon v-if="lockState.isLocked" class="w-4 h-4" />
@@ -639,18 +641,18 @@
     <!-- ─── Modal 1: Student Attendance History ──────────────────────────── -->
     <div
       v-if="showHistoryModal"
-      class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
     >
-      <div class="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-orange-100 flex flex-col max-h-[90vh]">
+      <div class="bg-white rounded-lg w-full max-w-2xl overflow-hidden shadow-xl border border-stone-300 flex flex-col max-h-[90vh]">
         <!-- Modal Header -->
-        <div class="px-6 py-4 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 flex items-center justify-between">
+        <div class="px-6 py-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            <div class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm">
               {{ getInitials(selectedStudentHistory?.studentName || 'HS') }}
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 text-base">Lịch sử điểm danh học sinh</h3>
-              <p class="text-xs text-gray-600">
+              <h3 class="font-bold text-stone-900 text-base">Lịch sử điểm danh học sinh</h3>
+              <p class="text-xs text-stone-600 tabular-nums">
                 {{ selectedStudentHistory?.studentName }} &bull; Mã: #{{ selectedStudentHistory?.studentId }}
               </p>
             </div>
@@ -658,7 +660,7 @@
           <button
             type="button"
             @click="showHistoryModal = false"
-            class="text-gray-400 hover:text-gray-600 p-1 rounded-xl transition-colors cursor-pointer"
+            class="text-stone-400 hover:text-stone-700 p-1 rounded-md hover:bg-stone-200/60 transition-colors cursor-pointer"
           >
             <XMarkIcon class="w-5 h-5" />
           </button>
@@ -667,25 +669,25 @@
         <!-- Modal Body Content -->
         <div class="p-6 overflow-y-auto space-y-4 flex-1">
           <!-- History Stats Ribbon -->
-          <div class="grid grid-cols-4 gap-2 text-center text-xs">
-            <div class="p-2.5 rounded-xl bg-gray-50 border border-gray-100">
-              <p class="text-gray-500">Tổng buổi</p>
-              <p class="text-base font-bold text-gray-900 mt-0.5">{{ studentHistoryList.length }}</p>
+          <div class="grid grid-cols-4 gap-2 text-center text-xs tabular-nums">
+            <div class="p-2.5 rounded-md bg-stone-50 border border-stone-300">
+              <p class="text-stone-500 font-medium">Tổng buổi</p>
+              <p class="text-base font-bold text-stone-900 mt-0.5">{{ studentHistoryList.length }}</p>
             </div>
-            <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
-              <p class="text-emerald-700">Có mặt</p>
+            <div class="p-2.5 rounded-md bg-emerald-50 border border-emerald-300">
+              <p class="text-emerald-800 font-medium">Có mặt</p>
               <p class="text-base font-bold text-emerald-800 mt-0.5">
                 {{ studentHistoryList.filter(h => h.status === 'PRESENT').length }}
               </p>
             </div>
-            <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-100">
-              <p class="text-amber-700">Đi muộn</p>
+            <div class="p-2.5 rounded-md bg-amber-50 border border-amber-300">
+              <p class="text-amber-800 font-medium">Đi muộn</p>
               <p class="text-base font-bold text-amber-800 mt-0.5">
                 {{ studentHistoryList.filter(h => h.status === 'LATE').length }}
               </p>
             </div>
-            <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-100">
-              <p class="text-rose-700">Vắng</p>
+            <div class="p-2.5 rounded-md bg-rose-50 border border-rose-300">
+              <p class="text-rose-800 font-medium">Vắng</p>
               <p class="text-base font-bold text-rose-800 mt-0.5">
                 {{ studentHistoryList.filter(h => h.status === 'ABSENT' || h.status === 'EXCUSED').length }}
               </p>
@@ -693,19 +695,19 @@
           </div>
 
           <!-- History Table -->
-          <div v-if="isLoadingHistory" class="py-8 text-center text-orange-500 space-y-2">
-            <ArrowPathIcon class="w-6 h-6 animate-spin mx-auto" />
+          <div v-if="isLoadingHistory" class="py-8 text-center text-stone-600 space-y-2">
+            <ArrowPathIcon class="w-6 h-6 animate-spin mx-auto text-orange-600" />
             <p class="text-xs font-semibold">Đang tải lịch sử điểm danh...</p>
           </div>
 
-          <div v-else-if="studentHistoryList.length === 0" class="py-8 text-center text-gray-400 space-y-1">
-            <CalendarDaysIcon class="w-8 h-8 mx-auto text-gray-300" />
+          <div v-else-if="studentHistoryList.length === 0" class="py-8 text-center text-stone-500 space-y-1">
+            <CalendarDaysIcon class="w-8 h-8 mx-auto text-stone-300" />
             <p class="text-xs font-medium">Chưa có bản ghi điểm danh nào trước đây của học sinh này.</p>
           </div>
 
-          <div v-else class="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
+          <div v-else class="border border-stone-300 rounded-md overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-gray-50 border-b border-gray-100 text-gray-700 font-bold uppercase text-[10px]">
+              <thead class="bg-stone-100 border-b-2 border-stone-300 text-stone-700 font-bold uppercase text-[11px]">
                 <tr>
                   <th class="py-2.5 px-3">Ngày học</th>
                   <th class="py-2.5 px-3">Lớp học</th>
@@ -713,28 +715,28 @@
                   <th class="py-2.5 px-3">Ghi chú</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100">
-                <tr v-for="h in studentHistoryList" :key="h.attendanceId || h.lessonId" class="hover:bg-gray-50/50">
-                  <td class="py-2.5 px-3 font-medium text-gray-900">
+              <tbody class="divide-y divide-stone-200">
+                <tr v-for="h in studentHistoryList" :key="h.attendanceId || h.lessonId" class="hover:bg-orange-50/40">
+                  <td class="py-2.5 px-3 font-medium text-stone-900 tabular-nums">
                     {{ formatDate(h.lessonDate) }}
                   </td>
-                  <td class="py-2.5 px-3 text-gray-700">
+                  <td class="py-2.5 px-3 text-stone-700">
                     {{ h.className || 'Toán tư duy' }}
                   </td>
                   <td class="py-2.5 px-3 text-center">
                     <span
                       :class="[
-                        'px-2 py-0.5 rounded-full font-bold text-[10px] inline-block',
-                        h.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' :
-                        h.status === 'LATE' ? 'bg-amber-100 text-amber-800' :
-                        h.status === 'EXCUSED' ? 'bg-sky-100 text-sky-800' :
-                        'bg-rose-100 text-rose-800'
+                        'px-2 py-0.5 rounded border font-semibold text-[11px] inline-block',
+                        h.status === 'PRESENT' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
+                        h.status === 'LATE' ? 'border-amber-300 bg-amber-50 text-amber-800' :
+                        h.status === 'EXCUSED' ? 'border-stone-300 bg-stone-100 text-stone-700' :
+                        'border-rose-300 bg-rose-50 text-rose-800'
                       ]"
                     >
                       {{ formatStatusLabel(h.status) }}
                     </span>
                   </td>
-                  <td class="py-2.5 px-3 text-gray-500 italic">
+                  <td class="py-2.5 px-3 text-stone-500 italic">
                     {{ h.teacherNotes || '—' }}
                   </td>
                 </tr>
@@ -744,11 +746,11 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+        <div class="px-6 py-3.5 bg-stone-50 border-t border-stone-200 flex justify-end">
           <button
             type="button"
             @click="showHistoryModal = false"
-            class="px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+            class="h-9 px-4 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
           >
             Đóng
           </button>
@@ -759,18 +761,18 @@
     <!-- ─── Modal 2: Leave Request Detail ───────────────────────────────── -->
     <div
       v-if="showLeaveModal"
-      class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
     >
-      <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-orange-100">
-        <div class="px-6 py-4 bg-indigo-50/80 border-b border-indigo-100 flex items-center justify-between">
+      <div class="bg-white rounded-lg w-full max-w-md overflow-hidden shadow-xl border border-stone-300">
+        <div class="px-6 py-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <DocumentTextIcon class="w-5 h-5 text-indigo-700" />
-            <h3 class="font-bold text-indigo-950 text-sm">Chi tiết đơn xin nghỉ phép</h3>
+            <DocumentTextIcon class="w-5 h-5 text-orange-600" />
+            <h3 class="font-bold text-stone-900 text-sm">Chi tiết đơn xin nghỉ phép</h3>
           </div>
           <button
             type="button"
             @click="showLeaveModal = false"
-            class="text-gray-400 hover:text-gray-600 p-1 rounded-lg transition-colors cursor-pointer"
+            class="text-stone-400 hover:text-stone-700 p-1 rounded-md hover:bg-stone-200/60 transition-colors cursor-pointer"
           >
             <XMarkIcon class="w-4 h-4" />
           </button>
@@ -778,29 +780,29 @@
 
         <div class="p-6 space-y-4 text-xs">
           <div>
-            <p class="text-gray-500 font-medium">Học sinh:</p>
-            <p class="font-bold text-gray-900 text-sm mt-0.5">{{ selectedLeaveStudent?.studentName }}</p>
+            <p class="text-stone-500 font-semibold uppercase tracking-wide text-[11px]">Học sinh:</p>
+            <p class="font-bold text-stone-900 text-sm mt-0.5">{{ selectedLeaveStudent?.studentName }}</p>
           </div>
 
           <div>
-            <p class="text-gray-500 font-medium">Lý do xin nghỉ từ phụ huynh:</p>
-            <div class="mt-1 p-3 rounded-xl bg-indigo-50/50 border border-indigo-100 text-indigo-950 font-medium leading-relaxed">
+            <p class="text-stone-500 font-semibold uppercase tracking-wide text-[11px]">Lý do xin nghỉ từ phụ huynh:</p>
+            <div class="mt-1 p-3 rounded-md bg-stone-50 border border-stone-300 text-stone-800 font-medium leading-relaxed">
               {{ selectedLeaveStudent?.leaveReason || 'Phụ huynh xin phép vắng mặt trong buổi học này.' }}
             </div>
           </div>
 
           <div>
-            <p class="text-gray-500 font-medium">Trạng thái đơn:</p>
-            <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] bg-amber-100 text-amber-800">
+            <p class="text-stone-500 font-semibold uppercase tracking-wide text-[11px]">Trạng thái đơn:</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-800 font-semibold text-[11px]">
               {{ selectedLeaveStudent?.leaveRequestStatus || 'Chờ duyệt' }}
             </span>
           </div>
 
-          <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+          <div class="pt-3 border-t border-stone-200 flex items-center justify-end gap-2">
             <button
               type="button"
               @click="showLeaveModal = false"
-              class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+              class="h-9 px-3.5 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer"
             >
               Đóng
             </button>
@@ -808,7 +810,7 @@
               v-if="!lockState.isLocked"
               type="button"
               @click="applyLeaveRequestFromModal"
-              class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white transition-colors cursor-pointer shadow-xs"
+              class="h-9 px-4 rounded-md text-xs font-semibold bg-orange-600 hover:bg-orange-700 text-white border border-orange-700 transition-colors cursor-pointer shadow-xs"
             >
               Duyệt nghỉ có phép (EXCUSED)
             </button>

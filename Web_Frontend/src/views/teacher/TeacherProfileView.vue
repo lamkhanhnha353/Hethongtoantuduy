@@ -1,16 +1,16 @@
 <template>
-  <div class="mx-auto max-w-5xl space-y-7 pb-8">
+  <div class="mx-auto max-w-5xl space-y-6 pb-8">
     <!-- ─── Header ────────────────────────────────────────────────────────── -->
-    <header class="flex flex-col gap-3 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header class="flex flex-col gap-3 border-b border-stone-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">Tài khoản giáo viên</p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900">Thông tin cá nhân</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600">Tài khoản giáo viên</p>
+        <h1 class="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">Thông tin cá nhân</h1>
+        <p class="mt-1.5 max-w-2xl text-xs sm:text-sm leading-6 text-stone-500">
           Quản lý thông tin cá nhân, liên hệ, hồ sơ chuyên môn và bảo mật tài khoản giáo viên của bạn.
         </p>
       </div>
-      <span class="inline-flex w-fit items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 ring-1 ring-inset ring-orange-200">
-        <span class="h-2 w-2 rounded-full bg-orange-500"></span>
+      <span class="inline-flex w-fit items-center gap-2 rounded border border-orange-300 bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-800">
+        <span class="h-2 w-2 rounded-full bg-orange-600"></span>
         Hồ sơ Giáo viên
       </span>
     </header>
@@ -19,12 +19,12 @@
     <div
       v-if="loadError"
       role="alert"
-      class="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between"
+      class="flex flex-col gap-3 rounded-lg border border-rose-300 bg-rose-50 px-4 py-4 text-sm text-rose-800 sm:flex-row sm:items-center sm:justify-between"
     >
       <span>{{ loadError }}</span>
       <button
         type="button"
-        class="w-fit rounded-lg border border-red-200 bg-white px-3 py-2 font-semibold text-red-700 hover:bg-red-100 cursor-pointer"
+        class="w-fit h-9 rounded-md border border-rose-300 bg-white px-3 font-semibold text-rose-700 hover:bg-rose-50 cursor-pointer"
         @click="loadProfile"
       >
         Tải lại hồ sơ
@@ -33,19 +33,19 @@
 
     <!-- ─── Loading Skeletons ─────────────────────────────────────────────── -->
     <div v-if="isLoading" class="space-y-5" aria-label="Đang tải hồ sơ">
-      <div class="h-48 animate-pulse rounded-2xl bg-gray-100"></div>
-      <div class="h-64 animate-pulse rounded-2xl bg-gray-100"></div>
-      <div class="h-64 animate-pulse rounded-2xl bg-gray-100"></div>
+      <div class="h-48 animate-pulse rounded-lg bg-stone-200"></div>
+      <div class="h-64 animate-pulse rounded-lg bg-stone-200"></div>
+      <div class="h-64 animate-pulse rounded-lg bg-stone-200"></div>
     </div>
 
     <!-- ─── Main Content ──────────────────────────────────────────────────── -->
     <template v-else-if="profile">
       <!-- ─── Hero Banner ─────────────────────────────────────────────────── -->
-      <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div class="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-400 px-6 py-7 text-white sm:px-8">
+      <section class="overflow-hidden rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div class="bg-orange-600 border-b border-orange-700 px-6 py-6 text-white sm:px-8">
           <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-5">
-              <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/30 bg-white/20 text-2xl font-bold shadow-sm">
+              <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border-2 border-white/40 bg-orange-700/60 text-2xl font-bold">
                 <img
                   v-if="displayedAvatarUrl"
                   :src="displayedAvatarUrl"
@@ -55,9 +55,9 @@
                 <span v-else>{{ initials }}</span>
               </div>
               <div class="min-w-0">
-                <p class="text-sm font-medium text-orange-50">Xin chào,</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-orange-100">Xin chào,</p>
                 <h2 class="mt-1 truncate text-2xl font-bold">{{ profile.fullName || 'Giáo viên' }}</h2>
-                <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-orange-50">
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-orange-100 tabular-nums">
                   <span>Giáo viên chính thức</span>
                   <span>•</span>
                   <span>Mã GV: <strong class="text-white font-mono">GV-0{{ teacherId || profile.accountId }}</strong></span>
@@ -66,11 +66,11 @@
             </div>
 
             <div class="flex flex-col items-start gap-3 sm:items-end">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="rounded-lg border border-white/40 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xs">
+              <div class="flex flex-wrap items-center gap-2 tabular-nums">
+                <span class="rounded border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
                   📚 {{ assignedClasses.length }} lớp phụ trách
                 </span>
-                <span class="rounded-lg border border-white/40 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xs">
+                <span class="rounded border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
                   🎯 {{ teacherSpecialize || 'Toán Tư Duy' }}
                 </span>
               </div>
@@ -78,20 +78,20 @@
                 <button
                   v-if="!isEditingAvatar"
                   type="button"
-                  class="rounded-lg border border-white/50 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                  class="h-9 rounded-md border border-white/50 bg-white/10 px-3.5 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-white/20 cursor-pointer"
                   @click="startEditingAvatar"
                 >
                   Thay đổi ảnh đại diện
                 </button>
                 <template v-else>
-                  <label class="cursor-pointer rounded-lg border border-white/50 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+                  <label class="inline-flex items-center h-9 cursor-pointer rounded-md border border-white/50 bg-white/10 px-3.5 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-white/20">
                     Chọn ảnh mới
                     <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" :disabled="isUploadingAvatar" @change="selectAvatar" />
                   </label>
                   <button
                     type="button"
                     :disabled="isUploadingAvatar || (!avatarFile && !isAvatarRemovalPending)"
-                    class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="h-9 rounded-md bg-white px-3.5 text-xs sm:text-sm font-semibold text-orange-700 transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                     @click="saveAvatar"
                   >
                     {{ isUploadingAvatar ? 'Đang tải ảnh...' : 'Lưu ảnh đại diện' }}
@@ -99,7 +99,7 @@
                   <button
                     type="button"
                     :disabled="isUploadingAvatar"
-                    class="rounded-lg border border-white/50 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+                    class="h-9 rounded-md border border-white/50 px-3.5 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-white/10 disabled:opacity-60 cursor-pointer"
                     @click="cancelEditingAvatar"
                   >
                     Hủy
@@ -108,10 +108,10 @@
               </div>
             </div>
           </div>
-          <div v-if="isEditingAvatar" class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-orange-50">
+          <div v-if="isEditingAvatar" class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-orange-100">
             <span>Chọn ảnh JPG, PNG hoặc WEBP (tối đa 5MB). Ảnh sẽ được cập nhật khi lưu.</span>
             <span v-if="avatarFile" class="font-semibold text-white">Đang xem trước: {{ avatarFile.name }}</span>
-            <button v-if="profile.avatar && !isAvatarRemovalPending" type="button" class="underline underline-offset-2 hover:text-white" @click="stageAvatarRemoval">
+            <button v-if="profile.avatar && !isAvatarRemovalPending" type="button" class="underline underline-offset-2 hover:text-white cursor-pointer" @click="stageAvatarRemoval">
               Xóa ảnh hiện tại
             </button>
             <span v-if="isAvatarRemovalPending">Ảnh sẽ bị xóa khi lưu.</span>
@@ -123,31 +123,31 @@
           <p
             v-if="profileMessage"
             role="status"
-            class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+            class="mb-3 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
           >
             {{ profileMessage }}
           </p>
           <p
             v-if="profileError"
             role="alert"
-            class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            class="mb-3 rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"
           >
             {{ profileError }}
           </p>
-          <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
+          <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-stone-500">
             <span>Hồ sơ giáo viên được đồng bộ trực tiếp với hệ thống quản lý đào tạo và thời khóa biểu.</span>
           </div>
         </div>
       </section>
 
       <!-- ─── Section 1: Thông tin cơ bản ─────────────────────────────────── -->
-      <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div class="flex flex-col gap-3 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <section class="rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="flex flex-col gap-3 border-b border-stone-200 bg-stone-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div>
-            <h2 class="text-lg font-semibold text-gray-900">Thông tin cơ bản</h2>
-            <p class="mt-1 text-sm text-gray-500">Tên và số điện thoại dùng để đăng nhập và định danh tài khoản.</p>
+            <h2 class="text-base font-bold text-stone-900">Thông tin cơ bản</h2>
+            <p class="mt-0.5 text-xs sm:text-sm text-stone-500">Tên và số điện thoại dùng để đăng nhập và định danh tài khoản.</p>
           </div>
-          <span class="w-fit rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-inset ring-orange-200">
+          <span class="w-fit rounded border border-orange-300 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-800">
             Vai trò: Giáo viên
           </span>
         </div>
@@ -155,7 +155,7 @@
         <form class="space-y-6 px-6 py-6 sm:px-8" @submit.prevent="saveProfile">
           <div class="grid gap-5 md:grid-cols-2">
             <div>
-              <label for="fullName" class="mb-2 block text-sm font-medium text-gray-700">Họ và tên</label>
+              <label for="fullName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Họ và tên</label>
               <input
                 id="fullName"
                 v-model.trim="form.fullName"
@@ -163,11 +163,11 @@
                 required
                 maxlength="100"
                 autocomplete="name"
-                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-600"
+                class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
               />
             </div>
             <div>
-              <label for="phone" class="mb-2 block text-sm font-medium text-gray-700">Số điện thoại đăng nhập</label>
+              <label for="phone" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Số điện thoại đăng nhập</label>
               <input
                 id="phone"
                 v-model.trim="form.phone"
@@ -175,18 +175,18 @@
                 type="tel"
                 maxlength="20"
                 autocomplete="tel"
-                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none cursor-not-allowed"
+                class="w-full h-10 rounded-md border border-stone-200 bg-stone-100 px-3.5 text-sm text-stone-500 outline-none cursor-not-allowed tabular-nums"
                 title="Số điện thoại tài khoản do quản trị viên cấp"
               />
-              <p class="mt-2 text-xs leading-5 text-gray-500">Số điện thoại dùng để đăng nhập hệ thống.</p>
+              <p class="mt-1.5 text-xs leading-5 text-stone-500">Số điện thoại dùng để đăng nhập hệ thống.</p>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-5">
+          <div class="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-5">
             <button
               v-if="!isEditingProfile"
               type="button"
-              class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 cursor-pointer"
+              class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 active:bg-orange-800 cursor-pointer"
               @click="startEditingProfile"
             >
               Chỉnh sửa thông tin
@@ -195,34 +195,34 @@
               <button
                 type="submit"
                 :disabled="isSavingProfile"
-                class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {{ isSavingProfile ? 'Đang lưu...' : 'Lưu thay đổi' }}
               </button>
               <button
                 type="button"
                 :disabled="isSavingProfile"
-                class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md border border-stone-300 bg-white px-4 text-xs sm:text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 @click="cancelEditingProfile"
               >
                 Hủy
               </button>
-              <span class="text-xs text-gray-500">Thông tin chỉ được cập nhật sau khi lưu.</span>
+              <span class="text-xs text-stone-500">Thông tin chỉ được cập nhật sau khi lưu.</span>
             </template>
           </div>
         </form>
       </section>
 
       <!-- ─── Section 2: Email liên hệ ────────────────────────────────────── -->
-      <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-100 px-6 py-5 sm:px-8">
-          <h2 class="text-lg font-semibold text-gray-900">Email liên hệ</h2>
-          <p class="mt-1 text-sm text-gray-500">Email nhận thông báo công việc, lịch dạy và thông tin từ trung tâm.</p>
+      <section class="rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="border-b border-stone-200 bg-stone-50 px-6 py-4 sm:px-8">
+          <h2 class="text-base font-bold text-stone-900">Email liên hệ</h2>
+          <p class="mt-0.5 text-xs sm:text-sm text-stone-500">Email nhận thông báo công việc, lịch dạy và thông tin từ trung tâm.</p>
         </div>
 
         <form class="space-y-5 px-6 py-6 sm:px-8" @submit.prevent="saveEmail">
           <div class="max-w-2xl">
-            <label for="email" class="mb-2 block text-sm font-medium text-gray-700">Địa chỉ email</label>
+            <label for="email" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Địa chỉ email</label>
             <input
               id="email"
               v-model.trim="email"
@@ -231,30 +231,30 @@
               type="email"
               maxlength="256"
               autocomplete="email"
-              class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-600"
+              class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm text-stone-900 outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
             />
           </div>
 
           <p
             v-if="emailMessage"
             role="status"
-            class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+            class="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
           >
             {{ emailMessage }}
           </p>
           <p
             v-if="emailError"
             role="alert"
-            class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            class="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"
           >
             {{ emailError }}
           </p>
 
-          <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-5">
+          <div class="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-5">
             <button
               v-if="!isEditingEmail"
               type="button"
-              class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 cursor-pointer"
+              class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 cursor-pointer"
               @click="startEditingEmail"
             >
               Đổi email
@@ -263,14 +263,14 @@
               <button
                 type="submit"
                 :disabled="isSavingEmail"
-                class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {{ isSavingEmail ? 'Đang lưu...' : 'Lưu thay đổi' }}
               </button>
               <button
                 type="button"
                 :disabled="isSavingEmail"
-                class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md border border-stone-300 bg-white px-4 text-xs sm:text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 @click="cancelEditingEmail"
               >
                 Hủy
@@ -281,13 +281,13 @@
       </section>
 
       <!-- ─── Section 3: Hồ sơ chuyên môn & Giảng dạy ──────────────────────── -->
-      <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div class="flex flex-col gap-3 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <section class="rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="flex flex-col gap-3 border-b border-stone-200 bg-stone-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div>
-            <h2 class="text-lg font-semibold text-gray-900">Hồ sơ chuyên môn & Giảng dạy</h2>
-            <p class="mt-1 text-sm text-gray-500">Lĩnh vực chuyên môn sư phạm và các lớp học được phân công phụ trách.</p>
+            <h2 class="text-base font-bold text-stone-900">Hồ sơ chuyên môn & Giảng dạy</h2>
+            <p class="mt-0.5 text-xs sm:text-sm text-stone-500">Lĩnh vực chuyên môn sư phạm và các lớp học được phân công phụ trách.</p>
           </div>
-          <span class="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+          <span class="w-fit rounded border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
             Trạng thái: Đang hoạt động
           </span>
         </div>
@@ -295,57 +295,58 @@
         <form class="space-y-6 px-6 py-6 sm:px-8" @submit.prevent="saveSpecialize">
           <div class="grid gap-5 md:grid-cols-2">
             <div>
-              <label for="specialize" class="mb-2 block text-sm font-medium text-gray-700">Chuyên môn phụ trách</label>
+              <label for="specialize" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Chuyên môn phụ trách</label>
               <input
                 id="specialize"
                 v-model.trim="teacherSpecialize"
+                maxlength="100"
                 :disabled="!isEditingSpecialize"
                 placeholder="VD: Toán Tư Duy Tiểu Học, Toán Logic, Hình Học Không Gian"
-                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-600"
+                class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
               />
-              <p class="mt-2 text-xs leading-5 text-gray-500">Các môn học, chuyên đề toán tư duy bạn chịu trách nhiệm giảng dạy.</p>
+              <p class="mt-1.5 text-xs leading-5 text-stone-500">Các môn học, chuyên đề toán tư duy bạn chịu trách nhiệm giảng dạy.</p>
             </div>
 
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-700">Các lớp học đang phụ trách ({{ assignedClasses.length }})</label>
-              <div v-if="assignedClasses.length === 0" class="rounded-xl border border-dashed border-gray-300 p-3 text-xs text-gray-400 text-center">
+              <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700 tabular-nums">Các lớp học đang phụ trách ({{ assignedClasses.length }})</label>
+              <div v-if="assignedClasses.length === 0" class="rounded-md border border-dashed border-stone-300 p-3 text-xs text-stone-400 text-center">
                 Chưa có lớp học nào được phân công.
               </div>
               <div v-else class="flex flex-wrap gap-2 pt-1 max-h-32 overflow-y-auto">
                 <span
                   v-for="c in assignedClasses"
                   :key="c.id"
-                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-900 font-semibold text-xs"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-orange-50 border border-orange-300 text-orange-800 font-semibold text-xs"
                 >
                   <span>🏫</span>
                   <span>{{ c.name }}</span>
-                  <span class="text-[10px] text-orange-700 font-normal">({{ c.code || 'Lớp' }})</span>
+                  <span class="text-[10px] text-orange-700 font-normal tabular-nums">({{ c.code || 'Lớp' }})</span>
                 </span>
               </div>
-              <p class="mt-2 text-xs leading-5 text-gray-500">Danh sách lớp học được phân công bởi Quản trị viên.</p>
+              <p class="mt-1.5 text-xs leading-5 text-stone-500">Danh sách lớp học được phân công bởi Quản trị viên.</p>
             </div>
           </div>
 
           <p
             v-if="specializeMessage"
             role="status"
-            class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+            class="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
           >
             {{ specializeMessage }}
           </p>
           <p
             v-if="specializeError"
             role="alert"
-            class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            class="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"
           >
             {{ specializeError }}
           </p>
 
-          <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-5">
+          <div class="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-5">
             <button
               v-if="!isEditingSpecialize"
               type="button"
-              class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 cursor-pointer"
+              class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 cursor-pointer"
               @click="startEditingSpecialize"
             >
               Chỉnh sửa chuyên môn
@@ -354,14 +355,14 @@
               <button
                 type="submit"
                 :disabled="isSavingSpecialize"
-                class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {{ isSavingSpecialize ? 'Đang lưu...' : 'Lưu thay đổi' }}
               </button>
               <button
                 type="button"
                 :disabled="isSavingSpecialize"
-                class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md border border-stone-300 bg-white px-4 text-xs sm:text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 @click="cancelEditingSpecialize"
               >
                 Hủy
@@ -372,28 +373,28 @@
       </section>
 
       <!-- ─── Section 4: Bảo mật ──────────────────────────────────────────── -->
-      <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-100 px-6 py-5 sm:px-8">
-          <h2 class="text-lg font-semibold text-gray-900">Bảo mật</h2>
-          <p class="mt-1 text-sm text-gray-500">Đổi mật khẩu định kỳ để bảo vệ tài khoản giáo viên.</p>
+      <section class="rounded-lg border border-stone-300 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="border-b border-stone-200 bg-stone-50 px-6 py-4 sm:px-8">
+          <h2 class="text-base font-bold text-stone-900">Bảo mật</h2>
+          <p class="mt-0.5 text-xs sm:text-sm text-stone-500">Đổi mật khẩu định kỳ để bảo vệ tài khoản giáo viên.</p>
         </div>
 
         <form class="space-y-5 px-6 py-6 sm:px-8" @submit.prevent="changePassword">
           <template v-if="isEditingPassword">
             <div class="grid gap-5 md:grid-cols-2">
               <div class="md:col-span-2">
-                <label for="currentPassword" class="mb-2 block text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
+                <label for="currentPassword" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Mật khẩu hiện tại</label>
                 <input
                   id="currentPassword"
                   v-model="passwordForm.currentPassword"
                   required
                   type="password"
                   autocomplete="current-password"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
                 />
               </div>
               <div>
-                <label for="newPassword" class="mb-2 block text-sm font-medium text-gray-700">Mật khẩu mới</label>
+                <label for="newPassword" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Mật khẩu mới</label>
                 <input
                   id="newPassword"
                   v-model="passwordForm.newPassword"
@@ -401,11 +402,11 @@
                   minlength="6"
                   type="password"
                   autocomplete="new-password"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
                 />
               </div>
               <div>
-                <label for="confirmNewPassword" class="mb-2 block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
+                <label for="confirmNewPassword" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-700">Xác nhận mật khẩu mới</label>
                 <input
                   id="confirmNewPassword"
                   v-model="passwordForm.confirmNewPassword"
@@ -413,36 +414,36 @@
                   minlength="6"
                   type="password"
                   autocomplete="new-password"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  class="w-full h-10 rounded-md border border-stone-300 bg-stone-50/70 px-3.5 text-sm outline-none transition-colors focus:bg-white focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20"
                 />
               </div>
             </div>
           </template>
 
-          <p v-else class="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          <p v-else class="rounded-md bg-stone-50 border border-stone-200 px-4 py-3 text-sm text-stone-600">
             Mật khẩu hiện tại được ẩn. Chọn “Đổi mật khẩu” để nhập mật khẩu mới.
           </p>
 
           <p
             v-if="passwordMessage"
             role="status"
-            class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+            class="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
           >
             {{ passwordMessage }}
           </p>
           <p
             v-if="passwordError"
             role="alert"
-            class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            class="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"
           >
             {{ passwordError }}
           </p>
 
-          <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-5">
+          <div class="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-5">
             <button
               v-if="!isEditingPassword"
               type="button"
-              class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-100 cursor-pointer"
+              class="h-9 rounded-md border border-stone-300 bg-white px-4 text-xs sm:text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100 hover:border-stone-400 cursor-pointer"
               @click="startEditingPassword"
             >
               Đổi mật khẩu
@@ -451,14 +452,14 @@
               <button
                 type="submit"
                 :disabled="isChangingPassword"
-                class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md bg-orange-600 border border-orange-700 px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {{ isChangingPassword ? 'Đang cập nhật...' : 'Lưu mật khẩu' }}
               </button>
               <button
                 type="button"
                 :disabled="isChangingPassword"
-                class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                class="h-9 rounded-md border border-stone-300 bg-white px-4 text-xs sm:text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100 hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 @click="cancelEditingPassword"
               >
                 Hủy
@@ -478,6 +479,7 @@ import profileService from '@/services/profile.service'
 import teacherService from '@/services/teacher.service'
 import classService from '@/services/class.service'
 import { getProfileId } from '@/services/auth-storage'
+import { validateEmail, validateTextLength } from '@/utils/validation.helper'
 
 // ─── State ─────────────────────────────────────────────────────────────────
 const profile = ref(null)
@@ -746,9 +748,16 @@ function cancelEditingEmail() {
 }
 
 async function saveEmail() {
-  isSavingEmail.value = true
   emailMessage.value = ''
   emailError.value = ''
+
+  const emailCheck = validateEmail(email.value, { label: 'Email' })
+  if (!emailCheck.valid) {
+    emailError.value = emailCheck.message
+    return
+  }
+
+  isSavingEmail.value = true
   try {
     if (teacherId.value) {
       await teacherService.update(teacherId.value, {
@@ -785,9 +794,19 @@ function cancelEditingSpecialize() {
 }
 
 async function saveSpecialize() {
-  isSavingSpecialize.value = true
   specializeMessage.value = ''
   specializeError.value = ''
+
+  const specializeCheck = validateTextLength(teacherSpecialize.value, {
+    label: 'Chuyên môn phụ trách',
+    max: 100,
+  })
+  if (!specializeCheck.valid) {
+    specializeError.value = specializeCheck.message
+    return
+  }
+
+  isSavingSpecialize.value = true
   try {
     if (teacherId.value) {
       await teacherService.update(teacherId.value, {

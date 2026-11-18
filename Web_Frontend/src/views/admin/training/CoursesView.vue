@@ -3,15 +3,15 @@
     <!-- ─── Page header ───────────────────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h1 class="text-xl font-bold text-orange-900">Danh mục Khóa học</h1>
-        <p class="text-sm text-gray-500 mt-0.5">
+        <h1 class="text-2xl font-bold text-stone-900">Danh mục Khóa học</h1>
+        <p class="text-sm text-stone-500 mt-0.5">
           Quản lý tất cả các khóa học trong hệ thống
         </p>
       </div>
       <button
         @click="openCreateModal"
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600
-               text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex-shrink-0 cursor-pointer"
+        class="inline-flex h-9 items-center gap-2 px-3.5 bg-orange-600 hover:bg-orange-700 border border-orange-700
+               text-white text-sm font-semibold rounded-md shadow-xs transition-colors flex-shrink-0 cursor-pointer"
       >
         <PlusIcon class="w-4 h-4" />
         Thêm khóa học
@@ -19,7 +19,7 @@
     </div>
 
     <!-- ─── Toolbar: Search + Filter + View toggle ─────────────────────── -->
-    <div class="bg-white rounded-2xl border border-orange-100 shadow-sm p-4 space-y-3">
+    <div class="bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-4 space-y-3">
       <div class="flex flex-col sm:flex-row gap-3">
         <!-- Search -->
         <SearchBar
@@ -31,17 +31,17 @@
         <button
           @click="showFilter = !showFilter"
           :class="[
-            'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all flex-shrink-0',
+            'inline-flex h-9 items-center gap-2 px-3.5 rounded-md text-sm font-semibold border transition-all flex-shrink-0',
             showFilter || hasActiveFilters
-              ? 'bg-orange-500 text-white border-orange-500'
-              : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50',
+              ? 'bg-orange-600 text-white border-orange-700'
+              : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-100 hover:border-stone-400',
           ]"
         >
           <FunnelIcon class="w-4 h-4" />
           Bộ lọc
           <span
             v-if="hasActiveFilters"
-            class="bg-white text-orange-500 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+            class="bg-white text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums flex items-center justify-center"
           >
             {{ activeFilterCount }}
           </span>
@@ -52,10 +52,10 @@
 
       <!-- Filter panel (collapsible) -->
       <transition name="slide-down">
-        <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1 border-t border-orange-100">
+        <div v-if="showFilter" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t border-stone-200">
           <!-- Khóa học filter -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Khóa học</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Khóa học</label>
             <select v-model="filters.courseId" class="filter-select">
               <option value="">Tất cả khóa học</option>
               <option v-for="c in courses" :key="c.id" :value="c.id">
@@ -65,7 +65,7 @@
           </div>
           <!-- Status -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Trạng thái</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Trạng thái</label>
             <select v-model="filters.status" class="filter-select">
               <option value="">Tất cả</option>
               <option value="active">Đang mở (ACTIVE)</option>
@@ -76,18 +76,19 @@
           </div>
           <!-- Fee range -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Học phí (từ)</label>
-            <input v-model.number="filters.feeMin" type="number" min="0" placeholder="0"
-              class="filter-select" />
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Học phí (từ)</label>
+            <input v-model.number="filters.feeMin" type="number" min="0" max="1000000000" placeholder="0"
+              class="filter-select tabular-nums" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Học phí (đến)</label>
-            <input v-model.number="filters.feeMax" type="number" min="0" placeholder="Không giới hạn"
-              class="filter-select" />
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Học phí (đến)</label>
+            <input v-model.number="filters.feeMax" type="number" min="0" max="1000000000" placeholder="Không giới hạn"
+              class="filter-select tabular-nums" />
+            <p v-if="feeRangeError" class="mt-1 text-[11px] font-medium text-rose-600">{{ feeRangeError }}</p>
           </div>
           <!-- Sort -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Sắp xếp</label>
+            <label class="block text-xs font-semibold uppercase tracking-wide text-stone-700 mb-1.5">Sắp xếp</label>
             <select v-model="filters.sort" class="filter-select">
               <option value="name_asc">Tên A → Z</option>
               <option value="name_desc">Tên Z → A</option>
@@ -98,7 +99,7 @@
           </div>
           <!-- Actions -->
           <div class="sm:col-span-2 lg:col-span-5 flex justify-end gap-2">
-            <button @click="resetFilters" class="text-xs text-gray-500 hover:text-orange-500 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors">
+            <button @click="resetFilters" class="text-xs font-semibold text-stone-600 hover:text-stone-900 px-3 py-1.5 rounded-md border border-transparent hover:border-stone-300 hover:bg-stone-100 transition-colors">
               Đặt lại
             </button>
           </div>
@@ -109,15 +110,15 @@
     <!-- ─── Error state ────────────────────────────────────────────────── -->
     <div
       v-if="errorMessage"
-      class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between gap-3 text-sm"
+      class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-md flex items-center justify-between gap-3 text-sm"
     >
       <div class="flex items-center gap-2">
-        <ExclamationCircleIcon class="w-5 h-5 flex-shrink-0 text-red-500" />
+        <ExclamationCircleIcon class="w-5 h-5 flex-shrink-0 text-rose-600" />
         <span>{{ errorMessage }}</span>
       </div>
       <button
         @click="loadCourses"
-        class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+        class="h-8 px-3 bg-rose-600 hover:bg-rose-700 border border-rose-700 text-white rounded-md text-xs font-semibold transition-colors"
       >
         Thử lại
       </button>
@@ -125,14 +126,14 @@
 
     <!-- ─── Results summary ────────────────────────────────────────────── -->
     <div v-if="!loading && !errorMessage" class="flex items-center justify-between">
-      <p class="text-sm text-gray-500">
-        Hiển thị <span class="font-semibold text-orange-700">{{ filteredCourses.length }}</span>
-        / {{ courses.length }} khóa học
+      <p class="text-sm text-stone-500">
+        Hiển thị <span class="font-semibold text-stone-900 tabular-nums">{{ filteredCourses.length }}</span>
+        / <span class="tabular-nums">{{ courses.length }}</span> khóa học
       </p>
       <button
         v-if="hasActiveFilters || search"
         @click="clearAll"
-        class="text-xs text-orange-500 hover:text-orange-700 flex items-center gap-1 font-medium"
+        class="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-semibold"
       >
         <XMarkIcon class="w-3.5 h-3.5" />
         Xóa bộ lọc
@@ -269,6 +270,14 @@ const activeFilterCount = computed(() =>
   [filters.value.courseId, filters.value.status, filters.value.feeMin, filters.value.feeMax].filter(v => v !== '' && v != null).length
 )
 
+const feeRangeError = computed(() => {
+  const { feeMin, feeMax } = filters.value
+  if (feeMin != null && feeMin !== '' && feeMax != null && feeMax !== '' && Number(feeMin) > Number(feeMax)) {
+    return 'Học phí "từ" không được lớn hơn học phí "đến".'
+  }
+  return ''
+})
+
 const filteredCourses = computed(() => {
   let list = [...courses.value]
 
@@ -294,12 +303,14 @@ const filteredCourses = computed(() => {
     list = list.filter(c => String(c.status || '').toLowerCase() === targetStatus)
   }
 
-  // Fee range (so sánh theo fee/minFee)
-  if (filters.value.feeMin != null && filters.value.feeMin !== '') {
-    list = list.filter(c => (c.fee ?? 0) >= filters.value.feeMin)
-  }
-  if (filters.value.feeMax != null && filters.value.feeMax !== '') {
-    list = list.filter(c => (c.fee ?? 0) <= filters.value.feeMax)
+  // Fee range (so sánh theo fee/minFee) — chỉ áp dụng khi khoảng học phí hợp lệ
+  if (!feeRangeError.value) {
+    if (filters.value.feeMin != null && filters.value.feeMin !== '') {
+      list = list.filter(c => (c.fee ?? 0) >= filters.value.feeMin)
+    }
+    if (filters.value.feeMax != null && filters.value.feeMax !== '') {
+      list = list.filter(c => (c.fee ?? 0) <= filters.value.feeMax)
+    }
   }
 
   // Sort

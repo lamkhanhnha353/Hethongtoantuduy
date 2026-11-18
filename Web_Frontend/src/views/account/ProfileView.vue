@@ -219,6 +219,7 @@
                   v-model="form.fullName"
                   type="text"
                   required
+                  maxlength="100"
                   :disabled="!isEditing || isSubmitting"
                   placeholder="Nhập họ và tên đầy đủ..."
                   :class="[
@@ -278,6 +279,7 @@
                 <input
                   v-model="form.email"
                   type="email"
+                  maxlength="256"
                   :disabled="!isEditing || isSubmitting"
                   placeholder="admin@toantuduy.edu.vn"
                   :class="[
@@ -289,6 +291,7 @@
                 />
                 <EnvelopeIcon class="w-4 h-4 text-gray-400 absolute right-3.5 top-3 pointer-events-none" />
               </div>
+              <p v-if="emailError" class="text-xs text-rose-600 mt-1">{{ emailError }}</p>
             </div>
 
             <!-- Role & Account Level -->
@@ -471,6 +474,7 @@
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useUserState } from '@/services/user-state'
+import { validateEmail, validateTextLength } from '@/utils/validation.helper'
 import {
   UserIcon,
   ShieldCheckIcon,
@@ -502,6 +506,7 @@ const isUploadingAvatar = ref(false)
 const avatarPreview = ref(null)
 const selectedAvatarFile = ref(null)
 const nameError = ref('')
+const emailError = ref('')
 
 const form = reactive({
   fullName: '',
@@ -554,23 +559,39 @@ onMounted(async () => {
 function enableEdit() {
   syncForm()
   nameError.value = ''
+  emailError.value = ''
   isEditing.value = true
 }
 
 function cancelEdit() {
   syncForm()
   nameError.value = ''
+  emailError.value = ''
   isEditing.value = false
 }
 
 async function handleSaveProfile() {
-  if (!form.fullName.trim()) {
-    nameError.value = 'Họ và tên không được để trống.'
+  nameError.value = ''
+  emailError.value = ''
+
+  const nameCheck = validateTextLength(form.fullName, {
+    label: 'Họ và tên',
+    min: 2,
+    max: 100,
+    required: true,
+  })
+  if (!nameCheck.valid) {
+    nameError.value = nameCheck.message
+    return
+  }
+
+  const emailCheck = validateEmail(form.email, { label: 'Email' })
+  if (!emailCheck.valid) {
+    emailError.value = emailCheck.message
     return
   }
 
   isSubmitting.value = true
-  nameError.value = ''
 
   try {
     await updateProfile({

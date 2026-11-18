@@ -5,20 +5,20 @@
       <div>
         <nav class="flex items-center gap-2 text-xs font-medium text-orange-600 mb-1">
           <span>Giáo viên</span>
-          <ChevronRightIcon class="w-3.5 h-3.5 text-orange-400" />
+          <ChevronRightIcon class="w-3.5 h-3.5 text-stone-400" />
           <span>Giao tiếp &amp; Thống kê</span>
-          <ChevronRightIcon class="w-3.5 h-3.5 text-orange-400" />
+          <ChevronRightIcon class="w-3.5 h-3.5 text-stone-400" />
           <span>Chat với phụ huynh</span>
         </nav>
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Chat với phụ huynh</h1>
-        <p class="text-xs md:text-sm text-gray-500 mt-0.5">
+        <h1 class="text-2xl md:text-3xl font-bold text-stone-900 tracking-tight">Chat với phụ huynh</h1>
+        <p class="text-xs md:text-sm text-stone-500 mt-0.5">
           Trao đổi trực tiếp với phụ huynh của học sinh trong các lớp bạn phụ trách
         </p>
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
         <span
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold border"
           :class="connectionBadgeClass"
         >
           <span class="w-2 h-2 rounded-full" :class="connectionDotClass" />
@@ -29,9 +29,9 @@
           type="button"
           @click="refreshAll"
           :disabled="isRefreshing"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200/80 text-orange-900 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-white hover:bg-stone-100 border border-stone-300 hover:border-stone-400 text-stone-800 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
         >
-          <ArrowPathIcon class="w-4 h-4 text-orange-600" :class="{ 'animate-spin': isRefreshing }" />
+          <ArrowPathIcon class="w-4 h-4 text-stone-600" :class="{ 'animate-spin': isRefreshing }" />
           <span>Làm mới</span>
         </button>
       </div>
@@ -40,14 +40,14 @@
     <!-- ─── Error banner ─────────────────────────────────────────────────── -->
     <div
       v-if="errorMessage"
-      class="flex items-start gap-2 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex-shrink-0"
+      class="flex items-start gap-2 px-4 py-3 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-xs font-medium flex-shrink-0"
     >
       <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
       <span class="flex-1">{{ errorMessage }}</span>
       <button
         type="button"
         @click="errorMessage = ''"
-        class="text-rose-400 hover:text-rose-600 cursor-pointer"
+        class="text-rose-500 hover:text-rose-700 cursor-pointer"
         title="Đóng thông báo"
       >
         <XMarkIcon class="w-4 h-4" />
@@ -56,24 +56,24 @@
 
     <!-- ─── Chat shell ───────────────────────────────────────────────────── -->
     <div
-      class="flex-1 min-h-0 bg-white rounded-3xl border border-orange-100 shadow-sm overflow-hidden grid lg:grid-cols-[330px_1fr]"
+      class="flex-1 min-h-0 bg-white rounded-lg border border-stone-300 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden grid lg:grid-cols-[330px_1fr]"
     >
       <!-- ═══ Left: conversations / contacts ═══════════════════════════════ -->
       <aside
         :class="[
-          'border-r border-orange-100 flex flex-col min-h-0 bg-orange-50/30',
+          'border-r border-stone-200 flex flex-col min-h-0 bg-stone-50',
           activePartner ? 'hidden lg:flex' : 'flex',
         ]"
       >
         <!-- Tabs -->
-        <div class="p-3 pb-2 flex-shrink-0">
-          <div class="flex items-center bg-orange-100/70 p-1 rounded-xl text-xs font-semibold">
+        <div class="p-3 pb-2 flex-shrink-0 border-b border-stone-200/80">
+          <div class="flex items-center bg-stone-200/70 p-1 rounded-md text-xs font-semibold">
             <button
               type="button"
               @click="activeTab = 'conversations'"
               :class="[
-                'flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                activeTab === 'conversations' ? 'bg-orange-400 text-white shadow-xs' : 'text-orange-900',
+                'flex-1 px-3 py-1.5 rounded transition-all cursor-pointer tabular-nums',
+                activeTab === 'conversations' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
               ]"
             >
               Hội thoại ({{ conversations.length }})
@@ -82,8 +82,8 @@
               type="button"
               @click="activeTab = 'contacts'"
               :class="[
-                'flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                activeTab === 'contacts' ? 'bg-orange-400 text-white shadow-xs' : 'text-orange-900',
+                'flex-1 px-3 py-1.5 rounded transition-all cursor-pointer tabular-nums',
+                activeTab === 'contacts' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-700 hover:text-stone-900',
               ]"
             >
               Phụ huynh ({{ contacts.length }})
@@ -96,9 +96,9 @@
         </div>
 
         <!-- List -->
-        <div class="flex-1 overflow-y-auto min-h-0 px-2 pb-3 space-y-1">
+        <div class="flex-1 overflow-y-auto min-h-0 px-2 py-2 space-y-1">
           <!-- Loading -->
-          <div v-if="isLoadingList" class="py-10 text-center text-orange-500 space-y-2">
+          <div v-if="isLoadingList" class="py-10 text-center text-orange-600 space-y-2">
             <ArrowPathIcon class="w-6 h-6 animate-spin mx-auto" />
             <p class="text-xs font-semibold">Đang tải dữ liệu...</p>
           </div>
@@ -106,8 +106,8 @@
           <!-- Conversations -->
           <template v-else-if="activeTab === 'conversations'">
             <div v-if="filteredConversations.length === 0" class="py-10 px-4 text-center space-y-2">
-              <ChatBubbleLeftRightIcon class="w-9 h-9 mx-auto text-orange-300" />
-              <p class="text-xs font-semibold text-gray-600">Chưa có hội thoại nào</p>
+              <ChatBubbleLeftRightIcon class="w-9 h-9 mx-auto text-stone-300" />
+              <p class="text-xs font-semibold text-stone-600">Chưa có hội thoại nào</p>
               <button
                 type="button"
                 @click="activeTab = 'contacts'"
@@ -123,13 +123,13 @@
               type="button"
               @click="selectConversation(conversation)"
               :class="[
-                'w-full text-left flex items-start gap-2.5 px-2.5 py-2.5 rounded-2xl transition-colors cursor-pointer',
+                'w-full text-left flex items-start gap-2.5 px-2.5 py-2.5 rounded-md transition-colors cursor-pointer',
                 activeConversation?.id === conversation.id
-                  ? 'bg-white border border-orange-200 shadow-2xs'
-                  : 'hover:bg-white/70 border border-transparent',
+                  ? 'bg-white border border-orange-400 shadow-xs'
+                  : 'hover:bg-white border border-transparent',
               ]"
             >
-              <div class="w-10 h-10 rounded-full bg-orange-200 text-orange-900 font-bold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
+              <div class="w-10 h-10 rounded-full bg-orange-100 border border-orange-200 text-orange-900 font-bold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
                 <img
                   v-if="conversation.partnerAvatar"
                   :src="conversation.partnerAvatar"
@@ -141,16 +141,16 @@
 
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-2">
-                  <p class="text-xs font-bold text-gray-900 truncate">{{ conversation.partnerName || 'Phụ huynh' }}</p>
-                  <span class="text-[10px] text-gray-400 flex-shrink-0">{{ formatRelativeTime(conversation.lastMessageAt) }}</span>
+                  <p class="text-xs font-bold text-stone-900 truncate">{{ conversation.partnerName || 'Phụ huynh' }}</p>
+                  <span class="text-[10px] text-stone-400 flex-shrink-0 tabular-nums">{{ formatRelativeTime(conversation.lastMessageAt) }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-2 mt-0.5">
-                  <p class="text-[11px] text-gray-500 truncate">
+                  <p class="text-[11px] text-stone-500 truncate">
                     {{ conversation.lastMessage || 'Bắt đầu cuộc trò chuyện' }}
                   </p>
                   <span
                     v-if="conversation.unreadCount > 0"
-                    class="min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0"
+                    class="min-w-[18px] h-[18px] px-1 rounded-full bg-orange-600 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 tabular-nums"
                   >
                     {{ conversation.unreadCount > 9 ? '9+' : conversation.unreadCount }}
                   </span>
@@ -162,9 +162,9 @@
           <!-- Contacts -->
           <template v-else>
             <div v-if="filteredContacts.length === 0" class="py-10 px-4 text-center space-y-2">
-              <UserGroupIcon class="w-9 h-9 mx-auto text-orange-300" />
-              <p class="text-xs font-semibold text-gray-600">Không tìm thấy phụ huynh</p>
-              <p class="text-[11px] text-gray-400">
+              <UserGroupIcon class="w-9 h-9 mx-auto text-stone-300" />
+              <p class="text-xs font-semibold text-stone-600">Không tìm thấy phụ huynh</p>
+              <p class="text-[11px] text-stone-400">
                 Phụ huynh sẽ xuất hiện khi học sinh của họ được xếp vào lớp bạn phụ trách.
               </p>
             </div>
@@ -175,30 +175,30 @@
               type="button"
               @click="selectContact(contact)"
               :class="[
-                'w-full text-left flex items-start gap-2.5 px-2.5 py-2.5 rounded-2xl transition-colors cursor-pointer',
+                'w-full text-left flex items-start gap-2.5 px-2.5 py-2.5 rounded-md transition-colors cursor-pointer',
                 activePartner?.id === contact.parentId
-                  ? 'bg-white border border-orange-200 shadow-2xs'
-                  : 'hover:bg-white/70 border border-transparent',
+                  ? 'bg-white border border-orange-400 shadow-xs'
+                  : 'hover:bg-white border border-transparent',
               ]"
             >
-              <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs flex-shrink-0">
+              <div class="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold flex items-center justify-center text-xs flex-shrink-0">
                 {{ getInitials(contact.parentName) }}
               </div>
 
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-2">
-                  <p class="text-xs font-bold text-gray-900 truncate">{{ contact.parentName }}</p>
+                  <p class="text-xs font-bold text-stone-900 truncate">{{ contact.parentName }}</p>
                   <span
                     v-if="conversationIdOf(contact.parentId)"
-                    class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0"
+                    class="text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 flex-shrink-0"
                   >
                     Đã chat
                   </span>
                 </div>
-                <p class="text-[11px] text-gray-500 truncate mt-0.5">
+                <p class="text-[11px] text-stone-500 truncate mt-0.5">
                   PH của {{ contact.children.join(', ') || 'học sinh' }}
                 </p>
-                <p v-if="contact.classNames.length" class="text-[10px] text-orange-500 truncate">
+                <p v-if="contact.classNames.length" class="text-[10px] text-orange-700 font-medium truncate">
                   {{ contact.classNames.join(' • ') }}
                 </p>
               </div>
@@ -213,17 +213,17 @@
       >
         <template v-if="activePartner">
           <!-- Thread header -->
-          <div class="px-4 py-3 border-b border-orange-100 flex items-center gap-3 flex-shrink-0 bg-white">
+          <div class="px-4 py-3 border-b border-stone-200 flex items-center gap-3 flex-shrink-0 bg-white">
             <button
               type="button"
               @click="clearActiveChat"
-              class="lg:hidden p-1.5 -ml-1 rounded-xl text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
+              class="lg:hidden p-1.5 -ml-1 rounded-md text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
               title="Quay lại danh sách"
             >
               <ArrowLeftIcon class="w-5 h-5" />
             </button>
 
-            <div class="w-10 h-10 rounded-full bg-orange-200 text-orange-900 font-bold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
+            <div class="w-10 h-10 rounded-full bg-orange-100 border border-orange-200 text-orange-900 font-bold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
               <img
                 v-if="activePartner.avatar"
                 :src="activePartner.avatar"
@@ -235,26 +235,26 @@
 
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="text-sm font-bold text-gray-900 truncate">{{ activePartner.name }}</h2>
+                <h2 class="text-sm font-bold text-stone-900 truncate">{{ activePartner.name }}</h2>
                 <span
                   v-if="!activeConversation"
-                  class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800"
+                  class="text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-800"
                 >
                   Hội thoại mới
                 </span>
               </div>
-              <p v-if="activePartner.children.length" class="text-[11px] text-gray-500 truncate">
+              <p v-if="activePartner.children.length" class="text-[11px] text-stone-500 truncate">
                 PH của {{ activePartner.children.join(', ') }}
                 <span v-if="activePartner.classNames.length"> • {{ activePartner.classNames.join(' • ') }}</span>
               </p>
-              <p v-else-if="activePartner.phone" class="text-[11px] text-gray-400">{{ activePartner.phone }}</p>
+              <p v-else-if="activePartner.phone" class="text-[11px] text-stone-500 tabular-nums">{{ activePartner.phone }}</p>
             </div>
 
             <div class="flex items-center gap-1.5 flex-shrink-0">
               <a
                 v-if="activePartner.phone"
                 :href="`tel:${activePartner.phone}`"
-                class="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-colors"
+                class="p-2 rounded-md border border-stone-300 bg-white text-stone-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-colors"
                 :title="`Gọi ${activePartner.phone}`"
               >
                 <PhoneIcon class="w-4 h-4" />
@@ -262,7 +262,7 @@
               <a
                 v-if="activePartner.email"
                 :href="`mailto:${activePartner.email}`"
-                class="p-2 rounded-xl text-sky-600 hover:bg-sky-50 transition-colors"
+                class="p-2 rounded-md border border-stone-300 bg-white text-stone-700 hover:bg-stone-100 hover:border-stone-400 transition-colors"
                 :title="activePartner.email"
               >
                 <EnvelopeIcon class="w-4 h-4" />
@@ -271,14 +271,14 @@
           </div>
 
           <!-- Messages -->
-          <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 px-4 py-4 space-y-3 bg-orange-50/20">
+          <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 px-4 py-4 space-y-3 bg-stone-50/70">
             <!-- Load older -->
             <div v-if="hasMore" class="text-center">
               <button
                 type="button"
                 @click="loadOlderMessages"
                 :disabled="isLoadingMore"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-orange-200 text-[11px] font-semibold text-orange-700 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-stone-300 hover:border-stone-400 text-[11px] font-semibold text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <ArrowPathIcon v-if="isLoadingMore" class="w-3.5 h-3.5 animate-spin" />
                 <ChevronDoubleUpIcon v-else class="w-3.5 h-3.5" />
@@ -287,16 +287,16 @@
             </div>
 
             <!-- Loading -->
-            <div v-if="isLoadingMessages" class="py-12 text-center text-orange-500 space-y-2">
+            <div v-if="isLoadingMessages" class="py-12 text-center text-orange-600 space-y-2">
               <ArrowPathIcon class="w-6 h-6 animate-spin mx-auto" />
               <p class="text-xs font-semibold">Đang tải tin nhắn...</p>
             </div>
 
             <!-- Empty -->
             <div v-else-if="messages.length === 0" class="py-12 text-center space-y-2">
-              <ChatBubbleLeftRightIcon class="w-10 h-10 mx-auto text-orange-300" />
-              <p class="text-sm font-bold text-gray-700">Chưa có tin nhắn nào</p>
-              <p class="text-xs text-gray-400">
+              <ChatBubbleLeftRightIcon class="w-10 h-10 mx-auto text-stone-300" />
+              <p class="text-sm font-bold text-stone-700">Chưa có tin nhắn nào</p>
+              <p class="text-xs text-stone-500">
                 Gửi lời chào đầu tiên để bắt đầu trao đổi với phụ huynh.
               </p>
             </div>
@@ -305,7 +305,7 @@
             <template v-else>
               <div v-for="(message, index) in messages" :key="message.id">
                 <div v-if="showDayDivider(index)" class="flex justify-center my-3">
-                  <span class="px-3 py-1 rounded-full bg-white border border-orange-100 text-[10px] font-semibold text-orange-500 shadow-2xs">
+                  <span class="px-2.5 py-0.5 rounded bg-white border border-stone-300 text-[10px] font-semibold text-stone-600 shadow-2xs tabular-nums">
                     {{ formatDay(message.createdAt) }}
                   </span>
                 </div>
@@ -313,7 +313,7 @@
                 <div :class="['flex gap-2 group', isMine(message) ? 'justify-end' : 'justify-start']">
                   <div
                     v-if="!isMine(message)"
-                    class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-[10px] flex-shrink-0 mt-1"
+                    class="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold flex items-center justify-center text-[10px] flex-shrink-0 mt-1"
                   >
                     {{ getInitials(activePartner.name) }}
                   </div>
@@ -323,8 +323,8 @@
                       :class="[
                         'px-3.5 py-2.5 text-sm shadow-2xs',
                         isMine(message)
-                          ? 'bg-orange-500 text-white rounded-2xl rounded-br-md'
-                          : 'bg-white text-gray-800 border border-orange-100 rounded-2xl rounded-bl-md',
+                          ? 'bg-orange-600 text-white rounded-lg rounded-br-sm'
+                          : 'bg-white text-stone-800 border border-stone-300 rounded-lg rounded-bl-sm',
                       ]"
                     >
                       <p
@@ -344,7 +344,7 @@
                         <img
                           :src="message.attachmentUrl"
                           :alt="message.content || 'Hình ảnh đính kèm'"
-                          class="max-h-64 max-w-full rounded-xl object-cover"
+                          class="max-h-64 max-w-full rounded-md object-cover"
                         />
                       </a>
 
@@ -364,17 +364,17 @@
 
                     <div
                       :class="[
-                        'flex items-center gap-2 mt-1 text-[10px] text-gray-400',
+                        'flex items-center gap-2 mt-1 text-[10px] text-stone-400 tabular-nums',
                         isMine(message) ? 'justify-end' : 'justify-start',
                       ]"
                     >
                       <span>{{ formatMessageTime(message.createdAt) }}</span>
-                      <span v-if="isMine(message)" class="font-semibold text-orange-400">Đã gửi</span>
+                      <span v-if="isMine(message)" class="font-semibold text-orange-600">Đã gửi</span>
                       <button
                         v-if="isMine(message)"
                         type="button"
                         @click="askDelete(message)"
-                        class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 transition-all cursor-pointer"
+                        class="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-600 transition-all cursor-pointer"
                         title="Xóa tin nhắn"
                       >
                         <TrashIcon class="w-3.5 h-3.5" />
@@ -387,7 +387,7 @@
           </div>
 
           <!-- Composer -->
-          <div class="border-t border-orange-100 p-3 bg-white flex-shrink-0">
+          <div class="border-t border-stone-200 p-3 bg-white flex-shrink-0">
             <div
               v-if="isUploading"
               class="mb-2 flex items-center gap-2 text-[11px] font-semibold text-orange-600"
@@ -401,7 +401,7 @@
                 type="button"
                 @click="fileInput?.click()"
                 :disabled="isSending || isUploading"
-                class="p-2.5 rounded-xl text-orange-600 bg-orange-50 hover:bg-orange-100 border border-orange-100 transition-colors cursor-pointer disabled:opacity-50"
+                class="h-[44px] w-[44px] flex items-center justify-center rounded-md text-stone-700 bg-white hover:bg-stone-100 border border-stone-300 hover:border-stone-400 transition-colors cursor-pointer disabled:opacity-50"
                 title="Gửi tệp hoặc hình ảnh"
               >
                 <PaperClipIcon class="w-5 h-5" />
@@ -417,16 +417,17 @@
               <textarea
                 v-model="composerText"
                 rows="1"
+                maxlength="2000"
                 @keydown="onComposerKeydown"
                 placeholder="Nhập tin nhắn gửi phụ huynh..."
-                class="flex-1 resize-none max-h-32 min-h-[44px] px-3.5 py-2.5 text-sm bg-orange-50/50 border border-orange-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 transition-all"
+                class="flex-1 resize-none max-h-32 min-h-[44px] px-3.5 py-2.5 text-sm bg-stone-50/70 border border-stone-300 rounded-md text-stone-900 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 transition-all"
               ></textarea>
 
               <button
                 type="button"
                 @click="sendText"
                 :disabled="!composerText.trim() || isSending || isUploading"
-                class="p-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                class="h-[44px] w-[44px] flex items-center justify-center rounded-md bg-orange-600 hover:bg-orange-700 active:bg-orange-800 border border-orange-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Gửi tin nhắn"
               >
                 <ArrowPathIcon v-if="isSending" class="w-5 h-5 animate-spin" />
@@ -434,7 +435,7 @@
               </button>
             </div>
 
-            <p class="text-[10px] text-gray-400 mt-1.5">
+            <p class="text-[10px] text-stone-400 mt-1.5 tabular-nums">
               Enter để gửi • Shift + Enter để xuống dòng • Tệp tối đa 20MB
             </p>
           </div>
@@ -457,14 +458,14 @@
       class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4"
       @click.self="deleteTarget = null"
     >
-      <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-orange-100 space-y-4">
+      <div class="bg-white rounded-lg w-full max-w-sm p-6 shadow-2xl border border-stone-300 space-y-4">
         <div class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
+          <div class="w-10 h-10 rounded-md bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center flex-shrink-0">
             <TrashIcon class="w-5 h-5" />
           </div>
           <div>
-            <h3 class="text-base font-bold text-gray-900">Xóa tin nhắn?</h3>
-            <p class="text-xs text-gray-500 mt-1">
+            <h3 class="text-base font-bold text-stone-900">Xóa tin nhắn?</h3>
+            <p class="text-xs text-stone-500 mt-1">
               Tin nhắn sẽ bị xóa vĩnh viễn ở cả hai phía và không thể khôi phục.
             </p>
           </div>
@@ -472,17 +473,17 @@
 
         <p
           v-if="deleteTarget.content"
-          class="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-xl p-3 line-clamp-3 break-words"
+          class="text-xs text-stone-700 bg-stone-50 border border-stone-200 rounded-md p-3 line-clamp-3 break-words"
         >
           {{ deleteTarget.content }}
         </p>
 
-        <div class="flex items-center justify-end gap-2 pt-1">
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-200">
           <button
             type="button"
             @click="deleteTarget = null"
             :disabled="isDeleting"
-            class="px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
+            class="h-9 px-3.5 rounded-md text-xs font-semibold bg-white border border-stone-300 hover:border-stone-400 text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer disabled:opacity-50"
           >
             Hủy
           </button>
@@ -490,7 +491,7 @@
             type="button"
             @click="confirmDelete"
             :disabled="isDeleting"
-            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white transition-colors cursor-pointer disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-xs font-semibold bg-rose-600 hover:bg-rose-700 border border-rose-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           >
             <ArrowPathIcon v-if="isDeleting" class="w-3.5 h-3.5 animate-spin" />
             Xóa tin nhắn
@@ -650,12 +651,12 @@ const connectionLabel = computed(() => {
 const connectionBadgeClass = computed(() => {
   switch (connectionStatus.value) {
     case 'connected':
-      return 'bg-emerald-50 border-emerald-200 text-emerald-700'
+      return 'bg-emerald-50 border-emerald-300 text-emerald-800'
     case 'reconnecting':
     case 'connecting':
-      return 'bg-amber-50 border-amber-200 text-amber-700'
+      return 'bg-amber-50 border-amber-300 text-amber-800'
     default:
-      return 'bg-gray-100 border-gray-200 text-gray-500'
+      return 'bg-stone-100 border-stone-300 text-stone-600'
   }
 })
 
@@ -667,7 +668,7 @@ const connectionDotClass = computed(() => {
     case 'connecting':
       return 'bg-amber-500 animate-pulse'
     default:
-      return 'bg-gray-400'
+      return 'bg-stone-400'
   }
 })
 
@@ -889,6 +890,11 @@ async function sendText() {
   const content = composerText.value.trim()
   const partnerId = activePartner.value?.id
   if (!content || !partnerId || isSending.value) return
+
+  if (content.length > 2000) {
+    errorMessage.value = 'Tin nhắn không được vượt quá 2000 ký tự.'
+    return
+  }
 
   isSending.value = true
   errorMessage.value = ''

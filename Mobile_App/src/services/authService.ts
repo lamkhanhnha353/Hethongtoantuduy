@@ -25,7 +25,7 @@ export async function register(payload: RegisterRequestDto): Promise<AuthRespons
 }
 
 export async function changePassword(
-  payload: ChangePasswordRequestDto,
+payload: ChangePasswordRequestDto,
 ): Promise<ChangePasswordResponseDto> {
   const { data } = await apiClient.post<ChangePasswordResponseDto>(
     '/api/auth/change-password',

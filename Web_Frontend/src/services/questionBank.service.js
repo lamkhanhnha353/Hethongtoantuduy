@@ -19,6 +19,22 @@ class QuestionBankService {
   }
 
   /**
+   * Lấy danh sách ngân hàng câu hỏi có phân trang
+   * GET /api/question-banks/paged
+   */
+  async getPaged({ page = 1, pageSize = 10, courseId = null, keyword = null } = {}) {
+    const res = await this.api.get("/paged", {
+      params: {
+        page,
+        pageSize,
+        courseId: courseId || undefined,
+        keyword: keyword?.trim() || undefined,
+      },
+    });
+    return res.data;
+  }
+
+  /**
    * Lấy chi tiết ngân hàng câu hỏi kèm toàn bộ câu hỏi bên trong
    * GET /api/question-banks/{id}
    */
@@ -71,6 +87,26 @@ class QuestionBankService {
   }
 
   /**
+   * Lấy danh sách câu hỏi có phân trang trong ngân hàng
+   * GET /api/question-banks/{bankId}/questions/paged
+   */
+  async getQuestionsPaged(
+    bankId,
+    { page = 1, pageSize = 20, difficulty = null, type = null, keyword = null } = {}
+  ) {
+    const res = await this.api.get(`/${bankId}/questions/paged`, {
+      params: {
+        page,
+        pageSize,
+        difficulty: difficulty || undefined,
+        type: type || undefined,
+        keyword: keyword?.trim() || undefined,
+      },
+    });
+    return res.data;
+  }
+
+  /**
    * Lấy chi tiết một câu hỏi theo ID
    * GET /api/question-banks/questions/{id}
    */
@@ -118,6 +154,16 @@ class QuestionBankService {
    */
   async deleteQuestion(id) {
     const res = await this.api.delete(`/questions/${id}`);
+    return res.data;
+  }
+
+  /**
+   * Xóa hàng loạt câu hỏi khỏi ngân hàng
+   * POST /api/question-banks/questions/bulk-delete
+   * @param {number[]} ids
+   */
+  async bulkDeleteQuestions(ids) {
+    const res = await this.api.post("/questions/bulk-delete", { ids });
     return res.data;
   }
 }

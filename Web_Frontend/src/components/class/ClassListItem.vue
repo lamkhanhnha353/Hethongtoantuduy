@@ -2,20 +2,20 @@
   <!-- Class row — List view -->
   <div
     @click="$emit('click', cls)"
-    class="group flex items-center gap-4 bg-white rounded-xl border border-orange-100 px-5 py-3.5
-           hover:border-orange-300 hover:shadow-sm transition-all duration-150 cursor-pointer"
+    class="group flex items-center gap-4 bg-white rounded-lg border border-stone-300 px-5 py-3.5
+           shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-orange-500 transition-colors duration-150 cursor-pointer"
   >
     <!-- Code -->
-    <span class="hidden sm:block text-xs font-mono font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded w-20 text-center flex-shrink-0 border border-orange-200">
+    <span class="hidden sm:block text-xs font-mono font-semibold text-orange-800 bg-orange-50 px-2 py-1 rounded w-20 text-center flex-shrink-0 border border-orange-200 tabular-nums">
       {{ cls.code ?? `LH-${cls.id}` }}
     </span>
 
     <!-- Name -->
     <div class="flex-1 min-w-0">
-      <p class="font-semibold text-gray-800 group-hover:text-orange-600 transition-colors truncate">
+      <p class="font-bold text-stone-900 group-hover:text-orange-600 transition-colors truncate">
         {{ cls.name }}
       </p>
-      <p class="text-xs text-gray-400 truncate mt-0.5">
+      <p class="text-xs text-stone-500 truncate mt-0.5 tabular-nums">
         GV: {{ cls.teacherName ?? 'Chưa phân công' }}
         <template v-if="cls.courseName"> · {{ cls.courseName }}</template>
         <template v-else-if="cls.courseLevelName"> · {{ cls.courseLevelName }}</template>
@@ -24,14 +24,14 @@
     </div>
 
     <!-- Capacity -->
-    <div class="hidden md:flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-      <UserGroupIcon class="w-3.5 h-3.5 text-orange-400" />
+    <div class="hidden md:flex items-center gap-1 text-xs font-medium text-stone-600 flex-shrink-0 tabular-nums">
+      <UserGroupIcon class="w-3.5 h-3.5 text-orange-600" />
       {{ currentStudentsCount }}/{{ maxCapacityDisplay }} HV
     </div>
 
     <!-- Room -->
-    <div v-if="cls.room" class="hidden lg:flex items-center gap-1 text-xs text-gray-400 flex-shrink-0 w-24">
-      <MapPinIcon class="w-3.5 h-3.5 text-orange-400" />
+    <div v-if="cls.room" class="hidden lg:flex items-center gap-1 text-xs text-stone-500 flex-shrink-0 w-24">
+      <MapPinIcon class="w-3.5 h-3.5 text-orange-600" />
       <span class="truncate">{{ cls.room }}</span>
     </div>
 
@@ -42,14 +42,14 @@
     <button
       type="button"
       @click.stop="$emit('edit', cls)"
-      class="text-gray-400 hover:text-orange-600 p-1.5 rounded-lg hover:bg-orange-50 transition-colors flex-shrink-0 cursor-pointer"
+      class="inline-flex items-center justify-center text-stone-700 bg-white border border-stone-300 hover:bg-stone-100 hover:border-stone-400 p-1.5 rounded-md transition-colors flex-shrink-0 cursor-pointer"
       title="Chỉnh sửa lớp học"
     >
-      <PencilSquareIcon class="w-4 h-4 text-orange-500" />
+      <PencilSquareIcon class="w-4 h-4 text-orange-600" />
     </button>
 
     <!-- Arrow -->
-    <ArrowRightIcon class="w-4 h-4 text-orange-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+    <ArrowRightIcon class="w-4 h-4 text-stone-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
   </div>
 </template>
 

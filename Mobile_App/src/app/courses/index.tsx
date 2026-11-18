@@ -5,7 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 import { CourseCard, CourseType } from '@/components/courses/CourseCard';
-import { API_URL } from '@/config/env';
+import { apiClient } from '@/services/apiClient';
 
 const QUICK_FILTERS = [
   { id: 'all', label: 'Tất cả' },
@@ -60,10 +60,8 @@ export default function AllCoursesScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/courses`); 
-        if (!response.ok) throw new Error(`Mã lỗi HTTP: ${response.status}`);
-
-        const data = await response.json();
+        const response = await apiClient.get('/api/courses');
+        const data = response.data;
         const formattedCourses: CourseType[] = [];
 
         data.forEach((course: any) => {

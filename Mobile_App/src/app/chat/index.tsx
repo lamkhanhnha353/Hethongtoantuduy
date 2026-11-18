@@ -92,6 +92,36 @@ export default function ChatListScreen() {
         <Text className="text-lg font-bold text-slate-800">Tin nhắn hỗ trợ</Text>
       </View>
 
+      <View className="bg-white px-4 pb-3 pt-3">
+        <TouchableOpacity
+          activeOpacity={0.8}
+          className="flex-row items-center overflow-hidden rounded-2xl bg-indigo-600 px-4 py-3.5"
+          onPress={() => router.push('/chat/ai')}
+        >
+          <View className="mr-3 h-11 w-11 items-center justify-center rounded-2xl bg-white/20">
+            <Feather color="#fff" name="cpu" size={22} />
+          </View>
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-[15px] font-bold text-white">Trợ lý AI</Text>
+              <View className="rounded-full bg-white/20 px-2 py-0.5">
+                <Text className="text-[9px] font-bold uppercase tracking-wide text-white">
+                  Mới
+                </Text>
+              </View>
+            </View>
+            <Text className="mt-0.5 text-xs text-indigo-100" numberOfLines={1}>
+              Hỏi đáp về khóa học, lịch học và chính sách
+            </Text>
+          </View>
+          <Feather color="#c7d2fe" name="chevron-right" size={20} />
+        </TouchableOpacity>
+
+        <Text className="mt-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+          Hội thoại với giáo viên
+        </Text>
+      </View>
+
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id.toString()}

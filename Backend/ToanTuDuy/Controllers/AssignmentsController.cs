@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.Extensions;
 using ToanTuDuy.Services;
 
 namespace ToanTuDuy.Controllers
@@ -134,6 +135,48 @@ namespace ToanTuDuy.Controllers
         public async Task<IActionResult> GetByStudent(int studentId, [FromQuery] int? lessonId)
         {
             var result = await _assignmentService.GetAssignmentsByStudentAsync(studentId, lessonId);
+            return Ok(result);
+        }
+
+        [HttpGet("student/{studentId:int}/practice")]
+        [Authorize(Roles = "Parent")]
+        public async Task<IActionResult> GetStudentPracticeAssignments(int studentId)
+        {
+            var result = await _assignmentService.GetStudentPracticeAssignmentsAsync(User.GetAccountId(), studentId);
+            return Ok(result);
+        }
+
+        [HttpGet("{id:int}/student/{studentId:int}/practice")]
+        [Authorize(Roles = "Parent")]
+        public async Task<IActionResult> GetStudentPracticeAssignment(int id, int studentId)
+        {
+            var result = await _assignmentService.GetStudentPracticeAssignmentDetailAsync(
+                User.GetAccountId(),
+                id,
+                studentId);
+            if (result == null)
+            {
+                return NotFound(new { message = "Không tìm thấy bài tập được giao cho học sinh này." });
+            }
+            return Ok(result);
+        }
+
+        [HttpPost("{id:int}/student/{studentId:int}/practice/submit")]
+        [Authorize(Roles = "Parent")]
+        public async Task<IActionResult> SubmitStudentPracticeAssignment(
+            int id,
+            int studentId,
+            [FromBody] SubmitStudentPracticeRequest request)
+        {
+            var result = await _assignmentService.SubmitStudentPracticeAssignmentAsync(
+                User.GetAccountId(),
+                id,
+                studentId,
+                request);
+            if (result == null)
+            {
+                return NotFound(new { message = "Không tìm thấy bài tập được giao cho học sinh này." });
+            }
             return Ok(result);
         }
 

@@ -34,25 +34,80 @@ namespace ToanTuDuy.Controllers
         public async Task<ActionResult<IEnumerable<AdminAccountResponse>>> GetAccounts(
             [FromQuery] string? keyword)
         {
+            var accounts = await BuildAccountQuery(keyword, role: null, isActive: null, User.GetAccountId())
+                .ToListAsync();
+
+            return Ok(accounts);
+        }
+
+        [HttpGet("paged")]
+        [ProducesResponseType(typeof(AdminAccountPagedResponse), StatusCodes.Status200OK)]
+        public async Task<ActionResult<AdminAccountPagedResponse>> GetAccountsPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
+            [FromQuery] string? keyword = null,
+            [FromQuery] string? role = null,
+            [FromQuery] bool? isActive = null,
+            CancellationToken cancellationToken = default)
+        {
+            var paged = await BuildAccountQuery(keyword, role, isActive, User.GetAccountId())
+                .ToPagedResultAsync(page, pageSize, cancellationToken: cancellationToken);
+
+            var activeCount = await _context.Users
+                .AsNoTracking()
+                .CountAsync(account => account.IsActive, cancellationToken);
+            var totalUsers = await _context.Users
+                .AsNoTracking()
+                .CountAsync(cancellationToken);
+
+            return Ok(new AdminAccountPagedResponse
+            {
+                Items = paged.Items,
+                Page = paged.Page,
+                PageSize = paged.PageSize,
+                TotalCount = paged.TotalCount,
+                ActiveCount = activeCount,
+                BlockedCount = totalUsers - activeCount
+            });
+        }
+
+        private IQueryable<AdminAccountResponse> BuildAccountQuery(
+            string? keyword,
+            string? role,
+            bool? isActive,
+            int currentAccountId)
+        {
             var query = _context.Users.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                var search = keyword.Trim().ToLower();
+                var search = keyword.Trim();
                 query = query.Where(account =>
-                    (account.UserName != null && account.UserName.ToLower().Contains(search)) ||
-                    (account.Email != null && account.Email.ToLower().Contains(search)) ||
-                    (account.PhoneNumber != null && account.PhoneNumber.Contains(search)) ||
+                    (account.UserName != null && EF.Functions.Like(account.UserName, $"%{search}%")) ||
+                    (account.Email != null && EF.Functions.Like(account.Email, $"%{search}%")) ||
+                    (account.PhoneNumber != null && EF.Functions.Like(account.PhoneNumber, $"%{search}%")) ||
                     (account.Role == "Parent" && account.ParentProfile != null &&
-                        account.ParentProfile.FullName.ToLower().Contains(search)) ||
+                        EF.Functions.Like(account.ParentProfile.FullName, $"%{search}%")) ||
                     (account.Role == "Teacher" && account.TeacherProfile != null &&
-                        account.TeacherProfile.FullName.ToLower().Contains(search)) ||
+                        EF.Functions.Like(account.TeacherProfile.FullName, $"%{search}%")) ||
                     (account.Role == "Admin" && account.AdminProfile != null &&
-                        account.AdminProfile.FullName.ToLower().Contains(search)));
+                        EF.Functions.Like(account.AdminProfile.FullName, $"%{search}%")));
             }
 
-            var accounts = await query
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                var normalizedRole = role.Trim();
+                query = query.Where(account => account.Role == normalizedRole);
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(account => account.IsActive == isActive.Value);
+            }
+
+            return query
                 .OrderByDescending(account => account.CreatedAt)
+                .ThenByDescending(account => account.Id)
                 .Select(account => new AdminAccountResponse
                 {
                     Id = account.Id,
@@ -68,17 +123,9 @@ namespace ToanTuDuy.Controllers
                     Phone = account.PhoneNumber,
                     Role = account.Role,
                     IsActive = account.IsActive,
+                    IsCurrentUser = account.Id == currentAccountId,
                     CreatedAt = account.CreatedAt
-                })
-                .ToListAsync();
-
-            var currentAccountId = User.GetAccountId();
-            foreach (var account in accounts)
-            {
-                account.IsCurrentUser = account.Id == currentAccountId;
-            }
-
-            return Ok(accounts);
+                });
         }
 
         [HttpPut("{id:int}/status")]
