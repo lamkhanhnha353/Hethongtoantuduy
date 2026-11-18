@@ -2,9 +2,8 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { usePagination } from "@/composables/usePagination";
-import createApiClient from "@/services/api.service";
+import adminPayrollService from "@/services/admin-payroll.service";
 
-const api = createApiClient("/api/payrolls");
 const { page, pageSize, totalCount, applyPagedResult, resetPage } = usePagination({
   initialPageSize: 20,
 });
@@ -17,6 +16,7 @@ const loading = ref(false);
 const batchLoading = ref(false);
 const detailLoading = ref(false);
 const adjustmentLoading = ref(false);
+const deletingAdjustmentId = ref(null);
 const baseRateLoading = ref(false);
 const emailLoadingId = ref(null);
 const previewLoading = ref(false);
@@ -109,17 +109,15 @@ async function loadPayrolls() {
   const token = ++requestToken;
   loading.value = true;
   try {
-    const response = await api.get("/admin/summary/paged", {
-      params: {
-        ...periodQuery.value,
-        page: page.value,
-        pageSize: pageSize.value,
-        keyword: keyword.value.trim() || undefined,
-        emailStatus: emailStatusFilter.value !== "ALL" ? emailStatusFilter.value : undefined,
-      },
+    const data = await adminPayrollService.getPaged({
+      ...periodQuery.value,
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: keyword.value,
+      emailStatus: emailStatusFilter.value,
     });
     if (token !== requestToken) return;
-    payrolls.value = applyPagedResult(response.data);
+    payrolls.value = applyPagedResult(data);
   } catch (error) {
     if (token !== requestToken) return;
     payrolls.value = [];
@@ -165,19 +163,21 @@ onBeforeUnmount(() => {
   if (searchTimer) clearTimeout(searchTimer);
 });
 
+async function refreshCurrentDetail() {
+  if (!selectedPayroll.value) return;
+  selectedDetail.value = await adminPayrollService.getDetail({
+    teacherId: selectedPayroll.value.teacherId,
+    ...periodQuery.value,
+  });
+}
+
 async function openLessonDetails(payroll) {
   selectedPayroll.value = payroll;
   selectedDetail.value = null;
   detailDialogVisible.value = true;
   detailLoading.value = true;
   try {
-    const response = await api.get("/detail", {
-      params: {
-        teacherId: payroll.teacherId,
-        ...periodQuery.value,
-      },
-    });
-    selectedDetail.value = response.data;
+    await refreshCurrentDetail();
   } catch (error) {
     detailDialogVisible.value = false;
     ElMessage.error(getErrorMessage(error, "Không thể tải chi tiết phiếu lương."));
@@ -223,9 +223,7 @@ async function submitBaseRate() {
 
   baseRateLoading.value = true;
   try {
-    await api.put(`/teachers/${form.teacherId}/base-rate`, {
-      baseRatePerSession: Number(form.baseRatePerSession),
-    });
+    await adminPayrollService.updateBaseRate(form.teacherId, Number(form.baseRatePerSession));
     baseRateDialogVisible.value = false;
     ElMessage.success("Đã cập nhật lương cơ bản cho giáo viên.");
     await loadPayrolls();
@@ -268,7 +266,7 @@ async function submitAdjustment() {
 
   adjustmentLoading.value = true;
   try {
-    await api.post("/adjustments", {
+    await adminPayrollService.createAdjustment({
       teacherId: form.teacherId,
       type: form.type,
       amount: Number(form.amount),
@@ -285,6 +283,33 @@ async function submitAdjustment() {
   }
 }
 
+async function handleDeleteAdjustment(adjustment) {
+  if (!adjustment?.id || deletingAdjustmentId.value) return;
+
+  const typeLabel = adjustment.type === "Bonus" ? "thưởng" : "phạt";
+  try {
+    await ElMessageBox.confirm(
+      `Xóa khoản ${typeLabel} "${adjustment.reason}" (${formatCurrency(adjustment.amount)})?`,
+      "Xác nhận xóa điều chỉnh",
+      { confirmButtonText: "Xóa", cancelButtonText: "Hủy", type: "warning" },
+    );
+  } catch {
+    return;
+  }
+
+  deletingAdjustmentId.value = adjustment.id;
+  try {
+    await adminPayrollService.deleteAdjustment(adjustment.id);
+    ElMessage.success("Đã xóa khoản điều chỉnh và tính lại thực nhận.");
+    await refreshCurrentDetail();
+    await loadPayrolls();
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, "Không thể xóa khoản điều chỉnh."));
+  } finally {
+    deletingAdjustmentId.value = null;
+  }
+}
+
 async function openEmailPreview(payroll) {
   if (!payroll.payrollId) {
     ElMessage.warning("Phiếu lương chưa được tạo, vui lòng tải lại bảng lương.");
@@ -296,12 +321,8 @@ async function openEmailPreview(payroll) {
   previewDialogVisible.value = true;
   previewLoading.value = true;
   try {
-    const response = await api.get(`/${payroll.payrollId}/preview-email`, {
-      responseType: "text",
-    });
-    previewHtml.value = typeof response.data === "string"
-      ? response.data
-      : JSON.stringify(response.data);
+    const data = await adminPayrollService.previewEmail(payroll.payrollId);
+    previewHtml.value = typeof data === "string" ? data : JSON.stringify(data);
   } catch (error) {
     previewDialogVisible.value = false;
     ElMessage.error(getErrorMessage(error, "Không thể tạo bản xem trước email."));
@@ -328,8 +349,8 @@ async function sendSingleEmail(payroll) {
 
   emailLoadingId.value = payroll.payrollId;
   try {
-    const response = await api.post(`/${payroll.payrollId}/send-email`);
-    ElMessage.success(response.data?.message ?? "Email đã được đưa vào hàng đợi.");
+    const data = await adminPayrollService.sendSingleEmail(payroll.payrollId);
+    ElMessage.success(data?.message ?? "Email đã được đưa vào hàng đợi.");
     await loadPayrolls();
   } catch (error) {
     ElMessage.error(getErrorMessage(error, "Không thể gửi email phiếu lương."));
@@ -351,9 +372,9 @@ async function sendBatchEmails() {
 
   batchLoading.value = true;
   try {
-    const response = await api.post("/send-batch-emails", null, { params: periodQuery.value });
-    const queued = response.data?.queuedCount ?? 0;
-    const skipped = response.data?.skippedCount ?? 0;
+    const data = await adminPayrollService.sendBatchEmails(periodQuery.value);
+    const queued = data?.queuedCount ?? 0;
+    const skipped = data?.skippedCount ?? 0;
     ElMessage.success(`Đã đưa ${queued} email vào hàng đợi; bỏ qua ${skipped} email.`);
     await loadPayrolls();
   } catch (error) {
@@ -521,7 +542,21 @@ async function sendBatchEmails() {
             <el-table-column label="Ngày" width="130"><template #default="{ row }">{{ formatDate(row.appliedDate) }}</template></el-table-column>
             <el-table-column label="Loại" width="120"><template #default="{ row }"><el-tag :type="row.type === 'Bonus' ? 'success' : 'danger'">{{ row.type === "Bonus" ? "Thưởng" : "Phạt" }}</el-tag></template></el-table-column>
             <el-table-column label="Số tiền" width="150" align="right"><template #default="{ row }">{{ formatCurrency(row.amount) }}</template></el-table-column>
-            <el-table-column prop="reason" label="Lý do" min-width="220" />
+            <el-table-column prop="reason" label="Lý do" min-width="200" />
+            <el-table-column label="Thao tác" width="100" align="center">
+              <template #default="{ row }">
+                <el-button
+                  size="small"
+                  type="danger"
+                  plain
+                  :loading="deletingAdjustmentId === row.id"
+                  :disabled="deletingAdjustmentId !== null && deletingAdjustmentId !== row.id"
+                  @click="handleDeleteAdjustment(row)"
+                >
+                  Xóa
+                </el-button>
+              </template>
+            </el-table-column>
             <template #empty><el-empty description="Không có khoản điều chỉnh." :image-size="60" /></template>
           </el-table>
         </template>

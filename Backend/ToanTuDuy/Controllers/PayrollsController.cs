@@ -121,6 +121,18 @@ public sealed class PayrollsController(
             adjustment);
     }
 
+    [HttpDelete("adjustments/{adjustmentId:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSalaryAdjustment(
+    int adjustmentId,
+    CancellationToken cancellationToken)
+    {
+        await payrollService.DeleteSalaryAdjustmentAsync(adjustmentId, cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Renders an email preview for a saved payroll summary.</summary>
     [HttpGet("{id:int}/preview-email")]
     [Authorize(Roles = "Admin")]

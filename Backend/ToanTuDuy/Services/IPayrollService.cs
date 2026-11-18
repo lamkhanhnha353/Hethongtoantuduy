@@ -36,4 +36,8 @@ public interface IPayrollService
     Task<int?> GetTeacherIdForAccountAsync(
         int accountId,
         CancellationToken cancellationToken = default);
+
+    Task DeleteSalaryAdjustmentAsync(
+        int adjustmentId, 
+        CancellationToken cancellationToken = default);
 }
