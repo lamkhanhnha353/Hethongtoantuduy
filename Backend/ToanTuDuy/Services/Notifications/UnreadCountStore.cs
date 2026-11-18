@@ -56,6 +56,11 @@ return -1";
 
         public async Task<int> GetAsync(int accountId, CancellationToken cancellationToken = default)
         {
+            if (!_redis.IsConnected)
+            {
+                return await CountFromDatabaseAsync(accountId, cancellationToken);
+            }
+
             try
             {
                 var database = _redis.GetDatabase();
@@ -82,6 +87,11 @@ return -1";
 
         public async Task DecrementAsync(int accountId, CancellationToken cancellationToken = default)
         {
+            if (!_redis.IsConnected)
+            {
+                return;
+            }
+
             try
             {
                 var database = _redis.GetDatabase();
@@ -101,7 +111,7 @@ return -1";
 
         public async Task IncrementAsync(int accountId, int delta, CancellationToken cancellationToken = default)
         {
-            if (delta <= 0)
+            if (delta <= 0 || !_redis.IsConnected)
             {
                 return;
             }
@@ -125,6 +135,11 @@ return -1";
 
         public async Task ResetAsync(int accountId, CancellationToken cancellationToken = default)
         {
+            if (!_redis.IsConnected)
+            {
+                return;
+            }
+
             try
             {
                 var database = _redis.GetDatabase();

@@ -140,6 +140,18 @@ namespace ToanTuDuy.Services
                         user.Id),
                     AudienceSpec.AllAdmins());
 
+                if (request.Role == "Parent")
+                {
+                    await _notificationService.EnqueueAsync(
+                        new NotificationMessage(
+                            NotificationTypes.Account,
+                            "Chào mừng đến với Toán Tư Duy!",
+                            $"Xin chào {request.FullName}, tài khoản phụ huynh của bạn đã được tạo thành công. Hãy thêm hồ sơ cho bé để bắt đầu khám phá các khóa học nhé!",
+                            $"ACCOUNT:{user.Id}:WELCOME",
+                            user.Id),
+                        AudienceSpec.Account(user.Id));
+                }
+
                 // 7. Lưu thay đổi còn đang tracked (notification + outbox) rồi mới Commit.
                 await _context.SaveChangesAsync();
 
@@ -298,6 +310,22 @@ namespace ToanTuDuy.Services
             // Thu hồi refresh token cũ: mọi phiên đang lưu refresh token sẽ không dùng được nữa.
             user.RefreshToken = null;
             await _userManager.UpdateAsync(user);
+
+            try
+            {
+                await _notificationService.PublishAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Account,
+                        "Mật khẩu vừa được thay đổi",
+                        "Mật khẩu tài khoản Toán Tư Duy của bạn vừa được thay đổi thành công. Nếu không phải bạn thực hiện, vui lòng liên hệ trung tâm ngay.",
+                        $"ACCOUNT:{accountId}:PASSWORD_CHANGED:{DateTime.UtcNow:yyyyMMddHHmmss}",
+                        accountId),
+                    AudienceSpec.Account(accountId));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AuthService] Không thể gửi thông báo đổi mật khẩu cho account {accountId}: {ex.Message}");
+            }
 
             return new ChangePasswordResponse
             {

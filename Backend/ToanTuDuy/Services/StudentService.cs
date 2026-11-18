@@ -10,6 +10,7 @@ using ToanTuDuy.Data;
 using ToanTuDuy.DTOs.Student;
 using ToanTuDuy.Exceptions;
 using ToanTuDuy.Models;
+using ToanTuDuy.Services.Notifications;
 using ToanTuDuy.Services.Storage;
 
 namespace ToanTuDuy.Services
@@ -20,15 +21,18 @@ namespace ToanTuDuy.Services
 
         private readonly ApplicationDbContext _context;
         private readonly IImageStorage _imageStorage;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<StudentService> _logger;
 
         public StudentService(
             ApplicationDbContext context,
             IImageStorage imageStorage,
+            INotificationService notificationService,
             ILogger<StudentService> logger)
         {
             _context = context;
             _imageStorage = imageStorage;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -61,6 +65,22 @@ namespace ToanTuDuy.Services
 
             _context.StudentProfiles.Add(student);
             await _context.SaveChangesAsync();
+
+            try
+            {
+                await _notificationService.PublishAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Account,
+                        "Đã tạo hồ sơ học viên mới",
+                        $"Hồ sơ của bé {student.FullName} đã được thêm thành công. Bạn có thể đăng ký khóa học cho bé ngay bây giờ.",
+                        $"STUDENT:{student.Id}:CREATED",
+                        accountId),
+                    AudienceSpec.Account(accountId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể gửi thông báo tạo học sinh {StudentId}.", student.Id);
+            }
 
             return Map(student);
         }

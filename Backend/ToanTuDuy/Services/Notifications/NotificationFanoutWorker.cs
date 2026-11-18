@@ -174,10 +174,15 @@ namespace ToanTuDuy.Services.Notifications
             var shouldSendEmail = audience.SendEmail
                 || string.Equals(notification.Type, NotificationTypes.Special, StringComparison.OrdinalIgnoreCase);
 
+            var categorySettingKey = ResolveCategorySettingKey(notification.Type);
+            var blockedSettingTypes = categorySettingKey == null
+                ? new[] { NotificationSettingTypes.InApp }
+                : new[] { NotificationSettingTypes.InApp, categorySettingKey };
+
             var disabledAccountIds = await context.NotificationSettings
                 .AsNoTracking()
                 .Where(setting => resolvedAccountIds.Contains(setting.AccountId)
-                    && setting.Type == NotificationSettingTypes.InApp
+                    && blockedSettingTypes.Contains(setting.Type)
                     && !setting.Enabled)
                 .Select(setting => setting.AccountId)
                 .Distinct()
@@ -233,6 +238,25 @@ namespace ToanTuDuy.Services.Notifications
             }
 
             return new FanoutResult(notification, inboxes, emailAccountIds.ToList());
+        }
+
+        private static string? ResolveCategorySettingKey(string? notificationType)
+        {
+            var normalized = notificationType?.Trim().ToUpperInvariant();
+            return normalized switch
+            {
+                NotificationTypes.Tuition or NotificationTypes.Enrollment or NotificationTypes.Payment
+                    => NotificationTypes.Tuition,
+                NotificationTypes.Attendance or NotificationTypes.LeaveRequest
+                    => NotificationTypes.Attendance,
+                NotificationTypes.Academic
+                    => NotificationTypes.Academic,
+                NotificationTypes.Announcement or NotificationTypes.System
+                    => NotificationTypes.Announcement,
+                NotificationTypes.Account
+                    => NotificationTypes.Account,
+                _ => null,
+            };
         }
 
         private static async Task UpdateUnreadCountsAsync(
