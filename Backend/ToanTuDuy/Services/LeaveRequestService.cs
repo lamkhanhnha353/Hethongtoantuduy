@@ -93,13 +93,23 @@ namespace ToanTuDuy.Services
             _context.LeaveRequests.Add(leaveRequest);
             await _context.SaveChangesAsync();
 
-            await _notificationService.PublishAsync(
+            await _notificationService.EnqueueAsync(
                 new NotificationMessage(
                     NotificationTypes.LeaveRequest,
                     "Đơn xin nghỉ mới",
                     $"{student.FullName} xin nghỉ buổi học \"{lesson.Title ?? "Buổi học"}\" ngày {lesson.LessonDate:dd/MM/yyyy}. Lý do: {leaveRequest.Reason}",
                     $"LEAVE_REQUEST:{leaveRequest.Id}:CREATED"),
                 AudienceSpec.ClassTeacher(lesson.ClassId));
+
+            await _notificationService.EnqueueAsync(
+                new NotificationMessage(
+                    NotificationTypes.Attendance,
+                    "Đã gửi đơn xin nghỉ phép",
+                    $"Hệ thống đã tiếp nhận đơn xin nghỉ buổi học \"{lesson.Title ?? "Buổi học"}\" ngày {lesson.LessonDate:dd/MM/yyyy} cho bé {student.FullName}. Vui lòng chờ giáo viên xác nhận.",
+                    $"LEAVE_REQUEST:{leaveRequest.Id}:SUBMITTED"),
+                AudienceSpec.StudentParent(student.Id));
+
+            await _context.SaveChangesAsync();
 
             return await GetRequestByIdAsync(leaveRequest.Id);
         }
@@ -127,13 +137,23 @@ namespace ToanTuDuy.Services
             leaveRequest.Status = "CANCELLED";
             await _context.SaveChangesAsync();
 
-            await _notificationService.PublishAsync(
+            await _notificationService.EnqueueAsync(
                 new NotificationMessage(
                     NotificationTypes.LeaveRequest,
                     "Đơn xin nghỉ đã bị hủy",
                     $"Phụ huynh đã hủy đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của {leaveRequest.Student.FullName}.",
                     $"LEAVE_REQUEST:{leaveRequest.Id}:CANCELLED"),
                 AudienceSpec.ClassTeacher(leaveRequest.Lesson.ClassId));
+
+            await _notificationService.EnqueueAsync(
+                new NotificationMessage(
+                    NotificationTypes.Attendance,
+                    "Đã hủy đơn xin nghỉ phép",
+                    $"Bạn đã hủy thành công đơn xin nghỉ buổi học \"{leaveRequest.Lesson.Title ?? "Buổi học"}\" ngày {leaveRequest.Lesson.LessonDate:dd/MM/yyyy} của bé {leaveRequest.Student.FullName}.",
+                    $"LEAVE_REQUEST:{leaveRequest.Id}:PARENT_CANCELLED"),
+                AudienceSpec.StudentParent(leaveRequest.StudentId));
+
+            await _context.SaveChangesAsync();
 
             return true;
         }

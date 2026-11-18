@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, FlatList, Modal, ScrollView, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
@@ -11,7 +11,7 @@ import { leaveRequestsQueryKey } from '@/lib/queryKeys';
 import { createLeaveRequest, getStudentLeaveRequests } from '@/services/lessonService';
 import type { LeaveRequestDto, StudentScheduleLesson } from '@/types/lesson';
 
-type CalendarStatus = 'completed' | 'upcoming' | 'none';
+type CalendarStatus = 'completed' | 'upcoming' | 'excused' | 'none';
 
 const WEEKDAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 const EMPTY_LEAVE_REQUESTS: LeaveRequestDto[] = [];
@@ -95,7 +95,13 @@ function renderStatusDot(status: CalendarStatus, isActive: boolean) {
     return null;
   }
 
-  const color = isActive ? 'bg-white' : status === 'completed' ? 'bg-emerald-500' : 'bg-orange-500';
+  const color = isActive
+    ? 'bg-white'
+    : status === 'excused'
+      ? 'bg-rose-500'
+      : status === 'completed'
+        ? 'bg-emerald-500'
+        : 'bg-orange-500';
   return <View className={`mt-1.5 h-1.5 w-1.5 rounded-full ${color}`} />;
 }
 
@@ -114,7 +120,6 @@ export default function ScheduleScreen() {
   const [selectedLeaveKeys, setSelectedLeaveKeys] = useState<string[]>([]);
   const [showLeaveReasonModal, setShowLeaveReasonModal] = useState(false);
   const [leaveReason, setLeaveReason] = useState('');
-  const [leaveNotice, setLeaveNotice] = useState<string | null>(null);
   const [calendarAnchor] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()),
   );
@@ -182,14 +187,14 @@ export default function ScheduleScreen() {
       const successes = results.filter((result) => result.error === null);
       const failures = results.filter((result) => result.error !== null);
       setSelectedLeaveKeys(failures.map((failure) => failure.key));
-      setLeaveNotice(
-        failures.length === 0
-          ? `Đã gửi ${successes.length} đơn xin nghỉ.`
-          : `Đã gửi ${successes.length}/${results.length} đơn. ${failures
-              .map((failure) => `${failure.studentName}: ${failure.error}`)
-              .join(' ')}`,
-      );
-      if (failures.length === 0) {
+      if (failures.length > 0) {
+        Alert.alert(
+          'Không thể gửi một số đơn',
+          `Đã gửi ${successes.length}/${results.length} đơn. ${failures
+            .map((failure) => `${failure.studentName}: ${failure.error}`)
+            .join(' ')}`,
+        );
+      } else {
         setShowLeaveReasonModal(false);
         setLeaveReason('');
       }
@@ -207,6 +212,16 @@ export default function ScheduleScreen() {
     const statuses = new Map<string, CalendarStatus>();
     for (const lesson of visibleLessons) {
       const dateKey = toLessonDateKey(lesson.lessonDate);
+      const leaveRequest = leaveRequestsByLesson.get(lessonKey(lesson));
+      if (leaveRequest?.status.toUpperCase() === 'APPROVED') {
+        statuses.set(dateKey, 'excused');
+        continue;
+      }
+
+      if (statuses.get(dateKey) === 'excused') {
+        continue;
+      }
+
       const status = lesson.status.toUpperCase();
       if (status === 'COMPLETED') {
         statuses.set(dateKey, 'completed');
@@ -215,7 +230,7 @@ export default function ScheduleScreen() {
       }
     }
     return statuses;
-  }, [visibleLessons]);
+  }, [leaveRequestsByLesson, visibleLessons]);
   const getDayStatus = (dateKey: string): CalendarStatus => calendarStatuses.get(dateKey) ?? 'none';
   const selectedDateKey = toDateKey(selectedDate);
   const currentLessons = useMemo(
@@ -268,6 +283,15 @@ export default function ScheduleScreen() {
     void leaveRequestsQuery.refetch();
   };
 
+  const refetchLeaveRequests = leaveRequestsQuery.refetch;
+  useFocusEffect(
+    useCallback(() => {
+      if (isParent && studentsQuery.isSuccess) {
+        void refetchLeaveRequests();
+      }
+    }, [isParent, refetchLeaveRequests, studentsQuery.isSuccess]),
+  );
+
   const selectDate = (date: Date) => {
     setSelectedLeaveKeys([]);
     setSelectedDate(date);
@@ -292,7 +316,6 @@ export default function ScheduleScreen() {
       return;
     }
 
-    setLeaveNotice(null);
     setSelectedLeaveKeys(lessonsToRequest.map(lessonKey));
     setSelectedLesson(null);
     setLeaveReason('');
@@ -451,22 +474,44 @@ export default function ScheduleScreen() {
             renderItem={({ item: date }) => {
               const dateKey = toDateKey(date);
               const isActive = selectedDateKey === dateKey;
+              const dayStatus = getDayStatus(dateKey);
+              const isExcused = dayStatus === 'excused';
               const dayName = WEEKDAY_LABELS[(date.getDay() + 6) % 7];
               return (
                 <TouchableOpacity
                   key={dateKey}
                   onPress={() => selectDate(date)}
                   className={`mr-2 h-[68px] w-[52px] items-center justify-center rounded-xl ${
-                    isActive ? 'bg-[#5a64f1]' : 'bg-transparent'
+                    isActive
+                      ? isExcused
+                        ? 'bg-rose-600'
+                        : 'bg-[#5a64f1]'
+                      : isExcused
+                        ? 'border border-rose-200 bg-rose-50'
+                        : 'bg-transparent'
                   }`}
                 >
-                  <Text className={`mb-1 text-[11px] font-semibold ${isActive ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  <Text
+                    className={`mb-1 text-[11px] font-semibold ${
+                      isActive
+                        ? isExcused
+                          ? 'text-rose-100'
+                          : 'text-indigo-100'
+                        : isExcused
+                          ? 'text-rose-500'
+                          : 'text-slate-400'
+                    }`}
+                  >
                     {dayName}
                   </Text>
-                  <Text className={`text-base font-black ${isActive ? 'text-white' : 'text-slate-700'}`}>
+                  <Text
+                    className={`text-base font-black ${
+                      isActive ? 'text-white' : isExcused ? 'text-rose-700' : 'text-slate-700'
+                    }`}
+                  >
                     {date.getDate()}
                   </Text>
-                  {renderStatusDot(getDayStatus(dateKey), isActive)}
+                  {renderStatusDot(dayStatus, isActive)}
                 </TouchableOpacity>
               );
             }}
@@ -484,12 +529,6 @@ export default function ScheduleScreen() {
             <Text className="text-xs font-bold text-[#5a64f1]">Xem lộ trình</Text>
           </TouchableOpacity>
         </View>
-
-        {leaveNotice ? (
-          <View className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50 p-3">
-            <Text className="text-sm font-medium text-indigo-800">{leaveNotice}</Text>
-          </View>
-        ) : null}
 
         {isPending ? (
           <View className="items-center justify-center py-12">
@@ -740,14 +779,18 @@ export default function ScheduleScreen() {
               </TouchableOpacity>
             </View>
 
-            <View className="mb-4 flex-row justify-center">
-              <View className="mr-5 flex-row items-center">
+            <View className="mb-4 flex-row justify-center gap-4">
+              <View className="flex-row items-center">
                 <View className="mr-2 h-2 w-2 rounded-full bg-emerald-500" />
                 <Text className="text-xs font-medium text-slate-500">Đã học</Text>
               </View>
               <View className="flex-row items-center">
                 <View className="mr-2 h-2 w-2 rounded-full bg-orange-500" />
                 <Text className="text-xs font-medium text-slate-500">Sắp học</Text>
+              </View>
+              <View className="flex-row items-center">
+                <View className="mr-2 h-2 w-2 rounded-full bg-rose-500" />
+                <Text className="text-xs font-medium text-slate-500">Nghỉ có phép</Text>
               </View>
             </View>
 
@@ -791,26 +834,36 @@ export default function ScheduleScreen() {
                       <View key={`${month.getMonth()}-${weekIndex}`} className="flex-row justify-between">
                         {dates.slice(weekIndex * 7, weekIndex * 7 + 7).map(({ date, dateKey, isCurrentMonth }) => {
                           const isActive = selectedDateKey === dateKey;
+                          const dayStatus = getDayStatus(dateKey);
+                          const isExcused = dayStatus === 'excused';
                           return (
                             <TouchableOpacity
                               key={dateKey}
                               onPress={() => selectDate(date)}
                               className={`h-11 w-[13%] items-center justify-center rounded-xl ${
-                                isActive ? 'bg-[#5a64f1]' : 'bg-transparent'
+                                isActive
+                                  ? isExcused
+                                    ? 'bg-rose-600'
+                                    : 'bg-[#5a64f1]'
+                                  : isExcused
+                                    ? 'bg-rose-50'
+                                    : 'bg-transparent'
                               }`}
                             >
                               <Text
                                 className={`text-base font-black ${
                                   isActive
                                     ? 'text-white'
-                                    : isCurrentMonth
-                                      ? 'text-slate-700'
-                                      : 'text-slate-300'
+                                    : isExcused
+                                      ? 'text-rose-700'
+                                      : isCurrentMonth
+                                        ? 'text-slate-700'
+                                        : 'text-slate-300'
                                 }`}
                               >
                                 {date.getDate()}
                               </Text>
-                              {renderStatusDot(getDayStatus(dateKey), isActive)}
+                              {renderStatusDot(dayStatus, isActive)}
                             </TouchableOpacity>
                           );
                         })}

@@ -42,10 +42,15 @@ namespace ToanTuDuy.Services
                 .Where(a => a.LessonId == lessonId)
                 .ToDictionaryAsync(a => a.StudentId);
 
-            // Lấy các đơn xin nghỉ phép của học sinh trong buổi học
-            var leaveRequests = await _context.LeaveRequests
-                .Where(lr => lr.LessonId == lessonId)
-                .ToDictionaryAsync(lr => lr.StudentId);
+            // Lấy các đơn xin nghỉ phép còn hiệu lực (bỏ qua đơn đã hủy, lấy đơn mới nhất nếu có nhiều bản ghi)
+            var leaveRequestList = await _context.LeaveRequests
+                .Where(lr => lr.LessonId == lessonId && lr.Status != "CANCELLED")
+                .OrderByDescending(lr => lr.Id)
+                .ToListAsync();
+
+            var leaveRequests = leaveRequestList
+                .GroupBy(lr => lr.StudentId)
+                .ToDictionary(group => group.Key, group => group.First());
 
             var studentResponses = new List<StudentAttendanceItemResponse>();
 
@@ -158,12 +163,18 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
+            var attendanceItems = request.Attendances
+                .Select(item => (
+                    item.StudentId,
+                    Status: item.Status?.Trim().ToUpper() ?? "PRESENT"))
+                .ToList();
+
+            await AutoApprovePendingLeaveRequestsForExcusedAsync(lesson, attendanceItems);
+
             await NotifyAbsentOrLateAsync(
                 request.LessonId,
                 lesson.LessonDate,
-                request.Attendances.Select(item => (
-                    item.StudentId,
-                    Status: item.Status?.Trim().ToUpper() ?? "PRESENT")));
+                attendanceItems);
 
             await NotifyAttendanceCompletedIfAllMarkedAsync(
                 request.LessonId,
@@ -226,10 +237,14 @@ namespace ToanTuDuy.Services
 
             await _context.SaveChangesAsync();
 
+            var singleAttendanceItems = new[] { (dto.StudentId, Status: normalizedStatus) };
+
+            await AutoApprovePendingLeaveRequestsForExcusedAsync(lesson, singleAttendanceItems);
+
             await NotifyAbsentOrLateAsync(
                 lessonId,
                 lesson.LessonDate,
-                new[] { (dto.StudentId, Status: normalizedStatus) });
+                singleAttendanceItems);
 
             await NotifyAttendanceCompletedIfAllMarkedAsync(
                 lessonId,
@@ -238,7 +253,11 @@ namespace ToanTuDuy.Services
                 lesson.LessonDate);
 
             var leave = await _context.LeaveRequests
-                .FirstOrDefaultAsync(lr => lr.LessonId == lessonId && lr.StudentId == dto.StudentId);
+                .Where(lr => lr.LessonId == lessonId
+                    && lr.StudentId == dto.StudentId
+                    && lr.Status != "CANCELLED")
+                .OrderByDescending(lr => lr.Id)
+                .FirstOrDefaultAsync();
 
             return new StudentAttendanceItemResponse
             {
@@ -282,6 +301,59 @@ namespace ToanTuDuy.Services
                     TeacherNotes = a.TeacherNotes
                 })
                 .ToListAsync();
+        }
+
+        private async Task AutoApprovePendingLeaveRequestsForExcusedAsync(
+            Lesson lesson,
+            IEnumerable<(int StudentId, string Status)> items)
+        {
+            var excusedStudentIds = items
+                .GroupBy(item => item.StudentId)
+                .Select(group => group.Last())
+                .Where(item => item.Status == "EXCUSED")
+                .Select(item => item.StudentId)
+                .Distinct()
+                .ToList();
+
+            if (excusedStudentIds.Count == 0)
+            {
+                return;
+            }
+
+            var pendingLeaveRequests = await _context.LeaveRequests
+                .Include(lr => lr.Student)
+                .Where(lr => lr.LessonId == lesson.Id
+                    && excusedStudentIds.Contains(lr.StudentId)
+                    && lr.Status == "PENDING")
+                .ToListAsync();
+
+            if (pendingLeaveRequests.Count == 0)
+            {
+                return;
+            }
+
+            var lessonTitle = string.IsNullOrWhiteSpace(lesson.Title)
+                ? "Buổi học"
+                : lesson.Title.Trim();
+
+            foreach (var leaveRequest in pendingLeaveRequests)
+            {
+                leaveRequest.Status = "APPROVED";
+
+                var studentName = string.IsNullOrWhiteSpace(leaveRequest.Student?.FullName)
+                    ? "học sinh"
+                    : leaveRequest.Student.FullName.Trim();
+
+                await _notificationService.EnqueueAsync(
+                    new NotificationMessage(
+                        NotificationTypes.Attendance,
+                        "Đơn xin nghỉ phép đã được duyệt",
+                        $"Đơn xin nghỉ buổi học \"{lessonTitle}\" ngày {lesson.LessonDate:dd/MM/yyyy} của bé {studentName} đã được giáo viên chấp thuận (nghỉ có phép).",
+                        $"LEAVE_REQUEST:{leaveRequest.Id}:APPROVED"),
+                    AudienceSpec.StudentParent(leaveRequest.StudentId));
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         private async Task NotifyAbsentOrLateAsync(
