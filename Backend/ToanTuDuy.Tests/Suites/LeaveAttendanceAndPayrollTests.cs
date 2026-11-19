@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using ToanTuDuy.Data;
 using ToanTuDuy.DTOs;
+using ToanTuDuy.DTOs.Notification;
 using ToanTuDuy.DTOs.Student;
 using ToanTuDuy.Models;
 using ToanTuDuy.Tests.Infrastructure;
@@ -221,5 +222,289 @@ public sealed class LeaveAttendanceAndPayrollTests(DatabaseFixture fixture) : IA
         await ApiAssertHelper.EventuallyAsync(() =>
             Task.FromResult(Factory.FakeEmail.SentMessages.Any(m =>
                 m.ToEmail == teacher1.Email && m.Subject.Contains("Phiếu lương"))));
+    }
+
+    [Fact]
+    public async Task LeaveRequest_GuardsOutsideClassOtherParent_CancelRules_AndRejectDoesNotCreateAttendance()
+    {
+        var teacher = await AuthTestHelper.RegisterTeacherAsync(Factory, markEmailConfirmed: true);
+        var parent1 = await AuthTestHelper.RegisterParentAsync(Factory);
+        var parent2 = await AuthTestHelper.RegisterParentAsync(Factory);
+
+        var sInClass = (await (await parent1.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "HS Trong Lớp" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+        var sOutside = (await (await parent1.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "HS Ngoài Lớp" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+        var sOtherParent = (await (await parent2.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "HS Phụ Huynh Khác" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+
+        int lessonFutureId, lessonCompletedId, lessonRejectId;
+        var vnNow = DateTime.UtcNow.AddHours(7);
+
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var course = new Course { Code = "LRG-C", Name = "Toán LRG", MinAge = 6, MaxAge = 10, Status = "ACTIVE", CreatedAt = DateTime.UtcNow };
+            db.Courses.Add(course);
+            await db.SaveChangesAsync();
+
+            var level = new CourseLevel { CourseId = course.Id, Code = "LRG-L", Name = "L1", Fee = 1000000m, TotalSessions = 3, OrderIndex = 1, Status = "ACTIVE" };
+            db.CourseLevels.Add(level);
+            await db.SaveChangesAsync();
+
+            var cls = new Classes { CourseLevelId = level.Id, TeacherId = teacher.ProfileId, Name = "Lớp LRG", MaxCapacity = 10, StartDate = vnNow.Date, Status = "OPEN" };
+            db.Classes.Add(cls);
+            await db.SaveChangesAsync();
+
+            db.ClassStudents.Add(new ClassStudent { ClassId = cls.Id, StudentId = sInClass.Id, Status = "ACTIVE" });
+
+            var lFuture = new Lesson { ClassId = cls.Id, Title = "Buổi Tương Lai", LessonDate = vnNow.AddDays(1).Date, StartTime = vnNow.AddDays(1), EndTime = vnNow.AddDays(1).AddHours(1.5), Status = "SCHEDULED" };
+            var lReject = new Lesson { ClassId = cls.Id, Title = "Buổi Từ Chối", LessonDate = vnNow.AddDays(2).Date, StartTime = vnNow.AddDays(2), EndTime = vnNow.AddDays(2).AddHours(1.5), Status = "SCHEDULED" };
+            var lCompleted = new Lesson { ClassId = cls.Id, Title = "Buổi Đã Xong", LessonDate = vnNow.AddDays(-1).Date, StartTime = vnNow.AddDays(-1), EndTime = vnNow.AddDays(-1).AddHours(1.5), Status = "COMPLETED" };
+            db.Lessons.AddRange(lFuture, lReject, lCompleted);
+            await db.SaveChangesAsync();
+
+            lessonFutureId = lFuture.Id;
+            lessonRejectId = lReject.Id;
+            lessonCompletedId = lCompleted.Id;
+        }
+
+        // Student not in class -> 400
+        Assert.Equal(HttpStatusCode.BadRequest, (await parent1.Client.PostAsJsonAsync("/api/leaverequests", new LeaveRequestCreateRequest
+        {
+            StudentId = sOutside.Id,
+            LessonId = lessonFutureId,
+            Reason = "Không học lớp này"
+        })).StatusCode);
+
+        // Other parent's student -> 404
+        Assert.Equal(HttpStatusCode.NotFound, (await parent1.Client.PostAsJsonAsync("/api/leaverequests", new LeaveRequestCreateRequest
+        {
+            StudentId = sOtherParent.Id,
+            LessonId = lessonFutureId,
+            Reason = "Hack"
+        })).StatusCode);
+
+        // Non-SCHEDULED / past lesson -> 400
+        Assert.Equal(HttpStatusCode.BadRequest, (await parent1.Client.PostAsJsonAsync("/api/leaverequests", new LeaveRequestCreateRequest
+        {
+            StudentId = sInClass.Id,
+            LessonId = lessonCompletedId,
+            Reason = "Quá khứ"
+        })).StatusCode);
+
+        // Create PENDING -> cancel -> 204
+        var createCancel = await parent1.Client.PostAsJsonAsync("/api/leaverequests", new LeaveRequestCreateRequest
+        {
+            StudentId = sInClass.Id,
+            LessonId = lessonFutureId,
+            Reason = "Tạm xin nghỉ"
+        });
+        Assert.Equal(HttpStatusCode.OK, createCancel.StatusCode);
+        var lrCancel = (await createCancel.Content.ReadFromJsonAsync<LeaveRequestResponse>())!;
+        Assert.Equal(HttpStatusCode.NoContent, (await parent1.Client.DeleteAsync($"/api/leaverequests/{lrCancel.Id}")).StatusCode);
+
+        // Create another for reject test -> Teacher pending paged shows it -> reject does NOT create Attendance -> cancel REJECTED returns 409
+        var createReject = await parent1.Client.PostAsJsonAsync("/api/leaverequests", new LeaveRequestCreateRequest
+        {
+            StudentId = sInClass.Id,
+            LessonId = lessonRejectId,
+            Reason = "Xin nghỉ để từ chối"
+        });
+        var lrReject = (await createReject.Content.ReadFromJsonAsync<LeaveRequestResponse>())!;
+
+        var pendingPaged = (await teacher.Client.GetFromJsonAsync<PagedResult<LeaveRequestResponse>>("/api/leaverequests/pending/paged"))!;
+        Assert.Contains(pendingPaged.Items, r => r.Id == lrReject.Id);
+
+        Assert.Equal(HttpStatusCode.OK,
+            (await teacher.Client.PutAsync($"/api/leaverequests/{lrReject.Id}/process?isApproved=false", null)).StatusCode);
+
+        // Attendance remains UNMARKED (no EXCUSED created)
+        var detail = (await teacher.Client.GetFromJsonAsync<LessonAttendanceDetailResponse>($"/api/attendances/lesson/{lessonRejectId}"))!;
+        Assert.Equal("UNMARKED", Assert.Single(detail.Students).Status);
+
+        // Cannot cancel already processed leave request -> 409
+        Assert.Equal(HttpStatusCode.Conflict, (await parent1.Client.DeleteAsync($"/api/leaverequests/{lrReject.Id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Attendance_BatchAndSingle_ValidatesMembership_NotifiesAbsentAndCompleted_AndFiltersHistory()
+    {
+        var admin = await AuthTestHelper.CreateAdminAsync(Factory);
+        var teacher = await AuthTestHelper.RegisterTeacherAsync(Factory, markEmailConfirmed: true);
+        var parent1 = await AuthTestHelper.RegisterParentAsync(Factory);
+        var parent2 = await AuthTestHelper.RegisterParentAsync(Factory);
+
+        var s1 = (await (await parent1.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "HS Điểm Danh 1" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+        var s2 = (await (await parent2.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "HS Điểm Danh 2" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+        var sOut = (await (await parent1.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "HS Ngoài" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+
+        int class1Id, class2Id, lesson1Id, lesson2Id;
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var course = new Course { Code = "ATT-C", Name = "Toán ATT", MinAge = 6, MaxAge = 10, Status = "ACTIVE", CreatedAt = DateTime.UtcNow };
+            db.Courses.Add(course);
+            await db.SaveChangesAsync();
+
+            var level = new CourseLevel { CourseId = course.Id, Code = "ATT-L", Name = "L1", Fee = 1000000m, TotalSessions = 2, OrderIndex = 1, Status = "ACTIVE" };
+            db.CourseLevels.Add(level);
+            await db.SaveChangesAsync();
+
+            var c1 = new Classes { CourseLevelId = level.Id, TeacherId = teacher.ProfileId, Name = "Lớp ATT 1", MaxCapacity = 10, StartDate = DateTime.UtcNow.Date, Status = "OPEN" };
+            var c2 = new Classes { CourseLevelId = level.Id, TeacherId = teacher.ProfileId, Name = "Lớp ATT 2", MaxCapacity = 10, StartDate = DateTime.UtcNow.Date, Status = "OPEN" };
+            db.Classes.AddRange(c1, c2);
+            await db.SaveChangesAsync();
+            class1Id = c1.Id;
+            class2Id = c2.Id;
+
+            db.ClassStudents.AddRange(
+                new ClassStudent { ClassId = c1.Id, StudentId = s1.Id, Status = "ACTIVE" },
+                new ClassStudent { ClassId = c1.Id, StudentId = s2.Id, Status = "ACTIVE" },
+                new ClassStudent { ClassId = c2.Id, StudentId = s1.Id, Status = "ACTIVE" });
+
+            var l1 = new Lesson { ClassId = c1.Id, Title = "Buổi ATT 1", LessonDate = DateTime.UtcNow.Date, Status = "SCHEDULED" };
+            var l2 = new Lesson { ClassId = c2.Id, Title = "Buổi ATT 2", LessonDate = DateTime.UtcNow.Date.AddDays(-1), Status = "COMPLETED" };
+            db.Lessons.AddRange(l1, l2);
+            await db.SaveChangesAsync();
+            lesson1Id = l1.Id;
+            lesson2Id = l2.Id;
+        }
+
+        // TC-ATT-007: Student outside class -> 400
+        Assert.Equal(HttpStatusCode.BadRequest, (await teacher.Client.PostAsJsonAsync("/api/attendances/batch", new BatchAttendanceRequest
+        {
+            LessonId = lesson1Id,
+            Attendances = [new AttendanceItemDto { StudentId = sOut.Id, Status = "PRESENT" }]
+        })).StatusCode);
+
+        // TC-ATT-006: Batch attendance 2 students (s1=PRESENT, s2=ABSENT)
+        var batchOk = await teacher.Client.PostAsJsonAsync("/api/attendances/batch", new BatchAttendanceRequest
+        {
+            LessonId = lesson1Id,
+            Attendances =
+            [
+                new AttendanceItemDto { StudentId = s1.Id, Status = "PRESENT" },
+                new AttendanceItemDto { StudentId = s2.Id, Status = "ABSENT", TeacherNotes = "Vắng không phép" }
+            ]
+        });
+        Assert.Equal(HttpStatusCode.OK, batchOk.StatusCode);
+
+        // Parent 2 receives ABSENT notification & Admin/Teacher receive ATTENDANCE_COMPLETED
+        await ApiAssertHelper.EventuallyAsync(async () =>
+        {
+            var p2Inbox = await parent2.Client.GetFromJsonAsync<NotificationListResponse>("/api/notifications");
+            var adminInbox = await admin.Client.GetFromJsonAsync<NotificationListResponse>("/api/notifications");
+            return p2Inbox is not null && p2Inbox.Items.Any(n => n.Type == "ATTENDANCE" && n.Title.Contains("vắng mặt"))
+                && adminInbox is not null && adminInbox.Items.Any(n => n.Type == "ATTENDANCE" && n.Title.Contains("Hoàn thiện điểm danh"));
+        });
+
+        // Single update s1 in lesson2 (class2) -> LATE
+        Assert.Equal(HttpStatusCode.OK, (await teacher.Client.PutAsJsonAsync(
+            $"/api/attendances/lesson/{lesson2Id}/student/{s1.Id}",
+            new AttendanceItemDto { StudentId = s1.Id, Status = "LATE" })).StatusCode);
+
+        // Student history filtered by classId
+        var allHistory = (await teacher.Client.GetFromJsonAsync<List<StudentAttendanceHistoryResponse>>(
+            $"/api/attendances/student/{s1.Id}"))!;
+        Assert.Equal(2, allHistory.Count);
+
+        var class2History = (await teacher.Client.GetFromJsonAsync<List<StudentAttendanceHistoryResponse>>(
+            $"/api/attendances/student/{s1.Id}?classId={class2Id}"))!;
+        var singleHistory = Assert.Single(class2History);
+        Assert.Equal(class2Id, singleHistory.ClassId);
+        Assert.Equal("LATE", singleHistory.Status);
+    }
+
+    [Fact]
+    public async Task Payroll_EmailNotConfigured400_BatchEmails_Paged_And_AdjustmentResetsEmailStatus()
+    {
+        var admin = await AuthTestHelper.CreateAdminAsync(Factory);
+        var teacher = await AuthTestHelper.RegisterTeacherAsync(Factory, markEmailConfirmed: true);
+        var parent = await AuthTestHelper.RegisterParentAsync(Factory);
+        var student = (await (await parent.Client.PostAsJsonAsync("/api/students", new CreateStudentRequest { FullName = "Bé Mail Lương" }))
+            .Content.ReadFromJsonAsync<StudentResponse>())!;
+
+        const int month = 11;
+        const int year = 2026;
+
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var course = new Course { Code = "PAYM-C", Name = "Toán PayMail", MinAge = 6, MaxAge = 10, Status = "ACTIVE", CreatedAt = DateTime.UtcNow };
+            db.Courses.Add(course);
+            await db.SaveChangesAsync();
+
+            var level = new CourseLevel { CourseId = course.Id, Code = "PAYM-L", Name = "L1", Fee = 1000000m, TotalSessions = 1, OrderIndex = 1, Status = "ACTIVE" };
+            db.CourseLevels.Add(level);
+            await db.SaveChangesAsync();
+
+            var cls = new Classes { CourseLevelId = level.Id, TeacherId = teacher.ProfileId, Name = "Lớp PayMail", MaxCapacity = 10, StartDate = new DateTime(year, month, 1), Status = "OPEN" };
+            db.Classes.Add(cls);
+            await db.SaveChangesAsync();
+
+            db.ClassStudents.Add(new ClassStudent { ClassId = cls.Id, StudentId = student.Id, Status = "ACTIVE" });
+            var l1 = new Lesson { ClassId = cls.Id, Title = "Buổi 1", LessonDate = new DateTime(year, month, 10), Status = "COMPLETED" };
+            db.Lessons.Add(l1);
+            await db.SaveChangesAsync();
+
+            db.Attendances.Add(new Attendance { LessonId = l1.Id, StudentId = student.Id, Status = "PRESENT" });
+            await db.SaveChangesAsync();
+        }
+
+        // Invalid adjustment Amount <= 0 or invalid Type -> 400
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.Client.PostAsJsonAsync("/api/payrolls/adjustments", new CreateAdjustmentRequestDto
+        {
+            TeacherId = teacher.ProfileId,
+            Type = "InvalidType",
+            Amount = 50000m,
+            Reason = "Test",
+            AppliedDate = new DateOnly(year, month, 12)
+        })).StatusCode);
+
+        await admin.Client.PutAsJsonAsync($"/api/payrolls/teachers/{teacher.ProfileId}/base-rate",
+            new UpdateTeacherBaseRateRequestDto { BaseRatePerSession = 200000m });
+
+        var paged = (await admin.Client.GetFromJsonAsync<PagedResult<PayslipDto>>(
+            $"/api/payrolls/admin/summary/paged?month={month}&year={year}"))!;
+        var payslip = paged.Items.Single(p => p.TeacherId == teacher.ProfileId);
+
+        // TC-PAY-004: Email service unconfigured -> 400
+        Factory.FakeEmail.IsConfiguredResult = false;
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await admin.Client.PostAsync($"/api/payrolls/{payslip.PayrollId}/send-email", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await admin.Client.PostAsync($"/api/payrolls/send-batch-emails?month={month}&year={year}", null)).StatusCode);
+
+        // Re-enable email -> batch queue -> 202 Accepted and EmailStatus becomes Sent
+        Factory.FakeEmail.IsConfiguredResult = true;
+        var batchResp = await admin.Client.PostAsync($"/api/payrolls/send-batch-emails?month={month}&year={year}", null);
+        Assert.Equal(HttpStatusCode.Accepted, batchResp.StatusCode);
+
+        await ApiAssertHelper.EventuallyAsync(async () =>
+        {
+            var detail = await admin.Client.GetFromJsonAsync<PayslipDetailDto>(
+                $"/api/payrolls/detail?teacherId={teacher.ProfileId}&month={month}&year={year}");
+            return detail?.Payslip.EmailStatus == "Sent";
+        });
+
+        // Adding a new Bonus resets EmailStatus back to NotSent when recalculated
+        Assert.Equal(HttpStatusCode.Created, (await admin.Client.PostAsJsonAsync("/api/payrolls/adjustments", new CreateAdjustmentRequestDto
+        {
+            TeacherId = teacher.ProfileId,
+            Type = "Bonus",
+            Amount = 50000m,
+            Reason = "Thưởng bổ sung",
+            AppliedDate = new DateOnly(year, month, 15)
+        })).StatusCode);
+
+        var refreshed = (await admin.Client.GetFromJsonAsync<List<PayslipDto>>(
+            $"/api/payrolls/admin/summary?month={month}&year={year}"))!;
+        var updatedPayslip = refreshed.Single(p => p.TeacherId == teacher.ProfileId);
+        Assert.Equal(250000m, updatedPayslip.FinalSalary);
+        Assert.Equal("NotSent", updatedPayslip.EmailStatus);
     }
 }

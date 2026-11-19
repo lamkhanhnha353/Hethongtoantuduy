@@ -217,4 +217,46 @@ public sealed class EnrollmentAndVnPayTests(DatabaseFixture fixture) : IAsyncLif
         var payUrl = await parent.Client.PostAsync($"/api/payment/create-url/{invoiceId}", null);
         Assert.Equal(HttpStatusCode.Conflict, payUrl.StatusCode);
     }
+
+    [Fact]
+    public async Task PaymentAndInvoice_EdgeCases_UnknownTxnRef_CancelPaidBlocked_AndParentHistoryIsolation()
+    {
+        var (_, _, parent1, studentId, _, class1Id, _) = await SetupCatalogAsync();
+        var parent2 = await AuthTestHelper.RegisterParentAsync(Factory);
+
+        var enroll = await parent1.Client.PostAsJsonAsync("/api/enrollment/register", new EnrollmentRequest
+        {
+            StudentId = studentId,
+            ClassId = class1Id
+        });
+        enroll.EnsureSuccessStatusCode();
+        using var enrollDoc = JsonDocument.Parse(await enroll.Content.ReadAsStringAsync());
+        var invoiceId = enrollDoc.RootElement.GetProperty("invoiceId").GetInt32();
+
+        var urlResp = await parent1.Client.PostAsync($"/api/payment/create-url/{invoiceId}", null);
+        using var urlDoc = JsonDocument.Parse(await urlResp.Content.ReadAsStringAsync());
+        var txnRef = QueryHelpers.ParseQuery(new Uri(urlDoc.RootElement.GetProperty("paymentUrl").GetString()!).Query)["vnp_TxnRef"].ToString();
+
+        using var anon = Factory.CreateClient();
+
+        // Unknown TxnRef -> RspCode "01"
+        var unknownQuery = VnPayTestSigner.BuildSignedQuery(TestWebApplicationFactory.VnPayHashSecret, "INV999999_UNKNOWN", 1500000);
+        var unknownIpn = await anon.GetFromJsonAsync<VnPayIpnResponse>($"/api/payment/vnpay-ipn?{unknownQuery}");
+        Assert.Equal("01", unknownIpn!.RspCode);
+
+        // Pay invoice -> then cancelling PAID invoice returns 400
+        var okQuery = VnPayTestSigner.BuildSignedQuery(TestWebApplicationFactory.VnPayHashSecret, txnRef, 1500000);
+        var okIpn = await anon.GetFromJsonAsync<VnPayIpnResponse>($"/api/payment/vnpay-ipn?{okQuery}");
+        Assert.Equal("00", okIpn!.RspCode);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await parent1.Client.PostAsync($"/api/invoice/cancel/{invoiceId}", null)).StatusCode);
+
+        // Parent invoice history isolation
+        var p1History = (await parent1.Client.GetFromJsonAsync<List<InvoiceHistoryResponse>>("/api/invoice/history"))!;
+        Assert.Single(p1History);
+        Assert.Equal("PAID", p1History[0].Status);
+
+        var p2History = (await parent2.Client.GetFromJsonAsync<List<InvoiceHistoryResponse>>("/api/invoice/history"))!;
+        Assert.Empty(p2History);
+    }
 }
