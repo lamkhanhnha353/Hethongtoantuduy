@@ -1,0 +1,128 @@
+﻿Chức năng,STT,Loại điều khiển,Giá trị mặc định,Lưu ý
+"Chức năng 01: Đăng nhập hệ thống",1,"Textbox (input type=tel, #phone)","(Rỗng)","Nhãn SỐ ĐIỆN THOẠI, placeholder Nhập số điện thoại, required, maxlength=12, regex (\+84|0)[0-9]{9}."
+"Chức năng 01: Đăng nhập hệ thống",2,"Textbox (input type=password, #password)","(Rỗng)","Nhãn MẬT KHẨU, placeholder Nhập mật khẩu, required, maxlength=128."
+"Chức năng 01: Đăng nhập hệ thống",3,"Icon Button (Hiện/Ẩn mật khẩu)","Ẩn mật khẩu","Chuyển đổi type password/text, cập nhật aria-label và aria-pressed."
+"Chức năng 01: Đăng nhập hệ thống",4,"Primary Button (submit)","Đăng nhập","Khóa (disabled) và đổi chữ thành Đang đăng nhập... trong lúc gọi API."
+"Chức năng 01: Đăng nhập hệ thống",5,"Google Sign-In / Thông báo trạng thái","Đăng nhập Google chưa được cấu hình.","Thực tế trên :8088 chưa cấu hình VITE_GOOGLE_CLIENT_ID; chưa có tính năng Quên mật khẩu."
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",1,Navigation Link/Button,Gửi thông báo,Điều hướng sang /communication/notifications.
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",2,Navigation Link/Button,Chốt lương,Điều hướng sang /finance/payroll.
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",3,KPI Stat Cards (4 thẻ),"Doanh thu 1.452.000.000 đ; Quỹ lương 0 đ; Học viên 585; Tin nhắn chờ 450",Hiển thị 4 chỉ số vận hành cốt lõi tháng hiện tại.
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",4,Bar Chart (vue-chartjs),6 tháng (T6-T11),So sánh Doanh thu học phí và Chi phí quỹ lương (triệu đồng).
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",5,Doughnut Chart & Legend,Tổng lượt ghi danh: 794,"Phân bổ học viên theo lớp; thực tế legend nhiều lớp dài làm đẩy biểu đồ xuống dưới."
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",6,"Data Table & Link Xem tất cả","5 dòng giáo viên (0 đ, Chưa gửi)",Link Xem tất cả mở /finance/payroll.
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",7,List Widget (Hội thoại phụ huynh),450 hội thoại,Hiển thị các hội thoại mới nhất có tin nhắn cuối từ phụ huynh.
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",1,Search Textbox (SearchBar),(Rỗng),"Placeholder Tìm tên, SĐT hoặc email phụ huynh..., debounce 300ms."
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",2,Data Table (4 cột),"1-20 / 1100 phụ huynh (55 trang)","Cột: HỌ TÊN PHỤ HUYNH, THÔNG TIN LIÊN HỆ, HỌC SINH TRỰC THUỘC, THAO TÁC."
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",3,"Row Action Buttons (Sửa, Xóa)",Enabled trên từng dòng,"Sửa mở modal (fullName max 100, pin 4-6 số); Xóa xác nhận qua window.confirm."
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",4,Pagination Bar,"20 / trang, trang 1/55, Trước disabled","Tùy chọn 10, 20, 50, 100 dòng/trang."
+"Chức năng 04: Quản lý Giáo viên",1,Primary Button (+ Thêm giáo viên),Enabled,"Mở modal tạo giáo viên mới (SĐT, MK >=6 ký tự, Email; ô Chuyên môn chỉ hiện khi Sửa)."
+"Chức năng 04: Quản lý Giáo viên",2,Search Textbox (SearchBar),(Rỗng),"Placeholder Tìm tên, SĐT hoặc email giáo viên..., debounce 300ms."
+"Chức năng 04: Quản lý Giáo viên",3,"Combobox (Lọc trạng thái giáo viên)","Tất cả trạng thái (ALL)","Tùy chọn: Tất cả trạng thái, Hoạt động (true), Đã khóa (false)."
+"Chức năng 04: Quản lý Giáo viên",4,Data Table (5 cột),"1-20 / 201 giáo viên (11 trang)","Cột: HỌ & TÊN, LIÊN HỆ, CHUYÊN MÔN, TRẠNG THÁI, THAO TÁC (Sửa, Xóa)."
+"Chức năng 04: Quản lý Giáo viên",5,Pagination Bar,"20 / trang, trang 1/11, Trước disabled","Tùy chọn 10, 20, 50, 100 dòng/trang."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",1,KPI Stat Cards (3 thẻ),"Tổng 1322; Đang hoạt động 1322; Đã khóa 0",Cập nhật tức thời sau khi khóa/mở khóa tài khoản.
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",2,"Searchbox (type=search, #account-search)",(Rỗng),"maxlength=100, debounce 300ms."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",3,Combobox (Lọc theo vai trò),"Tất cả vai trò (ALL)","Tùy chọn: ALL, Admin, Teacher, Parent."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",4,Combobox (Lọc theo trạng thái),"Tất cả trạng thái (ALL)","Tùy chọn: ALL, Đang hoạt động, Đã khóa."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",5,Secondary Button (Làm mới),Enabled,"Tải lại danh sách tài khoản."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",6,Data Table (5 cột),"1-20 / 1322 tài khoản (67 trang)","Hiển thị Tài khoản, Vai trò, Ngày tạo, Trạng thái, Thao tác."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",7,Toggle Switch & Button Đặt lại mật khẩu,"Switch checked (Hoạt động)","Khóa Switch với chính Admin đang đăng nhập; Reset chỉ bật cho Teacher/Parent có email đã xác minh."
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",8,Pagination Bar,"20 / trang, trang 1/67, Trước disabled","Tùy chọn 10, 20, 50, 100 dòng/trang."
+"Chức năng 06: Quản lý Danh mục Khóa học",1,Primary Button (+ Thêm khóa học),Enabled,Mở CourseModal chế độ tạo mới.
+"Chức năng 06: Quản lý Danh mục Khóa học",2,Search Textbox (SearchBar),(Rỗng),"Placeholder Tìm theo mã, tên khóa học, mô tả..., lọc trực tiếp ở client."
+"Chức năng 06: Quản lý Danh mục Khóa học",3,"Toggle Button Bộ lọc & View Toggle","Bộ lọc đóng; Dạng lưới","Chuyển đổi Grid/List và đóng/mở vùng lọc nâng cao."
+"Chức năng 06: Quản lý Danh mục Khóa học",4,"Filter Panel (3 select, 2 input number, nút Đặt lại)","Khóa học: Tất cả (12); Trạng thái: Tất cả; Sắp xếp: Tên A -> Z","Cảnh báo nếu Học phí từ > Học phí đến."
+"Chức năng 06: Quản lý Danh mục Khóa học",5,Grid Thẻ khóa học,"Hiển thị 12 / 12 khóa học","Mỗi thẻ có nút Sửa và Xem chi tiết -> (/training/courses/:id)."
+"Chức năng 06: Quản lý Danh mục Khóa học",6,Modal Thêm Khóa học mới (CourseModal),"Trạng thái=ACTIVE, minAge=5, maxAge=12","Upload ảnh bìa (<=10MB), video (<=100MB), ảnh CSVC thẳng lên Cloudinary; khóa Lưu/Đóng khi đang upload."
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",1,Primary Button (+ Mở lớp mới),Enabled,"Mở ClassModal tạo lớp thuộc cấp độ khóa học."
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",2,"Toolbar (SearchBar, Bộ lọc, View Toggle)","Search rỗng; Dạng lưới","Debounce 300ms, lọc server theo khóa học, trạng thái, sĩ số, sắp xếp."
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",3,Class Cards Grid & PaginationBar,"1000 lớp, 12 / trang (84 trang)","Thẻ lớp có Thời khóa biểu, Sửa, Chi tiết. Ghi nhận lớp LH-34/76/83 hiện trạng thái Không rõ."
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",4,Header Actions trong Chi tiết lớp,"4 nút hành động","Đổi giáo viên, Đồng bộ & Tính ngày kết thúc, Chỉnh sửa lớp học, + Thêm lịch tuần."
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",5,4 Metric Cards Chi tiết lớp,"Lớp #6: 1/14 HV; 1/16 buổi; 4.200.000đ; GV Xuân Tường Lê","Thẻ Giáo viên clickable để đổi GV nhanh."
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",6,3 Tabs Chi tiết lớp,"Mặc định: Lịch tuần (1 ca/tuần)","Gồm Lịch tuần (có lưới tuần trực quan), Danh sách Buổi học (1/16) và Danh sách Học viên (1)."
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",1,Mode Switcher (Google Calendar / Bảng danh sách),Lịch Google Calendar,Chuyển giữa chế độ lịch trực quan và bảng danh sách.
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",2,Primary Button (+ Thêm lịch học),Enabled,Mở ScheduleModal chế độ tạo mới.
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",3,Calendar Toolbar,"Tháng 11/2026, chế độ Tuần, 15 ngăn xếp mốc giờ","Gồm nút Hôm nay, chuyển tuần </>, Tuần/Ngày, + Thêm lịch."
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",4,Mini Calendar,"Tháng 11, 2026 (ngày 20 đang chọn)","Chọn nhanh ngày; mảng cố định 35 ô có thể thiếu ngày 30/31 ở tháng 6 hàng."
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",5,Panel lọc lớp (1000 lớp),"1000/1000 checkbox đang chọn; ô Lọc tên lớp rỗng","Nút Bỏ chọn; render toàn bộ 1000 lớp làm DOM rất nặng."
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",6,Lưới lịch tuần & Thẻ ngăn xếp,"Khung giờ 07:00-21:00 (GMT+7)","Bấm thẻ mở drawer danh sách lớp; lỗi thực tế: badge Ngăn xếp (67 lớp) rớt dòng đè chữ giờ học."
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",1,Secondary Button (Làm mới),Enabled,Tải lại danh sách hóa đơn.
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",2,KPI Stat Cards (4 thẻ),"Tổng 1.000; Đã TT 585; Chờ TT 223; Doanh thu 1.452.000.000 đ",Số liệu tổng hợp từ Backend.
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",3,Searchbox (Tìm kiếm hóa đơn),(Rỗng),"maxlength=100, debounce 300ms."
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",4,Combobox Trạng thái (#invoice-status),"Tất cả hóa đơn (ALL)","Tùy chọn: ALL, PENDING, PAID, FAILED, CANCELLED, REFUNDED."
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",5,Data Table (7 cột),"1-20 / 1000 hóa đơn (50 trang)","Cột Thao tác hiển thị nút Biên lai (PAID) hoặc Chi tiết."
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",6,Pagination Bar,"20 / trang, trang 1/50, Trước disabled","Tùy chọn 10, 20, 50, 100 dòng/trang."
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",7,"Modal Chi tiết / Biên lai (role=dialog)",Đóng mặc định,"Nút In biên lai (window.print) chỉ xuất hiện khi status === PAID."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",1,Month Picker (el-date-picker),11/2026,"clearable=false, khóa chọn tháng tương lai."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",2,Primary Button (Gửi Email Hàng Loạt),Enabled,"Xác nhận ElMessageBox.confirm; thực tế nút đang hiện màu xanh dương lệch chuẩn cam UI_RULE.md."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",3,Search Input (el-input),(Rỗng),"Placeholder Tìm tên hoặc email giáo viên..., debounce 300ms."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",4,Select (Trạng thái mail),Tất cả trạng thái mail (ALL),"Tùy chọn: ALL, NotSent, Pending, Sent, Failed."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",5,Data Table (7 cột),"Kỳ 11/2026 · 201 giáo viên (0 buổi / 0 đ)","Lỗi thực tế: cột TRẠNG THÁI EMAIL bị tràn ngang/khuất ở 1281x801; lồng 2 thẻ <main>."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",6,"Row Actions (Chi tiết, Thao tác v)",Enabled,"Gồm Chi tiết, Thay đổi lương cơ bản (0..100tr), Thêm Phạt/Thưởng (1..1tỷ), Preview Mail (iframe sandbox), Gửi Mail."
+"Chức năng 10: Quản lý Bảng lương Giáo viên",7,Pagination (el-pagination),"20/page, trang 1/11, Previous disabled","Điều hướng 11 trang (201 giáo viên)."
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",1,"Action Buttons (Làm mới, + Soạn thông báo)",Enabled,Mở modal tạo thông báo hoặc làm mới lịch sử.
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",2,Tab Switcher,Quản lý & gửi thông báo,"Chuyển giữa Quản lý & gửi thông báo và Thông báo của tôi."
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",3,KPI Stat Cards (4 thẻ),"Tổng 1000; Đang xử lý 0; Lượt nhận 1000; Đã đọc 694",Thống kê phân phát và lượt đọc.
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",4,"Search Form & Combobox Loại","Search rỗng; Loại: Tất cả loại","Lọc theo SPECIAL, ANNOUNCEMENT, SYSTEM."
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",5,"Data Table (5 cột) & Phân trang","20 / 1000 thông báo, Trang 1/50, Trước disabled","Hiển thị nội dung, đối tượng, ngày tạo, trạng thái Outbox, số đã đọc."
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",6,"Modal Soạn thông báo mới (role=dialog)","PARENT, ANNOUNCEMENT, sendEmail=false, nút gửi disabled","Nút Đưa vào hàng đợi bị khóa khi Tiêu đề rỗng; chọn SPECIAL tự bật và khóa checkbox gửi email."
+"Chức năng 12: Báo cáo Doanh thu",1,Combobox (Khoảng thời gian báo cáo),6 tháng gần nhất (6),"Tùy chọn: 3, 6, 12 tháng gần nhất."
+"Chức năng 12: Báo cáo Doanh thu",2,Primary Button (Xuất CSV),Enabled,"Xuất toàn bộ 585 hóa đơn trong kỳ ra tệp bao-cao-doanh-thu.csv (UTF-8 BOM)."
+"Chức năng 12: Báo cáo Doanh thu",3,KPI Stat Cards (3 thẻ),"Tổng 1.452.000.000 đ; Đã TT 585; Chờ TT 223",Dữ liệu trực tiếp từ adminReportService.getRevenue.
+"Chức năng 12: Báo cáo Doanh thu",4,2 Biểu đồ (Theo tháng & Theo lớp),"Tháng 6-11; Top 5 lớp (3,5 tr)",Biểu đồ cột CSS và xếp hạng top lớp.
+"Chức năng 12: Báo cáo Doanh thu",5,Data Table (5 cột),"10 giao dịch mới nhất / 585 hóa đơn","Sắp xếp mới nhất trước; ghi chú Xuất CSV để xem toàn bộ."
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",1,"Action Buttons Banner (Làm mới, Điểm danh ngay, Giao bài tập)",Enabled,"Điều hướng nhanh tới Điểm danh và Giao bài tập; lỗi thực tế: avatar banner trống."
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",2,KPI Stat Cards (4 thẻ),"3 Lớp (tổng 5); 1 HS; 0 Ca hôm nay; Chuyên cần 0.0%",Tổng hợp từ dữ liệu thực của giáo viên.
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",3,"Schedule Tabs (Hôm nay / Tuần này) & Link TKB","Hôm nay (0) active","Link Xem thời khóa biểu đầy đủ tới /teacher/schedule."
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",4,"Cards Bài tập cần chấm & Đơn nghỉ / Chat","5 bài đã chấm; 2 đơn xin nghỉ chờ duyệt","Gồm các link Chấm bài ngay, Duyệt đơn (2), Mở hộp thoại chat."
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",5,Card Thông báo từ trung tâm,"Đã đọc hết (1 thông báo hiển thị)","Có nút Xem chi tiết mở modal và link Xem tất cả thông báo."
+"Chức năng 14: Thời khóa biểu cá nhân (Giáo viên)",1,"Action Buttons (Đồng bộ lịch dạy, Lớp phụ trách)",Enabled,Đồng bộ lịch hoặc chuyển sang /teacher/classes.
+"Chức năng 14: Thời khóa biểu cá nhân (Giáo viên)",2,Week Navigator,"16/11 - 22/11/2026 (weekOffset=0)","Gồm Tuần trước, Tuần sau, Tuần này (Hôm nay)."
+"Chức năng 14: Thời khóa biểu cá nhân (Giáo viên)",3,Combobox Lọc lớp,"Tất cả lớp phụ trách (5)","6 options; lỗi hiển thị thực tế: tên Lớp KMN-403 bị cắt thiếu dấu ngoặc ) cuối."
+"Chức năng 14: Thời khóa biểu cá nhân (Giáo viên)",4,"View Toggle (Lưới tuần / Danh sách)",Lưới tuần active,Chuyển đổi giữa lưới 7 ngày và danh sách.
+"Chức năng 14: Thời khóa biểu cá nhân (Giáo viên)",5,Lưới 7 ngày trong tuần,"7 cột Thứ 2 -> Chủ Nhật (Không có ca dạy)",Hiển thị các ca dạy trong tuần đang chọn.
+"Chức năng 15: Lớp học đang phụ trách (Giáo viên)",1,"Action Buttons (Làm mới, Tất cả học sinh)",Enabled,Tải lại danh sách lớp hoặc mở /teacher/students.
+"Chức năng 15: Lớp học đang phụ trách (Giáo viên)",2,Search Input,(Rỗng),"Placeholder Tìm theo tên lớp, khóa học hoặc phòng học..."
+"Chức năng 15: Lớp học đang phụ trách (Giáo viên)",3,"Combobox Trạng thái & View Toggle","Tất cả trạng thái; Dạng lưới",Lọc theo 4 trạng thái và chuyển đổi Grid/List.
+"Chức năng 15: Lớp học đang phụ trách (Giáo viên)",4,Danh sách Card lớp học (5 lớp),"SRB-001, OLY-805, FGM-604, KMN-403, CPA-202","Mỗi thẻ có nút Học sinh (n), Lịch học, Điểm danh (lỗi thực tế: chữ trong 3 nút bị xuống 2 dòng)."
+"Chức năng 15: Lớp học đang phụ trách (Giáo viên)",5,Pagination Bar (Client),"9 / trang, trang 1/1, Trước & Sau disabled","Tùy chọn 9, 18, 36, 72 lớp/trang."
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",1,"Action Buttons (Làm mới, Xuất danh sách CSV)",Enabled,Xuất danh sách học sinh ra file CSV tại trình duyệt.
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",2,Combobox Chọn lớp học phụ trách *,"Lớp SRB-001 (value=1)","5 lớp phụ trách; tên Lớp KMN-403 bị cắt thiếu dấu ) cuối."
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",3,Text Input Tìm kiếm HS/PH,(Rỗng),"Tìm theo tên HS, mã HS, tên/SĐT phụ huynh; debounce 300ms."
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",4,Banner lớp & 2 Link nhanh,"Sĩ số: 0 / 16 + Điểm danh + Lịch học","Mâu thuẫn thực tế: banner ghi 0/16 trong khi bảng có 1 HS trạng thái DROPPED."
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",5,Data Table (8 cột),"1 bản ghi (Phúc Điền Ngô - HS-0001 - DROPPED)","Lỗi hiển thị thực tế: bảng tràn ngang khuất 2 nút Chat và Gọi ở 1281x801."
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",6,Pagination Bar,"20 / trang, trang 1/1, Trước & Sau disabled","Phân trang server."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",1,"Action Buttons (Làm mới, Lưu/Đã khóa điểm danh)","Làm mới enabled; Đã khóa điểm danh disabled","Khóa tự động sau 24h kết thúc buổi; hỏi confirm nếu còn HS UNMARKED."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",2,Warning Banner & Security Lock Box,Hiển thị do buổi 15/08/2026 đã quá hạn,"Ghi rõ giờ kết thúc và hạn chót chỉnh sửa; chuyển toàn bảng sang chỉ xem."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",3,"2 Combobox (Chọn lớp, Chọn buổi học)","Lớp SRB-001 (5 lớp); Buổi 1 - 15/08/2026 [Đã kết thúc]","Đánh số buổi tăng dần theo ngày học."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",4,5 Filter Tabs (Lọc nhanh buổi học),Tất cả active,"Tất cả, Đang diễn ra, Đã kết thúc, Đã điểm danh, Chưa điểm danh."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",5,Card trạng thái buổi học & 6 Thẻ KPI,"0% có mặt; 6 thẻ KPI = 0","Tổng sĩ số, Có mặt, Đi muộn, Có phép, Vắng mặt, Chưa điểm danh."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",6,Batch Toolbar (3 nút + Search + Select),"3 nút batch disabled; Select Tất cả trạng thái (0)","Tất cả CÓ MẶT, Duyệt đơn nghỉ phép, Đặt lại, lọc 7 trạng thái kể cả HAS_LEAVE."
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",7,Bảng học sinh điểm danh,Không tìm thấy học sinh nào (buổi #1),"Khi có HS còn hạn: 4 nút PRESENT/LATE/EXCUSED/ABSENT, duyệt đơn nghỉ, ghi chú, lưu lẻ."
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",1,3 Header Action Buttons,Enabled,"Import từ File (AI Worker), Tạo ngân hàng mới, Thêm câu hỏi."
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",2,Banner Quy chuẩn điểm,"Dễ 1.0đ; Trung bình 1.5đ; Khó 2.0đ",Công thức quy đổi thang 100.
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",3,Cột trái (Danh sách 1000 ngân hàng),"1-10 / 1000 (100 trang); #1000 đang chọn","Lọc theo 12 khóa học, tìm debounce 300ms, nút Sửa/Xóa từng ngân hàng."
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",4,Header cột phải (2 nút thao tác),Ngân hàng #1000,"Lỗi hiển thị thực tế: 2 nút Import từ file và Thêm câu hỏi bị hẹp làm chữ rớt 3 dòng."
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",5,"Bộ lọc câu hỏi & Chọn trang này","Tất cả mức độ; Tất cả loại; unchecked","Lọc độ khó/loại/nội dung; chọn nhiều để xóa hàng loạt hoặc trích xuất (stub)."
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",6,Card câu hỏi & Phân trang,"1 câu (ID 1000 - Khó 2đ - Trắc nghiệm); 20 / trang","Có nút Xem đáp án & giải thích, Sửa, Xóa."
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",7,Modal AI Import Worker (3 bước),"Bước 1 active; nút Bắt đầu bóc tách AI disabled","Dropzone .docx/.pdf <=50MB; Bước 2 polling 2.5s; Bước 3 xem trước & bulkCreateQuestions."
+"Chức năng 19: Tạo & Giao bài tập về nhà",1,"Action Buttons (Làm mới, Tạo bài kiểm tra mới)",Enabled,Mở modal tạo mới bài kiểm tra cho buổi học.
+"Chức năng 19: Tạo & Giao bài tập về nhà",2,"2 Combobox (Lớp, Buổi học) & SearchBar","Lớp SRB-001; Buổi 1: Buổi học (--)","Lỗi thực tế: ngày hiện (--) và giờ hiện chuỗi ISO thô 2026-08-16T02:48:13."
+"Chức năng 19: Tạo & Giao bài tập về nhà",3,Card bài kiểm tra (1 bài),"#001 (Bản nháp, 1 câu, 45 phút, 1/1 đã nộp)","Gồm 5 nút: Giao học sinh, Xem đề, Nhân bản, Sửa, Xóa (confirm)."
+"Chức năng 19: Tạo & Giao bài tập về nhà",4,Modal Tạo mới - Thông tin chung,"Tiêu đề tự điền; 30 phút; OPEN; mở 20/11 -> hạn 27/11","Nhập tiêu đề, datetime mở/hạn nộp, thời lượng, trạng thái."
+"Chức năng 19: Tạo & Giao bài tập về nhà",5,Modal Tạo mới - Chọn đề & Đối tượng,"1001 options ngân hàng; 0 câu đã chọn; Radio cả lớp; nút Phát hành disabled","Chặn câu ESSAY; nút Phát hành chỉ bật khi chọn >=1 câu; dropdown 1001 options khá nặng."
+"Chức năng 20: Chấm điểm & Nhập nhận xét",1,"Action Buttons (Làm mới, Lưu tất cả kết quả)",Enabled,Lưu hàng loạt điểm và nhận xét cho cả lớp.
+"Chức năng 20: Chấm điểm & Nhập nhận xét",2,"2 Combobox (Lớp, Bài kiểm tra) & Chỉ số","Lớp SRB-001; Bài #001; Tiến độ 1/1; TB 6.8đ",Tự động nạp danh sách bài kiểm tra của lớp đang chọn.
+"Chức năng 20: Chấm điểm & Nhập nhận xét",3,4 Tab lọc trạng thái,Tất cả học sinh active,"Tất cả học sinh, Đã nộp bài, Đã chấm điểm, Chưa nộp bài."
+"Chức năng 20: Chấm điểm & Nhập nhận xét",4,"Input Điểm (0-100đ) & Input Nhận xét","HS-1: Điểm 6.8; Nhận xét có sẵn","Điểm chuẩn hóa qua normalizeScore khi @input; nhận xét maxlength=1000."
+"Chức năng 20: Chấm điểm & Nhập nhận xét",5,"Row Buttons (Xem chi tiết bài làm, Lưu lẻ)",Enabled,"Chuyển tới TeacherSubmissionDetailView hoặc lưu riêng 1 học sinh."
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",1,Connection Badge & Button Làm mới,"Realtime đã kết nối; Làm mới enabled",Hiển thị trạng thái kết nối SignalR /chathub.
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",2,"2 Tab cột trái & SearchBar","Hội thoại (4) active; Phụ huynh (5); search rỗng",Tìm kiếm hội thoại hoặc danh bạ phụ huynh.
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",3,Danh sách hội thoại (4 mục),Bích Loan Lý đang chọn,"Hiển thị avatar, tên, tin cuối và ngày."
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",4,"Header khung chat & Link gọi/email","Bích Loan Lý (Lớp CPA-202...)","Lỗi thực tế: dòng tên lớp dài đẩy tràn ngang làm cắt nửa nút email ở 1281x801."
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",5,Luồng tin nhắn,"1 tin ngày 24/09/2026 (11:48 · Đã gửi)","Hỗ trợ TEXT/IMAGE/FILE và xóa tin của mình; lỗi thực tế: cạnh phải bong bóng bị cắt sát mép."
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",6,"Thanh soạn tin (File, Textarea, Gửi)","Textarea rỗng; nút Gửi disabled","Tệp tối đa 20MB, text max 2000; lỗi thực tế: nút Gửi tin nhắn bị cắt nửa mép phải."
+"Chức năng 22: Phiếu lương cá nhân (Giáo viên)",1,Month Picker (el-date-picker),11/2026,"clearable=false, khóa chọn tháng tương lai."
+"Chức năng 22: Phiếu lương cá nhân (Giáo viên)",2,3 Thẻ KPI,"Tổng thực nhận 0 đ; 0 buổi; Thưởng/Phạt +0 đ / -0 đ","Mâu thuẫn thực tế: bảng dưới có khoản -500.000 đ trong 11/2026 nhưng KPI vẫn hiện 0 đ."
+"Chức năng 22: Phiếu lương cá nhân (Giáo viên)",3,Bảng Chi tiết buổi dạy (5 cột),"0 buổi tính lương (trống)","Ngày dạy, Bài học, Trạng thái, Điểm danh, Tính lương (+1 Đơn vị / 0)."
+"Chức năng 22: Phiếu lương cá nhân (Giáo viên)",4,Bảng Khoản thưởng / phạt (4 cột),"1 dòng: 10/11/2026 | Phạt | -500.000 đ","Mâu thuẫn dữ liệu seed: loại Phạt nhưng lý do ghi Thưởng thành tích; lồng 2 thẻ <main>."

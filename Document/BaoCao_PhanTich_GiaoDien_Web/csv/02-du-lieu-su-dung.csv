@@ -1,0 +1,64 @@
+﻿Chức năng,STT,Tên bảng / Cấu trúc dữ liệu,Thêm,Sửa,Xóa,Truy vấn
+"Chức năng 01: Đăng nhập hệ thống",1,ACCOUNT (ApplicationUser),,X,,X
+"Chức năng 01: Đăng nhập hệ thống",2,ADMIN_PROFILE (AdminProfile),,,,X
+"Chức năng 01: Đăng nhập hệ thống",3,TEACHER_PROFILE (TeacherProfile),,,,X
+"Chức năng 01: Đăng nhập hệ thống",4,"sessionStorage (accessToken, role, profileId)",X,X,X,X
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",1,INVOICE (Invoice),,,,X
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",2,CLASS_STUDENT & CLASSES,,,,X
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",3,PAYROLL_SUMMARY & TEACHER_PROFILE,,,,X
+"Chức năng 02: Tổng quan hệ thống (Dashboard Quản trị)",4,"CONVERSATION, MESSAGE & PARENT_PROFILE",,,,X
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",1,PARENT_PROFILE (ParentProfile),,X,X,X
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",2,STUDENT_PROFILE (StudentProfile),,,,X
+"Chức năng 03: Quản lý Phụ huynh & Học sinh",3,ACCOUNT (ApplicationUser),,,X,X
+"Chức năng 04: Quản lý Giáo viên",1,TEACHER_PROFILE (TeacherProfile),X,X,X,X
+"Chức năng 04: Quản lý Giáo viên",2,ACCOUNT (ApplicationUser),X,X,X,X
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",1,ACCOUNT (ApplicationUser),,X,,X
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",2,ADMIN_PROFILE / TEACHER_PROFILE / PARENT_PROFILE,,,,X
+"Chức năng 05: Quản lý Tài khoản & Bảo mật",3,IEmailDeliveryService (Gửi mật khẩu tạm),X,,,
+"Chức năng 06: Quản lý Danh mục Khóa học",1,COURSE (Course),X,X,X,X
+"Chức năng 06: Quản lý Danh mục Khóa học",2,COURSE_LEVEL (CourseLevel),,,,X
+"Chức năng 06: Quản lý Danh mục Khóa học",3,Cloudinary Media Storage,X,,,
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",1,CLASSES (Classes),X,X,X,X
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",2,CLASS_SCHEDULE (ClassSchedule),X,X,X,X
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",3,LESSON (Lesson),X,X,X,X
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",4,CLASS_STUDENT (ClassStudent),X,,X,X
+"Chức năng 07: Quản lý Lớp học & Chi tiết Lớp học",5,"COURSE, COURSE_LEVEL, TEACHER_PROFILE, STUDENT_PROFILE",,,,X
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",1,CLASS_SCHEDULE (ClassSchedule),X,X,X,X
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",2,CLASSES (Classes),,X,,X
+"Chức năng 08: Quản lý Lịch học & Thời khóa biểu",3,LESSON (tự đồng bộ khi đổi lịch),X,X,X,
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",1,INVOICE (Invoice),,,,X
+"Chức năng 09: Quản lý Hóa đơn & Biên lai học phí",2,"PARENT_PROFILE, STUDENT_PROFILE, CLASSES, COURSE_LEVEL",,,,X
+"Chức năng 10: Quản lý Bảng lương Giáo viên",1,PAYROLL_SUMMARY (PayrollSummary),X,X,,X
+"Chức năng 10: Quản lý Bảng lương Giáo viên",2,TEACHER_SALARY_CONFIG (TeacherSalaryConfig),X,X,,X
+"Chức năng 10: Quản lý Bảng lương Giáo viên",3,SALARY_ADJUSTMENT (SalaryAdjustment),X,,,X
+"Chức năng 10: Quản lý Bảng lương Giáo viên",4,"LESSON, ATTENDANCE, TEACHER_PROFILE",,,,X
+"Chức năng 10: Quản lý Bảng lương Giáo viên",5,PayslipEmailQueue / PayslipEmailWorker,X,,,
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",1,NOTIFICATION & OUTBOX,X,X,,X
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",2,USER_INBOX & NOTIFICATION_SETTING,X,X,,X
+"Chức năng 11: Quản lý & Gửi Thông báo hệ thống",3,SignalR /hubs/notifications & Email Service,X,,,
+"Chức năng 12: Báo cáo Doanh thu",1,INVOICE (Invoice),,,,X
+"Chức năng 12: Báo cáo Doanh thu",2,CLASSES & STUDENT_PROFILE,,,,X
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",1,"CLASSES, CLASS_SCHEDULE, LESSON",,,,X
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",2,"ATTENDANCE, LEAVE_REQUEST",,,,X
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",3,"ASSIGNMENT, STUDENT_ASSIGNMENT",,,,X
+"Chức năng 13: Tổng quan Giáo viên (Dashboard Teacher)",4,"USER_INBOX, NOTIFICATION",,X,,X
+"Chức năng 14: Thời khóa biểu cá nhân (Giáo viên)",1,"CLASSES, CLASS_SCHEDULE, LESSON",,,,X
+"Chức năng 15: Lớp học đang phụ trách (Giáo viên)",1,"CLASSES, CLASS_SCHEDULE, LESSON, CLASS_STUDENT",,,,X
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",1,"CLASS_STUDENT, STUDENT_PROFILE, PARENT_PROFILE",,,,X
+"Chức năng 16: Danh sách học sinh theo lớp (Giáo viên)",2,"CLASSES, ATTENDANCE",,,,X
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",1,ATTENDANCE (Attendance),X,X,,X
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",2,LEAVE_REQUEST (LeaveRequest),,X,,X
+"Chức năng 17: Điểm danh học viên & Duyệt đơn xin nghỉ phép",3,"CLASSES, LESSON, CLASS_STUDENT, STUDENT_PROFILE",,,,X
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",1,QUESTION_BANK & QUESTION,X,X,X,X
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",2,QUESTION_ASSIGNMENT & COURSE,,,X,X
+"Chức năng 18: Quản lý Ngân hàng câu hỏi & AI Import đề thi",3,Python AI Import Worker (/api/parser/*),X,,,X
+"Chức năng 19: Tạo & Giao bài tập về nhà",1,ASSIGNMENT & QUESTION_ASSIGNMENT,X,X,X,X
+"Chức năng 19: Tạo & Giao bài tập về nhà",2,STUDENT_ASSIGNMENT,X,,X,X
+"Chức năng 19: Tạo & Giao bài tập về nhà",3,"QUESTION_BANK, QUESTION, CLASSES, LESSON, CLASS_STUDENT",,,,X
+"Chức năng 20: Chấm điểm & Nhập nhận xét",1,STUDENT_ASSIGNMENT (StudentAssignment),,X,,X
+"Chức năng 20: Chấm điểm & Nhập nhận xét",2,"ASSIGNMENT, QUESTION_ASSIGNMENT, QUESTION, LESSON, CLASSES, STUDENT_PROFILE",,,,X
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",1,CONVERSATION (HUMAN) & MESSAGE,X,X,X,X
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",2,"PARENT_PROFILE, STUDENT_PROFILE, CLASS_STUDENT, CLASSES",,,,X
+"Chức năng 21: Chat trực tuyến với Phụ huynh (Chat Realtime)",3,SignalR /chathub & Cloudinary Storage,X,,,X
+"Chức năng 22: Phiếu lương cá nhân (Giáo viên)",1,PAYROLL_SUMMARY & SALARY_ADJUSTMENT,,,,X
+"Chức năng 22: Phiếu lương cá nhân (Giáo viên)",2,LESSON & ATTENDANCE,,,,X
