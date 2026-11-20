@@ -1,0 +1,13 @@
+﻿STT,Màn hình / Route,Mức độ,Mô tả lỗi quan sát thực tế trên http://localhost:8088
+1,"Sidebar (Admin & Teacher)",Trung bình,"Mục Tổng quan vẫn giữ nền cam active khi vào route con; nhóm accordion không tự mở theo URL."
+2,"TeacherChatView (/teacher/communication/chat)",Cao,"Khung chat phải bị tràn ngang ở 1281x801 làm cắt nửa nút email, cạnh phải tin nhắn và nút Gửi tin nhắn."
+3,"ScheduleView (/training/schedule)",Cao,"Badge Ngăn xếp (67 lớp) rớt 3 dòng đè chữ giờ học; render 1000 checkbox lớp gây nặng DOM (>1048 button)."
+4,"AdminPayrollView (/finance/payroll)",Trung bình,"Cột TRẠNG THÁI EMAIL bị khuất ngang ở 1281x801; nút Gửi Email Hàng Loạt màu xanh dương lệch tông cam; lồng 2 thẻ <main>."
+5,"TeacherPayslipView (/teacher/payslip)",Trung bình,"Mâu thuẫn số liệu: bảng điều chỉnh có -500.000 đ (loại Phạt nhưng lý do Thưởng) trong khi KPI hiện 0 đ; lồng 2 thẻ <main>."
+6,"TeacherAssignmentsView (/teacher/assignments)",Trung bình,"Ngày buổi học hiện (--), giờ hiện ISO thô 2026-08-16T02:48:13; dropdown ngân hàng có 1001 options; modal Sửa thiếu maxAttempt."
+7,"TeacherQuestionsView (/teacher/questions)",Thấp,"Hai nút Import từ file và Thêm câu hỏi ở header cột phải bị hẹp làm chữ rớt 3 dòng."
+8,"TeacherStudentsView (/teacher/students)",Trung bình,"Bảng 8 cột tràn ngang khuất 2 nút Chat và Gọi ở 1281x801; banner sĩ số 0/16 mâu thuẫn với 1 HS DROPPED."
+9,"TeacherClassesView & TeacherScheduleView",Thấp,"3 nút trên card lớp bị ép xuống 2 dòng; tên Lớp KMN-403 trong dropdown bị cắt thiếu dấu ) cuối."
+10,"ClassesView (/training/classes)",Thấp,"Các lớp LH-34, LH-76, LH-83 hiển thị badge trạng thái Không rõ."
+11,"DashboardView (/)",Thấp,"Legend biểu đồ Doughnut Phân bổ học viên theo lớp quá dài đẩy biểu đồ xuống dưới."
+12,"TeacherDashboardView (/teacher) & SignalR",Thấp,"Avatar banner hiển thị trống lúc đầu; console phát sinh lỗi SignalR disconnect tại một số thời điểm."
